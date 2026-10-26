@@ -91,9 +91,10 @@ fn manifest_spec_example_loads() {
 #[test]
 fn prop_types_accept_values() {
     let value = |s| forge_spec::value::parse_value(s, forge_spec::value::Quoting::Plain).unwrap();
-    let size = PropType::Enum(vec!["sm".into(), "md".into()]);
-    assert!(size.accepts(&value("sm")));
-    assert!(!size.accepts(&value("xl")));
+    let size = PropType::Enum(vec!["Small".into(), "Medium".into()]);
+    assert!(size.accepts(&value("Small")));
+    assert!(!size.accepts(&value("small")));
+    assert!(!size.accepts(&value("XLarge")));
     assert!(PropType::Length.accepts(&value("12px")));
     assert!(!PropType::Number.accepts(&value("12px")));
     assert!(PropType::Bool.accepts(&value("$form.ok")));

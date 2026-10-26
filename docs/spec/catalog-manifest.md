@@ -33,8 +33,8 @@ elements:
       label: string       # shorthand for `{ type: string }`
       variant:
         type: enum
-        values: [default, primary, danger]
-        default: default
+        values: [Default, Primary, Danger]   # the library's Rust variant names
+        default: Default
       disabled:
         type: bool
         default: false
@@ -102,7 +102,8 @@ check (#92). Version requirements are recorded but not evaluated yet.
 ## Adding a component
 
 1. Add the element under `elements:` in the library's manifest, with its props, events and
-   allowed children. Use the library's own names where they are clear; map enum values to short,
-   lower-case words (`primary`, `sm`).
+   allowed children. Use the library's own names, including its Rust enum variant names for enum
+   values (`Primary` for `ButtonVariant::Primary`, `Small` for `Size::Small`), so a document maps
+   one-to-one onto the Rust API.
 2. Map the element to the library's component in the library's runtime adapter (#74, #75).
 3. Run `cargo test -p forge-spec`; the catalog tests load every manifest under `catalogs/`.

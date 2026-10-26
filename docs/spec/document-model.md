@@ -50,7 +50,7 @@ Value
   | Interpolated([Segment])        // "Hello, {$user.name}"
   | Number(f64, unit?)             // unit: "px" | "rem" | "%" | "fr"; None = unitless
   | Bool
-  | Enum(Ident)                    // bare word, e.g. primary, center; the catalog may read it as text
+  | Enum(Ident)                    // bare word, e.g. Primary, center; the catalog may read it as text
   | Color(rgba)                    // #rgb, #rrggbb, #rrggbbaa
   | Token(path)                    // theme token reference, written $theme.colors.primary
   | List([Value])
@@ -71,7 +71,7 @@ Path    = Ident ("." Ident | "[" integer "]")*   // rooted in the view state, e.
    is primary).
 6. `TwoWay` bindings appear only as prop values, never in `style`, `content` or handler args.
 
-Everything else (does `kit.Button` exist, is `variant` a valid prop, is `primary` an allowed enum
+Everything else (does `kit.Button` exist, is `variant` a valid prop, is `Primary` an allowed enum
 value, may a `Text` have children, is the library compatible with the base) is catalog validation
 ([#10](https://github.com/skamansam/gpui-forge/issues/10), [#92](https://github.com/skamansam/gpui-forge/issues/92)).
 
@@ -95,7 +95,7 @@ Document {
     children: [
       Node { element: Text, content: Interpolated(["Welcome back, ", $user.name]) },
       Node { element: Input, id: Some("email"), props: { value: Binding(form.email, TwoWay), placeholder: "Email" } },
-      Node { element: Button, content: "Sign in", props: { variant: Enum(primary), disabled: Binding(form.invalid, OneWay) },
+      Node { element: Button, content: "Sign in", props: { variant: Enum(Primary), disabled: Binding(form.invalid, OneWay) },
              events: [click -> sign_in()] },
       Node { element: ely.Badge, content: "beta" },
     ],

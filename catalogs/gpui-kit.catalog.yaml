@@ -55,12 +55,12 @@ elements:
       label: string
       variant:
         type: enum
-        values: [default, primary, secondary, danger, info, success, warning, ghost, link, text]
-        default: default
+        values: [Default, Primary, Secondary, Danger, Info, Success, Warning, Ghost, Link, Text]
+        default: Default
       size:
         type: enum
-        values: [xs, sm, md, lg]
-        default: md
+        values: [XSmall, Small, Medium, Large]
+        default: Medium
       icon: icon
       disabled:
         type: bool
@@ -146,8 +146,8 @@ elements:
         summary: Index of the selected `Radio`.
       layout:
         type: enum
-        values: [vertical, horizontal]
-        default: vertical
+        values: [Vertical, Horizontal]
+        default: Vertical
       disabled:
         type: bool
         default: false
@@ -198,8 +198,8 @@ elements:
         bindable: true
       variant:
         type: enum
-        values: [tab, pill, outline, segmented, underline]
-        default: tab
+        values: [Tab, Outline, Pill, Segmented, Underline, Folder]
+        default: Tab
     events:
       change: number
     children: [Tab]
@@ -261,8 +261,8 @@ elements:
       label: string
       variant:
         type: enum
-        values: [primary, secondary, danger, success, warning, info]
-        default: secondary
+        values: [Primary, Secondary, Danger, Success, Warning, Info]
+        default: Secondary
       outline:
         type: bool
         default: false
@@ -277,6 +277,6 @@ elements:
         required: true
       size:
         type: enum
-        values: [xs, sm, md, lg]
-        default: md
+        values: [XSmall, Small, Medium, Large]
+        default: Medium
       color: color
