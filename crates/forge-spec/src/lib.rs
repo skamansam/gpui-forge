@@ -6,6 +6,8 @@
 pub mod catalog;
 pub mod diagnostic;
 pub mod model;
+pub mod source_map;
+pub mod validate;
 pub mod value;
 pub mod yaml;
 
