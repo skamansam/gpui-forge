@@ -99,10 +99,12 @@ impl ForgeView {
     }
 
     fn lookup(&self, path: &Path) -> Option<&Json> {
-        path.0.iter().try_fold(&self.state, |json, segment| match segment {
-            PathSegment::Field(name) => json.get(name),
-            PathSegment::Index(i) => json.get(i),
-        })
+        path.0
+            .iter()
+            .try_fold(&self.state, |json, segment| match segment {
+                PathSegment::Field(name) => json.get(name),
+                PathSegment::Index(i) => json.get(i),
+            })
     }
 
     fn text(&self, value: &Value) -> String {
@@ -220,7 +222,10 @@ impl ForgeView {
     ) -> AnyElement {
         if let Some(namespace) = &node.element.namespace {
             return placeholder(
-                format!("{namespace}.{} is not available in the web preview yet", node.element.name),
+                format!(
+                    "{namespace}.{} is not available in the web preview yet",
+                    node.element.name
+                ),
                 cx,
             );
         }
@@ -236,15 +241,21 @@ impl ForgeView {
         let element: AnyElement = match node.element.name.as_str() {
             "Box" => {
                 let kids = children(self, window, cx);
-                return style(div(), &node.style, cx).children(kids).into_any_element();
+                return style(div(), &node.style, cx)
+                    .children(kids)
+                    .into_any_element();
             }
             "VStack" => {
                 let kids = children(self, window, cx);
-                return style(v_flex(), &node.style, cx).children(kids).into_any_element();
+                return style(v_flex(), &node.style, cx)
+                    .children(kids)
+                    .into_any_element();
             }
             "HStack" => {
                 let kids = children(self, window, cx);
-                return style(h_flex(), &node.style, cx).children(kids).into_any_element();
+                return style(h_flex(), &node.style, cx)
+                    .children(kids)
+                    .into_any_element();
             }
             "Text" => {
                 let text = self.prop_text(node, "text").unwrap_or_default();
@@ -258,7 +269,9 @@ impl ForgeView {
                 let clicked = node.clone();
                 Button::new(id)
                     .label(self.prop_text(node, "label").unwrap_or_default())
-                    .with_variant(button_variant(&self.prop_text(node, "variant").unwrap_or_default()))
+                    .with_variant(button_variant(
+                        &self.prop_text(node, "variant").unwrap_or_default(),
+                    ))
                     .with_size(size(&self.prop_text(node, "size").unwrap_or_default()))
                     .when_some(self.prop_text(node, "icon"), |b, name| b.icon(icon(&name)))
                     .when_some(self.prop_text(node, "tooltip"), |b, t| b.tooltip(t))
@@ -287,8 +300,8 @@ impl ForgeView {
                         });
                         let path = self.two_way(node, "value");
                         let changed = node.clone();
-                        let subscription = cx.subscribe(&state, move |this, state, event, cx| {
-                            match event {
+                        let subscription =
+                            cx.subscribe(&state, move |this, state, event, cx| match event {
                                 InputEvent::Change => {
                                     if let Some(path) = &path {
                                         let value = state.read(cx).value().to_string();
@@ -298,8 +311,7 @@ impl ForgeView {
                                 }
                                 InputEvent::PressEnter { .. } => this.fire(&changed, "submit"),
                                 _ => {}
-                            }
-                        });
+                            });
                         self.subscriptions.push(subscription);
                         self.inputs.insert(state_key, state.clone());
                         state
@@ -357,7 +369,11 @@ impl ForgeView {
                     })
                     .collect();
                 RadioGroup::new(id)
-                    .layout(if horizontal { Axis::Horizontal } else { Axis::Vertical })
+                    .layout(if horizontal {
+                        Axis::Horizontal
+                    } else {
+                        Axis::Vertical
+                    })
                     .selected_index(selected.map(|n| n as usize))
                     .disabled(self.prop_bool(node, "disabled"))
                     .children(radios)
@@ -441,7 +457,9 @@ impl ForgeView {
                         .collect::<Vec<_>>()
                 });
                 let bar = TabBar::new(id)
-                    .with_variant(tab_variant(&self.prop_text(node, "variant").unwrap_or_default()))
+                    .with_variant(tab_variant(
+                        &self.prop_text(node, "variant").unwrap_or_default(),
+                    ))
                     .selected_index(selected)
                     .children(tabs)
                     .on_click(move |index: &usize, _, cx| {
@@ -491,7 +509,9 @@ impl ForgeView {
                     .into_any_element()
             }
             "Tag" => Tag::new()
-                .with_variant(tag_variant(&self.prop_text(node, "variant").unwrap_or_default()))
+                .with_variant(tag_variant(
+                    &self.prop_text(node, "variant").unwrap_or_default(),
+                ))
                 .when(self.prop_bool(node, "outline"), |t| t.outline())
                 .child(self.prop_text(node, "label").unwrap_or_default())
                 .into_any_element(),
@@ -507,7 +527,9 @@ impl ForgeView {
         if node.style.is_empty() {
             element
         } else {
-            style(div(), &node.style, cx).child(element).into_any_element()
+            style(div(), &node.style, cx)
+                .child(element)
+                .into_any_element()
         }
     }
 }
@@ -661,8 +683,14 @@ fn style<E: Styled>(element: E, entries: &Entries, cx: &App) -> E {
             ("color", _, Some(c)) => e.text_color(c),
             ("border", _, Some(c)) => e.border_1().border_color(c),
             ("radius", _, _) => match value {
-                Value::Number { value, unit: None | Some(Unit::Px) } => e.rounded(px(*value as f32)),
-                Value::Number { value, unit: Some(Unit::Rem) } => e.rounded(rems(*value as f32)),
+                Value::Number {
+                    value,
+                    unit: None | Some(Unit::Px),
+                } => e.rounded(px(*value as f32)),
+                Value::Number {
+                    value,
+                    unit: Some(Unit::Rem),
+                } => e.rounded(rems(*value as f32)),
                 _ => e,
             },
             ("grow", _, _) if matches!(value, Value::Bool(true)) => e.flex_grow(1.0),
@@ -734,4 +762,3 @@ pub fn set_path(state: &mut Json, path: &Path, value: Json) {
     }
     *target = value;
 }
-

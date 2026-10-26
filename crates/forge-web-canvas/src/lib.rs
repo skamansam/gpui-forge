@@ -81,7 +81,11 @@ pub fn start(dark: bool, assets: String) {
 }
 
 fn apply_theme(dark: bool, cx: &mut App) {
-    let mode = if dark { ThemeMode::Dark } else { ThemeMode::Light };
+    let mode = if dark {
+        ThemeMode::Dark
+    } else {
+        ThemeMode::Light
+    };
     Theme::change(mode, None, cx);
     Theme::global_mut(cx).font_family = "Inter".into();
     Theme::global_mut(cx).mono_font_family = "JetBrains Mono".into();

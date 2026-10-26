@@ -42,4 +42,3 @@ pub fn to_json(diagnostics: &[Diagnostic]) -> String {
     )
     .to_string()
 }
-

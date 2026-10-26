@@ -13,7 +13,10 @@ fn valid_document_has_no_diagnostics() {
 fn invalid_document_still_renders() {
     let src = "forge: \"0.1\"\nroot:\n  Button: Save\n  variant: primary\n";
     let (doc, diagnostics) = check(src, &catalogs());
-    assert!(doc.is_some(), "a wrong enum value must not blank the canvas");
+    assert!(
+        doc.is_some(),
+        "a wrong enum value must not blank the canvas"
+    );
     assert_eq!(diagnostics.len(), 1);
     assert_eq!(diagnostics[0].pos.line, 4);
 }
