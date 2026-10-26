@@ -1,0 +1,16 @@
+[package]
+name = "forge-studio"
+description = "The Forge Studio: native visual editor for Forge documents."
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+repository.workspace = true
+
+# Studio's own UI is always built on gpui-kit. Canvases for other bases are
+# rendered out of process by a per-base preview host (#97).
+[dependencies]
+gpui-forge-runtime = { workspace = true, features = ["base-gpui-kit"] }
+gpui-kit.workspace = true
+
+[lints]
+workspace = true

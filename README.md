@@ -103,6 +103,28 @@ graph TD
 
 ---
 
+## 🧑‍💻 Development
+
+The Cargo workspace lives under `crates/` (`forge-spec`, `gpui-forge-runtime`, `forge-cli`, `forge-studio`, `forge-compiler`).
+
+```sh
+cargo test --workspace          # default base: gpui-kit
+cargo run -p forge-studio       # opens the Studio window
+cargo run -p forge-cli          # the `forge` binary
+```
+
+On Linux, install GPUI's system dependencies first (Ubuntu 24.04):
+
+```sh
+sudo apt install gcc g++ clang libfontconfig-dev libwayland-dev libwebkit2gtk-4.1-dev \
+  libxkbcommon-x11-dev libx11-xcb-dev libssl-dev libzstd-dev libasound2-dev \
+  vulkan-validationlayers libvulkan1
+```
+
+`gpui-forge-runtime` is built for one base at a time via mutually exclusive `base-*` features (`base-gpui-kit` is the default; `base-bezel`, `base-adabraka` and `base-gpui02` are reserved until their bases land). `forge-spec` must stay GPUI-free; CI enforces this.
+
+---
+
 ## 🤝 Contributing
 This is an experimental project at the intersection of systems programming and creative tooling. Contributions are welcome, especially regarding the specification design and the runtime performance of the hook system.
 
