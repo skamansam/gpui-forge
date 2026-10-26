@@ -2,9 +2,9 @@
 
 Status: **draft** (spec version `0.1`). Tracks [#3](https://github.com/skamansam/gpui-forge/issues/3).
 
-The document model is the canonical, format-independent AST. ForgeDSL, JSON and XML are three
-encodings of it; any document must survive `DSL -> model -> JSON -> model -> XML -> model -> DSL`
-without loss. The model is pure data: it knows nothing about GPUI or any base component system.
+The document model is the canonical, format-independent AST. [Forge YAML](forge-yaml.md), JSON
+(the same tree as YAML) and XML are its encodings; any document must survive
+`YAML -> model -> JSON -> model -> XML -> model -> YAML` without loss. The model is pure data: it knows nothing about GPUI or any base component system.
 Whether an element, prop or event *exists* is decided later by validation against the catalog
 manifests of the document's base and imported libraries.
 
@@ -25,7 +25,7 @@ Import
 
 Node
   element  : ElementRef
-  id       : Ident?                // unique within the document
+  id       : Ident?                // unique within the document; written Element#id or Element .id
   content  : Value?                // positional value; the catalog maps it to the element's primary prop
   props    : OrderedMap<Ident, Value>
   style    : OrderedMap<Ident, Value>   // keys defined by the style & layout model (#5)
@@ -51,7 +51,7 @@ Value
   | Bool
   | Enum(Ident)                    // bare identifier, e.g. primary, center
   | Color(rgba)                    // #rgb, #rrggbb, #rrggbbaa
-  | Token(path)                    // theme token reference, e.g. @colors.primary
+  | Token(path)                    // theme token reference, written $theme.colors.primary
   | List([Value])
   | Binding(path, mode)            // mode: OneWay | TwoWay
 

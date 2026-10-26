@@ -15,10 +15,10 @@ The project is comprised of six core pillars that work in tandem:
 
 ### 1. The Forge Schema (`forge-spec`)
 A multi-format specification for defining GPUI element trees. To ensure interoperability, we support:
-*   **ForgeDSL:** A custom, human-readable, indentation-based format optimized for Git diffs and ease of manual editing.
+*   **Forge YAML:** Plain YAML with a JSON Schema: human-readable, one fact per line for clean Git diffs, and editable with existing YAML tooling.
 *   **JSON/XML:** Standardized formats for machine-to-machine communication between the Web Builder and the Rust Engine.
 
-See the draft [ForgeDSL syntax](docs/spec/forge-dsl.md) and [document model](docs/spec/document-model.md).
+See the draft [Forge YAML format](docs/spec/forge-yaml.md) and [document model](docs/spec/document-model.md).
 
 ### 2. The Forge Converter (`forge-cli`)
 A powerful command-line utility used to transform interface definitions between all supported formats (e.g., converting a JSON blob from the web editor into a `.forge` file for the desktop editor).
