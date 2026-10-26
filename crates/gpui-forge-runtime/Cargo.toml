@@ -1,0 +1,22 @@
+[package]
+name = "gpui-forge-runtime"
+description = "Loads Forge documents and renders them with the selected base component system."
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+repository.workspace = true
+
+[features]
+default = ["base-gpui-kit"]
+# Exactly one base must be enabled: each base links its own GPUI build.
+base-gpui-kit = ["dep:gpui-kit"]
+base-bezel = []
+base-adabraka = []
+base-gpui02 = []
+
+[dependencies]
+forge-spec.workspace = true
+gpui-kit = { workspace = true, optional = true }
+
+[lints]
+workspace = true

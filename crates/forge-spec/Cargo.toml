@@ -1,0 +1,10 @@
+[package]
+name = "forge-spec"
+description = "The Forge Schema: GPUI-free document model, ForgeDSL/JSON/XML formats and validation."
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
