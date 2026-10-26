@@ -107,7 +107,8 @@ impl StyleType {
         if matches!(value, Value::Binding { .. }) {
             return true;
         }
-        let word = |words: &[&str]| matches!(value, Value::Enum(w) if words.contains(&w.as_str()));
+        // Words like `2xl` don't parse as bare enums, so plain strings count too.
+        let word = |words: &[&str]| matches!(value, Value::Enum(w) | Value::String(w) if words.contains(&w.as_str()));
         match self {
             StyleType::Length => is_length(value),
             StyleType::Size => is_length(value) || word(&["auto", "full"]),
