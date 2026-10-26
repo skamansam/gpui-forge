@@ -3,6 +3,7 @@
 //! Pure data: this crate must never depend on GPUI or any base component system,
 //! so documents can be read and validated by every tool regardless of base.
 
+pub mod catalog;
 pub mod diagnostic;
 pub mod model;
 pub mod value;

@@ -1,7 +1,7 @@
 //! Forge YAML (`docs/spec/forge-yaml.md`): reader and canonical writer.
 
 mod read;
-mod tree;
+pub(crate) mod tree;
 mod write;
 
 pub use read::from_str;

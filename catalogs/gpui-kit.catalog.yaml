@@ -1,0 +1,282 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for the gpui-kit base library (core subset).
+# Format: docs/spec/catalog-manifest.md
+catalog: "0.1"
+library: gpui-kit
+name: GPUI Kit
+version: 0.8.0
+license: Apache-2.0
+bases:
+  gpui-kit: "^0.8"
+
+elements:
+  Box:
+    summary: Plain container; layout comes entirely from `style`.
+    component: gpui::Div
+    children: any
+
+  VStack:
+    summary: Vertical flex container.
+    component: gpui_kit::base::v_flex
+    children: any
+
+  HStack:
+    summary: Horizontal flex container.
+    component: gpui_kit::base::h_flex
+    children: any
+
+  Text:
+    summary: A run of text.
+    component: gpui::SharedString
+    content: text
+    props:
+      text:
+        type: string
+        required: true
+
+  Label:
+    summary: Text with an optional secondary line.
+    component: gpui_component::label::Label
+    content: text
+    props:
+      text:
+        type: string
+        required: true
+      secondary: string
+      masked:
+        type: bool
+        default: false
+
+  Button:
+    summary: Clickable button.
+    component: gpui_component::button::Button
+    content: label
+    props:
+      label: string
+      variant:
+        type: enum
+        values: [default, primary, secondary, danger, info, success, warning, ghost, link, text]
+        default: default
+      size:
+        type: enum
+        values: [xs, sm, md, lg]
+        default: md
+      icon: icon
+      disabled:
+        type: bool
+        default: false
+      loading:
+        type: bool
+        default: false
+      outline:
+        type: bool
+        default: false
+      compact:
+        type: bool
+        default: false
+      tooltip: string
+    events:
+      click:
+
+  Input:
+    summary: Single-line text input.
+    component: gpui_component::input::Input
+    content: value
+    props:
+      value:
+        type: string
+        bindable: true
+      placeholder: string
+      disabled:
+        type: bool
+        default: false
+      readonly:
+        type: bool
+        default: false
+      cleanable:
+        type: bool
+        default: false
+      masked:
+        type: bool
+        default: false
+        summary: Hide the text, for passwords.
+    events:
+      change: string
+      submit: string
+
+  Checkbox:
+    summary: Checkbox with an optional label.
+    component: gpui_component::checkbox::Checkbox
+    content: label
+    props:
+      label: string
+      checked:
+        type: bool
+        default: false
+        bindable: true
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: bool
+
+  Switch:
+    summary: On/off toggle.
+    component: gpui_component::switch::Switch
+    content: label
+    props:
+      label: string
+      checked:
+        type: bool
+        default: false
+        bindable: true
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: bool
+
+  RadioGroup:
+    summary: A set of mutually exclusive options.
+    component: gpui_component::radio::RadioGroup
+    props:
+      selected:
+        type: number
+        bindable: true
+        summary: Index of the selected `Radio`.
+      layout:
+        type: enum
+        values: [vertical, horizontal]
+        default: vertical
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: number
+    children: [Radio]
+
+  Radio:
+    summary: One option of a `RadioGroup`.
+    component: gpui_component::radio::Radio
+    content: label
+    props:
+      label: string
+      disabled:
+        type: bool
+        default: false
+
+  Select:
+    summary: Dropdown for picking one option.
+    component: gpui_component::select::Select
+    props:
+      value:
+        type: string
+        bindable: true
+      options:
+        type: list<string>
+        required: true
+      placeholder: string
+      searchable:
+        type: bool
+        default: false
+      cleanable:
+        type: bool
+        default: false
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: string
+
+  Tabs:
+    summary: Tab bar; each `Tab` holds its panel's content.
+    component: gpui_component::tab::TabBar
+    props:
+      selected:
+        type: number
+        default: 0
+        bindable: true
+      variant:
+        type: enum
+        values: [tab, pill, outline, segmented, underline]
+        default: tab
+    events:
+      change: number
+    children: [Tab]
+
+  Tab:
+    summary: One tab of `Tabs`; its children are the panel content.
+    component: gpui_component::tab::Tab
+    content: label
+    props:
+      label:
+        type: string
+        required: true
+      disabled:
+        type: bool
+        default: false
+    children: any
+
+  Separator:
+    summary: Horizontal rule with an optional label.
+    component: gpui_component::separator::Separator
+    content: label
+    props:
+      label: string
+      dashed:
+        type: bool
+        default: false
+
+  Link:
+    summary: Hyperlink.
+    component: gpui_component::link::Link
+    content: label
+    props:
+      label: string
+      href: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      click:
+
+  Badge:
+    summary: Count or dot shown on top of its child.
+    component: gpui_component::badge::Badge
+    content: count
+    props:
+      count: number
+      max: number
+      dot:
+        type: bool
+        default: false
+      color: color
+    children: any
+
+  Tag:
+    summary: Small label for status or categories.
+    component: gpui_component::tag::Tag
+    content: label
+    props:
+      label: string
+      variant:
+        type: enum
+        values: [primary, secondary, danger, success, warning, info]
+        default: secondary
+      outline:
+        type: bool
+        default: false
+
+  Icon:
+    summary: Icon from the gpui-kit icon set.
+    component: gpui_component::icon::Icon
+    content: name
+    props:
+      name:
+        type: icon
+        required: true
+      size:
+        type: enum
+        values: [xs, sm, md, lg]
+        default: md
+      color: color
