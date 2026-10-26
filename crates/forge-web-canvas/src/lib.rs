@@ -22,6 +22,8 @@ thread_local! {
     static APPLICATION: RefCell<Option<ApplicationHandle>> = const { RefCell::new(None) };
     static VIEW: RefCell<Option<Entity<ForgeView>>> = const { RefCell::new(None) };
     static CATALOGS: Vec<Catalog> = check::catalogs();
+    /// A document rendered before the window exists, applied once it does.
+    static PENDING: RefCell<Option<forge_spec::Document>> = const { RefCell::new(None) };
 }
 
 #[cfg(target_family = "wasm")]
@@ -31,12 +33,16 @@ extern "C" {
     fn forge_hook(call: &str);
     #[wasm_bindgen(js_namespace = globalThis, js_name = forgeState)]
     fn forge_state(json: &str);
+    #[wasm_bindgen(js_namespace = globalThis, js_name = forgeReady)]
+    fn forge_ready();
 }
 
 #[cfg(not(target_family = "wasm"))]
 fn forge_hook(_: &str) {}
 #[cfg(not(target_family = "wasm"))]
 fn forge_state(_: &str) {}
+#[cfg(not(target_family = "wasm"))]
+fn forge_ready() {}
 
 /// Starts the canvas. `assets` is the URL that serves `assets/icons/*.svg`.
 #[wasm_bindgen]
@@ -61,18 +67,24 @@ pub fn start(dark: bool, assets: String) {
             .expect("bundled fonts load");
         apply_theme(dark, cx);
         let (_, view) = gpui_kit::open_window(WindowOptions::default(), cx, |_, cx| {
-            cx.new(|_| {
+            cx.new(|cx| {
                 let mut view = ForgeView::new(CATALOGS.with(Clone::clone));
                 view.set_sinks(
                     Rc::new(forge_hook),
                     Rc::new(|state| forge_state(&state.to_string())),
                 );
+                if let Some(doc) = PENDING.with(|p| p.borrow_mut().take()) {
+                    view.set_document(doc, cx);
+                }
                 view
             })
         })
         .expect("canvas window opens");
         VIEW.with(|v| *v.borrow_mut() = Some(view));
         cx.activate(true);
+        // The browser's GPU setup is asynchronous, so the window (and the view `render`
+        // updates) only exists from here on; tell the page it can start sending documents.
+        forge_ready();
     };
     #[cfg(target_family = "wasm")]
     APPLICATION.with(|a| *a.borrow_mut() = Some(app.run_embedded(launch)));
@@ -108,7 +120,11 @@ fn with_view(f: impl FnOnce(&Entity<ForgeView>, &mut App)) {
 pub fn render(yaml: &str) -> String {
     let (doc, diagnostics) = CATALOGS.with(|c| check::check(yaml, c));
     if let Some(doc) = doc {
-        with_view(|view, cx| view.update(cx, |view, cx| view.set_document(doc, cx)));
+        if VIEW.with(|v| v.borrow().is_none()) {
+            PENDING.with(|p| *p.borrow_mut() = Some(doc));
+        } else {
+            with_view(|view, cx| view.update(cx, |view, cx| view.set_document(doc, cx)));
+        }
     }
     check::to_json(&diagnostics)
 }
