@@ -1,8 +1,0 @@
-/home/ubuntu/repos/gpui-forge/target/debug/deps/sha1_smol-8770b52857cb085c.d: /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sha1_smol-1.0.1/src/lib.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sha1_smol-1.0.1/src/simd.rs
-
-/home/ubuntu/repos/gpui-forge/target/debug/deps/libsha1_smol-8770b52857cb085c.rlib: /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sha1_smol-1.0.1/src/lib.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sha1_smol-1.0.1/src/simd.rs
-
-/home/ubuntu/repos/gpui-forge/target/debug/deps/libsha1_smol-8770b52857cb085c.rmeta: /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sha1_smol-1.0.1/src/lib.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sha1_smol-1.0.1/src/simd.rs
-
-/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sha1_smol-1.0.1/src/lib.rs:
-/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sha1_smol-1.0.1/src/simd.rs:
