@@ -1,0 +1,11 @@
+/home/ubuntu/repos/gpui-forge/target/debug/deps/str_indices-2be0d96085475d5b.d: /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/lib.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/byte_chunk.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/chars.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/lines.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/lines_crlf.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/lines_lf.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/utf16.rs
+
+/home/ubuntu/repos/gpui-forge/target/debug/deps/libstr_indices-2be0d96085475d5b.rmeta: /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/lib.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/byte_chunk.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/chars.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/lines.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/lines_crlf.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/lines_lf.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/utf16.rs
+
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/lib.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/byte_chunk.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/chars.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/lines.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/lines_crlf.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/lines_lf.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/str_indices-0.4.4/src/utf16.rs:
