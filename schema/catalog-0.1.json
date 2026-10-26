@@ -1,0 +1,88 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gpui-forge.rudeboy.dev/schema/catalog-0.1.json",
+  "title": "GPUI Forge catalog manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["catalog", "library", "version", "bases", "elements"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "catalog": { "const": "0.1" },
+    "library": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
+    "name": { "type": "string" },
+    "version": { "type": "string" },
+    "license": { "type": "string" },
+    "bases": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": { "pattern": "^[a-z][a-z0-9_-]*$" },
+      "additionalProperties": { "type": "string" }
+    },
+    "elements": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[A-Z][A-Za-z0-9_]*$" },
+      "additionalProperties": { "$ref": "#/$defs/element" }
+    }
+  },
+  "$defs": {
+    "propType": {
+      "type": "string",
+      "pattern": "^(list<)*(string|number|length|bool|color|icon|enum)(>)*$"
+    },
+    "element": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "summary": { "type": "string" },
+        "component": { "type": "string" },
+        "content": { "type": "string" },
+        "props": {
+          "type": "object",
+          "propertyNames": { "pattern": "^[a-z_][A-Za-z0-9_-]*$" },
+          "additionalProperties": {
+            "oneOf": [
+              { "$ref": "#/$defs/propType" },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["type"],
+                "properties": {
+                  "type": { "$ref": "#/$defs/propType" },
+                  "values": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+                  "default": { "type": ["string", "number", "boolean"] },
+                  "required": { "type": "boolean" },
+                  "bindable": { "type": "boolean" },
+                  "summary": { "type": "string" }
+                }
+              }
+            ]
+          }
+        },
+        "events": {
+          "type": "object",
+          "propertyNames": { "pattern": "^[a-z_][A-Za-z0-9_-]*$" },
+          "additionalProperties": {
+            "oneOf": [
+              { "type": "null" },
+              { "type": "string" },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "payload": { "type": "string" },
+                  "summary": { "type": "string" }
+                }
+              }
+            ]
+          }
+        },
+        "children": {
+          "oneOf": [
+            { "enum": ["any", "none"] },
+            { "type": "array", "items": { "type": "string" } }
+          ]
+        }
+      }
+    }
+  }
+}

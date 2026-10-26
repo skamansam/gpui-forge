@@ -34,7 +34,7 @@ root:
       value: bind $form.email
       placeholder: Email
     - Button: Sign in
-      variant: primary
+      variant: Primary
       disabled: $form.invalid
       on click: sign_in()
     - ely.Badge: beta   # libraries are addressed by their import alias
@@ -97,7 +97,7 @@ How a scalar is quoted selects the rules:
 | Syntax | Model value |
 |---|---|
 | `Sign in`, `"Sign in"`, `'true'` | String |
-| `primary`, `center`, `Email` | Enum: a bare word. The catalog decides whether it is an enum value or text, so `placeholder: Email` is fine |
+| `Primary`, `center`, `Email` | Enum: a bare word. The catalog decides whether it is an enum value or text, so `placeholder: Email` is fine |
 | `"Hi {$user.name}"` | Interpolated string (`{{` for a literal brace) |
 | `12`, `1.5`, `-4px`, `1.5rem`, `50%`, `1fr` | Number with optional unit |
 | `true`, `false` | Bool |
@@ -186,5 +186,5 @@ root:
 ### The same node in JSON
 
 ```json
-{ "Button": "Sign in", "variant": "primary", "disabled": "$form.invalid", "on click": "sign_in()" }
+{ "Button": "Sign in", "variant": "Primary", "disabled": "$form.invalid", "on click": "sign_in()" }
 ```

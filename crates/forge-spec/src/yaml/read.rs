@@ -6,6 +6,7 @@ use super::tree::{self, Scalar, YNode};
 use crate::SPEC_VERSION;
 use crate::diagnostic::{Diagnostic, Diagnostics, Pos};
 use crate::model::{Document, ElementRef, EventBinding, Import, Node, Value};
+use crate::source_map::{NodeSpans, SourceMap};
 use crate::value::{
     self, is_element_name, is_ident, is_namespace, is_prop_key, is_two_way, parse_handler,
 };
@@ -14,6 +15,11 @@ const COLOR_HINT: &str = "quote colors, e.g. `\"#3b82f6\"` (an unquoted `#` star
 
 /// Reads a Forge YAML document.
 pub fn from_str(src: &str) -> Result<Document, Diagnostics> {
+    from_str_with_source_map(src).map(|(doc, _)| doc)
+}
+
+/// Reads a Forge YAML document, also returning where each node, prop and event was written.
+pub fn from_str_with_source_map(src: &str) -> Result<(Document, SourceMap), Diagnostics> {
     let tree = match tree::parse(src) {
         Ok(Some(tree)) => tree,
         Ok(None) => {
@@ -27,11 +33,13 @@ pub fn from_str(src: &str) -> Result<Document, Diagnostics> {
     let mut reader = Reader {
         src,
         diags: Vec::new(),
+        path: Vec::new(),
+        map: SourceMap::default(),
     };
     let doc = reader.document(tree);
     reader.diags.sort_by_key(|d| d.pos);
     match doc {
-        Some(doc) if reader.diags.is_empty() => Ok(doc),
+        Some(doc) if reader.diags.is_empty() => Ok((doc, reader.map)),
         _ => Err(Diagnostics(reader.diags)),
     }
 }
@@ -39,6 +47,9 @@ pub fn from_str(src: &str) -> Result<Document, Diagnostics> {
 struct Reader<'a> {
     src: &'a str,
     diags: Vec<Diagnostic>,
+    /// Child indices from the root to the node being read.
+    path: Vec<usize>,
+    map: SourceMap,
 }
 
 impl Reader<'_> {
@@ -81,7 +92,10 @@ impl Reader<'_> {
                         ok
                     });
                 }
-                "base" => base = self.text(val),
+                "base" => {
+                    self.map.base = Some(val.pos());
+                    base = self.text(val);
+                }
                 "use" => imports = self.imports(val),
                 "meta" => meta = self.meta(val),
                 "root" => {
@@ -154,11 +168,14 @@ impl Reader<'_> {
             let Some(text) = self.text(val) else { continue };
             let mut parts = text.split_whitespace();
             match (parts.next(), parts.next(), parts.next()) {
-                (Some(library), version, None) => imports.push(Import {
-                    alias: key.text,
-                    library: library.to_owned(),
-                    version: version.map(str::to_owned),
-                }),
+                (Some(library), version, None) => {
+                    self.map.imports.insert(key.text.clone(), key.pos);
+                    imports.push(Import {
+                        alias: key.text,
+                        library: library.to_owned(),
+                        version: version.map(str::to_owned),
+                    });
+                }
                 _ => self.hint(
                     at,
                     format!("invalid import `{text}`"),
@@ -193,6 +210,7 @@ impl Reader<'_> {
         };
         self.check_duplicates(&entries);
         let mut node = Node::default();
+        let mut spans = NodeSpans::default();
         let mut element: Option<ElementRef> = None;
         for (key, val) in entries {
             let name = key.text.as_str();
@@ -202,6 +220,7 @@ impl Reader<'_> {
                 node.children = self.children(val);
             } else if let Some(event) = name.strip_prefix("on ") {
                 if let Some(binding) = self.event(event.trim(), &key, val) {
+                    spans.events.insert(binding.event.clone(), key.pos);
                     node.events.push(binding);
                 }
             } else if let Some((el, id)) = element_key(name) {
@@ -213,11 +232,14 @@ impl Reader<'_> {
                     );
                     continue;
                 }
+                spans.element = key.pos;
+                spans.content = Some(val.pos());
                 node.id = id;
                 node.content = self.content(val);
                 element = Some(el);
             } else if is_prop_key(name) {
                 if let Some(value) = self.value(val, &key, true) {
+                    spans.props.insert(key.text.clone(), key.pos);
                     node.props.push((key.text, value));
                 }
             } else {
@@ -237,6 +259,7 @@ impl Reader<'_> {
             return None;
         };
         node.element = element;
+        self.map.nodes.insert(self.path.clone(), spans);
         Some(node)
     }
 
@@ -272,10 +295,17 @@ impl Reader<'_> {
 
     fn children(&mut self, val: YNode) -> Vec<Node> {
         match val {
-            YNode::Seq(items, _) => items
-                .into_iter()
-                .filter_map(|item| self.node(item))
-                .collect(),
+            YNode::Seq(items, _) => {
+                let mut nodes = Vec::new();
+                for item in items {
+                    self.path.push(nodes.len());
+                    if let Some(node) = self.node(item) {
+                        nodes.push(node);
+                    }
+                    self.path.pop();
+                }
+                nodes
+            }
             YNode::Scalar(s) if s.is_null() => Vec::new(),
             other => {
                 self.hint(
