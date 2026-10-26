@@ -86,23 +86,33 @@ Canonical key order written by the formatter: element key, props, `style`, event
 
 ## Values
 
-Forge reads every scalar as **text** and types it with the micro-syntax below, using the catalog
-for the expected type. YAML's own typing is ignored, so `0.1`, `on`, `no` or `1e3` are never turned
-into floats or booleans behind your back. The formatter quotes any value that a generic YAML 1.1
-tool could mis-type.
+Forge reads every scalar as **text** and types it with the micro-syntax below. YAML's own typing
+is ignored, so `0.1`, `on`, `no` or `1e3` are never turned into floats or booleans behind your back.
+How a scalar is quoted selects the rules:
+
+- **plain** scalars are fully typed (table below);
+- **double-quoted** scalars are text with `{$path}` interpolation, or a color;
+- **single-quoted** scalars are always literal text (no interpolation, no typing).
 
 | Syntax | Model value |
 |---|---|
-| `Sign in`, `"Sign in"` | String |
-| `"Hi {$user.name}"` | Interpolated string (`\{` for a literal brace) |
-| `12`, `1.5`, `12px`, `1.5rem`, `50%`, `1fr` | Number with optional unit |
+| `Sign in`, `"Sign in"`, `'true'` | String |
+| `primary`, `center`, `Email` | Enum: a bare word. The catalog decides whether it is an enum value or text, so `placeholder: Email` is fine |
+| `"Hi {$user.name}"` | Interpolated string (`{{` for a literal brace) |
+| `12`, `1.5`, `-4px`, `1.5rem`, `50%`, `1fr` | Number with optional unit |
 | `true`, `false` | Bool |
-| `primary`, `center` | Enum (when the catalog expects an enum) |
-| `"#3b82f6"`, `"#fff"` | Color, **must be quoted** (an unquoted `#` starts a YAML comment) |
+| `"#3b82f6"`, `"#fff"`, `"#00000080"` | Color, **must be quoted** (an unquoted `#` starts a YAML comment) |
 | `$form.email`, `$items[0].name` | One-way binding |
 | `$theme.colors.primary` | Theme token (bindings rooted at `theme`) |
 | `bind $form.email` | Two-way binding (props only) |
-| YAML sequence `[8px, 16px]` | List |
+| YAML sequence `[8px, 16px]` or a block list | List |
+
+Event handlers are `name`, `name()` or `name(arg, ...)`, where arguments use the same value syntax
+(`go_to($wizard.id, 2, 'next step')`). The formatter writes `name()`.
+
+The formatter writes canonical output: key order element key, props, `style`, events, `children`;
+colors as `#rrggbb[aa]`; and strings that a generic YAML 1.1 tool could mis-type (`yes`, `on`,
+`0.1`, ...) single-quoted. Comments are not preserved by the formatter yet.
 
 YAML gotchas the validator reports with a fix hint:
 

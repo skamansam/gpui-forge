@@ -12,6 +12,7 @@ manifests of the document's base and imported libraries.
 
 ```text
 Document
+  schema  : String?                // JSON Schema URL for editors (`$schema`)
   version : SpecVersion            // "0.1"
   base    : BaseId?                // "gpui-kit" | "bezel" | "adabraka" | "gpui-0.2"; inherited from forge.toml when absent
   imports : [Import]               // ordered
@@ -49,7 +50,7 @@ Value
   | Interpolated([Segment])        // "Hello, {$user.name}"
   | Number(f64, unit?)             // unit: "px" | "rem" | "%" | "fr"; None = unitless
   | Bool
-  | Enum(Ident)                    // bare identifier, e.g. primary, center
+  | Enum(Ident)                    // bare word, e.g. primary, center; the catalog may read it as text
   | Color(rgba)                    // #rgb, #rrggbb, #rrggbbaa
   | Token(path)                    // theme token reference, written $theme.colors.primary
   | List([Value])
