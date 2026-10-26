@@ -10,6 +10,8 @@ pub type NodePath = Vec<usize>;
 #[derive(Clone, Debug, Default)]
 pub struct SourceMap {
     pub nodes: HashMap<NodePath, NodeSpans>,
+    /// Position of the `base:` value.
+    pub base: Option<Pos>,
     /// Import alias -> position of its key under `use:`.
     pub imports: HashMap<String, Pos>,
 }

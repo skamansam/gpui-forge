@@ -13,7 +13,9 @@ use crate::value::is_two_way;
 
 /// Validates `doc` for the project's `base` against the installed `catalogs`.
 ///
-/// The base library is the catalog whose `library` id equals `base`. Without a source map,
+/// `base` is the project's base (from `forge.toml`); a document that declares a different
+/// `base:` is reported and not checked further. The base library is the catalog whose `library`
+/// id equals `base`. Without a source map,
 /// diagnostics point at `1:1`.
 pub fn validate(
     doc: &Document,
@@ -24,6 +26,7 @@ pub fn validate(
     let mut v = Validator {
         map,
         diags: Vec::new(),
+        base: None,
         imports: HashMap::new(),
         ids: HashMap::new(),
     };
@@ -37,6 +40,7 @@ struct Validator<'a> {
     diags: Vec<Diagnostic>,
     imports: HashMap<&'a str, &'a Catalog>,
     ids: HashMap<&'a str, Pos>,
+    base: Option<&'a Catalog>,
 }
 
 impl<'a> Validator<'a> {
@@ -50,6 +54,17 @@ impl<'a> Validator<'a> {
     }
 
     fn document(&mut self, doc: &'a Document, base: &str, catalogs: &'a [Catalog]) {
+        if let Some(declared) = &doc.base
+            && declared != base
+        {
+            let pos = self.map.and_then(|m| m.base).unwrap_or_else(Pos::start);
+            self.hint(
+                pos,
+                format!("document declares base `{declared}` but the project uses `{base}`"),
+                "change `base:` in the document or the project's base in forge.toml",
+            );
+            return;
+        }
         let Some(base_catalog) = catalogs.iter().find(|c| c.library == base) else {
             self.error(
                 Pos::start(),
@@ -84,6 +99,7 @@ impl<'a> Validator<'a> {
                 }
             }
         }
+        self.base = Some(base_catalog);
         self.node(&doc.root, base_catalog, &mut Vec::new());
     }
 
@@ -94,13 +110,16 @@ impl<'a> Validator<'a> {
     fn node(&mut self, node: &'a Node, base: &'a Catalog, path: &mut Vec<usize>) {
         let spans = self.spans(path);
         let at = spans.map_or_else(Pos::start, |s| s.element);
-        if let Some(id) = &node.id
-            && let Some(first) = self.ids.insert(id, at)
-        {
-            self.error(at, format!("duplicate id `{id}` (first used at {first})"));
+        if let Some(id) = &node.id {
+            if let Some(first) = self.ids.get(id.as_str()) {
+                let message = format!("duplicate id `{id}` (first used at {first})");
+                self.error(at, message);
+            } else {
+                self.ids.insert(id, at);
+            }
         }
-        if let Some(def) = self.element(node, base, at) {
-            self.check(node, def, spans, at, path);
+        if let Some((catalog, def)) = self.element(node, base, at) {
+            self.check(node, catalog, def, spans, at, path);
         }
         for (i, child) in node.children.iter().enumerate() {
             path.push(i);
@@ -109,7 +128,12 @@ impl<'a> Validator<'a> {
         }
     }
 
-    fn element(&mut self, node: &Node, base: &'a Catalog, at: Pos) -> Option<&'a ElementDef> {
+    fn element(
+        &mut self,
+        node: &Node,
+        base: &'a Catalog,
+        at: Pos,
+    ) -> Option<(&'a Catalog, &'a ElementDef)> {
         let catalog = match &node.element.namespace {
             None => base,
             Some(alias) => match self.imports.get(alias.as_str()) {
@@ -124,7 +148,9 @@ impl<'a> Validator<'a> {
                 }
             },
         };
-        let def = catalog.element(&node.element.name);
+        let def = catalog
+            .element(&node.element.name)
+            .map(|def| (catalog, def));
         if def.is_none() {
             self.error(
                 at,
@@ -140,6 +166,7 @@ impl<'a> Validator<'a> {
     fn check(
         &mut self,
         node: &Node,
+        catalog: &Catalog,
         def: &ElementDef,
         spans: Option<&NodeSpans>,
         at: Pos,
@@ -199,10 +226,19 @@ impl<'a> Validator<'a> {
                 );
             }
         }
-        self.children(node, def, path);
+        self.children(node, catalog, def, path);
     }
 
-    fn children(&mut self, node: &Node, def: &ElementDef, path: &[usize]) {
+    /// Library id of the catalog an element reference resolves to.
+    fn library_of(&self, element: &ElementRef) -> Option<&'a str> {
+        let catalog = match &element.namespace {
+            None => self.base,
+            Some(alias) => self.imports.get(alias.as_str()).copied(),
+        };
+        catalog.map(|c| c.library.as_str())
+    }
+
+    fn children(&mut self, node: &Node, catalog: &Catalog, def: &ElementDef, path: &[usize]) {
         let map = self.map;
         let child_pos = |i: usize| {
             let mut child = path.to_vec();
@@ -220,7 +256,15 @@ impl<'a> Validator<'a> {
             }
             Children::Only(allowed) => {
                 for (i, child) in node.children.iter().enumerate() {
-                    if !allowed.contains(&child.element.to_string()) {
+                    let Some(library) = self.library_of(&child.element) else {
+                        continue;
+                    };
+                    // Unqualified entries name the parent's own library; others are `<library-id>.Element`.
+                    let ok = allowed.iter().any(|entry| match entry.rsplit_once('.') {
+                        Some((lib, name)) => lib == library && name == child.element.name,
+                        None => catalog.library == library && *entry == child.element.name,
+                    });
+                    if !ok {
                         let pos = child_pos(i);
                         self.hint(
                             pos,
@@ -234,7 +278,15 @@ impl<'a> Validator<'a> {
     }
 
     fn value(&mut self, element: &ElementRef, prop: &PropDef, value: &Value, pos: Pos) {
-        if is_two_way(value) && !prop.bindable {
+        if nested_two_way(value) {
+            self.error(
+                pos,
+                format!(
+                    "`{element}.{}` cannot contain two-way bindings inside a list",
+                    prop.name
+                ),
+            );
+        } else if is_two_way(value) && !prop.bindable {
             self.error(
                 pos,
                 format!(
@@ -249,6 +301,10 @@ impl<'a> Validator<'a> {
             );
         }
     }
+}
+
+fn nested_two_way(value: &Value) -> bool {
+    matches!(value, Value::List(items) if items.iter().any(|i| is_two_way(i) || nested_two_way(i)))
 }
 
 fn known_list(what: &str, names: &[&str]) -> String {

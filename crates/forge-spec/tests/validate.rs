@@ -14,6 +14,8 @@ elements:
     content: label
     props:
       label: string
+  Group:
+    children: [Badge, gpui-kit.Text]
   Stepper:
     props:
       value: number
@@ -174,6 +176,53 @@ fn imports_are_checked_against_the_base() {
     );
     assert!(
         errors[1].starts_with("4:3: unknown library `foo-lib`"),
+        "{errors:#?}"
+    );
+}
+
+#[test]
+fn imported_children_resolve_by_library() {
+    assert_one(
+        "  ely.Group:\n  children:\n    - ely.Badge: new\n    - Text: hi\n",
+        "",
+    );
+    let errors = check(
+        "forge: \"0.1\"\nuse:\n  ui: ely-gpui-components\nroot:\n  ui.Group:\n  children:\n    - ui.Badge: new\n    - Button: no\n",
+    );
+    assert_eq!(errors.len(), 1, "{errors:#?}");
+    assert!(
+        errors[0].starts_with("8:7: `ui.Group` cannot contain `Button`"),
+        "{errors:#?}"
+    );
+}
+
+#[test]
+fn repeated_ids_point_at_the_first() {
+    let errors = check(&doc(
+        "  VStack#a:\n  children:\n    - Text#a: x\n    - Text#a: y\n",
+    ));
+    assert_eq!(errors.len(), 2, "{errors:#?}");
+    assert!(
+        errors.iter().all(|e| e.contains("(first used at 5:3)")),
+        "{errors:#?}"
+    );
+}
+
+#[test]
+fn two_way_bindings_inside_lists() {
+    assert_one(
+        "  Select:\n  options: [bind $form.x]\n",
+        "6:3: `Select.options` cannot contain two-way bindings inside a list",
+    );
+}
+
+#[test]
+fn document_base_must_match_project_base() {
+    let errors = check("forge: \"0.1\"\nbase: bezel\nroot:\n  Text: hi\n");
+    assert_eq!(errors.len(), 1, "{errors:#?}");
+    assert!(
+        errors[0]
+            .starts_with("2:7: document declares base `bezel` but the project uses `gpui-kit`"),
         "{errors:#?}"
     );
 }

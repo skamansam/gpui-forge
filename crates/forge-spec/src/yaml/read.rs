@@ -92,7 +92,10 @@ impl Reader<'_> {
                         ok
                     });
                 }
-                "base" => base = self.text(val),
+                "base" => {
+                    self.map.base = Some(val.pos());
+                    base = self.text(val);
+                }
                 "use" => imports = self.imports(val),
                 "meta" => meta = self.meta(val),
                 "root" => {

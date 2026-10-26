@@ -61,7 +61,7 @@ elements:
 | `content` | Prop that receives the node's positional content. Must be one of `props`. |
 | `props` | Prop name → type shorthand or prop definition. |
 | `events` | Event name → empty, payload type shorthand, or `{ payload, summary }`. Documents bind them with `on <event>:`. |
-| `children` | `none` (default), `any`, or a list of allowed element names (namespaced names allowed). |
+| `children` | `none` (default), `any`, or a list of allowed element names. A bare name is an element of the same library; `<library-id>.Element` names another library's element (import aliases are chosen per document, so catalogs use library ids). |
 
 Element names are PascalCase. Props and events are lower-case identifiers. Styling is not part of
 the catalog: `style` keys come from the style and layout model (#5) and apply to every element.
