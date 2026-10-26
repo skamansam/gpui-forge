@@ -265,10 +265,7 @@ fn style_keys_and_values() {
         "  VStack:\n  style:\n    opacity: 2\n",
         "7:5: style `opacity` must be a number from 0 to 1",
     );
-    assert_one(
-        "  VStack:\n  style:\n    width: bind $ui.width\n",
-        "7:5: style `width` cannot use a two-way binding",
-    );
+    assert_one("7:5: style `width` cannot use a two-way binding");
     assert_one(
         "  VStack:\n  style:\n    width: full\n    grow: true\n    color: $theme.primary\n    size: 2xl\n    max-width: $ui.max\n",
         "",
