@@ -13,6 +13,7 @@ forge-spec = { path = "crates/forge-spec" }
 gpui-forge-runtime = { path = "crates/gpui-forge-runtime", default-features = false }
 # The gpui-kit base pins the whole GPUI graph (gpui-pre =0.3.9) through gpui-kit.
 gpui-kit = "=0.8.0"
+saphyr-parser = "0.3"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
