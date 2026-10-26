@@ -98,7 +98,7 @@ fn unknown_prop_lists_known_props() {
 fn prop_types() {
     assert_one(
         "  Button: Save\n  variant: huge\n",
-        "6:3: `Button.variant` must be one of default,",
+        "6:3: `Button.variant` must be one of Default,",
     );
     assert_one(
         "  Button: Save\n  disabled: \"yes\"\n",
