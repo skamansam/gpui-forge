@@ -20,7 +20,7 @@
                         { type: 'forge:hook', call }  { type: 'forge:state', state }
     -->
     <script type="module">
-      import init, { start, render, set_state, set_theme } from './pkg/forge_web_canvas.js';
+      import init, { start, render, set_state, set_theme, refresh } from './pkg/forge_web_canvas.js';
 
       const params = new URLSearchParams(location.search);
       const dark = params.get('theme') !== 'light';
@@ -33,6 +33,14 @@
       await init();
       start(dark, new URL('.', location.href).href.replace(/\/$/, ''));
 
+      // Icons download after the first frame and GPUI doesn't repaint on its own, so redraw a
+      // few times after each render.
+      let timers = [];
+      const settle = () => {
+        timers.forEach(clearTimeout);
+        timers = [100, 500, 1500, 4000].map((ms) => setTimeout(refresh, ms));
+      };
+
       addEventListener('message', ({ data }) => {
         if (data?.type === 'forge:hello') {
           // The page may hydrate after the canvas started and miss the first `ready`.
@@ -40,6 +48,7 @@
         } else if (data?.type === 'forge:render') {
           if (data.state !== undefined) set_state(JSON.stringify(data.state));
           post({ type: 'forge:diagnostics', diagnostics: JSON.parse(render(data.yaml)) });
+          settle();
         } else if (data?.type === 'forge:theme') {
           document.documentElement.classList.toggle('dark', data.dark);
           set_theme(data.dark);

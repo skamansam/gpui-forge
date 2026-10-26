@@ -5,7 +5,8 @@
 	import { examples } from '#lib/examples.ts';
 
 	let tab = $state<Record<string, 'yaml' | 'rust'>>({});
-	const share = (yaml: string) => `${resolve('/playground')}#${encode(yaml)}`;
+	const share = (yaml: string, state: unknown) =>
+		`${resolve('/playground')}#${encode(JSON.stringify({ yaml, state }))}`;
 	const encode = (s: string) => btoa(String.fromCharCode(...new TextEncoder().encode(s)));
 </script>
 
@@ -20,7 +21,7 @@
 	{#each examples as ex (ex.slug)}
 		<section id={ex.slug}>
 			<h2>{ex.title}</h2>
-			<p>{ex.summary} <a href={share(ex.yaml)}>Open in the playground →</a></p>
+			<p>{ex.summary} <a href={share(ex.yaml, ex.state)}>Open in the playground →</a></p>
 			<div class="grid">
 				<div class="panel">
 					<div class="panel-title">

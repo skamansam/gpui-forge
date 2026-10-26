@@ -127,6 +127,13 @@ pub fn set_state(json: &str) -> Result<(), JsValue> {
     Ok(())
 }
 
+/// Redraws the canvas. GPUI only repaints on change, so the page calls this after a render
+/// to pick up icons that gpui-kit's web assets finish downloading later.
+#[wasm_bindgen]
+pub fn refresh() {
+    with_view(|view, cx| view.update(cx, |_, cx| cx.notify()));
+}
+
 #[wasm_bindgen]
 pub fn set_theme(dark: bool) {
     with_view(|view, cx| {

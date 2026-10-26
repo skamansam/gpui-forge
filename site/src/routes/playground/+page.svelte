@@ -19,7 +19,14 @@
 
 	onMount(() => {
 		if (location.hash.length > 1) {
-			try { yaml = decode(location.hash.slice(1)); } catch { /* keep the default */ }
+			try {
+				const shared = JSON.parse(decode(location.hash.slice(1)));
+				yaml = shared.yaml;
+				if (shared.state !== undefined) {
+					stateText = JSON.stringify(shared.state, null, 2);
+					applyState();
+				}
+			} catch { /* keep the default */ }
 		}
 	});
 
@@ -33,7 +40,7 @@
 		catch (e) { stateError = (e as Error).message; }
 	}
 	async function share() {
-		history.replaceState(null, '', `#${encode(yaml)}`);
+		history.replaceState(null, '', `#${encode(JSON.stringify({ yaml, state: liveState }))}`);
 		await navigator.clipboard?.writeText(location.href);
 		copied = true;
 		setTimeout(() => (copied = false), 1500);
