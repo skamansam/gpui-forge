@@ -24,20 +24,38 @@ A powerful command-line utility used to transform interface definitions between 
 ### 3. The Forge Runtime (`gpui-forge-runtime`)
 The core Rust library that powers everything else. It is responsible for:
 *   Parsing Forge definition files at runtime.
-*   Mapping declarative elements (Buttons, Containers, Text) to native [gpui-kit](https://github.com/longbridge/gpui-kit) components.
+*   Mapping declarative elements (Buttons, Containers, Text) to native components from the project's [base component system](#-base-component-systems) ([gpui-kit](https://github.com/longbridge/gpui-kit) by default).
 *   **The Hook System:** A reactive bridge that allows developers to inject custom Rust logic and event handlers into the visually defined UI structure.
 
 ### 4. The Forge Studio (`forge-studio`)
 The flagship desktop application built natively using **GPUI**. Inspired by [Workbench](https://github.com/workbenchdev/Workbench), it provides a professional IDE experience:
 *   A visual canvas for dragging and dropping components.
 *   Property inspectors for layout, styling, and padding.
-*   Real-time preview of the UI logic.
+*   Real-time preview of the UI logic. Studio itself is built with gpui-kit; projects on other bases are rendered by a separate preview process for that base (`forge-preview-<base>`), which Studio controls over IPC.
 
 ### 5. The Forge Compiler (`forge-compiler`)
 A build tool that takes a `.forge` definition and a set of Rust "hooks" and bundles them into a standalone, optimized GPUI application. This allows you to ship "demos" or "prototypes" as complete, single-binary executables.
 
 ### 6. Forge Web (`forge-web`)
-A lightweight, Svelte-based web application that brings the power of visual design to the browser. The Svelte shell hosts a canvas that renders the real gpui-kit components via `gpui-forge-runtime` compiled to WebAssembly, so web and native output match. It serves as a collaborative design tool, allowing designers to iterate on UI layouts and export JSON definitions that can be immediately pulled into the Rust workflow.
+A lightweight, Svelte-based web application that brings the power of visual design to the browser. The Svelte shell hosts a canvas that renders the real components of the project's base via `gpui-forge-runtime` compiled to WebAssembly (one canvas bundle per WASM-capable base), so web and native output match. It serves as a collaborative design tool, allowing designers to iterate on UI layouts and export JSON definitions that can be immediately pulled into the Rust workflow.
+
+---
+
+## 🧩 Base Component Systems
+
+A Rust app links exactly one `gpui`, so components built on different GPUI versions or forks can't be mixed in one window. Each Forge project therefore picks a **base** when it is created (`base:` in `forge.toml`). The base fixes the GPUI build, and Forge only offers libraries that are compatible with it. Within a base you can mix and match libraries freely.
+
+| Base | GPUI build | Base library | Compatible add-ons | Web/WASM |
+|---|---|---|---|---|
+| **gpui-kit** (default) | `gpui-pre =0.3.9` | [gpui-kit](https://github.com/longbridge/gpui-kit) | [Ely GPUI Component](https://github.com/ELY-Open-Source/Ely-GPUI-Components), [gpui-video-player](https://github.com/cijiugechu/gpui-video-player), [zorite](https://github.com/packetThrower/zorite) widgets (GPL-3.0, opt-in), HIG for GPUI (after bump) | yes |
+| **Bezel** | `bezel-gpui 0.3.x` (fork) | [Bezel](https://github.com/crabtalk/bezel) | Bezel ecosystem (chart, editor, canvas, markdown, terminal, icons, motion, …) | yes |
+| **adabraka-ui** | `adabraka-gpui 0.5` (fork) | [adabraka-ui](https://github.com/Augani/adabraka-ui) | none known | no (nightly Rust) |
+| **Vanilla GPUI 0.2** | crates.io `gpui 0.2.2` | [guise](https://github.com/wess/guise) | [ferrum-flow](https://github.com/tu6ge/ferrum-flow), [gpui-symbols](https://github.com/AprilNEA/gpui-symbols), [rhythm-gpui](https://github.com/P233/rhythm-gpui), gpui-video-player, … | no |
+
+*   Each library ships a catalog manifest declaring the bases it supports; validation rejects incompatible libraries.
+*   The runtime is compiled once per base, and the compiler emits a `Cargo.toml` + `rust-toolchain` for the chosen base.
+*   Changing base later is a migration (`forge migrate --base`).
+*   Libraries pinned to raw Zed git revisions fit no base and are tracked for porting ([#83](https://github.com/skamansam/gpui-forge/issues/83)).
 
 ---
 
@@ -70,13 +88,13 @@ graph TD
 
 *   **Language:** [Rust](https://www.rust-lang.org/) (Core engine, Runtime, Studio, Compiler)
 *   **UI Framework:** [GPUI](https://www.gpui.rs/)
-*   **Components:** [gpui-kit](https://github.com/longbridge/gpui-kit) (`gpui-component` / `gpui-base`)
-*   **Web Frontend:** [Svelte](https://svelte.dev/) shell + gpui-kit canvas compiled to WebAssembly
+*   **Components:** a per-project [base component system](#-base-component-systems): gpui-kit (default), Bezel, adabraka-ui or Vanilla GPUI 0.2
+*   **Web Frontend:** [Svelte](https://svelte.dev/) shell + the base's canvas compiled to WebAssembly
 *   **Serialization:** `serde` (JSON/XML/Custom)
 
 ## 🗺 Roadmap
 
-- [ ] **Phase 1: The Foundation.** Define the `.forge` specification ([#1](https://github.com/skamansam/gpui-forge/issues/1)) and implement the `gpui-forge-runtime` ([#12](https://github.com/skamansam/gpui-forge/issues/12)).
+- [ ] **Phase 1: The Foundation.** Define the `.forge` specification ([#1](https://github.com/skamansam/gpui-forge/issues/1)) and implement the `gpui-forge-runtime` ([#12](https://github.com/skamansam/gpui-forge/issues/12)), plus base component systems and library adapters ([#70](https://github.com/skamansam/gpui-forge/issues/70)).
 - [ ] **Phase 2: The CLI.** Build `forge-cli` for format conversion ([#22](https://github.com/skamansam/gpui-forge/issues/22)).
 - [ ] **Phase 3: The Web Canvas.** Create the Svelte editor for basic layout composition ([#29](https://github.com/skamansam/gpui-forge/issues/29)).
 - [ ] **Phase 4: The Studio.** Develop the native GPUI desktop IDE (Forge Studio) ([#41](https://github.com/skamansam/gpui-forge/issues/41)).
