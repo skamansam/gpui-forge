@@ -1,6 +1,6 @@
 [package]
 name = "forge-spec"
-description = "The Forge Schema: GPUI-free document model, ForgeDSL/JSON/XML formats and validation."
+description = "The Forge Schema: GPUI-free document model, Forge YAML, catalog manifests and validation."
 version.workspace = true
 edition.workspace = true
 publish.workspace = true
