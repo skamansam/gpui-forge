@@ -3,10 +3,11 @@ use forge_spec::{BindingMode, Document, ElementRef, Path, PathSegment, Segment, 
 
 const SPEC: &str = include_str!("../../../docs/spec/forge-yaml.md");
 
-fn yaml_blocks(md: &str) -> Vec<&str> {
-    md.split("```yaml\n")
+fn yaml_blocks(md: &str) -> Vec<String> {
+    md.replace("\r\n", "\n")
+        .split("```yaml\n")
         .skip(1)
-        .map(|block| block.split("```").next().unwrap())
+        .map(|block| block.split("```").next().unwrap().to_owned())
         .collect()
 }
 
@@ -37,7 +38,7 @@ fn path(fields: &[&str]) -> Path {
 fn spec_examples_read_and_round_trip() {
     let blocks = yaml_blocks(SPEC);
     assert!(blocks.len() >= 3);
-    for src in blocks {
+    for src in &blocks {
         let doc = read(src);
         let out = write(&doc);
         assert_eq!(read(&out), doc, "round trip changed the model:\n{out}");
@@ -47,7 +48,7 @@ fn spec_examples_read_and_round_trip() {
 
 #[test]
 fn reads_the_login_example() {
-    let doc = read(yaml_blocks(SPEC)[0]);
+    let doc = read(&yaml_blocks(SPEC)[0]);
     assert_eq!(doc.version, "0.1");
     assert_eq!(doc.base.as_deref(), Some("gpui-kit"));
     assert_eq!(doc.imports[0].alias, "ely");
