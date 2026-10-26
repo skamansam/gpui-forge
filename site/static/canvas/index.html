@@ -29,6 +29,11 @@
 
       globalThis.forgeHook = (call) => post({ type: 'forge:hook', call });
       globalThis.forgeState = (json) => post({ type: 'forge:state', state: JSON.parse(json) });
+      let started = false;
+      globalThis.forgeReady = () => {
+        started = true;
+        post({ type: 'forge:ready' });
+      };
 
       await init();
       start(dark, new URL('.', location.href).href.replace(/\/$/, ''));
@@ -44,7 +49,7 @@
       addEventListener('message', ({ data }) => {
         if (data?.type === 'forge:hello') {
           // The page may hydrate after the canvas started and miss the first `ready`.
-          post({ type: 'forge:ready' });
+          if (started) post({ type: 'forge:ready' });
         } else if (data?.type === 'forge:render') {
           if (data.state !== undefined) set_state(JSON.stringify(data.state));
           post({ type: 'forge:diagnostics', diagnostics: JSON.parse(render(data.yaml)) });
@@ -54,7 +59,6 @@
           set_theme(data.dark);
         }
       });
-      post({ type: 'forge:ready' });
     </script>
   </body>
 </html>
