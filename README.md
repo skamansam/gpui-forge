@@ -107,6 +107,8 @@ graph TD
 
 ## 🧑‍💻 Development
 
+The docs site, with live gpui-kit previews, a playground and an editor, lives in [`site/`](site/README.md) and deploys to GitHub Pages on every merge to `main`.
+
 The Cargo workspace lives under `crates/` (`forge-spec`, `gpui-forge-runtime`, `forge-cli`, `forge-studio`, `forge-compiler`).
 
 ```sh

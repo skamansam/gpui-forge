@@ -1,0 +1,21 @@
+[package]
+name = "forge-web-canvas"
+description = "Renders Forge documents with gpui-kit in the browser (WASM) for the docs site and forge-web."
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+repository.workspace = true
+
+[lib]
+test = false
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+gpui-kit.workspace = true
+wasm-bindgen = "0.2"
+console_error_panic_hook = "0.1"
+forge-spec.workspace = true
+serde_json = "1"
+
+[lints]
+workspace = true

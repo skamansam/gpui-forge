@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Forge canvas</title>
+    <style>
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #fff; }
+      html.dark, html.dark body { background: #0a0a0a; }
+      body > canvas { position: fixed; inset: 0; }
+    </style>
+  </head>
+  <body>
+    <!--
+      Hosts the gpui-kit canvas. GPUI's web platform draws into a canvas on <body>, so each
+      preview lives in its own iframe and the page talks to it with postMessage:
+        page -> canvas  { type: 'forge:hello' }  { type: 'forge:render', yaml, state? }
+                        { type: 'forge:theme', dark }
+        canvas -> page  { type: 'forge:ready' }  { type: 'forge:diagnostics', diagnostics }
+                        { type: 'forge:hook', call }  { type: 'forge:state', state }
+    -->
+    <script type="module">
+      import init, { start, render, set_state, set_theme, refresh } from './pkg/forge_web_canvas.js';
+
+      const params = new URLSearchParams(location.search);
+      const dark = params.get('theme') !== 'light';
+      document.documentElement.classList.toggle('dark', dark);
+      const post = (message) => parent.postMessage({ ...message, source: 'forge-canvas' }, '*');
+
+      globalThis.forgeHook = (call) => post({ type: 'forge:hook', call });
+      globalThis.forgeState = (json) => post({ type: 'forge:state', state: JSON.parse(json) });
+
+      await init();
+      start(dark, new URL('.', location.href).href.replace(/\/$/, ''));
+
+      // Icons download after the first frame and GPUI doesn't repaint on its own, so redraw a
+      // few times after each render.
+      let timers = [];
+      const settle = () => {
+        timers.forEach(clearTimeout);
+        timers = [100, 500, 1500, 4000].map((ms) => setTimeout(refresh, ms));
+      };
+
+      addEventListener('message', ({ data }) => {
+        if (data?.type === 'forge:hello') {
+          // The page may hydrate after the canvas started and miss the first `ready`.
+          post({ type: 'forge:ready' });
+        } else if (data?.type === 'forge:render') {
+          if (data.state !== undefined) set_state(JSON.stringify(data.state));
+          post({ type: 'forge:diagnostics', diagnostics: JSON.parse(render(data.yaml)) });
+          settle();
+        } else if (data?.type === 'forge:theme') {
+          document.documentElement.classList.toggle('dark', data.dark);
+          set_theme(data.dark);
+        }
+      });
+      post({ type: 'forge:ready' });
+    </script>
+  </body>
+</html>
