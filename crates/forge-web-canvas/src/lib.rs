@@ -24,6 +24,8 @@ thread_local! {
     static CATALOGS: Vec<Catalog> = check::catalogs();
     /// A document rendered before the window exists, applied once it does.
     static PENDING: RefCell<Option<forge_spec::Document>> = const { RefCell::new(None) };
+    /// View state set before the window exists, applied with `PENDING`.
+    static PENDING_STATE: RefCell<Option<serde_json::Value>> = const { RefCell::new(None) };
 }
 
 #[cfg(target_family = "wasm")]
@@ -73,6 +75,9 @@ pub fn start(dark: bool, assets: String) {
                     Rc::new(forge_hook),
                     Rc::new(|state| forge_state(&state.to_string())),
                 );
+                if let Some(state) = PENDING_STATE.with(|p| p.borrow_mut().take()) {
+                    view.set_state(state, cx);
+                }
                 if let Some(doc) = PENDING.with(|p| p.borrow_mut().take()) {
                     view.set_document(doc, cx);
                 }
@@ -139,7 +144,11 @@ pub fn diagnostics(yaml: &str) -> String {
 #[wasm_bindgen]
 pub fn set_state(json: &str) -> Result<(), JsValue> {
     let state = serde_json::from_str(json).map_err(|e| JsValue::from_str(&e.to_string()))?;
-    with_view(|view, cx| view.update(cx, |view, cx| view.set_state(state, cx)));
+    if VIEW.with(|v| v.borrow().is_none()) {
+        PENDING_STATE.with(|p| *p.borrow_mut() = Some(state));
+    } else {
+        with_view(|view, cx| view.update(cx, |view, cx| view.set_state(state, cx)));
+    }
     Ok(())
 }
 
