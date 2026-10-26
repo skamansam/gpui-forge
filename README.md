@@ -18,6 +18,8 @@ A multi-format specification for defining GPUI element trees. To ensure interope
 *   **ForgeDSL:** A custom, human-readable, indentation-based format optimized for Git diffs and ease of manual editing.
 *   **JSON/XML:** Standardized formats for machine-to-machine communication between the Web Builder and the Rust Engine.
 
+See the draft [ForgeDSL syntax](docs/spec/forge-dsl.md) and [document model](docs/spec/document-model.md).
+
 ### 2. The Forge Converter (`forge-cli`)
 A powerful command-line utility used to transform interface definitions between all supported formats (e.g., converting a JSON blob from the web editor into a `.forge` file for the desktop editor).
 

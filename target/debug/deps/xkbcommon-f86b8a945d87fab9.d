@@ -1,0 +1,11 @@
+/home/ubuntu/repos/gpui-forge/target/debug/deps/xkbcommon-f86b8a945d87fab9.d: /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/lib.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/xkb/mod.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/xkb/compose.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/xkb/ffi.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/xkb/keysyms.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/xkb/x11/mod.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/xkb/x11/ffi.rs
+
+/home/ubuntu/repos/gpui-forge/target/debug/deps/libxkbcommon-f86b8a945d87fab9.rmeta: /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/lib.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/xkb/mod.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/xkb/compose.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/xkb/ffi.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/xkb/keysyms.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/xkb/x11/mod.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/xkb/x11/ffi.rs
+
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/lib.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/xkb/mod.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/xkb/compose.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/xkb/ffi.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/xkb/keysyms.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/xkb/x11/mod.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/xkbcommon-0.8.0/src/xkb/x11/ffi.rs:

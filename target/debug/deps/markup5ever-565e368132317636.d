@@ -1,0 +1,15 @@
+/home/ubuntu/repos/gpui-forge/target/debug/deps/markup5ever-565e368132317636.d: /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/lib.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/data/mod.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/interface/mod.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/interface/tree_builder.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/serialize.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/util/buffer_queue.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/util/smallcharset.rs /home/ubuntu/repos/gpui-forge/target/debug/build/markup5ever-ab19fd97478dee5d/out/generated.rs /home/ubuntu/repos/gpui-forge/target/debug/build/markup5ever-ab19fd97478dee5d/out/named_entities.rs
+
+/home/ubuntu/repos/gpui-forge/target/debug/deps/libmarkup5ever-565e368132317636.rmeta: /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/lib.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/data/mod.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/interface/mod.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/interface/tree_builder.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/serialize.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/util/buffer_queue.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/util/smallcharset.rs /home/ubuntu/repos/gpui-forge/target/debug/build/markup5ever-ab19fd97478dee5d/out/generated.rs /home/ubuntu/repos/gpui-forge/target/debug/build/markup5ever-ab19fd97478dee5d/out/named_entities.rs
+
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/lib.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/data/mod.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/interface/mod.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/interface/tree_builder.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/serialize.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/util/buffer_queue.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/markup5ever-0.12.1/util/smallcharset.rs:
+/home/ubuntu/repos/gpui-forge/target/debug/build/markup5ever-ab19fd97478dee5d/out/generated.rs:
+/home/ubuntu/repos/gpui-forge/target/debug/build/markup5ever-ab19fd97478dee5d/out/named_entities.rs:
+
+# env-dep:OUT_DIR=/home/ubuntu/repos/gpui-forge/target/debug/build/markup5ever-ab19fd97478dee5d/out

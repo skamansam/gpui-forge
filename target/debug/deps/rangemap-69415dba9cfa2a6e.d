@@ -1,0 +1,12 @@
+/home/ubuntu/repos/gpui-forge/target/debug/deps/rangemap-69415dba9cfa2a6e.d: /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/lib.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/inclusive_map.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/inclusive_set.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/map.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/operations.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/set.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/range_wrapper.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/std_ext.rs
+
+/home/ubuntu/repos/gpui-forge/target/debug/deps/librangemap-69415dba9cfa2a6e.rmeta: /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/lib.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/inclusive_map.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/inclusive_set.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/map.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/operations.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/set.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/range_wrapper.rs /home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/std_ext.rs
+
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/lib.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/inclusive_map.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/inclusive_set.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/map.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/operations.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/set.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/range_wrapper.rs:
+/home/ubuntu/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/rangemap-1.8.0/src/std_ext.rs:
