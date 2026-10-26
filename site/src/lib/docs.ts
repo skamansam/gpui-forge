@@ -29,6 +29,6 @@ export const docs: Doc[] = Object.entries(files)
 	.sort((a, b) => order(a.slug) - order(b.slug));
 
 function order(slug: string) {
-	const i = ['forge-yaml', 'document-model', 'catalog-manifest'].indexOf(slug);
+	const i = ['forge-yaml', 'document-model', 'style-layout', 'catalog-manifest'].indexOf(slug);
 	return i < 0 ? 99 : i;
 }
