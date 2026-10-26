@@ -236,3 +236,41 @@ fn missing_base_catalog() {
         "1:1: no catalog installed for base `adabraka`"
     );
 }
+
+const STYLE_SPEC: &str = include_str!("../../../docs/spec/style-layout.md");
+
+#[test]
+fn style_spec_examples_are_valid() {
+    assert!(STYLE_SPEC.contains("background: $theme.muted"));
+    // The example is a list item; check it as the root node.
+    let body = "  HStack:\n  style:\n    gap: 8px\n    padding: [8px, 12px]\n    align: center\n    justify: between\n    background: $theme.muted\n    radius: md\n";
+    assert_one(body, "");
+}
+
+#[test]
+fn style_keys_and_values() {
+    assert_one(
+        "  VStack:\n  style:\n    gapp: 8px\n",
+        "7:5: unknown style property `gapp`",
+    );
+    assert_one(
+        "  VStack:\n  style:\n    align: middle\n",
+        "7:5: style `align` must be one of start,",
+    );
+    assert_one(
+        "  VStack:\n  style:\n    padding: [1px, 2px, 3px]\n",
+        "7:5: style `padding` must be",
+    );
+    assert_one(
+        "  VStack:\n  style:\n    opacity: 2\n",
+        "7:5: style `opacity` must be a number from 0 to 1",
+    );
+    assert_one(
+        "  VStack:\n  style:\n    width: bind $ui.width\n",
+        "7:5: style `width` cannot use a two-way binding",
+    );
+    assert_one(
+        "  VStack:\n  style:\n    width: full\n    grow: true\n    color: $theme.primary\n    size: 2xl\n    max-width: $ui.max\n",
+        "",
+    );
+}

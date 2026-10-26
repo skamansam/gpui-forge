@@ -9,6 +9,7 @@ use crate::catalog::{Catalog, Children, ElementDef, PropDef};
 use crate::diagnostic::{Diagnostic, Pos};
 use crate::model::{Document, ElementRef, Node, Value};
 use crate::source_map::{NodeSpans, SourceMap};
+use crate::style;
 use crate::value::is_two_way;
 
 /// Validates `doc` for the project's `base` against the installed `catalogs`.
@@ -121,6 +122,7 @@ impl<'a> Validator<'a> {
         if let Some((catalog, def)) = self.element(node, base, at) {
             self.check(node, catalog, def, spans, at, path);
         }
+        self.style(node, spans, at);
         for (i, child) in node.children.iter().enumerate() {
             path.push(i);
             self.node(child, base, path);
@@ -299,6 +301,32 @@ impl<'a> Validator<'a> {
                 pos,
                 format!("`{element}.{}` must be {}", prop.name, prop.ty),
             );
+        }
+    }
+}
+
+impl Validator<'_> {
+    fn style(&mut self, node: &Node, spans: Option<&NodeSpans>, at: Pos) {
+        for (key, value) in &node.style {
+            let pos = spans.and_then(|s| s.style.get(key)).copied().unwrap_or(at);
+            match style::key_type(key) {
+                None => match style::closest_key(key) {
+                    Some(close) => self.hint(
+                        pos,
+                        format!("unknown style property `{key}`"),
+                        format!("did you mean `{close}`?"),
+                    ),
+                    None => self.error(pos, format!("unknown style property `{key}`")),
+                },
+                Some(_) if is_two_way(value) || nested_two_way(value) => self.error(
+                    pos,
+                    format!("style `{key}` cannot use a two-way binding; use `$path` instead"),
+                ),
+                Some(ty) if !ty.accepts(value) => {
+                    self.error(pos, format!("style `{key}` must be {ty}"));
+                }
+                Some(_) => {}
+            }
         }
     }
 }
