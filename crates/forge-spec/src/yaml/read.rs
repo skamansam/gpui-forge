@@ -215,7 +215,7 @@ impl Reader<'_> {
         for (key, val) in entries {
             let name = key.text.as_str();
             if name == "style" {
-                node.style = self.style(val);
+                node.style = self.style(val, &mut spans);
             } else if name == "children" {
                 node.children = self.children(val);
             } else if let Some(event) = name.strip_prefix("on ") {
@@ -278,7 +278,7 @@ impl Reader<'_> {
         }
     }
 
-    fn style(&mut self, val: YNode) -> Vec<(String, Value)> {
+    fn style(&mut self, val: YNode, spans: &mut NodeSpans) -> Vec<(String, Value)> {
         let mut style = Vec::new();
         for (key, val) in self.mapping(val, "`style`") {
             if !is_prop_key(&key.text) {
@@ -287,6 +287,7 @@ impl Reader<'_> {
                     format!("`{}` is not a valid style property", key.text),
                 );
             } else if let Some(value) = self.value(val, &key, false) {
+                spans.style.insert(key.text.clone(), key.pos);
                 style.push((key.text, value));
             }
         }

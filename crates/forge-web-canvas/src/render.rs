@@ -666,40 +666,83 @@ fn color(value: &Value, cx: &App) -> Option<Hsla> {
     }
 }
 
-/// Applies the provisional style keys documented on the docs site.
+/// Applies a node's `style:` map (`docs/spec/style-layout.md`).
 fn style<E: Styled>(element: E, entries: &Entries, cx: &App) -> E {
     entries.iter().fold(element, |e, (key, value)| {
         let word = match value {
             Value::Enum(s) | Value::String(s) => s.as_str(),
             _ => "",
         };
+        let flag = matches!(value, Value::Bool(true));
         match (key.as_str(), length(value), color(value, cx)) {
             ("gap", Some(l), _) => e.gap(l),
-            ("padding", Some(l), _) => e.p(l),
+            ("gap-x", Some(l), _) => e.gap_x(l),
+            ("gap-y", Some(l), _) => e.gap_y(l),
             ("width", Some(l), _) => e.w(l),
             ("height", Some(l), _) => e.h(l),
+            ("min-width", Some(l), _) => e.min_w(l),
             ("max-width", Some(l), _) => e.max_w(l),
+            ("min-height", Some(l), _) => e.min_h(l),
+            ("max-height", Some(l), _) => e.max_h(l),
+            ("basis", Some(l), _) => e.flex_basis(l),
+            ("line-height", Some(l), _) => e.line_height(l),
+            ("width", _, _) if word == "full" => e.w_full(),
+            ("height", _, _) if word == "full" => e.h_full(),
+            ("padding", _, _) => match edges(value) {
+                Some([t, r, b, l]) => e.pt(t).pr(r).pb(b).pl(l),
+                None => e,
+            },
+            ("margin", _, _) => match edges(value) {
+                Some([t, r, b, l]) => e.mt(t).mr(r).mb(b).ml(l),
+                None => e,
+            },
             ("background", _, Some(c)) => e.bg(c),
             ("color", _, Some(c)) => e.text_color(c),
-            ("border", _, Some(c)) => e.border_1().border_color(c),
-            ("radius", _, _) => match value {
-                Value::Number {
-                    value,
-                    unit: None | Some(Unit::Px),
-                } => e.rounded(px(*value as f32)),
-                Value::Number {
-                    value,
-                    unit: Some(Unit::Rem),
-                } => e.rounded(rems(*value as f32)),
+            ("border-color", _, Some(c)) => e.border_color(c),
+            ("border", Some(_), _) => e.border_1(),
+            ("border-style", _, _) if word == "dashed" => e.border_dashed(),
+            ("radius", Some(_), _) | ("radius", _, _) => match (word, value) {
+                ("sm", _) => e.rounded_sm(),
+                ("md", _) => e.rounded_md(),
+                ("lg", _) => e.rounded_lg(),
+                ("full", _) => e.rounded_full(),
+                (
+                    _,
+                    Value::Number {
+                        value,
+                        unit: None | Some(Unit::Px),
+                    },
+                ) => e.rounded(px(*value as f32)),
+                (
+                    _,
+                    Value::Number {
+                        value,
+                        unit: Some(Unit::Rem),
+                    },
+                ) => e.rounded(rems(*value as f32)),
                 _ => e,
             },
-            ("grow", _, _) if matches!(value, Value::Bool(true)) => e.flex_grow(1.0),
-            ("wrap", _, _) if matches!(value, Value::Bool(true)) => e.flex_wrap(),
+            ("direction", _, _) => match word {
+                "row" => e.flex_row(),
+                "column" => e.flex_col(),
+                "row-reverse" => e.flex_row_reverse(),
+                "column-reverse" => e.flex_col_reverse(),
+                _ => e,
+            },
             ("align", _, _) => match word {
                 "start" => e.items_start(),
                 "center" => e.items_center(),
                 "end" => e.items_end(),
                 "stretch" => e.items_stretch(),
+                "baseline" => e.items_baseline(),
+                _ => e,
+            },
+            ("align-self", _, _) => match word {
+                "start" => e.self_start(),
+                "center" => e.self_center(),
+                "end" => e.self_end(),
+                "stretch" => e.self_stretch(),
+                "baseline" => e.self_baseline(),
                 _ => e,
             },
             ("justify", _, _) => match word {
@@ -707,12 +750,43 @@ fn style<E: Styled>(element: E, entries: &Entries, cx: &App) -> E {
                 "center" => e.justify_center(),
                 "end" => e.justify_end(),
                 "between" => e.justify_between(),
+                "around" => e.justify_around(),
+                "evenly" => e.justify_evenly(),
+                _ => e,
+            },
+            ("wrap", _, _) => {
+                if flag {
+                    e.flex_wrap()
+                } else {
+                    e.flex_nowrap()
+                }
+            }
+            ("grow", _, _) => match value {
+                Value::Number { value, .. } => e.flex_grow(*value as f32),
+                Value::Bool(b) => e.flex_grow(if *b { 1.0 } else { 0.0 }),
+                _ => e,
+            },
+            ("shrink", _, _) => match value {
+                Value::Number { value, .. } => e.flex_shrink(*value as f32),
+                Value::Bool(b) => e.flex_shrink(if *b { 1.0 } else { 0.0 }),
+                _ => e,
+            },
+            ("overflow", _, _) if word != "visible" => e.overflow_hidden(),
+            ("opacity", _, _) => match value {
+                Value::Number { value, .. } => e.opacity(*value as f32),
+                _ => e,
+            },
+            ("shadow", _, _) => match word {
+                "sm" => e.shadow_sm(),
+                "md" => e.shadow_md(),
+                "lg" => e.shadow_lg(),
+                "xl" => e.shadow_xl(),
                 _ => e,
             },
             ("size", _, _) => match word {
                 "xs" => e.text_xs(),
                 "sm" => e.text_sm(),
-                "md" => e.text_base(),
+                "base" | "md" => e.text_base(),
                 "lg" => e.text_lg(),
                 "xl" => e.text_xl(),
                 "2xl" => e.text_2xl(),
@@ -722,15 +796,43 @@ fn style<E: Styled>(element: E, entries: &Entries, cx: &App) -> E {
                     _ => e,
                 },
             },
-            ("weight", _, _) => match word {
-                "medium" => e.font_weight(FontWeight::MEDIUM),
-                "semibold" => e.font_weight(FontWeight::SEMIBOLD),
-                "bold" => e.font_weight(FontWeight::BOLD),
-                _ => e.font_weight(FontWeight::NORMAL),
+            ("weight", _, _) => e.font_weight(match word {
+                "thin" => FontWeight::THIN,
+                "light" => FontWeight::LIGHT,
+                "medium" => FontWeight::MEDIUM,
+                "semibold" => FontWeight::SEMIBOLD,
+                "bold" => FontWeight::BOLD,
+                "black" => FontWeight::BLACK,
+                _ => FontWeight::NORMAL,
+            }),
+            ("text-align", _, _) => match word {
+                "left" => e.text_left(),
+                "center" => e.text_center(),
+                "right" => e.text_right(),
+                _ => e,
             },
+            ("italic", _, _) if flag => e.italic(),
+            ("underline", _, _) if flag => e.underline(),
+            ("truncate", _, _) if flag => e.truncate(),
             _ => e,
         }
     })
+}
+
+/// `padding`/`margin` as `[top, right, bottom, left]`.
+fn edges(value: &Value) -> Option<[DefiniteLength; 4]> {
+    match value {
+        Value::List(items) => {
+            let l: Vec<DefiniteLength> = items.iter().filter_map(length).collect();
+            match l.as_slice() {
+                [a] => Some([*a; 4]),
+                [y, x] => Some([*y, *x, *y, *x]),
+                [t, r, b, l] => Some([*t, *r, *b, *l]),
+                _ => None,
+            }
+        }
+        other => length(other).map(|l| [l; 4]),
+    }
 }
 
 /// Writes `value` at `path`, creating objects and arrays along the way.

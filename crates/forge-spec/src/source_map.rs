@@ -25,4 +25,6 @@ pub struct NodeSpans {
     pub props: HashMap<String, Pos>,
     /// Event name -> position of its `on <event>` key.
     pub events: HashMap<String, Pos>,
+    /// Style key -> position of the key.
+    pub style: HashMap<String, Pos>,
 }
