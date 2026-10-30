@@ -93,6 +93,17 @@ element.
 Binding paths also accept `-` in each segment, so style props can bind state by their catalog
 names — e.g. `document.edits.style.text-align`.
 
+### File paths in `src`
+
+`Image`'s `src` resolves **relative to the document file**, not the process cwd — a `.forge.yaml`
+in `examples/` writes `src: ../shared/logo.svg` to reach the workspace root. `Image` renders
+raster formats (PNG, JPEG, WebP, GIF, BMP, TIFF, ICO) and multicolor SVGs at full color via
+gpui's `img()`; URLs and asset keys pass through to the app's `HttpClient`/`AssetSource`. Theme
+icons come from `Icon` (Lucide names, tinted by `text_color`), not `Image`.
+
+`DropdownMenu`/`MenuItem` render a button that opens a popover menu — `MenuItem` children fire
+`on click:` hooks.
+
 ## Values
 
 Forge reads every scalar as **text** and types it with the micro-syntax below. YAML's own typing

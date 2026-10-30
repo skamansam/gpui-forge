@@ -34,11 +34,12 @@ type SharedState = Rc<RefCell<Shared>>;
 
 fn main() {
     gpui_kit::application()
-        .with_assets(gpui_kit::assets::Assets)
+        .with_assets(gpui_kit::assets::AllAssets)
         .run(|cx| {
             gpui_kit::init(cx);
             let bounds = Bounds::centered(None, size(px(1400.0), px(900.0)), cx);
             let options = WindowOptions {
+                app_id: Some("gpui-forge".into()),
                 window_bounds: Some(WindowBounds::Windowed(bounds)),
                 titlebar: Some(TitlebarOptions {
                     title: Some("Forge Studio".into()),
@@ -48,8 +49,23 @@ fn main() {
                 app_owns_titlebar_drag: true,
                 ..Default::default()
             };
-            gpui_kit::open_window(options, cx, |_, cx| cx.new(build_shell))
-                .expect("failed to open window");
+            gpui_kit::open_window(options, cx, |_, cx| {
+                // Default to the OS appearance — the theme switch still
+                // overrides to explicit Light/Dark.
+                use gpui_kit::WindowAppearance;
+                Theme::change(
+                    match cx.window_appearance() {
+                        WindowAppearance::Dark | WindowAppearance::VibrantDark => {
+                            ThemeMode::Dark
+                        }
+                        _ => ThemeMode::Light,
+                    },
+                    None,
+                    cx,
+                );
+                cx.new(build_shell)
+            })
+            .expect("failed to open window");
         });
 }
 
@@ -68,6 +84,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         view.set_document(doc, cx);
     }
 
+    view.set_base_dir(env!("CARGO_MANIFEST_DIR"));
     let dark = Theme::global(cx).is_dark();
     view.set_state(
         json!({
@@ -121,24 +138,42 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         preview.set_sinks(
             Rc::new(move |call, _, cx| {
                 let (name, args) = parse_call(call);
-                weak.update(cx, |view, cx| dispatch(view, &name, &args, &shared, cx))
-                    .ok();
+                let weak = weak.clone();
+                let shared = shared.clone();
+                // Defer — a preview event fires while the preview entity is leased,
+                // so touching it (or the shell, which then touches the preview)
+                // must wait until the in-flight update releases.
+                cx.defer(move |cx| {
+                    weak.update(cx, |view, cx| dispatch(view, &name, &args, &shared, cx))
+                        .ok();
+                });
             }),
             Rc::new(move |state, _, cx| {
-                shell
-                    .update(cx, |view, cx| {
-                        view.update_state(
-                            &parse_path("preview.state").unwrap(),
-                            Json::String(state.to_string()),
-                            cx,
-                        );
-                    })
-                    .ok();
+                let shell = shell.clone();
+                let state = state.to_string();
+                cx.defer(move |cx| {
+                    shell
+                        .update(cx, |view, cx| {
+                            view.update_state(
+                                &parse_path("preview.state").unwrap(),
+                                Json::String(state.clone()),
+                                cx,
+                            );
+                        })
+                        .ok();
+                });
             }),
         );
     });
 
-    load_source(&mut view, "welcome.forge.yaml", WELCOME, &shared, cx);
+    load_source(
+        &mut view,
+        "welcome.forge.yaml",
+        WELCOME,
+        Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR"))),
+        &shared,
+        cx,
+    );
     view
 }
 
@@ -206,7 +241,14 @@ fn start_from(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &
         });
     match src {
         Some(src) => {
-            load_source(view, name, &src, shared, cx);
+            load_source(
+                view,
+                name,
+                &src,
+                Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR"))),
+                shared,
+                cx,
+            );
             view.update_state(&parse_path("studio.tab").unwrap(), Json::from(2), cx);
         }
         None => status(view, &format!("no starter `{name}`"), cx),
@@ -249,9 +291,10 @@ fn open_document(shared: SharedState, cx: &mut Context<ForgeView>) {
                     .file_name()
                     .map(|n| n.to_string_lossy().into_owned())
                     .unwrap_or_else(|| path.display().to_string());
+                let dir = path.parent().map(|p| p.to_path_buf());
                 shared.borrow_mut().file = Some(path);
-                load_source(view, &name, &src, &shared, cx);
-                view.update_state(&parse_path("studio.tab").unwrap(), Json::from(1), cx);
+                load_source(view, &name, &src, dir.as_deref(), &shared, cx);
+                view.update_state(&parse_path("studio.tab").unwrap(), Json::from(2), cx);
             }
             Err(e) => status(view, &format!("cannot read {}: {e}", path.display()), cx),
         })
@@ -265,6 +308,7 @@ fn load_source(
     view: &mut ForgeView,
     name: &str,
     src: &str,
+    dir: Option<&std::path::Path>,
     shared: &SharedState,
     cx: &mut Context<ForgeView>,
 ) {
@@ -286,6 +330,10 @@ fn load_source(
     view.set_state(state, cx);
     if let Some(doc) = doc {
         view.set_preview_document("canvas", doc, cx);
+        if let Some(dir) = dir {
+            view.preview("canvas", cx)
+                .update(cx, |p, _| p.set_base_dir(dir.to_path_buf()));
+        }
     }
 }
 

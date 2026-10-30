@@ -49,7 +49,9 @@ root:
             gap: 8px
             padding: [6px, 12px]
           children:
-            - Icon: hammer
+            - Image#logo:
+              src: gpui_forge_icon_medallion.svg
+              size: 18px
             - Label: Forge Studio
               style:
                 weight: semibold
@@ -212,58 +214,79 @@ root:
                     - VStack:
                       style:
                         grow: true
-                        padding: 32px
-                        gap: 16px
-                        align: start
-                        border: 1px
+                        padding: 48px
+                        gap: 24px
+                        align: center
+                        overflow: scroll
                       children:
-                        - Label: Get started
-                          secondary: pick a starter project to load into the workspace
-                        - GroupBox: Welcome
-                          variant: Outline
+                        - VStack:
+                          style: {align: center, gap: 12px}
                           children:
-                            - Text: A guided tour of the Forge document format and the studio shell.
-                              style: {size: sm, color: $theme.muted_foreground}
-                            - HStack:
-                              style: {justify: end}
-                              children:
-                                - Button: Open
-                                  size: Small
-                                  variant: Primary
-                                  on click: start_from('welcome')
-                        - GroupBox: Gallery
-                          variant: Outline
+                            - Image#welcome-logo:
+                              src: ../../gpui_forge_icon_medallion.svg
+                              size: 150px
+                            - Label: Forge Studio
+                              style: {size: xl, weight: bold}
+                            - Text: a visual builder for Forge documents
+                              style: {color: $theme.muted_foreground}
+                        - Text: "Forge Studio edits .forge.yaml documents live — outline a document in Structure, tune it in the Inspector, and watch the preview rebuild. To get started, choose a starter below."
+                          style: {size: sm, color: $theme.muted_foreground, width: 520px}
+                        - HStack:
+                          style: {gap: 16px, justify: center, align: stretch}
                           children:
-                            - HStack:
+                            - GroupBox: Welcome
+                              variant: Outline
+                              style: {width: 170px}
                               children:
-                              - Text: "Select widget set:"
-                              - Select#widget_set:
-                                options: [gpui-kit, forge]
-                                value: bind $studio.widget_set
-                                placeholder: gallery
-                                on change: widget_set_changed($studio.widget_set)
-                                style: {width: 110px}
-                            - Text: The live component gallery — every element the adapter renders.
-                              style: {size: sm, color: $theme.muted_foreground}
-                            - HStack:
-                              style: {justify: end}
+                                - Image#img-welcome:
+                                  src: ../../gpui_forge_icon_medallion.svg
+                                  size: 56px
+                                - Text: A guided tour of Forge documents and the studio shell.
+                                  style: {size: sm, color: $theme.muted_foreground}
+                                - HStack:
+                                  style: {justify: end, grow: true}
+                                  children:
+                                    - Button: Open
+                                      size: Small
+                                      variant: Primary
+                                      on click: start_from('welcome')
+                            - GroupBox: Gallery
+                              variant: Outline
+                              style: {width: 170px}
                               children:
-                                - Button: Open
-                                  size: Small
-                                  variant: Primary
-                                  on click: start_from('gallery')
-                        - GroupBox: Blank
-                          variant: Outline
-                          children:
-                            - Text: An empty document — a root VStack with a single Text.
-                              style: {size: sm, color: $theme.muted_foreground}
-                            - HStack:
-                              style: {justify: end}
+                                - Image#img-gallery:
+                                  src: ../../gpui_forge_icon_medallion.svg
+                                  size: 56px
+                                - Select#widget_set:
+                                  options: [gpui-kit, forge]
+                                  value: bind $studio.widget_set
+                                  placeholder: widget set
+                                  on change: widget_set_changed($studio.widget_set)
+                                - Text: Every element the adapter renders, per widget set.
+                                  style: {size: sm, color: $theme.muted_foreground}
+                                - HStack:
+                                  style: {justify: end, grow: true}
+                                  children:
+                                    - Button: Open
+                                      size: Small
+                                      variant: Primary
+                                      on click: start_from('gallery')
+                            - GroupBox: Blank
+                              variant: Outline
+                              style: {width: 170px}
                               children:
-                                - Button: Open
-                                  size: Small
-                                  variant: Primary
-                                  on click: start_from('blank')
+                                - Image#img-blank:
+                                  src: ../../gpui_forge_icon_medallion.svg
+                                  size: 56px
+                                - Text: An empty document — a clean canvas for something new.
+                                  style: {size: sm, color: $theme.muted_foreground}
+                                - HStack:
+                                  style: {justify: end, grow: true}
+                                  children:
+                                    - Button: Open
+                                      size: Small
+                                      variant: Primary
+                                      on click: start_from('blank')
                 - Tab: Source
                   children:
                     - Editor#source:

@@ -144,6 +144,9 @@ pub struct ForgeView {
     subscriptions: Vec<Subscription>,
     /// Render-time problems surfaced for the host — `take_errors` drains them.
     errors: Vec<String>,
+    /// The directory of the document this view renders — `src` paths on
+    /// `Svg`/image elements resolve relative to it.
+    base_dir: Option<std::path::PathBuf>,
     /// Shown while there is no document (e.g. inside `forge.Preview`).
     empty_text: Option<String>,
 }
@@ -226,6 +229,7 @@ impl ForgeView {
             on_state: None,
             subscriptions: Vec::new(),
             errors: Vec::new(),
+            base_dir: None,
             empty_text: None,
         }
     }
@@ -571,6 +575,24 @@ impl ForgeView {
     /// Records a render-time problem — surfaced to the host as a toast next paint.
     pub fn report(&mut self, message: impl Into<String>) {
         self.errors.push(message.into());
+    }
+
+    /// Sets the directory the current document lives in — relative `src` paths
+    /// on `Svg`/image elements resolve against it.
+    pub fn set_base_dir(&mut self, dir: impl Into<std::path::PathBuf>) {
+        self.base_dir = Some(dir.into());
+    }
+
+    /// Resolves `src` against `base_dir` when relative — `std::fs` calls use this
+    /// so `src` is document-relative, not cwd-relative.
+    fn resolve_path(&self, src: &str) -> std::path::PathBuf {
+        let path = std::path::Path::new(src);
+        if path.is_relative()
+            && let Some(base) = &self.base_dir
+        {
+            return base.join(path);
+        }
+        path.to_path_buf()
     }
 
     /// Drains accumulated errors — the host captures them to show or handle.
@@ -1472,11 +1494,9 @@ impl ForgeView {
             }
             "Tabs" => {
                 let bound = self.prop(node, "selected").and_then(|v| self.number(v));
-                let selected = self
-                    .tabs
-                    .get(key)
-                    .copied()
-                    .or(bound.map(|n| n as usize))
+                let selected = bound
+                    .map(|n| n as usize)
+                    .or_else(|| self.tabs.get(key).copied())
                     .unwrap_or(0)
                     .min(node.children.len().saturating_sub(1));
                 let path = self.two_way(node, "selected");
@@ -1609,10 +1629,41 @@ impl ForgeView {
                 .into_any_element(),
             "Icon" => {
                 let color = self.prop(node, "color").and_then(|v| color(v, cx));
-                icon(&self.prop_text(node, "name").unwrap_or_default())
-                    .with_size(size(&self.prop_text(node, "size").unwrap_or_default()))
-                    .when_some(color, |i, c| i.text_color(c))
+                let name = self.prop_text(node, "name").unwrap_or_default();
+                let element = svg().path(format!("icons/{name}.svg"));
+                // `svg()` has no intrinsic size — default to 16px like a Medium icon.
+                let element = match self.prop(node, "size").and_then(length) {
+                    Some(size) => element.w(size).h(size),
+                    None => element.w_4().h_4(),
+                };
+                element
+                    .when_some(color, |e, c| e.text_color(c))
                     .into_any_element()
+            }
+            "Image" => {
+                let src = self.prop_text(node, "src").unwrap_or_default();
+                // `img()` keeps a multicolor image's colors — `svg()` is a
+                // single-color mask tinted with `text_color` for theme icons.
+                // A `Path` source reads the file directly; a URL or a bare name
+                // falls through as `ImageSource` (uri / embedded asset key).
+                let path = self.resolve_path(&src);
+                let element = if path.is_file() {
+                    img(path)
+                } else {
+                    img(src.as_str())
+                };
+                let fit = match self.prop_text(node, "object-fit").as_deref() {
+                    Some("Cover") => ObjectFit::Cover,
+                    Some("Fill") => ObjectFit::Fill,
+                    Some("ScaleDown") => ObjectFit::ScaleDown,
+                    _ => ObjectFit::Contain,
+                };
+                let element = element.object_fit(fit);
+                match self.prop(node, "size").and_then(length) {
+                    Some(size) => element.w(size).h(size),
+                    None => element,
+                }
+                .into_any_element()
             }
             "Spinner" => {
                 let color = self.prop(node, "color").and_then(|v| color(v, cx));

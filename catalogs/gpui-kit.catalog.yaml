@@ -407,6 +407,20 @@ elements:
         default: Medium
       color: color
 
+  Image:
+    summary: A full-color image — raster formats, URLs, asset keys, and multicolor SVGs.
+    component: gpui::img
+    props:
+      src:
+        type: string
+        required: true
+      size:
+        type: length
+      object-fit:
+        type: enum
+        values: [Contain, Cover, Fill, ScaleDown]
+        default: Contain
+
   Spinner:
     summary: Loading spinner.
     component: gpui_component::spinner::Spinner

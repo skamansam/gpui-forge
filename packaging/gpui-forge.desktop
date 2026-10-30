@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Forge Studio
+Comment=Visual builder for GPUI Forge documents
+Exec=forge-studio
+Icon=gpui-forge
+Categories=Development;IDE;
+Terminal=false
+StartupWMClass=gpui-forge

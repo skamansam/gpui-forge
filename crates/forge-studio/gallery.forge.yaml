@@ -9,8 +9,10 @@ meta:
 root:
   VStack#gallery:
   style:
+    height: full
     padding: 24px
     gap: 16px
+    overflow: scroll
   children:
     - Label: Component gallery
       secondary: "every element in the catalogs, rendered by gpui-forge-runtime"
