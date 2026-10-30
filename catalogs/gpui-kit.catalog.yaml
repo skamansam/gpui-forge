@@ -21,8 +21,8 @@ elements:
     children: any
 
   HStack:
-    summary: Horizontal flex container.
-    component: gpui_kit::base::h_flex
+    summary: Horizontal flex container; children stretch on the cross axis by default.
+    component: gpui::Div
     children: any
 
   Text:
@@ -103,6 +103,64 @@ elements:
     events:
       change: string
       submit: string
+
+  Textarea:
+    summary: Multi-line text input.
+    component: gpui_component::input::Textarea
+    content: value
+    props:
+      value:
+        type: string
+        bindable: true
+      placeholder: string
+      rows:
+        type: number
+        summary: Minimum number of visible rows.
+      height:
+        type: length
+        summary: Fixed height; `100%` fills the parent.
+      disabled:
+        type: bool
+        default: false
+      readonly:
+        type: bool
+        default: false
+    events:
+      change: string
+
+  Editor:
+    summary: Code editor with line numbers and optional syntax highlighting.
+    component: gpui_component::input::Editor
+    content: value
+    props:
+      value:
+        type: string
+        bindable: true
+      placeholder: string
+      language:
+        type: string
+        summary: Active highlighter language, e.g. `yaml`.
+      languages:
+        type: list<string>
+        summary: Languages this editor may switch between. Declared; a language picker is not wired yet.
+      highlighting:
+        type: map
+        summary: 'Nested form of the flat props: `{languages: [yaml], default: yaml, show-selection: true}`.'
+      show-selection:
+        type: bool
+        default: true
+        summary: Whether the selection is drawn. Declared; not applied yet (no component API).
+      height:
+        type: length
+        summary: Fixed height; `100%` fills the parent.
+      disabled:
+        type: bool
+        default: false
+      readonly:
+        type: bool
+        default: false
+    events:
+      change: string
 
   Checkbox:
     summary: Checkbox with an optional label.
@@ -218,14 +276,82 @@ elements:
     children: any
 
   Separator:
-    summary: Horizontal rule with an optional label.
+    summary: Horizontal rule or vertical divider with an optional label.
     component: gpui_component::separator::Separator
     content: label
     props:
       label: string
+      orientation:
+        type: enum
+        values: [Horizontal, Vertical]
+        default: Horizontal
       dashed:
         type: bool
         default: false
+
+  DropdownMenu:
+    summary: A button that opens a dropdown `PopupMenu` of `MenuItem`s.
+    component: gpui_component::menu::dropdown_menu::DropdownMenuPopover
+    props:
+      label:
+        type: string
+        summary: Trigger button label.
+      icon: icon
+      size:
+        type: enum
+        values: [XSmall, Small, Medium, Large]
+      variant:
+        type: enum
+        values: [Primary, Secondary, Ghost, Danger, Link]
+      disabled:
+        type: bool
+        default: false
+    children: [MenuItem, MenuSeparator]
+
+  MenuItem:
+    summary: One clickable entry in a `DropdownMenu`.
+    component: gpui_component::menu::popup_menu::PopupMenuItem
+    content: label
+    props:
+      label: string
+      icon: icon
+      disabled:
+        type: bool
+        default: false
+      checked:
+        type: bool
+        default: false
+    events:
+      click:
+
+  MenuSeparator:
+    summary: Divider line between `MenuItem`s in a `DropdownMenu`.
+    component: gpui_component::menu::popup_menu::PopupMenuItem
+
+  GroupBox:
+    summary: Titled section grouping related content.
+    component: gpui_component::group_box::GroupBox
+    content: title
+    props:
+      title: string
+      variant:
+        type: enum
+        values: [Normal, Fill, Outline]
+        default: Normal
+      footer:
+        type: string
+        summary: Supporting content shown below the group's surface.
+    children: any
+
+  Empty:
+    summary: Placeholder for a section with nothing to show yet.
+    component: gpui_component::empty::Empty
+    content: title
+    props:
+      icon: icon
+      title: string
+      description: string
+    children: any
 
   Link:
     summary: Hyperlink.
@@ -280,3 +406,651 @@ elements:
         values: [XSmall, Small, Medium, Large]
         default: Medium
       color: color
+
+  Spinner:
+    summary: Loading spinner.
+    component: gpui_component::spinner::Spinner
+    props:
+      icon: icon
+      color: color
+
+  Alert:
+    summary: Callout for status messages, optionally a banner.
+    component: gpui_component::alert::Alert
+    content: message
+    props:
+      message:
+        type: string
+        required: true
+      variant:
+        type: enum
+        values: [Info, Success, Warning, Error]
+        default: Info
+      title: string
+      banner:
+        type: bool
+        default: false
+      visible:
+        type: bool
+        default: true
+
+  Kbd:
+    summary: Keycap, e.g. `ctrl-o`.
+    component: gpui_component::kbd::Kbd
+    content: keys
+    props:
+      keys:
+        type: string
+        required: true
+      outline:
+        type: bool
+        default: false
+      appearance:
+        type: bool
+        default: true
+
+  Skeleton:
+    summary: Loading placeholder block.
+    component: gpui_component::skeleton::Skeleton
+    props:
+      secondary:
+        type: bool
+        default: false
+
+  Breadcrumb:
+    summary: Trail of `BreadcrumbItem`s.
+    component: gpui_component::breadcrumb::Breadcrumb
+    children: [BreadcrumbItem]
+
+  BreadcrumbItem:
+    summary: One crumb in a `Breadcrumb`.
+    component: gpui_component::breadcrumb::BreadcrumbItem
+    content: label
+    props:
+      label:
+        type: string
+        required: true
+      disabled:
+        type: bool
+        default: false
+
+  Pagination:
+    summary: Page switcher.
+    component: gpui_component::pagination::Pagination
+    props:
+      page:
+        type: number
+        summary: Current page index.
+        bindable: true
+      total:
+        type: number
+        required: true
+        summary: Total number of pages.
+      compact:
+        type: bool
+        default: false
+      visible:
+        type: number
+        summary: Max page buttons shown.
+    events:
+      change: number
+
+  Rating:
+    summary: Star rating input or display.
+    component: gpui_component::rating::Rating
+    props:
+      value:
+        type: number
+        bindable: true
+      max:
+        type: number
+        default: 5
+      size:
+        type: enum
+        values: [XSmall, Small, Medium, Large]
+        default: Medium
+      color: color
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: number
+
+  Toolbar:
+    summary: Horizontal toolbar grouping controls.
+    component: gpui_component::toolbar::Toolbar
+    props:
+      disabled:
+        type: bool
+        default: false
+    children: any
+
+  Progress:
+    summary: Linear progress bar.
+    component: gpui_component::progress::Progress
+    props:
+      value:
+        type: number
+        summary: 0–100.
+      loading:
+        type: bool
+        default: false
+        summary: Indeterminate animation.
+      color: color
+
+  ProgressCircle:
+    summary: Circular progress indicator.
+    component: gpui_component::progress::ProgressCircle
+    props:
+      value:
+        type: number
+        summary: 0–100.
+      loading:
+        type: bool
+        default: false
+      color: color
+
+  DescriptionList:
+    summary: Label/value grid (definition list).
+    component: gpui_component::description_list::DescriptionList
+    props:
+      layout:
+        type: enum
+        values: [Horizontal, Vertical]
+        default: Vertical
+      label-width: length
+      bordered:
+        type: bool
+        default: false
+      columns:
+        type: number
+    children: [DescriptionItem]
+
+  DescriptionItem:
+    summary: One row in a `DescriptionList`.
+    component: gpui_component::description_list::DescriptionItem
+    content: label
+    props:
+      label:
+        type: string
+        required: true
+      value:
+        type: string
+        required: true
+      span:
+        type: number
+        default: 1
+
+  StatusBar:
+    summary: Window status bar; first child goes left, second goes right.
+    component: gpui_component::status_bar::StatusBar
+    children: any
+
+  Avatar:
+    summary: User avatar image or initials.
+    component: gpui_component::avatar::Avatar
+    props:
+      name:
+        type: string
+        summary: Fallback initials.
+      src:
+        type: string
+        summary: Image path.
+      icon:
+        type: icon
+        summary: Placeholder icon.
+
+  AvatarGroup:
+    summary: Overlapping stack of `Avatar`s.
+    component: gpui_component::avatar::AvatarGroup
+    props:
+      limit:
+        type: number
+        summary: Max avatars shown.
+      ellipsis:
+        type: bool
+        default: false
+    children: [Avatar]
+
+  Stepper:
+    summary: Numbered/stepping indicator.
+    component: gpui_component::stepper::Stepper
+    props:
+      selected:
+        type: number
+        bindable: true
+        summary: Active step index.
+      layout:
+        type: enum
+        values: [Horizontal, Vertical]
+        default: Horizontal
+      text-center:
+        type: bool
+        default: false
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: number
+    children: [StepperItem]
+
+  StepperItem:
+    summary: One step in a `Stepper`.
+    component: gpui_component::stepper::StepperItem
+    content: label
+    props:
+      label: string
+      icon: icon
+      disabled:
+        type: bool
+        default: false
+
+  NumberInput:
+    summary: Numeric input with step controls.
+    component: gpui_component::input::NumberInput
+    content: value
+    props:
+      value:
+        type: string
+        bindable: true
+      placeholder: string
+      size:
+        type: enum
+        values: [XSmall, Small, Medium, Large]
+        default: Medium
+      appearance:
+        type: bool
+        default: true
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: string
+
+  Slider:
+    summary: Value slider.
+    component: gpui_component::slider::Slider
+    props:
+      value:
+        type: number
+        bindable: true
+      min:
+        type: number
+        default: 0
+      max:
+        type: number
+        default: 100
+      step:
+        type: number
+        default: 1
+      vertical:
+        type: bool
+        default: false
+      reverse:
+        type: bool
+        default: false
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: number
+
+  Accordion:
+    summary: Expandable sections of `AccordionItem`s.
+    component: gpui_component::accordion::Accordion
+    props:
+      multiple:
+        type: bool
+        default: false
+        summary: Allow several open items.
+      bordered:
+        type: bool
+        default: false
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: number
+    children: [AccordionItem]
+
+  AccordionItem:
+    summary: One expandable section in an `Accordion`.
+    component: gpui_component::accordion::AccordionItem
+    content: title
+    props:
+      title:
+        type: string
+        required: true
+      icon: icon
+      open:
+        type: bool
+        default: false
+      disabled:
+        type: bool
+        default: false
+    children: any
+
+  Collapsible:
+    summary: Show/hide container driven by an `open` prop.
+    component: gpui_component::collapsible::Collapsible
+    props:
+      open:
+        type: bool
+        default: false
+    children: any
+
+  Form:
+    summary: Labeled form grid of `FormField`s.
+    component: gpui_component::form::Form
+    props:
+      layout:
+        type: enum
+        values: [Vertical, Horizontal]
+        default: Vertical
+      label-layout:
+        type: enum
+        values: [Horizontal, Vertical]
+        summary: Label/field arrangement within each row.
+      label-width: length
+      columns:
+        type: number
+        summary: Grid columns.
+    children: [FormField]
+
+  FormField:
+    summary: One labeled row in a `Form`.
+    component: gpui_component::form::Field
+    content: label
+    props:
+      label: string
+      description: string
+      required:
+        type: bool
+        default: false
+      visible:
+        type: bool
+        default: true
+      label-indent:
+        type: bool
+        default: false
+      align:
+        type: enum
+        values: [Start, Center, End]
+        summary: items_start/items_center/items_end.
+      col-span:
+        type: number
+      col-start:
+        type: number
+    children: any
+
+  ColorPicker:
+    summary: Color swatch that opens a color picker popup.
+    component: gpui_component::color_picker::ColorPicker
+    props:
+      value:
+        type: color
+        bindable: true
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: color
+
+  OtpInput:
+    summary: One-time-code input cells.
+    component: gpui_component::input::OtpInput
+    props:
+      value:
+        type: string
+        bindable: true
+      length:
+        type: number
+        default: 6
+      masked:
+        type: bool
+        default: false
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: string
+      complete: string
+
+  DatePicker:
+    summary: Date input with calendar popup.
+    component: gpui_component::time::DatePicker
+    props:
+      value:
+        type: string
+        bindable: true
+        summary: ISO date string.
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: string
+
+  Calendar:
+    summary: Inline month calendar.
+    component: gpui_component::time::Calendar
+    props:
+      disabled:
+        type: bool
+        default: false
+
+  TimeField:
+    summary: Time-of-day input.
+    component: gpui_component::time_field::TimeField
+    props:
+      value:
+        type: string
+        bindable: true
+      invalid:
+        type: bool
+        default: false
+    events:
+      change: string
+
+  TitleBar:
+    summary: Custom titlebar with window controls; children render inside the titlebar row.
+    component: gpui_component::title_bar::TitleBar
+    children: any
+
+  Message:
+    summary: Chat-style message; children are the Message* slots below.
+    component: gpui_component::message::Message
+    props:
+      alignment:
+        type: enum
+        values: [Start, End]
+        default: Start
+      avatar: icon
+    children: any
+
+  MessageAvatar:
+    summary: Avatar slot inside a `Message`.
+    component: gpui_component::message::MessageAvatar
+    children: any
+
+  MessageHeader:
+    summary: Header slot inside a `Message`.
+    component: gpui_component::message::MessageHeader
+    children: any
+
+  MessageContent:
+    summary: Body slot inside a `Message`.
+    component: gpui_component::message::MessageContent
+    children: any
+
+  MessageFooter:
+    summary: Footer slot inside a `Message`.
+    component: gpui_component::message::MessageFooter
+    children: any
+
+  Table:
+    summary: Static table of `TableHeader`/`TableBody`/`TableFooter`/`TableCaption`.
+    component: gpui_component::table::Table
+    children: [TableHeader, TableBody, TableFooter, TableCaption]
+
+  TableHeader:
+    summary: Header row group of a `Table`.
+    component: gpui_component::table::TableHeader
+    children: [TableHead]
+
+  TableBody:
+    summary: Row group of a `Table`.
+    component: gpui_component::table::TableBody
+    children: [TableRow]
+
+  TableFooter:
+    summary: Footer row group of a `Table`.
+    component: gpui_component::table::TableFooter
+    children: [TableRow]
+
+  TableCaption:
+    summary: Caption of a `Table`.
+    component: gpui_component::table::TableCaption
+    children: any
+
+  TableRow:
+    summary: A row of `TableCell`s in a `Table`.
+    component: gpui_component::table::TableRow
+    children: [TableCell, TableHead]
+
+  TableHead:
+    summary: Header cell in a `Table`.
+    component: gpui_component::table::TableHead
+    props:
+      col-span:
+        type: number
+      text-align:
+        type: enum
+        values: [Left, Center, Right]
+    children: any
+
+  TableCell:
+    summary: Data cell in a `Table`.
+    component: gpui_component::table::TableCell
+    props:
+      col-span:
+        type: number
+      text-align:
+        type: enum
+        values: [Left, Center, Right]
+    children: any
+
+  Resizable:
+    summary: Split-pane group of `ResizablePanel`s with drag handles.
+    component: gpui_base::resizable::ResizablePanelGroup
+    props:
+      layout:
+        type: enum
+        values: [Horizontal, Vertical]
+        default: Horizontal
+    children: [ResizablePanel]
+
+  ResizablePanel:
+    summary: One pane in a `Resizable` group.
+    component: gpui_base::resizable::ResizablePanel
+    props:
+      size:
+        type: number
+        summary: Initial size in px.
+      min-size:
+        type: number
+      max-size:
+        type: number
+      fixed:
+        type: bool
+        default: false
+      visible:
+        type: bool
+        default: true
+    children: any
+
+  Sidebar:
+    summary: Collapsible app sidebar; `SidebarHeader`/`SidebarFooter` children map to the header/footer slots, `SidebarMenu` children become items.
+    component: gpui_component::sidebar::Sidebar
+    props:
+      side:
+        type: enum
+        values: [Left, Right]
+        default: Left
+      collapsible:
+        type: enum
+        values: [None, Icon, Offcanvas]
+        default: Icon
+      collapsed:
+        type: bool
+        default: false
+    children: any
+
+  SidebarHeader:
+    summary: Header slot inside a `Sidebar`.
+    component: gpui_component::sidebar::SidebarHeader
+    children: any
+
+  SidebarFooter:
+    summary: Footer slot inside a `Sidebar`.
+    component: gpui_component::sidebar::SidebarFooter
+    children: any
+
+  SidebarMenu:
+    summary: A group of `SidebarMenuItem`s in a `Sidebar`.
+    component: gpui_component::sidebar::SidebarMenu
+    children: [SidebarMenuItem]
+
+  SidebarMenuItem:
+    summary: One navigable item (or nested group) in a `SidebarMenu`.
+    component: gpui_component::sidebar::SidebarMenuItem
+    content: label
+    props:
+      label:
+        type: string
+        required: true
+      icon: icon
+      active:
+        type: bool
+        default: false
+      disabled:
+        type: bool
+        default: false
+      open:
+        type: bool
+        default: false
+        summary: Start expanded when it has children.
+    events:
+      click:
+    children: [SidebarMenuItem]
+
+  List:
+    summary: Virtualized list of rows — children are the row template list.
+    component: gpui_component::list::List
+    props:
+      selected:
+        type: number
+        bindable: true
+        summary: Selected row index.
+    events:
+      select: number
+      confirm: number
+    children: any
+
+  Tree:
+    summary: Expandable tree of `TreeItem`s.
+    component: gpui_component::tree::Tree
+    children: [TreeItem]
+
+  TreeItem:
+    summary: One node in a `Tree`; `TreeItem` children become sub-items, other children render as row content.
+    component: gpui_base::tree::TreeItem
+    content: label
+    props:
+      label:
+        type: string
+        required: true
+      icon: icon
+      expanded:
+        type: bool
+        default: false
+    children: any

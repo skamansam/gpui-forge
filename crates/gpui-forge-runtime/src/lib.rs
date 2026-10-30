@@ -3,29 +3,20 @@
 //! Compiled once per base component system. Select the base with exactly one
 //! `base-*` Cargo feature; `base-gpui-kit` is the default.
 
-#[cfg(not(any(
-    feature = "base-gpui-kit",
-    feature = "base-bezel",
-    feature = "base-adabraka",
-    feature = "base-gpui02"
-)))]
-compile_error!(
-    "gpui-forge-runtime: enable exactly one base feature: \
-     base-gpui-kit, base-bezel, base-adabraka or base-gpui02"
-);
-
-#[cfg(any(
-    all(feature = "base-gpui-kit", feature = "base-bezel"),
-    all(feature = "base-gpui-kit", feature = "base-adabraka"),
-    all(feature = "base-gpui-kit", feature = "base-gpui02"),
-    all(feature = "base-bezel", feature = "base-adabraka"),
-    all(feature = "base-bezel", feature = "base-gpui02"),
-    all(feature = "base-adabraka", feature = "base-gpui02"),
-))]
-compile_error!(
-    "gpui-forge-runtime: base features are mutually exclusive (each base links its own GPUI). \
-     Use `default-features = false` when selecting a non-default base."
-);
+const _: () = {
+    let bases = cfg!(feature = "base-gpui-kit") as usize
+        + cfg!(feature = "base-bezel") as usize
+        + cfg!(feature = "base-adabraka") as usize
+        + cfg!(feature = "base-gpui02") as usize
+        + cfg!(feature = "base-ratatui") as usize
+        + cfg!(feature = "base-iced") as usize;
+    assert!(
+        bases == 1,
+        "gpui-forge-runtime: enable exactly one base feature: \
+         base-gpui-kit, base-bezel, base-adabraka, base-gpui02, base-ratatui or base-iced. \
+         Use `default-features = false` when selecting a non-default base."
+    );
+};
 
 #[cfg(feature = "base-bezel")]
 compile_error!("gpui-forge-runtime: the Bezel base is not implemented yet (#94)");
@@ -36,6 +27,15 @@ compile_error!("gpui-forge-runtime: the adabraka-ui base is not implemented yet 
 #[cfg(feature = "base-gpui02")]
 compile_error!("gpui-forge-runtime: the Vanilla GPUI 0.2 base is not implemented yet (#96)");
 
+#[cfg(feature = "base-ratatui")]
+compile_error!("gpui-forge-runtime: the ratatui (TUI) base is not implemented yet (#112)");
+
+#[cfg(feature = "base-iced")]
+compile_error!("gpui-forge-runtime: the iced base is not implemented yet (#113)");
+
 pub mod base;
+pub mod check;
+#[cfg(feature = "base-gpui-kit")]
+pub mod render;
 
 pub use forge_spec;

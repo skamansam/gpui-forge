@@ -1,0 +1,10 @@
+# The starter document for "Blank" — a minimal Forge document.
+forge: "0.1"
+base: gpui-kit
+
+root:
+  VStack:
+  style:
+    padding: 16px
+  children:
+    - Text: Hello, Forge!

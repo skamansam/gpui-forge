@@ -14,7 +14,7 @@ manifests of the document's base and imported libraries.
 Document
   schema  : String?                // JSON Schema URL for editors (`$schema`)
   version : SpecVersion            // "0.1"
-  base    : BaseId?                // "gpui-kit" | "bezel" | "adabraka" | "gpui-0.2"; inherited from forge.toml when absent
+  base    : BaseId?                // "gpui-kit" | "bezel" | "adabraka" | "gpui-0.2" | "ratatui" | "iced" | …; inherited from forge.toml when absent
   imports : [Import]               // ordered
   meta    : Map<String, String>    // free-form: title, description, author, ...
   root    : Node
@@ -102,6 +102,16 @@ Document {
   },
 }
 ```
+
+## Mutation API
+
+`Document` exposes index-path mutations used by the Studio's inspector and editor:
+
+- `node_at(path)` / `node_at_mut(path)` — `"0.2.1"` selects `root.children[2].children[1]`
+  (`"0"` is the root itself).
+- `set_prop(path, name, Option<Value>)` — upsert or remove a prop.
+- `set_style(path, name, Option<Value>)` — upsert or remove a `style:` entry.
+- `insert_node(path, node, index)` / `remove_node(path)` — the palette/undo ops.
 
 ## Open questions
 

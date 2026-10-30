@@ -376,13 +376,13 @@ impl Reader<'_> {
                     .collect();
                 (values.len() == len).then_some(Value::List(values))
             }
-            YNode::Map(_, at) => {
-                self.hint(
-                    at,
-                    "expected a value, found a mapping",
-                    "text starting with `{` is a YAML mapping; quote it, e.g. `\"{$user.name}!\"`",
-                );
-                None
+            YNode::Map(items, _) => {
+                let len = items.len();
+                let entries: Vec<(String, Value)> = items
+                    .into_iter()
+                    .filter_map(|(key, val)| Some((key.text, self.typed(val, allow_two_way)?)))
+                    .collect();
+                (entries.len() == len).then_some(Value::Map(entries))
             }
         }
     }

@@ -254,7 +254,7 @@ pub(crate) fn is_path_ident(s: &str) -> bool {
     chars
         .next()
         .is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
-        && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+        && chars.all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
 }
 
 pub(crate) fn is_prop_key(s: &str) -> bool {

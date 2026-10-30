@@ -1,10 +1,11 @@
 use forge_web_canvas::check::{catalogs, check, to_json};
+use forge_web_canvas::BASE;
 use forge_web_canvas::render::set_path;
 
 #[test]
 fn valid_document_has_no_diagnostics() {
     let src = "forge: \"0.1\"\nroot:\n  VStack:\n  children:\n    - Button: Save\n      variant: Primary\n";
-    let (doc, diagnostics) = check(src, &catalogs());
+    let (doc, diagnostics) = check(src, BASE, &catalogs());
     assert!(doc.is_some());
     assert!(diagnostics.is_empty(), "{diagnostics:?}");
 }
@@ -12,7 +13,7 @@ fn valid_document_has_no_diagnostics() {
 #[test]
 fn invalid_document_still_renders() {
     let src = "forge: \"0.1\"\nroot:\n  Button: Save\n  variant: primary\n";
-    let (doc, diagnostics) = check(src, &catalogs());
+    let (doc, diagnostics) = check(src, BASE, &catalogs());
     assert!(
         doc.is_some(),
         "a wrong enum value must not blank the canvas"
@@ -23,7 +24,7 @@ fn invalid_document_still_renders() {
 
 #[test]
 fn syntax_error_reports_position() {
-    let (doc, diagnostics) = check("forge: \"0.1\"\nroot: [\n", &catalogs());
+    let (doc, diagnostics) =  check("forge: \"0.1\"\nroot: [\n", BASE, &catalogs());
     assert!(doc.is_none());
     let json: serde_json::Value = serde_json::from_str(&to_json(&diagnostics)).unwrap();
     assert!(json[0]["line"].as_u64().unwrap() >= 1);

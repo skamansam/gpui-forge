@@ -1,0 +1,115 @@
+# Every element the gpui-kit adapter renders, for a quick visual check.
+forge: "0.1"
+base: gpui-kit
+use:
+  forge: forge
+meta:
+  title: Component gallery
+
+root:
+  VStack#gallery:
+  style:
+    padding: 24px
+    gap: 16px
+  children:
+    - Label: Component gallery
+      secondary: "every element in the catalogs, rendered by gpui-forge-runtime"
+      style:
+        weight: semibold
+    - GroupBox: Layout
+      variant: Outline
+      children:
+        - HStack:
+          style:
+            gap: 8px
+          children:
+            - Tag: Box
+            - Tag: VStack
+            - Tag: HStack
+            - Tag: GroupBox
+            - Tag: forge.Preview
+    - GroupBox: Text
+      variant: Outline
+      children:
+        - Text: "Text element — interpolates {$user.name}"
+        - Label: Label
+          secondary: secondary line
+    - GroupBox: Inputs
+      variant: Outline
+      children:
+        - HStack:
+          style:
+            gap: 8px
+            wrap: true
+          children:
+            - Button: Default
+              size: Small
+            - Button: Primary
+              variant: Primary
+              size: Small
+            - Button: Ghost
+              variant: Ghost
+              size: Small
+            - Button: Danger
+              variant: Danger
+              size: Small
+        - Input:
+          placeholder: Input
+        - Textarea:
+          placeholder: Textarea
+          rows: 3
+        - Checkbox: Checkbox
+          checked: true
+        - Switch: Switch
+          checked: bind $gallery.switch
+        - RadioGroup:
+          selected: 1
+          children:
+            - Radio: One
+            - Radio: Two
+            - Radio: Three
+        - Select:
+          options: [Alpha, Beta, Gamma]
+          placeholder: Select
+        - Tabs:
+          variant: Pill
+          children:
+            - Tab: First
+              children:
+                - Text: first panel
+                  style:
+                    size: sm
+            - Tab: Second
+              children:
+                - Text: second panel
+                  style:
+                    size: sm
+    - GroupBox: Display
+      variant: Outline
+      children:
+        - HStack:
+          style:
+            gap: 8px
+            align: center
+          children:
+            - Icon: star
+            - Icon: rocket
+            - Icon: flame
+            - Badge: 7
+              children:
+                - Icon: bell
+            - Tag: Tag
+            - Tag: Info
+              variant: Info
+            - Tag: Danger
+              variant: Danger
+              outline: true
+        - Separator:
+          label: Separator
+        - Separator:
+          orientation: Vertical
+        - Link: GPUI Forge on GitHub
+          href: https://github.com/skamansam/gpui-forge
+        - Empty: Nothing here yet
+          icon: ghost
+          description: an Empty placeholder with an icon

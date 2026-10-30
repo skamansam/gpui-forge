@@ -5,8 +5,7 @@
 
 #![recursion_limit = "256"]
 
-pub mod check;
-pub mod render;
+pub use gpui_forge_runtime::{check, render};
 
 use std::borrow::Cow;
 use std::cell::RefCell;
@@ -15,8 +14,11 @@ use std::rc::Rc;
 use forge_spec::catalog::Catalog;
 use gpui_kit::component::theme::{Theme, ThemeMode};
 use gpui_kit::{prelude::*, *};
-use render::ForgeView;
+use gpui_forge_runtime::render::ForgeView;
 use wasm_bindgen::prelude::*;
+
+/// The base component system this canvas renders with.
+pub const BASE: &str = gpui_forge_runtime::base::BASE_ID;
 
 thread_local! {
     static APPLICATION: RefCell<Option<ApplicationHandle>> = const { RefCell::new(None) };
@@ -72,8 +74,8 @@ pub fn start(dark: bool, assets: String) {
             cx.new(|cx| {
                 let mut view = ForgeView::new(CATALOGS.with(Clone::clone));
                 view.set_sinks(
-                    Rc::new(forge_hook),
-                    Rc::new(|state| forge_state(&state.to_string())),
+                    Rc::new(|call, _, _| forge_hook(call)),
+                    Rc::new(|state, _, _| forge_state(&state.to_string())),
                 );
                 if let Some(state) = PENDING_STATE.with(|p| p.borrow_mut().take()) {
                     view.set_state(state, cx);
@@ -123,7 +125,7 @@ fn with_view(f: impl FnOnce(&Entity<ForgeView>, &mut App)) {
 /// Reads, validates and (when it parses) renders `yaml`. Returns the diagnostics as JSON.
 #[wasm_bindgen]
 pub fn render(yaml: &str) -> String {
-    let (doc, diagnostics) = CATALOGS.with(|c| check::check(yaml, c));
+    let (doc, diagnostics) = CATALOGS.with(|c| check::check(yaml, BASE, c));
     if let Some(doc) = doc {
         if VIEW.with(|v| v.borrow().is_none()) {
             PENDING.with(|p| *p.borrow_mut() = Some(doc));
@@ -137,7 +139,7 @@ pub fn render(yaml: &str) -> String {
 /// Validates `yaml` without rendering it. Returns the diagnostics as JSON.
 #[wasm_bindgen]
 pub fn diagnostics(yaml: &str) -> String {
-    CATALOGS.with(|c| check::to_json(&check::check(yaml, c).1))
+    CATALOGS.with(|c| check::to_json(&check::check(yaml, BASE, c).1))
 }
 
 /// Replaces the view state that bindings read from and write to.

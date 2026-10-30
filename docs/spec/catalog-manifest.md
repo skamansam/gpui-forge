@@ -70,7 +70,7 @@ the catalog: `style` keys come from the style and layout model (#5) and apply to
 
 | Key | Meaning |
 |---|---|
-| `type` | `string`, `number`, `length`, `bool`, `color`, `icon`, `enum`, or `list<T>`. |
+| `type` | `string`, `number`, `length`, `bool`, `color`, `icon`, `enum`, `list<T>`, or `map`. |
 | `values` | Allowed bare words, for `enum` (and `list<enum>`). |
 | `default` | Default value, written in the Forge value syntax and checked against `type`. |
 | `required` | The prop must be set (directly or through `content`). Default `false`. |
@@ -89,6 +89,7 @@ What each type accepts from a document (see [Forge YAML values](forge-yaml.md#va
 | `icon` | an icon name |
 | `enum` | one of `values` |
 | `list<T>` | a YAML list whose items are all `T` |
+| `map` | a YAML mapping; nested keys are the elements own contract |
 
 One-way bindings (`$path`) are accepted by every type and checked at runtime. Theme tokens are
 accepted by `color`, `length` and `number`.

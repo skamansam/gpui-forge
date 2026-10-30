@@ -46,7 +46,7 @@ root:
 |---|---|---|
 | `$schema` | no | Schema URL (also accepted as a `# yaml-language-server: $schema=…` comment) |
 | `forge` | yes | Spec version, as a string (`"0.1"`) |
-| `base` | no | Base component system (`gpui-kit`, `bezel`, `adabraka`, `gpui-0.2`); defaults to the project's `forge.toml` |
+| `base` | no | Base component system (`gpui-kit`, `bezel`, `adabraka`, `gpui-0.2`, and planned non-GPUI bases `ratatui`, `iced`); defaults to the project's `forge.toml` |
 | `use` | no | Map of import alias → `"<library-id> [<version-req>]"` |
 | `meta` | no | Map of string → string (title, description, …) |
 | `root` | yes | The root node |
@@ -83,6 +83,15 @@ Keys are classified by shape: the element key matches `^([a-z][\w-]*\.)?[A-Z]\w*
 `on <event>` keys start with `on `, and everything else is a prop. Exactly one element key per node.
 
 Canonical key order written by the formatter: element key, props, `style`, events, `children`.
+
+### Universal props
+
+`tooltip` may appear on **any** element — it is not declared per-element and the validator does
+not flag it as unknown. The runtime attaches the text as a hover tooltip around the rendered
+element.
+
+Binding paths also accept `-` in each segment, so style props can bind state by their catalog
+names — e.g. `document.edits.style.text-align`.
 
 ## Values
 

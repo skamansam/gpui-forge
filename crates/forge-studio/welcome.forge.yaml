@@ -1,0 +1,35 @@
+# The document Forge Studio opens in its preview on startup.
+forge: "0.1"
+base: gpui-kit
+
+root:
+  VStack#welcome:
+  style:
+    height: full
+    padding: 32px
+    gap: 16px
+    align: center
+    justify: center
+  children:
+    - Icon: hammer
+      size: Large
+      color: $theme.primary
+    - Label: Welcome to Forge Studio
+      style:
+        size: xl
+        weight: semibold
+    - Text: "Every panel here — toolbar, palette, editor, preview, inspector — is a Forge document."
+      style:
+        color: $theme.muted_foreground
+        text-align: center
+    - Separator:
+    - HStack:
+      style:
+        gap: 8px
+      children:
+        - Button: Open a .forge.yaml…
+          variant: Primary
+          on click: open_document()
+        - Button: Component gallery
+          variant: Secondary
+          on click: open_gallery()

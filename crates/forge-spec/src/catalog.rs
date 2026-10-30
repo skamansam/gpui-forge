@@ -79,6 +79,8 @@ pub enum PropType {
     Icon,
     Enum(Vec<String>),
     List(Box<PropType>),
+    /// A YAML mapping; nested keys are the element's own contract.
+    Map,
 }
 
 impl PropType {
@@ -103,6 +105,7 @@ impl PropType {
             (T::Icon, Value::Enum(_) | Value::String(_)) => true,
             (T::Enum(values), Value::Enum(v)) => values.contains(v),
             (T::List(item), Value::List(items)) => items.iter().all(|i| item.accepts(i)),
+            (T::Map, Value::Map(_)) => true,
             _ => false,
         }
     }
@@ -119,6 +122,7 @@ impl fmt::Display for PropType {
             PropType::Icon => f.write_str("icon"),
             PropType::Enum(values) => write!(f, "one of {}", values.join(", ")),
             PropType::List(item) => write!(f, "list<{item}>"),
+            PropType::Map => write!(f, "map"),
         }
     }
 }
@@ -413,6 +417,7 @@ impl Loader {
             "bool" => PropType::Bool,
             "color" => PropType::Color,
             "icon" => PropType::Icon,
+            "map" => PropType::Map,
             "enum" => match values {
                 Some(values) if !values.is_empty() => return Some(PropType::Enum(values)),
                 _ => {
@@ -431,7 +436,7 @@ impl Loader {
                 }
                 None => {
                     let message = format!(
-                        "unknown prop type `{text}`; expected string, number, length, bool, color, icon, enum or list<T>"
+                        "unknown prop type `{text}`; expected string, number, length, bool, color, icon, enum, list<T> or map"
                     );
                     self.error(ty.pos, message);
                     return None;

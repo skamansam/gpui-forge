@@ -1,0 +1,55 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for the Forge runtime's own elements.
+# These are provided by gpui-forge-runtime, not by a component library.
+catalog: "0.1"
+library: forge
+name: Forge
+version: 0.1.0
+license: Apache-2.0
+bases:
+  gpui-kit: "*"
+
+elements:
+  Preview:
+    summary: Hosts another Forge document inside this document.
+    component: gpui_forge_runtime::render::ForgeView
+    props:
+      placeholder:
+        type: string
+        summary: Shown while the host application has not set a document.
+    children: none
+
+  Outline:
+    summary: Widget tree of a document hosted by `forge.Preview`.
+    component: gpui_forge_runtime::render::ForgeView
+    props:
+      of:
+        type: string
+        required: true
+        summary: "The `forge.Preview` element id — `of: canvas`."
+      placeholder:
+        type: string
+        summary: Shown while the preview has no document.
+      selected:
+        type: string
+        bindable: true
+        summary: Node index path (`0.2.1`) of the selected row.
+    events:
+      select: string
+    children: none
+
+  Inspector:
+    summary: Property table for the selected node in a `forge.Preview`'s document.
+    component: gpui_forge_runtime::render::ForgeView
+    props:
+      of:
+        type: string
+        required: true
+      selected:
+        type: string
+        bindable: true
+        summary: Node index path to inspect — the same path `forge.Outline` writes.
+      placeholder:
+        type: string
+        summary: Shown when nothing is selected.
+    children: none

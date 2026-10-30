@@ -170,6 +170,13 @@ fn inline(value: &Value, flow: bool) -> String {
             let items: Vec<String> = items.iter().map(|item| inline(item, true)).collect();
             format!("[{}]", items.join(", "))
         }
+        Value::Map(entries) => {
+            let items: Vec<String> = entries
+                .iter()
+                .map(|(key, val)| format!("{}: {}", string_scalar(key, true), inline(val, true)))
+                .collect();
+            format!("{{{}}}", items.join(", "))
+        }
     }
 }
 

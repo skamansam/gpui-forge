@@ -59,6 +59,19 @@ A Rust app links exactly one `gpui`, so components built on different GPUI versi
 *   Changing base later is a migration (`forge migrate --base`).
 *   Libraries pinned to raw Zed git revisions fit no base and are tracked for porting ([#83](https://github.com/skamansam/gpui-forge/issues/83)).
 
+### Non-GPUI bases (planned)
+
+Bases are not limited to GPUI builds. The document model, Forge YAML loader, catalogs and
+validation are toolkit-agnostic, so the same files drive other UI frameworks. What each
+non-GPUI base needs is a catalog, a runtime adapter, its own style profile (the style &
+layout keys map to GPUI `Styled` methods) and a preview host (`forge-preview-<base>`,
+[#97](https://github.com/skamansam/gpui-forge/issues/97)).
+
+| Base | Kind | Event model | Web/WASM | Tracking |
+|---|---|---|---|---|
+| **ratatui** | Terminal UI; immediate-mode, drawn from state each frame | `on <event>` fires while the node is focused (key/mouse are polled) | via a terminal-emulator backend (e.g. ratzilla) | [#112](https://github.com/skamansam/gpui-forge/issues/112) |
+| **iced** | Elm-style GUI on winit/wgpu — not a TUI | `on <event>` maps to a `Message` in `update()` | experimental | [#113](https://github.com/skamansam/gpui-forge/issues/113) |
+
 ---
 
 ## 📐 Architecture Overview
@@ -96,7 +109,7 @@ graph TD
 
 ## 🗺 Roadmap
 
-- [ ] **Phase 1: The Foundation.** Define the `.forge` specification ([#1](https://github.com/skamansam/gpui-forge/issues/1)) and implement the `gpui-forge-runtime` ([#12](https://github.com/skamansam/gpui-forge/issues/12)), plus base component systems and library adapters ([#70](https://github.com/skamansam/gpui-forge/issues/70)).
+- [ ] **Phase 1: The Foundation.** Define the `.forge` specification ([#1](https://github.com/skamansam/gpui-forge/issues/1)) and implement the `gpui-forge-runtime` ([#12](https://github.com/skamansam/gpui-forge/issues/12)), plus base component systems and library adapters ([#70](https://github.com/skamansam/gpui-forge/issues/70)) — GPUI bases first, then non-GPUI bases like ratatui and iced ([#112](https://github.com/skamansam/gpui-forge/issues/112), [#113](https://github.com/skamansam/gpui-forge/issues/113)).
 - [ ] **Phase 2: The CLI.** Build `forge-cli` for format conversion ([#22](https://github.com/skamansam/gpui-forge/issues/22)).
 - [ ] **Phase 3: The Web Canvas.** Create the Svelte editor for basic layout composition ([#29](https://github.com/skamansam/gpui-forge/issues/29)).
 - [ ] **Phase 4: The Studio.** Develop the native GPUI desktop IDE (Forge Studio) ([#41](https://github.com/skamansam/gpui-forge/issues/41)).
@@ -125,7 +138,7 @@ sudo apt install gcc g++ clang libfontconfig-dev libwayland-dev libwebkit2gtk-4.
   vulkan-validationlayers libvulkan1
 ```
 
-`gpui-forge-runtime` is built for one base at a time via mutually exclusive `base-*` features (`base-gpui-kit` is the default; `base-bezel`, `base-adabraka` and `base-gpui02` are reserved until their bases land). `forge-spec` must stay GPUI-free; CI enforces this.
+`gpui-forge-runtime` is built for one base at a time via mutually exclusive `base-*` features (`base-gpui-kit` is the default; `base-bezel`, `base-adabraka`, `base-gpui02`, `base-ratatui` and `base-iced` are reserved until their bases land). `forge-spec` must stay GPUI-free; CI enforces this.
 
 ---
 

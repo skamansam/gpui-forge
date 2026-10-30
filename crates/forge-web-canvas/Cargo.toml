@@ -12,6 +12,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 gpui-kit.workspace = true
+gpui-forge-runtime = { workspace = true, features = ["base-gpui-kit"] }
 wasm-bindgen = "0.2"
 console_error_panic_hook = "0.1"
 forge-spec.workspace = true

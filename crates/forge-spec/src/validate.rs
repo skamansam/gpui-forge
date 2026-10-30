@@ -198,6 +198,7 @@ impl<'a> Validator<'a> {
             let pos = spans.and_then(|s| s.props.get(name)).copied().unwrap_or(at);
             match def.prop(name) {
                 Some(prop) => self.value(element, prop, value, pos),
+                None if name == "tooltip" => {}
                 None => {
                     let known: Vec<&str> = def.props.iter().map(|p| p.name.as_str()).collect();
                     self.hint(

@@ -8,15 +8,18 @@ repository.workspace = true
 
 [features]
 default = ["base-gpui-kit"]
-# Exactly one base must be enabled: each base links its own GPUI build.
+# Exactly one base must be enabled: each base links its own UI toolkit build.
 base-gpui-kit = ["dep:gpui-kit"]
 base-bezel = []
 base-adabraka = []
 base-gpui02 = []
+base-ratatui = []
+base-iced = []
 
 [dependencies]
 forge-spec.workspace = true
 gpui-kit = { workspace = true, optional = true }
+serde_json = "1"
 
 [lints]
 workspace = true

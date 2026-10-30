@@ -99,3 +99,8 @@ checked at runtime; two-way bindings (`bind …`) are not allowed in `style`.
 
 Grid layout, absolute positioning, transitions and responsive variants. They will be added as new
 keys, so existing documents stay valid.
+
+The keys above are the **GPUI-family profile**: they name GPUI `Styled` methods and gpui-kit theme
+fields. Non-GPUI bases ([ratatui](https://github.com/skamansam/gpui-forge/issues/112),
+[iced](https://github.com/skamansam/gpui-forge/issues/113)) will get their own style profiles
+matching their toolkit's styling model (e.g. ratatui `Constraint`s and `Modifier`s).

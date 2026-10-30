@@ -1,0 +1,44 @@
+# Component gallery for the `forge` widget set — the intrinsic elements the
+# runtime provides on top of base libraries.
+forge: "0.1"
+base: gpui-kit
+use:
+  forge: forge
+
+root:
+  VStack:
+  style:
+    height: full
+    padding: 24px
+    gap: 16px
+    overflow: scroll
+  children:
+    - Text: forge.* intrinsics
+      style:
+        size: lg
+        weight: semibold
+    - GroupBox: forge.Preview
+      variant: Outline
+      children:
+        - Text: Hosts a document rendered by the adapter — Studio's live canvas is one.
+          style: {size: sm, color: $theme.muted_foreground}
+        - forge.Preview#demo:
+          placeholder: no document
+          style: {min-height: 100px}
+    - GroupBox: forge.Outline
+      variant: Outline
+      children:
+        - Text: A Tree of a document's nodes — Studio's Structure panel is one.
+          style: {size: sm, color: $theme.muted_foreground}
+        - forge.Outline:
+          of: demo
+          placeholder: no document
+          style: {min-height: 100px}
+    - GroupBox: forge.Inspector
+      variant: Outline
+      children:
+        - Text: A catalog-driven property form for the selected node.
+          style: {size: sm, color: $theme.muted_foreground}
+        - forge.Inspector:
+          of: demo
+          placeholder: no selection

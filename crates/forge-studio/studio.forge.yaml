@@ -1,0 +1,343 @@
+# The Forge Studio shell, described in Forge YAML and rendered by gpui-forge-runtime.
+forge: "0.1"
+base: gpui-kit
+use:
+  forge: forge
+meta:
+  title: Forge Studio
+
+root:
+  VStack#studio:
+  style:
+    width: full
+    height: full
+  children:
+    # ── title bar (drag region + window controls) ────────────────────────
+    - TitleBar:
+      children:
+        # ── toolbar ──────────────────────────────────────────────────────────
+        - DropdownMenu#file-menu:
+          label: File
+          size: Small
+          variant: Ghost
+          children:
+            - MenuItem: New
+              icon: file-plus
+              on click: new_document()
+            - MenuItem: Open…
+              icon: folder-open
+              on click: open_document()
+            - MenuItem: Format
+              icon: sparkles
+              on click: format_document()
+            - MenuItem: Save
+              icon: save
+              on click: save_document()
+            - MenuSeparator:
+            - MenuItem: Test error
+              icon: alert-circle
+              on click: test_error()
+        - VStack:
+          style: {width: 180px}
+          children:
+            - Label: "{$studio.file}"
+            - Text: "{$studio.base} · forge {$studio.spec}"
+              style: {size: xs, color: $theme.muted_foreground}
+        - HStack#toolbar:
+          style:
+            align: center
+            gap: 8px
+            padding: [6px, 12px]
+          children:
+            - Icon: hammer
+            - Label: Forge Studio
+              style:
+                weight: semibold
+            - Tag: self-hosted
+              outline: true
+            - Box:
+              style:
+                grow: true
+            - Switch#dark_mode:
+              label: Dark
+              checked: bind $studio.dark
+              on change: apply_theme($studio.dark)
+    # - Separator:
+    # ── body ─────────────────────────────────────────────────────────────
+    - HStack#body:
+      style:
+        grow: true
+        min-height: 0
+      children:
+        # palette: a live gallery of what the adapter renders
+        - VStack#palette:
+          style:
+            width: 230px
+            padding: 8px
+            gap: 8px
+            overflow: scroll
+          children:
+            - Accordion:
+              tooltip: Accordion
+              style:
+                # min-height: 400px
+              children:
+              - AccordionItem:
+                title: Layout
+                children:
+                  - Text: "Box · VStack · HStack · GroupBox · forge.Preview"
+                    tooltip: Text
+                    style:
+                      size: xs
+                      color: $theme.muted_foreground
+              - AccordionItem:
+                title: Inputs
+                children:
+                  - Button: Button
+                    tooltip: Button
+                    size: Small
+                    on click: copy_snippet('Button')
+                  - Input:
+                    tooltip: Input
+                    placeholder: Input
+                  - Checkbox: Checkbox
+                    tooltip: Checkbox
+                  - Switch: Switch
+                    tooltip: Switch
+                  - RadioGroup:
+                    tooltip: RadioGroup
+                    selected: 0
+                    children:
+                      - Radio: Option one
+                        tooltip: Radio
+                      - Radio: Option two
+                        tooltip: Radio
+                  - Select:
+                    tooltip: Select
+                    options: [First, Second]
+                    placeholder: Select
+              - AccordionItem:
+                title: Display
+                children:
+                  - Label: Label
+                    tooltip: Label
+                    secondary: with secondary text
+                  - Badge: 3
+                    tooltip: Badge
+                    children:
+                      - Icon: bell
+                        tooltip: Icon
+                        size: Small
+                  - HStack:
+                    tooltip: HStack
+                    style:
+                      gap: 4px
+                    children:
+                      - Tag: Tag
+                        tooltip: Tag
+                      - Tag: Primary
+                        tooltip: Tag
+                        variant: Primary
+                      - Tag: Success
+                        tooltip: Tag
+                        variant: Success
+                  - HStack:
+                    tooltip: HStack
+                    style:
+                      gap: 8px
+                      align: center
+                    children:
+                      - Icon: star
+                        tooltip: Icon
+                        size: Small
+                      - Icon: heart
+                        tooltip: Icon
+                        size: Small
+                      - Icon: zap
+                        tooltip: Icon
+                        size: Small
+                      - Icon: palette
+                        tooltip: Icon
+                        size: Small
+                  - Separator:
+                    tooltip: Separator
+                    label: Separator
+                  - Link: GPUI Forge on GitHub
+                    tooltip: Link
+                    href: https://github.com/skamansam/gpui-forge
+                  - Empty: Empty
+                    tooltip: Empty
+                    description: an empty-state placeholder
+              - AccordionItem:
+                title: Editing
+                children:
+                  - Tabs:
+                    tooltip: Tabs
+                    children:
+                      - Tab: One
+                        tooltip: Tab
+                        children:
+                          - Text: first tab panel
+                            tooltip: Text
+                            style:
+                              size: xs
+                      - Tab: Two
+                        tooltip: Tab
+                        children:
+                          - Text: second tab panel
+                            tooltip: Text
+                            style:
+                              size: xs
+        - Separator:
+          tooltip: Separator
+          orientation: Vertical
+        # workspace: source on the left, live preview on the right
+        - HStack#workspace:
+          style:
+            grow: true
+            min-width: 0
+            gap: 8px
+            padding: 8px
+          children:
+            - Tabs#panes:
+              style:
+                grow: true
+                min-height: 0
+                basis: 100%
+                border: 1px
+              selected: bind $studio.tab
+              children:
+                - Tab: Welcome
+                  children:
+                    - VStack:
+                      style:
+                        grow: true
+                        padding: 32px
+                        gap: 16px
+                        align: start
+                        border: 1px
+                      children:
+                        - Label: Get started
+                          secondary: pick a starter project to load into the workspace
+                        - GroupBox: Welcome
+                          variant: Outline
+                          children:
+                            - Text: A guided tour of the Forge document format and the studio shell.
+                              style: {size: sm, color: $theme.muted_foreground}
+                            - HStack:
+                              style: {justify: end}
+                              children:
+                                - Button: Open
+                                  size: Small
+                                  variant: Primary
+                                  on click: start_from('welcome')
+                        - GroupBox: Gallery
+                          variant: Outline
+                          children:
+                            - HStack:
+                              children:
+                              - Text: "Select widget set:"
+                              - Select#widget_set:
+                                options: [gpui-kit, forge]
+                                value: bind $studio.widget_set
+                                placeholder: gallery
+                                on change: widget_set_changed($studio.widget_set)
+                                style: {width: 110px}
+                            - Text: The live component gallery — every element the adapter renders.
+                              style: {size: sm, color: $theme.muted_foreground}
+                            - HStack:
+                              style: {justify: end}
+                              children:
+                                - Button: Open
+                                  size: Small
+                                  variant: Primary
+                                  on click: start_from('gallery')
+                        - GroupBox: Blank
+                          variant: Outline
+                          children:
+                            - Text: An empty document — a root VStack with a single Text.
+                              style: {size: sm, color: $theme.muted_foreground}
+                            - HStack:
+                              style: {justify: end}
+                              children:
+                                - Button: Open
+                                  size: Small
+                                  variant: Primary
+                                  on click: start_from('blank')
+                - Tab: Source
+                  children:
+                    - Editor#source:
+                      language: yaml
+                      highlighting:
+                        languages: [yaml]
+                        default: yaml
+                        show-selection: true
+                      value: bind $editor.source
+                      on change: source_changed()
+                      style: 
+                        grow: true
+                        border: 1px
+                - Tab: Preview
+                  children:
+                    - forge.Preview#canvas:
+                      style: 
+                        grow: true
+                        border: 1px
+        - VStack#inspector:
+          style:
+            width: 280px
+            padding: 8px
+            gap: 8px
+            overflow: scroll
+          children:
+            - GroupBox: Structure
+              variant: Outline
+              style:
+                min-height: 120px
+              children:
+                - forge.Outline#structure:
+                  of: canvas
+                  selected: bind $document.selected
+                  on select: select_node()
+                  placeholder: no document
+                  style:
+                    grow: true
+                    min-height: 200px
+            - GroupBox: Inspector
+              variant: Outline
+              children:
+                - forge.Inspector#props:
+                  of: canvas
+                  selected: bind $document.selected
+                  placeholder: nothing selected
+            - GroupBox: Diagnostics
+              variant: Outline
+              children:
+                - Text: "{$studio.diagnostics}"
+                  style:
+                    size: sm
+            - GroupBox: View state
+              variant: Outline
+              children:
+                - Text: "{$preview.state}"
+                  style:
+                    size: xs
+                    color: $theme.muted_foreground
+    - Separator:
+    # ── status bar ───────────────────────────────────────────────────────
+    - HStack#statusbar:
+      style:
+        align: center
+        gap: 8px
+        padding: [4px, 12px]
+      children:
+        - Text: "{$status.message}"
+          style:
+            size: sm
+        - Box:
+          style:
+            grow: true
+        - Tag: "forge {$studio.spec}"
+          outline: true
+        - Tag: gpui-kit 0.8
+          outline: true
