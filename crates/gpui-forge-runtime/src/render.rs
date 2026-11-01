@@ -14,6 +14,7 @@ use forge_spec::{
     PathSegment, Segment, Unit, Value,
 };
 use gpui_kit::component::accordion::Accordion;
+use gpui_kit::component::setting::{SettingGroup, SettingItem, SettingPage, Settings};
 use gpui_kit::component::alert::{Alert, AlertVariant};
 use gpui_kit::component::avatar::{Avatar, AvatarGroup};
 use gpui_kit::component::badge::Badge;
@@ -122,7 +123,7 @@ type Options = Vec<SharedString>;
 
 pub struct ForgeView {
     doc: Option<Document>,
-    catalogs: Vec<Catalog>,
+    pub catalogs: Vec<Catalog>,
     state: Json,
     inputs: HashMap<String, Entity<InputState>>,
     textareas: HashMap<String, Entity<TextareaState>>,
@@ -147,6 +148,9 @@ pub struct ForgeView {
     /// The directory of the document this view renders — `src` paths on
     /// `Svg`/image elements resolve relative to it.
     base_dir: Option<std::path::PathBuf>,
+    /// Element-picker mode — rendered nodes get a click overlay that writes
+    /// `document.selected` (the host's structure/inspector selection).
+    pick: bool,
     /// Shown while there is no document (e.g. inside `forge.Preview`).
     empty_text: Option<String>,
 }
@@ -230,6 +234,7 @@ impl ForgeView {
             subscriptions: Vec::new(),
             errors: Vec::new(),
             base_dir: None,
+            pick: false,
             empty_text: None,
         }
     }
@@ -493,6 +498,83 @@ impl ForgeView {
             .collect()
     }
 
+    /// A `SettingPage` node — `title`/`text` prop or positional content names it;
+    /// children are `SettingGroup`s.
+    fn setting_page(
+        &mut self,
+        node: &Node,
+        key: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> SettingPage {
+        let title = self
+            .prop_text(node, "title")
+            .or_else(|| self.prop_text(node, "text"))
+            .unwrap_or_default();
+        let groups = node
+            .children
+            .iter()
+            .enumerate()
+            .map(|(i, c)| self.setting_group(c, &format!("{key}/{i}"), window, cx))
+            .collect::<Vec<_>>();
+        SettingPage::new(title).groups(groups)
+    }
+
+    /// A `SettingGroup` node — children are `SettingItem`s.
+    fn setting_group(
+        &mut self,
+        node: &Node,
+        key: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> SettingGroup {
+        let title = self
+            .prop_text(node, "title")
+            .or_else(|| self.prop_text(node, "text"))
+            .unwrap_or_default();
+        let items = node
+            .children
+            .iter()
+            .enumerate()
+            .map(|(i, c)| self.setting_item(c, &format!("{key}/{i}"), window, cx))
+            .collect::<Vec<_>>();
+        SettingGroup::new().title(title).items(items)
+    }
+
+    /// A `SettingItem` node — `title`/`text` names the row; children render as
+    /// its field element lazily inside the dialog's render.
+    fn setting_item(
+        &mut self,
+        node: &Node,
+        key: &str,
+        _window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> SettingItem {
+        let title = self
+            .prop_text(node, "title")
+            .or_else(|| self.prop_text(node, "text"));
+        let weak = cx.entity().downgrade();
+        let node = node.clone();
+        let key = key.to_owned();
+        SettingItem::render(move |_, window, cx| {
+            let kids = try_update(&weak, cx, "setting-item", |v, cx| {
+                v.slot_children(&node, &format!("{key}/0"), window, cx)
+            })
+            .unwrap_or_default();
+            let field = div().children(kids);
+            match &title {
+                Some(title) => div()
+                    .flex()
+                    .flex_col()
+                    .gap_1()
+                    .child(Label::new(title.clone()))
+                    .child(field)
+                    .into_any_element(),
+                None => field.into_any_element(),
+            }
+        })
+    }
+
     /// Builds a `TableHead` — shared by `Table` header cells and standalone nodes.
     fn table_head(&self, node: &Node) -> TableHead {
         let mut head = TableHead::new()
@@ -581,6 +663,14 @@ impl ForgeView {
     /// on `Svg`/image elements resolve against it.
     pub fn set_base_dir(&mut self, dir: impl Into<std::path::PathBuf>) {
         self.base_dir = Some(dir.into());
+    }
+
+    /// Element-picker mode — while on, every rendered node is clickable and
+    /// selects itself via `document.selected` before the mode clears.
+    pub fn set_pick(&mut self, pick: bool, cx: &mut Context<Self>) {
+        eprintln!("set_pick: {pick}");
+        self.pick = pick;
+        cx.notify();
     }
 
     /// Resolves `src` against `base_dir` when relative — `std::fs` calls use this
@@ -1468,7 +1558,11 @@ impl ForgeView {
                     Some(state) => state.clone(),
                     None => {
                         let selected = options.iter().position(|o| *o == value).map(IndexPath::new);
+                        let ix = options.iter().position(|o| *o == value).map(IndexPath::new);
                         let state = cx.new(|cx| SelectState::new(options, selected, window, cx));
+                        // Sync the bound `value` into the state's selected index —
+                        // external writes (e.g. theme reset) land here too.
+                        state.update(cx, |s, cx| s.set_selected_index(ix, window, cx));
                         let path = self.two_way(node, "value");
                         let changed = node.clone();
                         let subscription = cx.subscribe(
@@ -1691,7 +1785,9 @@ impl ForgeView {
                     .when_some(color, |a, c| a.icon(icon("info").text_color(c)))
                     .into_any_element()
             }
-            "Kbd" => match Keystroke::parse(&self.prop_text(node, "keys").unwrap_or_default()) {
+            "Kbd" => match Keystroke::parse(Box::leak(
+                self.prop_text(node, "keys").unwrap_or_default().into_boxed_str(),
+            )) {
                 Ok(stroke) => Kbd::new(stroke)
                     .appearance(!matches!(
                         self.prop(node, "appearance"),
@@ -1701,6 +1797,37 @@ impl ForgeView {
                     .into_any_element(),
                 Err(_) => placeholder("invalid keystroke".to_owned(), cx),
             },
+            "Settings" => {
+                let id = format!("settings-{key}");
+                let pages = node
+                    .children
+                    .iter()
+                    .enumerate()
+                    .map(|(i, c)| self.setting_page(c, &format!("{key}/{i}"), window, cx))
+                    .collect::<Vec<_>>();
+                Settings::new(id).pages(pages).into_any_element()
+            }
+            "SettingPage" | "SettingsGroup" | "SettingItem" => placeholder(
+                format!("`{}` only renders inside `Settings`", node.element.name),
+                cx,
+            ),
+            // A `Dialog` used inline renders its contents in a bordered box;
+            // top-level `Dialog#id:` declarations open via `open_dialog`.
+            "Dialog" => {
+                let kids = self.slot_children(node, &format!("{key}/0"), window, cx);
+                let title = self.prop_text(node, "title");
+                let el = div()
+                    .flex()
+                    .flex_col()
+                    .gap_2()
+                    .border_1()
+                    .border_color(cx.theme().border)
+                    .rounded_lg()
+                    .p_4()
+                    .when_some(title, |d, t| d.child(Label::new(t)))
+                    .children(kids);
+                return style(el, &node.style, cx).into_any_element();
+            }
             "Skeleton" => Skeleton::new()
                 .when(self.prop_bool(node, "secondary"), |s| s.secondary())
                 .into_any_element(),
@@ -2409,6 +2536,19 @@ impl ForgeView {
                         state
                     }
                 };
+                // Sync the bound `selected` value into the tree's internal
+                // `selected_ix` — the element-picker writes `document.selected`
+                // (a doc path like "0.0.1"); the item id uses the same
+                // `{key}/{i}` shape, so a `/`-normalized path matches.
+                if let Some(selected) = self.prop_text(node, "selected") {
+                    // doc path "0.4.1" → item id "root/4/1"
+                    let id = selected.replacen('0', "root", 1).replace('.', "/");
+                    state.update(cx, |state, cx| {
+                        if let Some(ix) = state.index_of(&id.into()) {
+                            state.set_selected_index(Some(ix), cx);
+                        }
+                    });
+                }
                 let weak = cx.entity().downgrade();
                 let nodes = Rc::new(nodes);
                 let key = key.to_owned();
@@ -2448,13 +2588,51 @@ impl ForgeView {
             }
             other => placeholder(format!("`{other}` is not in the gpui-kit catalog"), cx),
         };
-        wrap(
+        let element = wrap(
             element,
             &node.style,
             &format!("forge-{key}"),
             self.prop_text(node, "tooltip"),
             cx,
-        )
+        );
+        if self.pick {
+            // Element-picker — an absolute overlay ON TOP of the element so
+            // clicks/hover land here, not on the child's own handlers.
+            let path = key.replacen("root", "0", 1).replace('/', ".");
+            let weak = cx.entity().downgrade();
+            let accent = cx.theme().accent;
+            div()
+                .relative()
+                .child(element)
+                .child(
+                    div()
+                        .id(format!("pick-{key}"))
+                        .absolute()
+                        .inset_0()
+                        .cursor_pointer()
+                        .hover(move |s| {
+                            s.bg(accent.alpha(0.35))
+                                .border_2()
+                                .border_color(accent)
+                        })
+                        .on_click(move |_, _, cx| {
+                            eprintln!("pick click: {path}");
+                            try_update(&weak, cx, "pick", |p, cx| {
+                                p.pick = false;
+                                p.write(
+                                    &parse_path("document.selected").unwrap(),
+                                    Json::String(path.clone()),
+                                    cx,
+                                );
+                                cx.notify();
+                            })
+                            .ok();
+                        }),
+                )
+                .into_any_element()
+        } else {
+            element
+        }
     }
 }
 

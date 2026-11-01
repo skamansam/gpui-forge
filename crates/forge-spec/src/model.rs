@@ -14,6 +14,8 @@ pub struct Document {
     pub base: Option<String>,
     pub imports: Vec<Import>,
     pub meta: Vec<(String, String)>,
+    /// Top-level `Dialog#name:` declarations, opened by `open_dialog(name)`.
+    pub dialogs: Vec<Node>,
     pub root: Node,
 }
 

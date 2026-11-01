@@ -12,9 +12,12 @@ use gpui_forge_runtime::base::BASE_ID;
 use gpui_forge_runtime::check;
 use gpui_forge_runtime::forge_spec::catalog::Catalog;
 use gpui_forge_runtime::forge_spec::value::parse_path;
-use gpui_forge_runtime::forge_spec::{Diagnostic, yaml};
+use gpui_forge_runtime::forge_spec::{Diagnostic, ElementRef, Node, Value, yaml};
 use gpui_forge_runtime::render::{ForgeView, get_path, set_path};
-use gpui_kit::component::theme::{Theme, ThemeMode};
+use gpui_kit::component::theme::{Theme, ThemeMode, ThemeRegistry};
+use gpui_kit::component::theme::ThemeSet;
+use gpui_kit::component::WindowExt as _;
+use gpui_forge_runtime::forge_spec::Document;
 use gpui_kit::{prelude::*, *};
 use serde_json::{Value as Json, json};
 
@@ -86,10 +89,41 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
 
     view.set_base_dir(env!("CARGO_MANIFEST_DIR"));
     let dark = Theme::global(cx).is_dark();
+    // Load every vendored theme JSON — `default-theme.json` is only
+    // light+dark; the full catalog lives in the workspace `themes/` dir.
+    // Load every vendored theme JSON — `default-theme.json` is only
+    // light+dark; the full catalog lives in the workspace `themes/` dir.
+    let themes_dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../themes");
+    if let Ok(entries) = std::fs::read_dir(&themes_dir) {
+        for entry in entries.flatten() {
+            if entry.path().extension().and_then(|s| s.to_str()) == Some("json")
+                && let Ok(content) = std::fs::read_to_string(entry.path())
+            {
+                let _ = ThemeRegistry::global_mut(cx).load_themes_from_str(&content);
+            }
+        }
+    }
+    // Watch the dir too — editing a theme JSON reloads the registry live.
+    let _ = ThemeRegistry::watch_dir(themes_dir, cx, |_| {});
+    let sorted = ThemeRegistry::global(cx).sorted_themes();
+    let light_themes: Vec<String> = sorted
+        .iter()
+        .filter(|t| !t.mode.is_dark())
+        .map(|t| t.name.to_string())
+        .collect();
+    let dark_themes: Vec<String> = sorted
+        .iter()
+        .filter(|t| t.mode.is_dark())
+        .map(|t| t.name.to_string())
+        .collect();
+    let theme_name = Theme::global(cx).theme_name().to_string();
     view.set_state(
         json!({
             "studio": {
                 "dark": dark,
+                "light_themes": light_themes,
+                "dark_themes": dark_themes,
+                "theme": theme_name,
                 "file": "welcome.forge.yaml",
                 "diagnostics": "",
                 "spec": gpui_forge_runtime::forge_spec::SPEC_VERSION,
@@ -108,8 +142,13 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "save_document",
         "format_document",
         "apply_theme",
+        "apply_theme_name",
+        "apply_theme_json",
+        "reset_theme",
         "source_changed",
         "copy_snippet",
+        "insert_component",
+        "pick",
         "open_gallery",
         "select_node",
         "prop_changed",
@@ -117,6 +156,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "start_from",
         "widget_set_changed",
         "test_error",
+        "open_dialog",
         "quit",
     ] {
         let shared = shared.clone();
@@ -178,6 +218,171 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
 }
 
 /// Routes a fired hook (from the shell or a previewed document) to its implementation.
+/// `open_dialog('name')` — finds the document's `Dialog#name` declaration,
+/// builds a child ForgeView from its contents, and opens it via `WindowExt`.
+fn open_dialog(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &mut Context<ForgeView>) {
+    let Some(name) = args
+        .first()
+        .map(|a| a.trim_matches(|c| c == '"' || c == '\'').to_owned())
+    else {
+        return;
+    };
+    let Some(node) = view
+        .document()
+        .and_then(|doc| doc.dialogs.iter().find(|n| n.id.as_deref() == Some(name.as_str())).cloned())
+    else {
+        view.report(format!("dialog `{name}` not found"));
+        return;
+    };
+    let catalogs = view.catalogs.clone();
+    let shell = cx.entity().downgrade();
+    let shared = shared.clone();
+    let child = cx.new(|cx| {
+        let mut v = ForgeView::new(catalogs);
+        let weak = shell.clone();
+        let shared = shared.clone();
+        v.set_sinks(
+            Rc::new(move |call, _, cx| {
+                let (name, args) = parse_call(call);
+                let weak = weak.clone();
+                let shared = shared.clone();
+                cx.defer(move |cx| {
+                    weak.update(cx, |view, cx| dispatch(view, &name, &args, &shared, cx))
+                        .ok();
+                });
+            }),
+            Rc::new(move |state, _, cx| {
+                let shell = shell.clone();
+                let state = state.to_string();
+                cx.defer(move |cx| {
+                    shell
+                        .update(cx, |view, cx| {
+                            view.update_state(
+                                &parse_path("dialog.state").unwrap(),
+                                Json::String(state.clone()),
+                                cx,
+                            );
+                        })
+                        .ok();
+                });
+            }),
+        );
+        v.set_document(
+            Document {
+                schema: None,
+                version: "0.1".into(),
+                base: None,
+                imports: vec![],
+                meta: vec![],
+                dialogs: vec![],
+                root: Node {
+                    element: ElementRef { namespace: None, name: "VStack".into() },
+                    style: node.style.clone(),
+                    children: node.children.clone(),
+                    ..Default::default()
+                },
+            },
+            cx,
+        );
+        v
+    });
+    // The hook runs inside the main window's own update cycle — `App::windows()`
+    // handles can't be `update`d from in here because the window is taken out of
+    // the slot map for the duration. A foreground task runs after the update
+    // finishes, when the window is live again.
+    let app = cx.to_async();
+    let title = SharedString::from(name.clone());
+    cx.foreground_executor()
+        .spawn(async move {
+            let opened = app.update(|cx| {
+                for handle in cx.windows() {
+                    let title = title.clone();
+                    let child = child.clone();
+                    if handle
+                        .update(cx, move |_, window, cx| {
+                            window.open_dialog(cx, move |dialog, _, _| {
+                                dialog.title(title.clone()).child(child.clone())
+                            });
+                        })
+                        .is_ok()
+                    {
+                        return true;
+                    }
+                }
+                false
+            });
+            if !opened {
+                eprintln!("open_dialog: no live window for `{name}`");
+            }
+        })
+        .detach();
+}
+
+/// `apply_theme_name('Theme name')` — the titlebar `Select` writes `studio.theme`
+/// and fires this; swaps the theme config + mode to match.
+fn apply_theme_name(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeView>) {
+    let Some(name) = args.first() else {
+        return;
+    };
+    let Some(config) = ThemeRegistry::global(cx).themes().get(name.as_str()).cloned() else {
+        view.report(format!("theme `{name}` not found"));
+        return;
+    };
+    // `apply_config` installs the config into its mode's slot, switches mode,
+    // and applies colors — `edit` sees it as already installed and skips the
+    // reload that would otherwise re-apply the OLD config.
+    Theme::update(cx, |theme| theme.apply_config(&config));
+    // Show the theme's JSON in the Themes editor.
+    if let Ok(json) = serde_json::to_string_pretty(&ThemeSet {
+        name: config.name.clone(),
+        themes: vec![(*config).clone()],
+        ..Default::default()
+    }) {
+        view.update_state(&parse_path("studio.theme_json").unwrap(), Json::String(json), cx);
+    }
+}
+
+/// `reset_theme()` — the Themes tab's reset icon — restores the registry's
+/// default light/dark theme for the current mode.
+fn reset_theme(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
+    let registry = ThemeRegistry::global(cx);
+    let dark = Theme::global(cx).is_dark();
+    let default = if dark {
+        registry.default_dark_theme().clone()
+    } else {
+        registry.default_light_theme().clone()
+    };
+    let name = default.name.to_string();
+    Theme::update(cx, |theme| theme.apply_config(&default));
+    view.update_state(&parse_path("studio.theme").unwrap(), Json::String(name), cx);
+}
+
+/// `apply_theme_json()` — parse `studio.theme_json` (a `ThemeSet`) and apply the
+/// first theme, so the user can edit a builtin theme's JSON and see it live.
+fn apply_theme_json(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
+    let json = view
+        .state()
+        .get("studio")
+        .and_then(|s| s.get("theme_json"))
+        .and_then(|j| j.as_str())
+        .map(|s| s.to_owned());
+    let Some(json) = json else {
+        return;
+    };
+    match serde_json::from_str::<ThemeSet>(&json) {
+        Ok(set) => {
+            let Some(config) = set.themes.into_iter().next() else {
+                view.report("theme set has no themes".to_owned());
+                return;
+            };
+            let name = config.name.to_string();
+            Theme::update(cx, |theme| theme.apply_config(&Rc::new(config)));
+            view.update_state(&parse_path("studio.theme").unwrap(), Json::String(name), cx);
+        }
+        Err(e) => view.report(format!("theme json: {e}")),
+    }
+}
+
 fn dispatch(
     view: &mut ForgeView,
     name: &str,
@@ -197,8 +402,18 @@ fn dispatch(
             let dark = args.first().is_some_and(|a| a == "true");
             Theme::change(if dark { ThemeMode::Dark } else { ThemeMode::Light }, None, cx);
         }
+        "apply_theme_name" => apply_theme_name(view, args, cx),
+        "apply_theme_json" => apply_theme_json(view, cx),
+        "reset_theme" => reset_theme(view, cx),
         "source_changed" => reload(view, shared, cx),
         "copy_snippet" => copy_snippet(view, args, cx),
+        "insert_component" => insert_component(view, args, cx),
+        "pick" => {
+            view.report("pick mode — click an element in the preview".to_owned());
+            view.preview("canvas", cx)
+                .update(cx, |p, cx| p.set_pick(true, cx));
+        }
+        "open_dialog" => open_dialog(view, args, shared, cx),
         "open_gallery" => start_from(view, &["gallery".into()], shared, cx),
         "start_from" => start_from(view, args, shared, cx),
         "widget_set_changed" => {
@@ -416,6 +631,45 @@ fn format_document(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<
         }
         None => status(view, "cannot format: the document does not parse", cx),
     }
+}
+
+/// Palette click — inserts a default node for the element under the outline
+/// selection (or the root when nothing is selected).
+fn insert_component(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeView>) {
+    let Some(tag) = args.first().cloned() else {
+        return;
+    };
+    let selected = view
+        .state()
+        .get("document")
+        .and_then(|e| e.get("selected"))
+        .and_then(|s| s.as_str())
+        .map(|s| s.to_owned());
+    let preview = view.preview("canvas", cx);
+    preview.update(cx, |p, cx| {
+        let Some(mut doc) = p.document().cloned() else {
+            return;
+        };
+        let node = Node {
+            element: ElementRef {
+                name: tag.clone(),
+                namespace: None,
+            },
+            content: Some(Value::String(tag.clone())),
+            ..Default::default()
+        };
+        // Insert under the selected node; a leaf or missing selection falls
+        // back to the root.
+        let target = selected
+            .as_deref()
+            .filter(|path| doc.node_at(path).is_some())
+            .unwrap_or("0");
+        if doc.insert_node(target, node, None) {
+            p.set_document(doc, cx);
+        }
+    });
+    view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(true), cx);
+    cx.notify();
 }
 
 fn copy_snippet(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeView>) {

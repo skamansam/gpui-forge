@@ -54,6 +54,10 @@ pub fn to_string(doc: &Document, options: &WriteOptions) -> String {
             line(&mut out, 2, &format!("{key}: {}", text_scalar(text)));
         }
     }
+    for dialog in &doc.dialogs {
+        out.push('\n');
+        write_node(&mut out, dialog, 0, false, options);
+    }
     out.push('\n');
     line(&mut out, 0, "root:");
     write_node(&mut out, &doc.root, 2, false, options);

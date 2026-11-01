@@ -51,6 +51,42 @@ root:
 | `meta` | no | Map of string → string (title, description, …) |
 | `root` | yes | The root node |
 
+## Fragments, anchors and merge keys
+
+Forge supports standard YAML anchors, aliases and merge keys, so documents can share
+repeated structure through top-level fragment slots. Any unknown top-level key whose
+value is a mapping or sequence is treated as a fragment slot — it is not rendered or
+validated as part of the document; scalar fragments go inside a container:
+
+```yaml
+forge: "0.1"
+
+appMenu: &appMenu              # fragment slot — only referenced via *appMenu
+  icon: hamburger
+  children:
+    - MenuItem: New
+      on click: new_document()
+
+fragments:                     # scalar anchors live inside a container
+  label: &label "Save"
+
+root:
+  VStack:
+  children:
+    - DropdownMenu#file-menu:
+      <<: *appMenu             # merge key — splices icon + children in
+    - Button: *label           # alias — copies the anchored scalar
+```
+
+- `&name` anchors attach to scalars, sequences or mappings; `*name` aliases resolve to
+  a clone of the anchored value and may appear anywhere — including as a whole node.
+- `<<` merges a mapping (or a list of mappings, earlier winning) into the current one.
+  Explicit keys always override merged ones.
+- Aliases must reference anchors defined earlier in the document.
+- Serializing (`write`) expands fragments back into plain YAML; anchors are not
+  preserved on round-trips.
+- YAML tags (`!tag`) remain unsupported.
+
 ## Nodes
 
 A node is a YAML mapping with exactly one **element key** plus optional reserved keys.

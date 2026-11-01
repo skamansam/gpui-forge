@@ -6,6 +6,75 @@ use:
 meta:
   title: Forge Studio
 
+
+# the app menu
+appMenu: &appMenu
+  icon: hamburger
+  size: Small
+  variant: Ghost
+  children:
+    - MenuItem: New
+      icon: file-plus
+      on click: new_document()
+    - MenuItem: Open…
+      icon: folder-open
+      on click: open_document()
+    - MenuItem: Format
+      icon: sparkles
+      on click: format_document()
+    - MenuItem: Save
+      icon: save
+      on click: save_document()
+    - MenuSeparator:
+    - MenuItem: Preferences...
+      icon: settings
+      on click: open_dialog("preferences")
+    - MenuSeparator:
+    - MenuItem: Test error
+      icon: alert-circle
+      on click: test_error()
+
+# the title bar
+titleBar: &titleBar
+  children:
+    - HStack:
+      children:
+        - DropdownMenu#file-menu:
+          <<: *appMenu
+        - Image#logo:
+          src: ../../gpui_forge_icon_medallion.svg
+          size: 18px
+        - Label: Forge Studio
+          style:
+            weight: semibold
+        - Tag: self-hosted
+          outline: true
+
+Dialog#preferences:
+  style:
+    width: 400px
+    height: 300px
+    padding: 16px
+    gap: 16px
+    border-radius: 8px
+    background: $theme.background
+    border: 1px solid $theme.border
+  children:
+    - Text: "This is a dialog"
+      style:
+        size: lg
+        weight: semibold
+    - Settings:
+      children:
+        - SettingPage: Theme
+          children:
+            - SettingsGroup: Theme
+              children:
+                - SettingItem: Select theme
+                  children:
+                    - Select:
+                      options: ["Light", "Dark", "System"]
+
 root:
   VStack#studio:
   style:
@@ -14,56 +83,7 @@ root:
   children:
     # ── title bar (drag region + window controls) ────────────────────────
     - TitleBar:
-      children:
-        # ── toolbar ──────────────────────────────────────────────────────────
-        - DropdownMenu#file-menu:
-          label: File
-          size: Small
-          variant: Ghost
-          children:
-            - MenuItem: New
-              icon: file-plus
-              on click: new_document()
-            - MenuItem: Open…
-              icon: folder-open
-              on click: open_document()
-            - MenuItem: Format
-              icon: sparkles
-              on click: format_document()
-            - MenuItem: Save
-              icon: save
-              on click: save_document()
-            - MenuSeparator:
-            - MenuItem: Test error
-              icon: alert-circle
-              on click: test_error()
-        - VStack:
-          style: {width: 180px}
-          children:
-            - Label: "{$studio.file}"
-            - Text: "{$studio.base} · forge {$studio.spec}"
-              style: {size: xs, color: $theme.muted_foreground}
-        - HStack#toolbar:
-          style:
-            align: center
-            gap: 8px
-            padding: [6px, 12px]
-          children:
-            - Image#logo:
-              src: gpui_forge_icon_medallion.svg
-              size: 18px
-            - Label: Forge Studio
-              style:
-                weight: semibold
-            - Tag: self-hosted
-              outline: true
-            - Box:
-              style:
-                grow: true
-            - Switch#dark_mode:
-              label: Dark
-              checked: bind $studio.dark
-              on change: apply_theme($studio.dark)
+      <<: *titleBar
     # - Separator:
     # ── body ─────────────────────────────────────────────────────────────
     - HStack#body:
@@ -72,6 +92,7 @@ root:
         min-height: 0
       children:
         # palette: a live gallery of what the adapter renders
+        # palette: a tool grid — click an icon to insert the element
         - VStack#palette:
           style:
             width: 230px
@@ -80,116 +101,299 @@ root:
             overflow: scroll
           children:
             - Accordion:
-              tooltip: Accordion
-              style:
-                # min-height: 400px
+              style: {height: full}
               children:
               - AccordionItem:
                 title: Layout
                 children:
-                  - Text: "Box · VStack · HStack · GroupBox · forge.Preview"
-                    tooltip: Text
-                    style:
-                      size: xs
-                      color: $theme.muted_foreground
+                  - HStack:
+                    style: {gap: 4px}
+                    children:
+                      - Button:
+                        icon: rows-3
+                        variant: Ghost
+                        size: Small
+                        tooltip: VStack
+                        on click: insert_component('VStack')
+                      - Button:
+                        icon: columns-3
+                        variant: Ghost
+                        size: Small
+                        tooltip: HStack
+                        on click: insert_component('HStack')
+                      - Button:
+                        icon: square
+                        variant: Ghost
+                        size: Small
+                        tooltip: Box
+                        on click: insert_component('Box')
+                      - Button:
+                        icon: package
+                        variant: Ghost
+                        size: Small
+                        tooltip: GroupBox
+                        on click: insert_component('GroupBox')
+                  - HStack:
+                    style: {gap: 4px}
+                    children:
+                      - Button:
+                        icon: panel-left
+                        variant: Ghost
+                        size: Small
+                        tooltip: Sidebar
+                        on click: insert_component('Sidebar')
+                      - Button:
+                        icon: scroll
+                        variant: Ghost
+                        size: Small
+                        tooltip: Scrollable
+                        on click: insert_component('Scrollable')
               - AccordionItem:
                 title: Inputs
                 children:
-                  - Button: Button
-                    tooltip: Button
-                    size: Small
-                    on click: copy_snippet('Button')
-                  - Input:
-                    tooltip: Input
-                    placeholder: Input
-                  - Checkbox: Checkbox
-                    tooltip: Checkbox
-                  - Switch: Switch
-                    tooltip: Switch
-                  - RadioGroup:
-                    tooltip: RadioGroup
-                    selected: 0
+                  - HStack:
+                    style: {gap: 4px}
                     children:
-                      - Radio: Option one
-                        tooltip: Radio
-                      - Radio: Option two
-                        tooltip: Radio
-                  - Select:
-                    tooltip: Select
-                    options: [First, Second]
-                    placeholder: Select
+                      - Button:
+                        icon: square-mouse-pointer
+                        variant: Ghost
+                        size: Small
+                        tooltip: Button
+                        on click: insert_component('Button')
+                      - Button:
+                        icon: text-cursor-input
+                        variant: Ghost
+                        size: Small
+                        tooltip: Input
+                        on click: insert_component('Input')
+                      - Button:
+                        icon: square-check
+                        variant: Ghost
+                        size: Small
+                        tooltip: Checkbox
+                        on click: insert_component('Checkbox')
+                      - Button:
+                        icon: toggle-right
+                        variant: Ghost
+                        size: Small
+                        tooltip: Switch
+                        on click: insert_component('Switch')
+                  - HStack:
+                    style: {gap: 4px}
+                    children:
+                      - Button:
+                        icon: circle-dot
+                        variant: Ghost
+                        size: Small
+                        tooltip: RadioGroup
+                        on click: insert_component('RadioGroup')
+                      - Button:
+                        icon: chevrons-up-down
+                        variant: Ghost
+                        size: Small
+                        tooltip: Select
+                        on click: insert_component('Select')
+                      - Button:
+                        icon: sliders-horizontal
+                        variant: Ghost
+                        size: Small
+                        tooltip: Slider
+                        on click: insert_component('Slider')
+                      - Button:
+                        icon: calendar
+                        variant: Ghost
+                        size: Small
+                        tooltip: DatePicker
+                        on click: insert_component('DatePicker')
+                  - HStack:
+                    style: {gap: 4px}
+                    children:
+                      - Button:
+                        icon: text-select
+                        variant: Ghost
+                        size: Small
+                        tooltip: Textarea
+                        on click: insert_component('Textarea')
               - AccordionItem:
                 title: Display
                 children:
-                  - Label: Label
-                    tooltip: Label
-                    secondary: with secondary text
-                  - Badge: 3
-                    tooltip: Badge
-                    children:
-                      - Icon: bell
-                        tooltip: Icon
-                        size: Small
                   - HStack:
-                    tooltip: HStack
-                    style:
-                      gap: 4px
+                    style: {gap: 4px}
                     children:
-                      - Tag: Tag
-                        tooltip: Tag
-                      - Tag: Primary
-                        tooltip: Tag
-                        variant: Primary
-                      - Tag: Success
-                        tooltip: Tag
-                        variant: Success
+                      - Button:
+                        icon: type
+                        variant: Ghost
+                        size: Small
+                        tooltip: Text
+                        on click: insert_component('Text')
+                      - Button:
+                        icon: tag
+                        variant: Ghost
+                        size: Small
+                        tooltip: Label
+                        on click: insert_component('Label')
+                      - Button:
+                        icon: badge
+                        variant: Ghost
+                        size: Small
+                        tooltip: Badge
+                        on click: insert_component('Badge')
+                      - Button:
+                        icon: star
+                        variant: Ghost
+                        size: Small
+                        tooltip: Icon
+                        on click: insert_component('Icon')
                   - HStack:
-                    tooltip: HStack
-                    style:
-                      gap: 8px
-                      align: center
+                    style: {gap: 4px}
                     children:
-                      - Icon: star
-                        tooltip: Icon
+                      - Button:
+                        icon: minus
+                        variant: Ghost
                         size: Small
-                      - Icon: heart
-                        tooltip: Icon
+                        tooltip: Separator
+                        on click: insert_component('Separator')
+                      - Button:
+                        icon: link
+                        variant: Ghost
                         size: Small
-                      - Icon: zap
-                        tooltip: Icon
+                        tooltip: Link
+                        on click: insert_component('Link')
+                      - Button:
+                        icon: ghost
+                        variant: Ghost
                         size: Small
-                      - Icon: palette
-                        tooltip: Icon
+                        tooltip: Empty
+                        on click: insert_component('Empty')
+                      - Button:
+                        icon: image
+                        variant: Ghost
                         size: Small
-                  - Separator:
-                    tooltip: Separator
-                    label: Separator
-                  - Link: GPUI Forge on GitHub
-                    tooltip: Link
-                    href: https://github.com/skamansam/gpui-forge
-                  - Empty: Empty
-                    tooltip: Empty
-                    description: an empty-state placeholder
+                        tooltip: Image
+                        on click: insert_component('Image')
+                  - HStack:
+                    style: {gap: 4px}
+                    children:
+                      - Button:
+                        icon: loader
+                        variant: Ghost
+                        size: Small
+                        tooltip: Spinner
+                        on click: insert_component('Spinner')
+                      - Button:
+                        icon: bell
+                        variant: Ghost
+                        size: Small
+                        tooltip: Alert
+                        on click: insert_component('Alert')
+                      - Button:
+                        icon: circle-user
+                        variant: Ghost
+                        size: Small
+                        tooltip: Avatar
+                        on click: insert_component('Avatar')
+                      - Button:
+                        icon: activity
+                        variant: Ghost
+                        size: Small
+                        tooltip: Progress
+                        on click: insert_component('Progress')
               - AccordionItem:
                 title: Editing
                 children:
-                  - Tabs:
-                    tooltip: Tabs
+                  - HStack:
+                    style: {gap: 4px}
                     children:
-                      - Tab: One
-                        tooltip: Tab
-                        children:
-                          - Text: first tab panel
-                            tooltip: Text
-                            style:
-                              size: xs
-                      - Tab: Two
-                        tooltip: Tab
-                        children:
-                          - Text: second tab panel
-                            tooltip: Text
-                            style:
-                              size: xs
+                      - Button:
+                        icon: square-pen
+                        variant: Ghost
+                        size: Small
+                        tooltip: Editor
+                        on click: insert_component('Editor')
+                      - Button:
+                        icon: clipboard
+                        variant: Ghost
+                        size: Small
+                        tooltip: Clipboard
+                        on click: insert_component('Clipboard')
+                      - Button:
+                        icon: list
+                        variant: Ghost
+                        size: Small
+                        tooltip: List
+                        on click: insert_component('List')
+                      - Button:
+                        icon: table
+                        variant: Ghost
+                        size: Small
+                        tooltip: DataTable
+                        on click: insert_component('DataTable')
+                  - HStack:
+                    style: {gap: 4px}
+                    children:
+                      - Button:
+                        icon: folder-tree
+                        variant: Ghost
+                        size: Small
+                        tooltip: Tree
+                        on click: insert_component('Tree')
+              - AccordionItem:
+                title: Navigation
+                children:
+                  - HStack:
+                    style: {gap: 4px}
+                    children:
+                      - Button:
+                        icon: layout-panel-top
+                        variant: Ghost
+                        size: Small
+                        tooltip: Tabs
+                        on click: insert_component('Tabs')
+                      - Button:
+                        icon: rows-2
+                        variant: Ghost
+                        size: Small
+                        tooltip: Accordion
+                        on click: insert_component('Accordion')
+                      - Button:
+                        icon: chevrons-right
+                        variant: Ghost
+                        size: Small
+                        tooltip: Breadcrumb
+                        on click: insert_component('Breadcrumb')
+                      - Button:
+                        icon: menu
+                        variant: Ghost
+                        size: Small
+                        tooltip: DropdownMenu
+                        on click: insert_component('DropdownMenu')
+                  - HStack:
+                    style: {gap: 4px}
+                    children:
+                      - Button:
+                        icon: step-forward
+                        variant: Ghost
+                        size: Small
+                        tooltip: Stepper
+                        on click: insert_component('Stepper')
+                      - Button:
+                        icon: panel-bottom
+                        variant: Ghost
+                        size: Small
+                        tooltip: Sheet
+                        on click: insert_component('Sheet')
+                      - Button:
+                        icon: layers
+                        variant: Ghost
+                        size: Small
+                        tooltip: Dialog
+                        on click: insert_component('Dialog')
+                      - Button:
+                        icon: square-stack
+                        variant: Ghost
+                        size: Small
+                        tooltip: Toggle
+                        on click: insert_component('Toggle')
         - Separator:
           tooltip: Separator
           orientation: Vertical
@@ -306,6 +510,62 @@ root:
                       style: 
                         grow: true
                         border: 1px
+                - Tab: Preferences
+                  children:
+                    - VStack:
+                      style: {grow: true, padding: 12px, gap: 12px}
+                      children:
+                        - Label: Light themes
+                          style: {weight: semibold}
+                        - Select#prefs_light:
+                          options: $studio.light_themes
+                          value: bind $studio.theme
+                          placeholder: light theme
+                          on change: apply_theme_name($studio.theme)
+                        - Label: Dark themes
+                          style: {weight: semibold}
+                        - Select#prefs_dark:
+                          options: $studio.dark_themes
+                          value: bind $studio.theme
+                          placeholder: dark theme
+                          on change: apply_theme_name($studio.theme)
+                - Tab: Themes
+                  children:
+                    - VStack:
+                      style: {grow: true, padding: 12px, gap: 12px}
+                      children:
+                        - HStack:
+                          style: {justify: end}
+                          children:
+                            - Button:
+                              icon: rotate-ccw
+                              variant: Ghost
+                              size: Small
+                              tooltip: Reset to the default theme
+                              on click: reset_theme()
+                        - Label: Light
+                          style: {weight: semibold}
+                        - Select#editor_light:
+                          options: $studio.light_themes
+                          value: bind $studio.theme
+                          placeholder: light theme
+                          on change: apply_theme_name($studio.theme)
+                        - Label: Dark
+                          style: {weight: semibold}
+                        - Select#editor_dark:
+                          options: $studio.dark_themes
+                          value: bind $studio.theme
+                          placeholder: dark theme
+                          on change: apply_theme_name($studio.theme)
+                        - Editor#theme_json:
+                          language: json
+                          value: bind $studio.theme_json
+                        - HStack:
+                          style: {justify: end}
+                          children:
+                            - Button: Apply
+                              variant: Primary
+                              on click: apply_theme_json()
         - VStack#inspector:
           style:
             width: 280px
@@ -329,6 +589,15 @@ root:
             - GroupBox: Inspector
               variant: Outline
               children:
+                - HStack:
+                  style: {justify: end}
+                  children:
+                    - Button:
+                      icon: crosshair
+                      variant: Ghost
+                      size: Small
+                      tooltip: Pick element in preview
+                      on click: pick()
                 - forge.Inspector#props:
                   of: canvas
                   selected: bind $document.selected
@@ -360,6 +629,7 @@ root:
         - Box:
           style:
             grow: true
+        - Label: "{$studio.file}"
         - Tag: "forge {$studio.spec}"
           outline: true
         - Tag: gpui-kit 0.8

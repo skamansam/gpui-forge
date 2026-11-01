@@ -3,6 +3,7 @@
 use std::collections::HashMap;
 
 use super::tree::{self, Scalar, YNode};
+use crate::value::Quoting;
 use crate::SPEC_VERSION;
 use crate::diagnostic::{Diagnostic, Diagnostics, Pos};
 use crate::model::{Document, ElementRef, EventBinding, Import, Node, Value};
@@ -73,7 +74,7 @@ impl Reader<'_> {
         };
         self.check_duplicates(&entries);
         let (mut schema, mut version, mut base, mut root) = (None, None, None, None);
-        let (mut imports, mut meta) = (Vec::new(), Vec::new());
+        let (mut imports, mut meta, mut dialogs) = (Vec::new(), Vec::new(), Vec::new());
         let (mut saw_version, mut saw_root) = (false, false);
         for (key, val) in entries {
             match key.text.as_str() {
@@ -102,11 +103,25 @@ impl Reader<'_> {
                     saw_root = true;
                     root = self.node(val);
                 }
-                other => self.hint(
-                    key.pos,
-                    format!("unknown top-level key `{other}`"),
-                    "expected `$schema`, `forge`, `base`, `use`, `meta` or `root`",
-                ),
+                other => {
+                    // `Dialog#name:` declares a dialog; container values are
+                    // fragment slots for `&anchor` declarations; unknown scalar
+                    // keys are likely typos.
+                    let is_dialog = key.text == "Dialog"
+                        || key.text.starts_with("Dialog#")
+                        || key.text.starts_with("Dialog.");
+                    if is_dialog {
+                        if let Some(node) = self.dialog_node(key, val) {
+                            dialogs.push(node);
+                        }
+                    } else if matches!(val, YNode::Scalar(_)) {
+                        self.hint(
+                            key.pos,
+                            format!("unknown top-level key `{other}`"),
+                            "expected `$schema`, `forge`, `base`, `use`, `meta` or `root`",
+                        );
+                    }
+                }
             }
         }
         if !saw_version {
@@ -121,8 +136,29 @@ impl Reader<'_> {
             base,
             imports,
             meta,
+            dialogs,
             root: root?,
         })
+    }
+
+    /// Parses a top-level `Dialog#name:` declaration — the element key lives on
+    /// the key itself, so we synthesize `{Dialog#name: null, ..body}` for `node()`.
+    fn dialog_node(&mut self, key: Scalar, val: YNode) -> Option<Node> {
+        let YNode::Map(body, at) = val else {
+            self.error(key.pos, "`Dialog` must be a mapping");
+            return None;
+        };
+        let pos = key.pos;
+        let mut entries = vec![(
+            key,
+            YNode::Scalar(Scalar {
+                text: String::new(),
+                quoting: Quoting::Plain,
+                pos,
+            }),
+        )];
+        entries.extend(body);
+        self.node(YNode::Map(entries, at))
     }
 
     fn text(&mut self, val: YNode) -> Option<String> {

@@ -36,7 +36,7 @@ fn studio_documents_validate_clean() {
         ),
     ] {
         let (parsed, diagnostics) = check(src, "gpui-kit", &catalogs);
-        assert!(parsed, "{name} must parse");
+        assert!(parsed, "{name} must parse: {diagnostics:?}");
         assert!(diagnostics.is_empty(), "{name}: {diagnostics:?}");
     }
 }

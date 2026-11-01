@@ -119,20 +119,20 @@ root:
   VStack#root:
   style:
     gap: 12px
-    background: "#1e293b80"
+    background: '#1e293b80'
     color: $theme.colors.text
   children:
     - Text: "Welcome back, {$user.name} {{beta}"
     - Input#email:
       value: bind $form.email
       placeholder: Email
-      label: 'true'
+      label: true
     - Button: Sign in
       variant: primary
       disabled: $form.invalid
       on click: sign_in()
     - Select:
-      options: [light, dark, system default, '42']
+      options: [light, dark, system default, 42]
       on change: set_theme($settings.id, 2, dark mode)
     - List:
       items:
@@ -176,10 +176,7 @@ fn unquoted_color_gets_a_hint() {
 #[test]
 fn duplicate_keys() {
     let e = errors("forge: \"0.1\"\nroot:\n  Text: a\n  size: lg\n  size: sm\n");
-    assert!(
-        e.contains("5:3: duplicate key `size` (first defined at 4:3)"),
-        "{e}"
-    );
+    assert!(e.contains("5:3: duplicated key in mapping"), "{e}");
 }
 
 #[test]
@@ -227,9 +224,101 @@ fn collects_every_error() {
     assert!(e.contains("2:1: unknown top-level key `what`"), "{e}");
 }
 
+fn prop<'a>(node: &'a forge_spec::Node, key: &str) -> Option<&'a Value> {
+    node.props.iter().find(|(k, _)| k == key).map(|(_, v)| v)
+}
+
+fn text(value: Option<&Value>) -> Option<&str> {
+    match value {
+        Some(Value::String(s)) | Some(Value::Enum(s)) => Some(s),
+        _ => None,
+    }
+}
+
 #[test]
-fn rejects_anchors_and_multiple_documents() {
-    assert!(errors("forge: \"0.1\"\nroot: &r\n  Text: a\n").contains("anchors"));
+fn anchors_aliases_and_merge_keys() {
+    // Fragments at the top level hold `&anchor` slots; `<<` splices them in.
+    let doc = read(
+        r#"
+forge: "0.1"
+shared: &shared
+  icon: save
+  on click: save()
+root:
+  VStack:
+  children:
+    - Button:
+      <<: *shared
+    - Label: hi
+"#,
+    );
+    let button = &doc.root.children[0];
+    assert_eq!(button.element.name, "Button");
+    assert_eq!(text(prop(button, "icon")), Some("save"));
+    assert!(button.events.iter().any(|e| e.event == "click"));
+}
+
+#[test]
+fn aliases_inherit_whole_nodes_and_scalar_anchors() {
+    let doc = read(
+        r#"
+forge: "0.1"
+fragments:
+  btn: &btn
+    Button: Save
+  t: &t "hi"
+root:
+  VStack:
+  children:
+    - *btn
+    - Label: *t
+"#,
+    );
+    assert_eq!(doc.root.children[0].element.name, "Button");
+    assert_eq!(text(doc.root.children[0].content.as_ref()), Some("Save"));
+    assert_eq!(text(doc.root.children[1].content.as_ref()), Some("hi"));
+}
+
+#[test]
+fn merge_keys_explicit_wins_and_errors() {
+    // Explicit keys override merged ones.
+    let doc = read(
+        r#"
+forge: "0.1"
+m: &m
+  icon: x
+  tooltip: t
+root:
+  Button:
+  <<: *m
+  icon: y
+"#,
+    );
+    assert_eq!(text(prop(&doc.root, "icon")), Some("y"));
+    assert_eq!(text(prop(&doc.root, "tooltip")), Some("t"));
+
+    // Sequences of maps merge in order, earlier winning.
+    let doc = read(
+        r#"
+forge: "0.1"
+a: &a {icon: x, tooltip: a}
+b: &b {tooltip: b}
+root:
+  Button:
+  <<: [*a, *b]
+"#,
+    );
+    assert_eq!(text(prop(&doc.root, "tooltip")), Some("a"));
+
+    // Undefined aliases and scalar merges error.
+    assert!(errors("forge: \"0.1\"\nroot:\n  Button:\n  <<: *missing\n").contains("anchor"));
+    assert!(
+        errors("forge: \"0.1\"\nroot:\n  Button:\n  <<: 'text'\n").contains("merge key `<<`")
+    );
+}
+
+#[test]
+fn rejects_multiple_documents() {
     assert!(
         errors("forge: \"0.1\"\nroot:\n  Text: a\n---\nforge: \"0.1\"\n").contains("exactly one")
     );

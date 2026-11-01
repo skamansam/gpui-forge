@@ -25,6 +25,43 @@ elements:
     component: gpui::Div
     children: any
 
+  Dialog:
+    summary: A top-level `Dialog#id:` declaration — opened via `open_dialog(name)`;
+      inline usage renders its contents in a bordered box.
+    component: gpui_component::dialog::Dialog
+    props:
+      title: string
+    children: any
+
+  Settings:
+    summary: Grouped settings pages.
+    component: gpui_component::setting::Settings
+    children: any
+
+  SettingPage:
+    summary: A page inside `Settings`.
+    component: gpui_component::setting::SettingPage
+    content: text
+    props:
+      text: string
+    children: any
+
+  SettingsGroup:
+    summary: A titled group of `SettingItem`s inside a `SettingPage`.
+    component: gpui_component::setting::SettingGroup
+    content: text
+    props:
+      text: string
+    children: any
+
+  SettingItem:
+    summary: A row inside a `SettingsGroup` — a title plus a field element.
+    component: gpui_component::setting::SettingItem
+    content: text
+    props:
+      text: string
+    children: any
+
   Text:
     summary: A run of text.
     component: gpui::SharedString
