@@ -566,6 +566,7 @@ fn load_source(
     let mut state = view.state().clone();
     set_path(&mut state, &parse_path("editor.source").unwrap(), Json::String(src.to_owned()));
     set_path(&mut state, &parse_path("studio.file").unwrap(), Json::String(name.to_owned()));
+    set_path(&mut state, &parse_path("studio.dirty").unwrap(), Json::Bool(false));
     set_path(
         &mut state,
         &parse_path("studio.diagnostics").unwrap(),
@@ -577,6 +578,9 @@ fn load_source(
         Json::String(problem_count(&diagnostics)),
     );
     view.set_state(state, cx);
+    // Sync the editor's text without firing `source_changed` — a fresh load
+    // is clean, not a user edit.
+    view.reset_inputs("source");
     if let Some(doc) = doc {
         view.set_preview_document("canvas", doc, cx);
         if let Some(dir) = dir {
@@ -589,6 +593,7 @@ fn load_source(
 /// `on change: source_changed()` — re-check the source on every edit and keep the
 /// preview showing the last valid document.
 fn reload(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView>) {
+    view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(true), cx);
     let src = source(view);
     let catalogs = shared.borrow().catalogs.clone();
     let (doc, diagnostics) = check::check(&src, BASE_ID, &catalogs);
@@ -613,7 +618,10 @@ fn save_document(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<Fo
         return;
     };
     match std::fs::write(&path, source(view)) {
-        Ok(()) => status(view, &format!("saved {}", path.display()), cx),
+        Ok(()) => {
+            view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(false), cx);
+            status(view, &format!("saved {}", path.display()), cx);
+        }
         Err(e) => status(view, &format!("cannot save {}: {e}", path.display()), cx),
     }
 }
@@ -629,6 +637,7 @@ fn save_as(shared: SharedState, cx: &mut Context<ForgeView>) {
         view.update(cx, move |view, cx| {
             match std::fs::write(&path, source(view)) {
                 Ok(()) => {
+                    view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(false), cx);
                     let name = path
                         .file_name()
                         .map(|n| n.to_string_lossy().into_owned())
