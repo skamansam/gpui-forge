@@ -31,6 +31,10 @@ struct Shared {
     /// The file `editor.source` was loaded from; `None` for embedded documents.
     file: Option<PathBuf>,
     catalogs: Vec<Catalog>,
+    /// Undo/redo — snapshots of `(document, editor source)` taken before each
+    /// mutation, so a step back restores the editor text exactly.
+    undo: Vec<(Document, String)>,
+    redo: Vec<(Document, String)>,
 }
 
 type SharedState = Rc<RefCell<Shared>>;
@@ -76,6 +80,8 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     let shared: SharedState = Rc::new(RefCell::new(Shared {
         file: None,
         catalogs: check::catalogs(),
+        undo: Vec::new(),
+        redo: Vec::new(),
     }));
 
     let mut view = ForgeView::new(shared.borrow().catalogs.clone());
@@ -150,6 +156,8 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "insert_component",
         "place_component",
         "pick",
+        "undo",
+        "redo",
         "open_gallery",
         "select_node",
         "prop_changed",
@@ -410,7 +418,9 @@ fn dispatch(
         "source_changed" => reload(view, shared, cx),
         "copy_snippet" => copy_snippet(view, args, cx),
         "insert_component" => insert_component(view, args, cx),
-        "place_component" => place_component(view, args, cx),
+        "place_component" => place_component(view, shared, cx),
+        "undo" => undo_action(view, shared, cx),
+        "redo" => redo_action(view, shared, cx),
         "pick" => {
             view.report("pick mode — click an element in the preview".to_owned());
             view.preview("canvas", cx)
@@ -427,8 +437,8 @@ fn dispatch(
             start_from(view, &[name.to_owned()], shared, cx);
         }
         "select_node" => select_node(view, args, cx),
-        "prop_changed" => prop_changed(view, args, cx),
-        "style_changed" => style_changed(view, args, cx),
+        "prop_changed" => prop_changed(view, args, shared, cx),
+        "style_changed" => style_changed(view, args, shared, cx),
         "quit" => cx.quit(),
         "test_error" => {
             view.report("test toast — simulated error".to_owned());
@@ -530,6 +540,9 @@ fn load_source(
     shared: &SharedState,
     cx: &mut Context<ForgeView>,
 ) {
+    // A different document invalidates the mutation history.
+    shared.borrow_mut().undo.clear();
+    shared.borrow_mut().redo.clear();
     let catalogs = shared.borrow().catalogs.clone();
     let (doc, diagnostics) = check::check(src, BASE_ID, &catalogs);
     let mut state = view.state().clone();
@@ -670,7 +683,7 @@ fn insert_component(view: &mut ForgeView, args: &[String], cx: &mut Context<Forg
 /// Fires when the preview reports a drop target (`studio.drop_target`) while a
 /// palette item is armed (`studio.placing`): parse the element's snippet into a
 /// node and insert it under the clicked node.
-fn place_component(view: &mut ForgeView, _args: &[String], cx: &mut Context<ForgeView>) {
+fn place_component(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView>) {
     let state = view.state().clone();
     let Some(tag) = get_path(&state, &parse_path("studio.placing").unwrap())
         .and_then(|j| j.as_str())
@@ -682,6 +695,7 @@ fn place_component(view: &mut ForgeView, _args: &[String], cx: &mut Context<Forg
         .and_then(|j| j.as_str())
         .map(str::to_owned);
     let node = snippet_node(&tag);
+    record_undo(view, shared, cx);
     let preview = view.preview("canvas", cx);
     let mut placed = None;
     preview.update(cx, |p, cx| {
@@ -745,6 +759,59 @@ fn snippet_node(tag: &str) -> Node {
         content: Some(Value::String(tag.to_owned())),
         ..Default::default()
     }
+}
+
+/// Snapshots `(document, source)` before a mutation; clears the redo stack.
+fn record_undo(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView>) {
+    let preview = view.preview("canvas", cx);
+    let Some(doc) = preview.read(cx).document().cloned() else {
+        return;
+    };
+    let src = source(view);
+    let mut shared = shared.borrow_mut();
+    shared.undo.push((doc, src));
+    if shared.undo.len() > 100 {
+        shared.undo.remove(0);
+    }
+    shared.redo.clear();
+}
+
+/// Restores the snapshot at the top of `stack`, pushing the current state onto
+/// the opposite stack.
+fn restore(
+    view: &mut ForgeView,
+    shared: &SharedState,
+    stack: impl Fn(&mut Shared) -> &mut Vec<(Document, String)>,
+    other: impl Fn(&mut Shared) -> &mut Vec<(Document, String)>,
+    cx: &mut Context<ForgeView>,
+) {
+    let Some((doc, src)) = stack(&mut shared.borrow_mut()).pop() else {
+        status(view, "nothing to restore", cx);
+        return;
+    };
+    let preview = view.preview("canvas", cx);
+    let current = preview.read(cx).document().cloned();
+    if let Some(current) = current {
+        other(&mut shared.borrow_mut()).push((current, source(view)));
+    }
+    preview.update(cx, |p, cx| p.set_document(doc, cx));
+    view.update_state(
+        &parse_path("editor.source").unwrap(),
+        Json::String(src),
+        cx,
+    );
+    view.reset_inputs("source");
+    view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(true), cx);
+}
+
+fn undo_action(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView>) {
+    status(view, "undo", cx);
+    restore(view, shared, |s| &mut s.undo, |s| &mut s.redo, cx);
+}
+
+fn redo_action(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView>) {
+    status(view, "redo", cx);
+    restore(view, shared, |s| &mut s.redo, |s| &mut s.undo, cx);
 }
 
 fn copy_snippet(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeView>) {
@@ -830,7 +897,7 @@ fn problem_count(diagnostics: &[Diagnostic]) -> String {
 /// new value into the preview's document at `document.selected` and re-render.
 /// `style_changed('<style-prop>')` — the Inspector's Style tab writes the bound
 /// `document.edits.style.<name>` value back into the node's `style` entries.
-fn style_changed(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeView>) {
+fn style_changed(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &mut Context<ForgeView>) {
     let Some(name) = args.first() else {
         return;
     };
@@ -847,13 +914,14 @@ fn style_changed(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeVi
     )
     .cloned()
     .unwrap_or(Json::Null);
+    record_undo(view, shared, cx);
     let preview = view.preview("canvas", cx);
     preview.update(cx, |preview, cx| {
         preview.set_node_style(&path, name, &value, cx);
     });
 }
 
-fn prop_changed(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeView>) {
+fn prop_changed(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &mut Context<ForgeView>) {
     let Some(prop) = args.first() else {
         return;
     };
@@ -870,6 +938,7 @@ fn prop_changed(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeVie
     )
     .cloned()
     .unwrap_or(Json::Null);
+    record_undo(view, shared, cx);
     let preview = view.preview("canvas", cx);
     preview.update(cx, |preview, cx| {
         preview.set_node_prop(&path, prop, &value, cx);

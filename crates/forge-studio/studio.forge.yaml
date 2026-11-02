@@ -22,6 +22,14 @@ appMenu: &appMenu
     - MenuItem: Format
       icon: sparkles
       on click: format_document()
+    - MenuSeparator:
+    - MenuItem: Undo
+      icon: undo-2
+      on click: undo()
+    - MenuItem: Redo
+      icon: redo-2
+      on click: redo()
+    - MenuSeparator:
     - MenuItem: Save
       icon: save
       on click: save_document()
