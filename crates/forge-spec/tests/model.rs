@@ -82,3 +82,21 @@ fn reparent_moves_and_guards() {
     assert!(!doc.reparent("0.1", "0.1", None));
     assert!(!doc.reparent("0.1", "0.1.0", None));
 }
+
+#[test]
+fn insert_after_and_move_after_place_siblings() {
+    let mut doc = doc();
+    // insert a Label right after the first Button (0.1.0)
+    let node = Node {
+        element: ElementRef { namespace: None, name: "Label".into() },
+        content: Some(Value::String("x".into())),
+        ..Default::default()
+    };
+    assert_eq!(doc.insert_after("0.1.0", node).as_deref(), Some("0.1.1"));
+    assert_eq!(doc.node_at("0.1.1").unwrap().element.name, "Label");
+    // move it after the root-level HStack sibling's first child — same parent reorder
+    assert_eq!(doc.move_after("0.1.0", "0.1.2").as_deref(), Some("0.1.2"));
+    // moving after itself or into a descendant fails
+    assert!(doc.move_after("0.1", "0.1").is_none());
+    assert!(doc.move_after("0.1", "0.1.0").is_none());
+}

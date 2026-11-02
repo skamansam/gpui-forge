@@ -713,10 +713,18 @@ fn place_component(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<
             .as_deref()
             .filter(|path| doc.node_at(path).is_some())
             .unwrap_or("0");
-        if doc.insert_node(target, node, None)
-            && let Some(index) = doc.node_at(target).map(|n| n.children.len() - 1)
+        // Container targets take the node inside; leaf targets take it as
+        // the sibling right after.
+        let result = if target == "0"
+            || accepts_children(&shared.borrow().catalogs, &doc, target)
         {
-            placed = Some(format!("{target}.{index}"));
+            doc.insert_node(target, node, None)
+                .then(|| format!("{target}.{}", doc.node_at(target).unwrap().children.len() - 1))
+        } else {
+            doc.insert_after(target, node)
+        };
+        if result.is_some() {
+            placed = result;
             p.set_document(doc, cx);
         }
     });
@@ -777,10 +785,18 @@ fn move_node(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &m
         let Some(mut doc) = p.document().cloned() else {
             return;
         };
-        if doc.reparent(&src, &target, None)
-            && let Some(index) = doc.node_at(&target).map(|n| n.children.len() - 1)
-        {
-            moved = Some(format!("{target}.{index}"));
+        // Container targets take the node inside; leaf targets take it as
+        // the sibling right after.
+        let into = target == "0"
+            || accepts_children(&shared.borrow().catalogs, &doc, &target);
+        let result = if into {
+            doc.reparent(&src, &target, None)
+                .then(|| format!("{target}.{}", doc.node_at(&target).unwrap().children.len() - 1))
+        } else {
+            doc.move_after(&src, &target)
+        };
+        if result.is_some() {
+            moved = result;
             p.set_document(doc, cx);
         }
     });
@@ -812,10 +828,18 @@ fn insert_at(view: &mut ForgeView, shared: &SharedState, node: Node, tag: &str, 
             .as_deref()
             .filter(|path| doc.node_at(path).is_some())
             .unwrap_or("0");
-        if doc.insert_node(target, node, None)
-            && let Some(index) = doc.node_at(target).map(|n| n.children.len() - 1)
+        // Container targets take the node inside; leaf targets take it as
+        // the sibling right after.
+        let result = if target == "0"
+            || accepts_children(&shared.borrow().catalogs, &doc, target)
         {
-            placed = Some(format!("{target}.{index}"));
+            doc.insert_node(target, node, None)
+                .then(|| format!("{target}.{}", doc.node_at(target).unwrap().children.len() - 1))
+        } else {
+            doc.insert_after(target, node)
+        };
+        if result.is_some() {
+            placed = result;
             p.set_document(doc, cx);
         }
     });
@@ -826,6 +850,21 @@ fn insert_at(view: &mut ForgeView, shared: &SharedState, node: Node, tag: &str, 
         sync_source(view, &preview, cx);
     }
     cx.notify();
+}
+
+/// True when the node at `path` accepts children per its catalog entry.
+fn accepts_children(catalogs: &[Catalog], doc: &Document, path: &str) -> bool {
+    doc.node_at(path).is_some_and(|node| {
+        catalogs.iter().any(|c| {
+            c.element(&node.element.name)
+                .is_some_and(|def| {
+                    !matches!(
+                        def.children,
+                        gpui_forge_runtime::forge_spec::catalog::Children::None
+                    )
+                })
+        })
+    })
 }
 
 /// Re-writes `editor.source` from the preview document via the preserving writer.

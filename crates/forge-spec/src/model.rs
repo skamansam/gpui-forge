@@ -130,6 +130,40 @@ impl Document {
             .then(|| parent.children.remove(index))
     }
 
+    /// Inserts `node` as the sibling immediately after `after` — into its
+    /// parent at `index + 1`. Returns the inserted node's path.
+    pub fn insert_after(&mut self, after: &str, node: Node) -> Option<String> {
+        let (parent_path, index) = after.rsplit_once('.')?;
+        let index: usize = index.parse().ok()?;
+        let parent = self.node_at_mut(parent_path)?;
+        let at = (index + 1).min(parent.children.len());
+        parent.children.insert(at, node);
+        Some(format!("{parent_path}.{at}"))
+    }
+
+    /// Moves the node at `path` to the position immediately after `after`,
+    /// keeping siblings in order when moving within the same parent.
+    pub fn move_after(&mut self, path: &str, after: &str) -> Option<String> {
+        if path == "0" || path == after || after.starts_with(&format!("{path}.")) {
+            return None;
+        }
+        let (parent_path, index) = after.rsplit_once('.')?;
+        let index: usize = index.parse().ok()?;
+        let (src_parent, src_index) = path.rsplit_once('.')?;
+        let src_index: usize = src_index.parse().ok()?;
+        let node = self.remove_node(path)?;
+        // A sibling removed above `after` shifts its slot left by one.
+        let at = if src_parent == parent_path && src_index < index {
+            index
+        } else {
+            index + 1
+        };
+        let parent = self.node_at_mut(parent_path)?;
+        let at = at.min(parent.children.len());
+        parent.children.insert(at, node);
+        Some(format!("{parent_path}.{at}"))
+    }
+
     /// Moves the node at `path` under `new_parent` (appended, or at `index`).
     /// Refuses to move the root, or a node into itself/descendants.
     pub fn reparent(&mut self, path: &str, new_parent: &str, index: Option<usize>) -> bool {
