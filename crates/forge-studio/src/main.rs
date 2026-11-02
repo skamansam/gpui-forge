@@ -275,6 +275,7 @@ fn open_dialog(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: 
                 imports: vec![],
                 meta: vec![],
                 dialogs: vec![],
+                raw: None,
                 root: Node {
                     element: ElementRef { namespace: None, name: "VStack".into() },
                     style: node.style.clone(),
@@ -802,7 +803,7 @@ fn prop_changed(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeVie
     // Keep the source pane in sync with the mutated document — rebuild the editor
     // entity from the bound path so the new text shows.
     if let Some(doc) = preview.read(cx).document().cloned() {
-        let src = yaml::to_string(&doc, &yaml::WriteOptions::default());
+        let src = yaml::to_string_preserving(&doc, &yaml::WriteOptions::default());
         view.update_state(
             &parse_path("editor.source").unwrap(),
             Json::String(src),

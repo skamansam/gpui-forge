@@ -17,6 +17,24 @@ pub struct Document {
     /// Top-level `Dialog#name:` declarations, opened by `open_dialog(name)`.
     pub dialogs: Vec<Node>,
     pub root: Node,
+    /// The YAML source and tree this document was read from, kept so the writer
+    /// can splice unchanged regions verbatim (comments, anchors, formatting).
+    /// `None` for documents built programmatically.
+    pub raw: Option<Raw>,
+}
+
+/// A parsed document's original text and marked YAML tree.
+#[derive(Clone, Debug)]
+pub struct Raw {
+    pub source: String,
+    pub(crate) tree: saphyr::MarkedYamlOwned,
+}
+
+// Provenance, not semantics — two equal documents may come from different text.
+impl PartialEq for Raw {
+    fn eq(&self, _: &Self) -> bool {
+        true
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]

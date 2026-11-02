@@ -21,8 +21,8 @@ pub fn from_str(src: &str) -> Result<Document, Diagnostics> {
 
 /// Reads a Forge YAML document, also returning where each node, prop and event was written.
 pub fn from_str_with_source_map(src: &str) -> Result<(Document, SourceMap), Diagnostics> {
-    let tree = match tree::parse(src) {
-        Ok(Some(tree)) => tree,
+    let (tree, marked) = match tree::parse(src) {
+        Ok(Some(parsed)) => parsed,
         Ok(None) => {
             return Err(Diagnostics(vec![
                 Diagnostic::new(Pos::start(), "empty document")
@@ -40,9 +40,71 @@ pub fn from_str_with_source_map(src: &str) -> Result<(Document, SourceMap), Diag
     let doc = reader.document(tree);
     reader.diags.sort_by_key(|d| d.pos);
     match doc {
-        Some(doc) if reader.diags.is_empty() => Ok((doc, reader.map)),
+        Some(mut doc) if reader.diags.is_empty() => {
+            doc.raw = Some(crate::model::Raw {
+                source: src.to_owned(),
+                tree: marked,
+            });
+            Ok((doc, reader.map))
+        }
         _ => Err(Diagnostics(reader.diags)),
     }
+}
+
+/// Re-parses a `YNode` subtree into a model `Node`; used by the preserving
+/// writer to detect unchanged regions.
+pub(crate) fn reparse_node(src: &str, val: YNode) -> Option<Node> {
+    Reader {
+        src,
+        diags: Vec::new(),
+        path: Vec::new(),
+        map: SourceMap::default(),
+    }
+    .node(val)
+}
+
+/// Re-parses a scalar value; `allow_two_way` matches props vs style/content rules.
+pub(crate) fn reparse_value(src: &str, val: YNode, allow_two_way: bool) -> Option<Value> {
+    Reader {
+        src,
+        diags: Vec::new(),
+        path: Vec::new(),
+        map: SourceMap::default(),
+    }
+    .typed(val, allow_two_way)
+}
+
+/// Re-parses a scalar as plain text (`forge`, `$schema`, `base`, ...).
+pub(crate) fn reparse_text(src: &str, val: YNode) -> Option<String> {
+    Reader {
+        src,
+        diags: Vec::new(),
+        path: Vec::new(),
+        map: SourceMap::default(),
+    }
+    .text(val)
+}
+
+/// Re-parses a `use:` mapping into imports.
+pub(crate) fn reparse_imports(src: &str, val: YNode) -> Vec<Import> {
+    Reader {
+        src,
+        diags: Vec::new(),
+        path: Vec::new(),
+        map: SourceMap::default(),
+    }
+    .imports(val)
+}
+
+/// Re-parses a `meta:` mapping into entries.
+pub(crate) fn reparse_meta(src: &str, val: YNode) -> Vec<(String, String)> {
+    Reader {
+        src,
+        diags: Vec::new(),
+        path: Vec::new(),
+        map: SourceMap::default(),
+    }
+    .meta(val)
 }
 
 struct Reader<'a> {
@@ -138,6 +200,7 @@ impl Reader<'_> {
             meta,
             dialogs,
             root: root?,
+            raw: None,
         })
     }
 
@@ -439,7 +502,7 @@ impl Reader<'_> {
 }
 
 /// Parses `[alias.]Element[#id]` or `[alias.]Element .id`.
-fn element_key(key: &str) -> Option<(ElementRef, Option<String>)> {
+pub(crate) fn element_key(key: &str) -> Option<(ElementRef, Option<String>)> {
     let (path, id) = match key.split_once('#').or_else(|| key.split_once(" .")) {
         Some((path, id)) => (path, Some(id)),
         None => (key, None),

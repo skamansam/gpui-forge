@@ -40,3 +40,17 @@ fn studio_documents_validate_clean() {
         assert!(diagnostics.is_empty(), "{name}: {diagnostics:?}");
     }
 }
+
+#[test]
+fn studio_documents_write_back_verbatim() {
+    // Unmodified documents keep their source byte-for-byte — comments,
+    // anchors, merge keys and formatting survive a save.
+    for src in [
+        include_str!("../../forge-studio/studio.forge.yaml"),
+        include_str!("../../forge-studio/welcome.forge.yaml"),
+        include_str!("../../forge-studio/gallery.forge.yaml"),
+    ] {
+        let doc = yaml::from_str(src).unwrap();
+        assert_eq!(yaml::to_string_preserving(&doc, &Default::default()), src);
+    }
+}

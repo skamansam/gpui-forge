@@ -147,7 +147,7 @@ pub enum Children {
 /// Reads a catalog manifest written in YAML.
 pub fn from_yaml(src: &str) -> Result<Catalog, Diagnostics> {
     let tree = match tree::parse(src) {
-        Ok(Some(tree)) => tree,
+        Ok(Some((tree, _))) => tree,
         Ok(None) => {
             return Err(Diagnostics(vec![Diagnostic::new(
                 Pos::start(),

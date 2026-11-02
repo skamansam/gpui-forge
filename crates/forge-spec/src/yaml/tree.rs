@@ -47,8 +47,10 @@ fn pos(span: &saphyr_parser::Span) -> Pos {
     }
 }
 
-/// Parses a single YAML document; `None` when the input is empty.
-pub(crate) fn parse(src: &str) -> Result<Option<YNode>, Diagnostic> {
+/// Parses a single YAML document; `None` when the input is empty. Returns the
+/// `YNode` tree plus the marked root, which keeps source spans for the
+/// lossless writer.
+pub(crate) fn parse(src: &str) -> Result<Option<(YNode, MarkedYamlOwned)>, Diagnostic> {
     let docs = MarkedYamlOwned::load_from_str(src).map_err(|e| {
         Diagnostic::new(
             Pos {
@@ -69,9 +71,14 @@ pub(crate) fn parse(src: &str) -> Result<Option<YNode>, Diagnostic> {
                 "a Forge file holds exactly one YAML document",
             ));
         }
-        root = Some(convert(doc)?);
+        root = Some((convert(doc.clone())?, doc));
     }
     Ok(root)
+}
+
+/// Re-parses a raw marked node into a `YNode`, resolving merges like `convert`.
+pub(crate) fn convert_marked(node: &MarkedYamlOwned) -> Result<YNode, Diagnostic> {
+    convert(node.clone())
 }
 
 /// `---` separators and comment-only documents load as a bare scalar.
@@ -143,7 +150,7 @@ fn convert(node: MarkedYamlOwned) -> Result<YNode, Diagnostic> {
     }
 }
 
-fn quoting(style: ScalarStyle) -> Quoting {
+pub(crate) fn quoting(style: ScalarStyle) -> Quoting {
     match style {
         ScalarStyle::Plain => Quoting::Plain,
         ScalarStyle::DoubleQuoted => Quoting::Double,
@@ -153,7 +160,7 @@ fn quoting(style: ScalarStyle) -> Quoting {
 }
 
 /// A resolved scalar, rendered back to its text form.
-fn value_text(scalar: saphyr::ScalarOwned) -> String {
+pub(crate) fn value_text(scalar: saphyr::ScalarOwned) -> String {
     match scalar {
         saphyr::ScalarOwned::Null => String::new(),
         saphyr::ScalarOwned::Boolean(b) => b.to_string(),

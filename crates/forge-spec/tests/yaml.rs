@@ -323,3 +323,98 @@ fn rejects_multiple_documents() {
         errors("forge: \"0.1\"\nroot:\n  Text: a\n---\nforge: \"0.1\"\n").contains("exactly one")
     );
 }
+
+fn preserve(doc: &Document) -> String {
+    yaml::to_string_preserving(doc, &WriteOptions::default())
+}
+
+#[test]
+fn preserving_writer_returns_unmodified_source_verbatim() {
+    let src = r#"# Forge Studio doc
+forge: "0.1"   # version
+
+shared: &shared {variant: ghost}   # shared fragment
+
+Dialog#prefs:
+  title: Prefs
+
+root:
+  VStack#app:
+  style: {gap: 8px}   # inline style
+  <<: *shared
+  children:
+    # leading comment
+    - Button#ok: Sign in
+    - Label: done   # trailing comment
+# tail comment
+"#;
+    let doc = read(src);
+    assert_eq!(preserve(&doc), src);
+}
+
+#[test]
+fn preserving_writer_splices_unchanged_regions() {
+    let src = r#"forge: "0.1"
+
+# a comment about the root
+root:
+  VStack#app:
+  gap: 8
+  children:
+    - Button#ok: Sign in   # keep me
+    - Label: done
+"#;
+    let mut doc = read(src);
+    // Change one prop: only that line rewrites canonically.
+    doc.set_prop("0", "gap", Some(Value::Number { value: 12.0, unit: None }));
+    let out = preserve(&doc);
+    assert!(out.contains("# a comment about the root"));
+    assert!(out.contains("- Button#ok: Sign in   # keep me"));
+    assert!(out.contains("- Label: done"));
+    assert!(out.contains("gap: 12"));
+    assert!(!out.contains("gap: 8"));
+    // And it still reads back to the same document.
+    assert_eq!(read(&out), doc);
+}
+
+#[test]
+fn preserving_writer_keeps_anchors_and_merges() {
+    let src = r#"forge: "0.1"
+
+frag: &frag
+  icon: check
+
+root:
+  Button:
+  <<: *frag
+  variant: ghost
+"#;
+    let mut doc = read(src);
+    doc.set_prop("0", "variant", Some(Value::Enum("solid".into())));
+    let out = preserve(&doc);
+    assert!(out.contains("frag: &frag"));
+    assert!(out.contains("<<: *frag"));
+    assert!(out.contains("variant: solid"));
+    assert_eq!(read(&out), doc);
+}
+
+#[test]
+fn preserving_writer_drops_removed_and_adds_new() {
+    let src = r#"forge: "0.1"
+root:
+  VStack:
+  children:
+    - Button: A
+    - Label: B
+"#;
+    let mut doc = read(src);
+    doc.remove_node("0.1");
+    let mut button = forge_spec::Node::default();
+    button.element = forge_spec::ElementRef { namespace: None, name: "Input".into() };
+    doc.insert_node("0", button, Some(0));
+    let out = preserve(&doc);
+    assert!(out.contains("- Button: A"));
+    assert!(!out.contains("Label: B"));
+    assert!(out.contains("- Input"));
+    assert_eq!(read(&out), doc);
+}

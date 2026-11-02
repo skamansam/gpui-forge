@@ -18,6 +18,13 @@ pub struct WriteOptions {
     pub id_style: IdStyle,
 }
 
+/// Writes `doc` preserving the original source wherever the model did not
+/// change — comments, anchors, aliases, `<<` merges and formatting survive.
+/// Falls back to canonical output for documents built programmatically.
+pub fn to_string_preserving(doc: &Document, options: &WriteOptions) -> String {
+    super::preserve::preserving(doc, options).unwrap_or_else(|| to_string(doc, options))
+}
+
 /// Writes `doc` as canonical Forge YAML.
 ///
 /// Key order: element key, props, `style`, events, `children`.
@@ -64,32 +71,48 @@ pub fn to_string(doc: &Document, options: &WriteOptions) -> String {
     out
 }
 
-fn line(out: &mut String, indent: usize, text: &str) {
+pub(crate) fn line(out: &mut String, indent: usize, text: &str) {
     out.extend(std::iter::repeat_n(' ', indent));
     out.push_str(text);
     out.push('\n');
 }
 
-fn write_node(
+pub(crate) fn write_node(
     out: &mut String,
     node: &Node,
     indent: usize,
     list_item: bool,
     options: &WriteOptions,
 ) {
+    let indent = write_head(out, node, indent, list_item, options);
+    write_entries(out, node, indent, options);
+}
+
+/// Writes the `Element#id: content` head line; returns the body indent.
+pub(crate) fn write_head(
+    out: &mut String,
+    node: &Node,
+    indent: usize,
+    list_item: bool,
+    options: &WriteOptions,
+) -> usize {
     let mut head = element_key(&node.element, node.id.as_deref(), options.id_style);
     head.push(':');
     if let Some(content) = &node.content {
         head.push(' ');
         head.push_str(&inline(content, false));
     }
-    let indent = if list_item {
+    if list_item {
         line(out, indent, &format!("- {head}"));
         indent + 2
     } else {
         line(out, indent, &head);
         indent
-    };
+    }
+}
+
+/// Writes props, `style:`, events and `children:` below the head line.
+pub(crate) fn write_entries(out: &mut String, node: &Node, indent: usize, options: &WriteOptions) {
     for (key, value) in &node.props {
         write_entry(out, indent, key, value);
     }
@@ -100,11 +123,7 @@ fn write_node(
         }
     }
     for event in &node.events {
-        line(
-            out,
-            indent,
-            &format!("on {}: {}", event.event, handler(&event.handler)),
-        );
+        write_event(out, indent, event);
     }
     if !node.children.is_empty() {
         line(out, indent, "children:");
@@ -114,7 +133,15 @@ fn write_node(
     }
 }
 
-fn element_key(element: &ElementRef, id: Option<&str>, style: IdStyle) -> String {
+pub(crate) fn write_event(out: &mut String, indent: usize, event: &crate::model::EventBinding) {
+    line(
+        out,
+        indent,
+        &format!("on {}: {}", event.event, handler(&event.handler)),
+    );
+}
+
+pub(crate) fn element_key(element: &ElementRef, id: Option<&str>, style: IdStyle) -> String {
     match (id, style) {
         (None, _) => element.to_string(),
         (Some(id), IdStyle::Hash) => format!("{element}#{id}"),
@@ -122,7 +149,7 @@ fn element_key(element: &ElementRef, id: Option<&str>, style: IdStyle) -> String
     }
 }
 
-fn write_entry(out: &mut String, indent: usize, key: &str, value: &Value) {
+pub(crate) fn write_entry(out: &mut String, indent: usize, key: &str, value: &Value) {
     if let Value::List(items) = value {
         let flow: Vec<String> = items.iter().map(|item| inline(item, true)).collect();
         if flow.iter().all(|item| flow_safe(item)) {
@@ -139,7 +166,7 @@ fn write_entry(out: &mut String, indent: usize, key: &str, value: &Value) {
 }
 
 /// A value as a single-line YAML scalar (or flow sequence) that reads back identically.
-fn inline(value: &Value, flow: bool) -> String {
+pub(crate) fn inline(value: &Value, flow: bool) -> String {
     match value {
         Value::String(s) => string_scalar(s, flow),
         Value::Interpolated(segments) => {
@@ -196,7 +223,7 @@ fn string_scalar(s: &str, flow: bool) -> String {
     }
 }
 
-fn handler(handler: &HandlerRef) -> String {
+pub(crate) fn handler(handler: &HandlerRef) -> String {
     let args: Vec<String> = handler.args.iter().map(handler_arg).collect();
     let text = format!("{}({})", handler.name, args.join(", "));
     if plain_safe(&text, false) {
@@ -221,7 +248,7 @@ fn handler_arg(value: &Value) -> String {
 }
 
 /// Raw text (version, base, imports, meta): plain when YAML-safe, otherwise quoted.
-fn text_scalar(s: &str) -> String {
+pub(crate) fn text_scalar(s: &str) -> String {
     if plain_safe(s, false) {
         s.to_owned()
     } else if s.contains(['\n', '\r', '\t']) {

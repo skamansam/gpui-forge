@@ -83,8 +83,10 @@ root:
 - `<<` merges a mapping (or a list of mappings, earlier winning) into the current one.
   Explicit keys always override merged ones.
 - Aliases must reference anchors defined earlier in the document.
-- Serializing (`write`) expands fragments back into plain YAML; anchors are not
-  preserved on round-trips.
+- `yaml::to_string_preserving` writes documents back with their original source
+  wherever the model did not change — anchors, aliases, merge keys, comments and
+  formatting all survive a save; `yaml::to_string` remains the canonical
+  formatter and expands fragments into plain YAML.
 - YAML tags (`!tag`) remain unsupported.
 
 ## Nodes
