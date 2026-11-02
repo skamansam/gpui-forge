@@ -1051,11 +1051,13 @@ impl ForgeView {
                             cx,
                         );
                         match drag {
-                            ForgeDrag::Component(tag) => {
-                                p.fire_call("drop_component", vec![tag.clone()], cx)
-                            }
+                            ForgeDrag::Component(tag) => p.fire_call(
+                                "drop_component",
+                                vec![tag.clone(), drop_id.clone()],
+                                cx,
+                            ),
                             ForgeDrag::Node(src) => {
-                                p.fire_call("move_node", vec![src.clone()], cx)
+                                p.fire_call("move_node", vec![src.clone(), drop_id.clone()], cx)
                             }
                         }
                         cx.notify();
@@ -2712,7 +2714,7 @@ impl ForgeView {
                                         Json::String(path.clone()),
                                         cx,
                                     );
-                                    p.fire_call("place_component", vec![], cx);
+                                    p.fire_call("place_component", vec![path.clone()], cx);
                                 } else {
                                     p.write(
                                         &parse_path("document.selected").unwrap(),
@@ -2803,10 +2805,14 @@ impl ForgeView {
                         );
                         match drag {
                             ForgeDrag::Component(tag) => {
-                                p.fire_call("drop_component", vec![tag.clone()], cx)
+                                p.fire_call(
+                                    "drop_component",
+                                    vec![tag.clone(), path.clone()],
+                                    cx,
+                                )
                             }
                             ForgeDrag::Node(src) => {
-                                p.fire_call("move_node", vec![src.clone()], cx)
+                                p.fire_call("move_node", vec![src.clone(), path.clone()], cx)
                             }
                         }
                         cx.notify();

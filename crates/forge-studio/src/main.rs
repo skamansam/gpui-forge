@@ -422,7 +422,7 @@ fn dispatch(
         "source_changed" => reload(view, shared, cx),
         "copy_snippet" => copy_snippet(view, args, cx),
         "insert_component" => insert_component(view, args, cx),
-        "place_component" => place_component(view, shared, cx),
+        "place_component" => place_component(view, args, shared, cx),
         "undo" => undo_action(view, shared, cx),
         "redo" => redo_action(view, shared, cx),
         "remove_component" => remove_component(view, shared, cx),
@@ -690,7 +690,7 @@ fn insert_component(view: &mut ForgeView, args: &[String], cx: &mut Context<Forg
 /// Fires when the preview reports a drop target (`studio.drop_target`) while a
 /// palette item is armed (`studio.placing`): parse the element's snippet into a
 /// node and insert it under the clicked node.
-fn place_component(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView>) {
+fn place_component(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &mut Context<ForgeView>) {
     let state = view.state().clone();
     let Some(tag) = get_path(&state, &parse_path("studio.placing").unwrap())
         .and_then(|j| j.as_str())
@@ -698,9 +698,9 @@ fn place_component(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<
     else {
         return;
     };
-    let target = get_path(&state, &parse_path("studio.drop_target").unwrap())
-        .and_then(|j| j.as_str())
-        .map(str::to_owned);
+    let target = args
+        .first()
+        .map(|t| t.trim_matches(|c| c == '"' || c == '\'').to_owned());
     let node = snippet_node(&tag);
     record_undo(view, shared, cx);
     let preview = view.preview("canvas", cx);
@@ -750,8 +750,8 @@ fn place_component(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<
     cx.notify();
 }
 
-/// A palette item dropped on a preview node or outline row — the target path
-/// is in `studio.drop_target` (written by the drop handler before this fires).
+/// A palette item dropped on a preview node or outline row —
+/// `drop_component('<tag>', '<target-path>')`.
 fn drop_component(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &mut Context<ForgeView>) {
     let Some(tag) = args
         .first()
@@ -759,12 +759,15 @@ fn drop_component(view: &mut ForgeView, args: &[String], shared: &SharedState, c
     else {
         return;
     };
+    let target = args
+        .get(1)
+        .map(|t| t.trim_matches(|c| c == '"' || c == '\'').to_owned());
     let node = snippet_node(&tag);
-    insert_at(view, shared, node, &tag, cx);
+    insert_at(view, shared, node, &tag, target, cx);
 }
 
-/// A document node dragged onto a preview node or outline row — reparents the
-/// dragged node (`move_node('<path>')`) under `studio.drop_target`.
+/// A document node dragged onto a preview node or outline row —
+/// `move_node('<src-path>', '<target-path>')`.
 fn move_node(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &mut Context<ForgeView>) {
     let Some(src) = args
         .first()
@@ -772,9 +775,9 @@ fn move_node(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &m
     else {
         return;
     };
-    let Some(target) = get_path(view.state(), &parse_path("studio.drop_target").unwrap())
-        .and_then(|j| j.as_str())
-        .map(str::to_owned)
+    let Some(target) = args
+        .get(1)
+        .map(|t| t.trim_matches(|c| c == '"' || c == '\'').to_owned())
     else {
         return;
     };
@@ -811,12 +814,16 @@ fn move_node(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &m
     cx.notify();
 }
 
-/// Inserts `node` under `studio.drop_target` (or root), records undo, selects
-/// the new node, and syncs the source pane. Shared by click-to-place and DnD.
-fn insert_at(view: &mut ForgeView, shared: &SharedState, node: Node, tag: &str, cx: &mut Context<ForgeView>) {
-    let target = get_path(view.state(), &parse_path("studio.drop_target").unwrap())
-        .and_then(|j| j.as_str())
-        .map(str::to_owned);
+/// Inserts `node` at `target` (or root), records undo, selects the new node,
+/// and syncs the source pane. Shared by click-to-place and DnD.
+fn insert_at(
+    view: &mut ForgeView,
+    shared: &SharedState,
+    node: Node,
+    tag: &str,
+    target: Option<String>,
+    cx: &mut Context<ForgeView>,
+) {
     record_undo(view, shared, cx);
     let preview = view.preview("canvas", cx);
     let mut placed = None;
