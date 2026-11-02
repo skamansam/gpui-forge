@@ -148,6 +148,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "source_changed",
         "copy_snippet",
         "insert_component",
+        "place_component",
         "pick",
         "open_gallery",
         "select_node",
@@ -409,6 +410,7 @@ fn dispatch(
         "source_changed" => reload(view, shared, cx),
         "copy_snippet" => copy_snippet(view, args, cx),
         "insert_component" => insert_component(view, args, cx),
+        "place_component" => place_component(view, args, cx),
         "pick" => {
             view.report("pick mode — click an element in the preview".to_owned());
             view.preview("canvas", cx)
@@ -634,43 +636,115 @@ fn format_document(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<
     }
 }
 
-/// Palette click — inserts a default node for the element under the outline
-/// selection (or the root when nothing is selected).
+/// Palette click — arms click-to-place: the next preview click inserts the
+/// element's snippet under that node. Clicking the palette again cancels.
 fn insert_component(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeView>) {
     let Some(tag) = args.first().cloned() else {
         return;
     };
-    let selected = view
-        .state()
-        .get("document")
-        .and_then(|e| e.get("selected"))
-        .and_then(|s| s.as_str())
-        .map(|s| s.to_owned());
+    let placing = get_path(view.state(), &parse_path("studio.placing").unwrap())
+        .and_then(|j| j.as_str())
+        .map(str::to_owned);
     let preview = view.preview("canvas", cx);
+    if placing.as_deref() == Some(tag.as_str()) {
+        // Same palette item clicked while armed — cancel place mode.
+        view.update_state(&parse_path("studio.placing").unwrap(), Json::Null, cx);
+        preview.update(cx, |p, cx| p.set_placing(false, cx));
+        status(view, "place cancelled", cx);
+        return;
+    }
+    view.update_state(
+        &parse_path("studio.placing").unwrap(),
+        Json::String(tag.clone()),
+        cx,
+    );
+    preview.update(cx, |p, cx| p.set_placing(true, cx));
+    status(
+        view,
+        &format!("placing {tag} — click a container in the preview (palette again to cancel)"),
+        cx,
+    );
+    cx.notify();
+}
+
+/// Fires when the preview reports a drop target (`studio.drop_target`) while a
+/// palette item is armed (`studio.placing`): parse the element's snippet into a
+/// node and insert it under the clicked node.
+fn place_component(view: &mut ForgeView, _args: &[String], cx: &mut Context<ForgeView>) {
+    let state = view.state().clone();
+    let Some(tag) = get_path(&state, &parse_path("studio.placing").unwrap())
+        .and_then(|j| j.as_str())
+        .map(str::to_owned)
+    else {
+        return;
+    };
+    let target = get_path(&state, &parse_path("studio.drop_target").unwrap())
+        .and_then(|j| j.as_str())
+        .map(str::to_owned);
+    let node = snippet_node(&tag);
+    let preview = view.preview("canvas", cx);
+    let mut placed = None;
     preview.update(cx, |p, cx| {
         let Some(mut doc) = p.document().cloned() else {
             return;
         };
-        let node = Node {
-            element: ElementRef {
-                name: tag.clone(),
-                namespace: None,
-            },
-            content: Some(Value::String(tag.clone())),
-            ..Default::default()
-        };
-        // Insert under the selected node; a leaf or missing selection falls
-        // back to the root.
-        let target = selected
+        let target = target
             .as_deref()
             .filter(|path| doc.node_at(path).is_some())
             .unwrap_or("0");
-        if doc.insert_node(target, node, None) {
+        if doc.insert_node(target, node, None)
+            && let Some(index) = doc.node_at(target).map(|n| n.children.len() - 1)
+        {
+            placed = Some(format!("{target}.{index}"));
             p.set_document(doc, cx);
         }
     });
-    view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(true), cx);
+    if let Some(path) = placed {
+        view.update_state(
+            &parse_path("document.selected").unwrap(),
+            Json::String(path.clone()),
+            cx,
+        );
+        view.update_state(&parse_path("studio.placing").unwrap(), Json::Null, cx);
+        view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(true), cx);
+        status(view, &format!("placed {tag} at {path}"), cx);
+        if let Some(doc) = preview.read(cx).document().cloned() {
+            let src = yaml::to_string_preserving(&doc, &yaml::WriteOptions::default());
+            view.update_state(
+                &parse_path("editor.source").unwrap(),
+                Json::String(src),
+                cx,
+            );
+            view.reset_inputs("source");
+        }
+    }
     cx.notify();
+}
+
+/// Parses a palette `snippet` into a `Node` by wrapping it as a document
+/// children item; falls back to a bare `Element: Name` node.
+fn snippet_node(tag: &str) -> Node {
+    if let Some(snippet) = snippet(tag) {
+        let body: String = snippet
+            .lines()
+            .map(|line| format!("    {line}"))
+            .collect::<Vec<_>>()
+            .join("\n");
+        let src = format!("forge: \"0.1\"\nroot:\n  VStack:\n  children:\n{body}");
+        if let Ok(doc) = yaml::from_str(&src)
+            && let Some(node) = doc.root.children.into_iter().next()
+        {
+            return node;
+        }
+    }
+    Node {
+        element: ElementRef {
+            name: tag.to_owned(),
+            namespace: None,
+        },
+        content: Some(Value::String(tag.to_owned())),
+        ..Default::default()
+    }
 }
 
 fn copy_snippet(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeView>) {
@@ -688,7 +762,7 @@ fn copy_snippet(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeVie
 /// A node snippet for each palette element.
 fn snippet(name: &str) -> Option<&'static str> {
     Some(match name {
-        "Button" => "- Button: Label\n  on click:",
+        "Button" => "- Button: Label",
         "Input" => "- Input:\n  value: bind $form.field\n  placeholder: Text",
         "Textarea" => "- Textarea:\n  value: bind $form.text\n  rows: 3",
         "Checkbox" => "- Checkbox: Label\n  checked: bind $form.flag",

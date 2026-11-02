@@ -151,6 +151,9 @@ pub struct ForgeView {
     /// Element-picker mode — rendered nodes get a click overlay that writes
     /// `document.selected` (the host's structure/inspector selection).
     pick: bool,
+    /// Click-to-place mode — the pick click writes `studio.drop_target` and
+    /// fires `place_component` instead of selecting.
+    placing: bool,
     /// Shown while there is no document (e.g. inside `forge.Preview`).
     empty_text: Option<String>,
 }
@@ -235,6 +238,7 @@ impl ForgeView {
             errors: Vec::new(),
             base_dir: None,
             pick: false,
+            placing: false,
             empty_text: None,
         }
     }
@@ -668,8 +672,16 @@ impl ForgeView {
     /// Element-picker mode — while on, every rendered node is clickable and
     /// selects itself via `document.selected` before the mode clears.
     pub fn set_pick(&mut self, pick: bool, cx: &mut Context<Self>) {
-        eprintln!("set_pick: {pick}");
         self.pick = pick;
+        self.placing = false;
+        cx.notify();
+    }
+
+    /// Click-to-place mode — the same overlay as `pick`, but the click reports
+    /// `studio.drop_target` and fires `place_component` for the shell.
+    pub fn set_placing(&mut self, placing: bool, cx: &mut Context<Self>) {
+        self.pick = placing;
+        self.placing = placing;
         cx.notify();
     }
 
@@ -2616,14 +2628,25 @@ impl ForgeView {
                                 .border_color(accent)
                         })
                         .on_click(move |_, _, cx| {
-                            eprintln!("pick click: {path}");
                             try_update(&weak, cx, "pick", |p, cx| {
                                 p.pick = false;
-                                p.write(
-                                    &parse_path("document.selected").unwrap(),
-                                    Json::String(path.clone()),
-                                    cx,
-                                );
+                                if p.placing {
+                                    p.placing = false;
+                                    p.write(
+                                        &parse_path("studio.drop_target").unwrap(),
+                                        Json::String(path.clone()),
+                                        cx,
+                                    );
+                                    if let Some(sink) = p.on_hook.clone() {
+                                        sink("place_component()", p, cx);
+                                    }
+                                } else {
+                                    p.write(
+                                        &parse_path("document.selected").unwrap(),
+                                        Json::String(path.clone()),
+                                        cx,
+                                    );
+                                }
                                 cx.notify();
                             })
                             .ok();
