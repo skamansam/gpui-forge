@@ -77,6 +77,31 @@ use serde_json::Value as Json;
 /// Called with `hook(args)` when an event fires and no hook is registered for its name.
 pub type HookSink = Rc<dyn Fn(&str, &mut ForgeView, &mut Context<ForgeView>)>;
 
+/// A drag payload: `Component` comes from palette items (`insert_component`
+/// handlers), `Node` from existing document nodes (reparent drags).
+pub enum ForgeDrag {
+    Component(String),
+    Node(String),
+}
+
+/// The floating chip rendered while dragging.
+struct DragGhost(SharedString);
+
+impl Render for DragGhost {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let theme = cx.theme();
+        div()
+            .px_2()
+            .py_1()
+            .rounded_md()
+            .text_sm()
+            .bg(theme.accent)
+            .text_color(theme.accent_foreground)
+            .child(self.0.clone())
+            .into_any_element()
+    }
+}
+
 /// Panics caught inside `update` calls where the view itself is unreachable — a
 /// double-leased entity can't be updated to report its own error. Drained by
 /// `take_errors` on the next paint.
@@ -154,6 +179,10 @@ pub struct ForgeView {
     /// Click-to-place mode — the pick click writes `studio.drop_target` and
     /// fires `place_component` instead of selecting.
     placing: bool,
+    /// Drag & drop — rendered nodes are drag sources (`ForgeDrag::Node`) and
+    /// drop targets (writes `studio.drop_target`, fires `drop_component` /
+    /// `move_node`). Host enables on the preview.
+    dnd: bool,
     /// Shown while there is no document (e.g. inside `forge.Preview`).
     empty_text: Option<String>,
 }
@@ -239,6 +268,7 @@ impl ForgeView {
             base_dir: None,
             pick: false,
             placing: false,
+            dnd: false,
             empty_text: None,
         }
     }
@@ -685,6 +715,22 @@ impl ForgeView {
         cx.notify();
     }
 
+    /// Enables drag & drop on rendered nodes (the preview canvas).
+    pub fn set_dnd(&mut self, dnd: bool, cx: &mut Context<Self>) {
+        self.dnd = dnd;
+        cx.notify();
+    }
+
+    /// Fires a registered hook by name, bubbling to the host's sink when this
+    /// view doesn't handle it — the shared path for events and drops.
+    fn fire_call(&mut self, name: &str, args: Vec<String>, cx: &mut Context<Self>) {
+        if let Some(handler) = self.hooks.get(name).cloned() {
+            handler(&args, self, cx);
+        } else if let Some(sink) = self.on_hook.clone() {
+            sink(&format!("{}({})", name, args.join(", ")), self, cx);
+        }
+    }
+
     /// Resolves `src` against `base_dir` when relative — `std::fs` calls use this
     /// so `src` is document-relative, not cwd-relative.
     fn resolve_path(&self, src: &str) -> std::path::PathBuf {
@@ -968,6 +1014,7 @@ impl ForgeView {
         // `render_item` runs several times per row per paint (measure then paint), so the
         // row is rebuilt inside the closure — nothing is handed out once and consumed.
         let weak = cx.entity().downgrade();
+        let drop_weak = weak.clone();
         let outline = node.clone();
         Tree::new(&state, move |ix, entry, selected, _, _cx| {
             let mut item = ListItem::new(ix);
@@ -975,7 +1022,12 @@ impl ForgeView {
             let sel = sel.clone();
             let outline = outline.clone();
             let weak = weak.clone();
+            let drag_id = id.clone();
+            let drop_id = id.clone();
+            let drop_weak = drop_weak.clone();
+            let ghost: SharedString = entry.item().label.to_string().into();
             let row = div()
+                .id(format!("outline-row-{}", entry.item().id))
                 .flex()
                 .flex_row()
                 .items_center()
@@ -985,6 +1037,28 @@ impl ForgeView {
                             this.write(path, Json::String(id.clone()), cx);
                         }
                         this.fire(&outline, "select", cx);
+                    })
+                    .ok();
+                })
+                .on_drag(ForgeDrag::Node(drag_id), move |_, _, _, cx| {
+                    cx.new(|_| DragGhost(ghost.clone()))
+                })
+                .on_drop::<ForgeDrag>(move |drag, _, cx| {
+                    try_update(&drop_weak, cx, "drop", |p, cx| {
+                        p.write(
+                            &parse_path("studio.drop_target").unwrap(),
+                            Json::String(drop_id.clone()),
+                            cx,
+                        );
+                        match drag {
+                            ForgeDrag::Component(tag) => {
+                                p.fire_call("drop_component", vec![tag.clone()], cx)
+                            }
+                            ForgeDrag::Node(src) => {
+                                p.fire_call("move_node", vec![src.clone()], cx)
+                            }
+                        }
+                        cx.notify();
                     })
                     .ok();
                 })
@@ -2607,12 +2681,13 @@ impl ForgeView {
             self.prop_text(node, "tooltip"),
             cx,
         );
-        if self.pick {
+        let path = key.replacen("root", "0", 1).replace('/', ".");
+        let element = if self.pick {
             // Element-picker — an absolute overlay ON TOP of the element so
             // clicks/hover land here, not on the child's own handlers.
-            let path = key.replacen("root", "0", 1).replace('/', ".");
             let weak = cx.entity().downgrade();
             let accent = cx.theme().accent;
+            let path = path.clone();
             div()
                 .relative()
                 .child(element)
@@ -2637,9 +2712,7 @@ impl ForgeView {
                                         Json::String(path.clone()),
                                         cx,
                                     );
-                                    if let Some(sink) = p.on_hook.clone() {
-                                        sink("place_component()", p, cx);
-                                    }
+                                    p.fire_call("place_component", vec![], cx);
                                 } else {
                                     p.write(
                                         &parse_path("document.selected").unwrap(),
@@ -2654,16 +2727,23 @@ impl ForgeView {
                 )
                 .into_any_element()
         } else {
-            // Selection highlight — the outline/inspector selection gets a
-            // non-interactive accent frame so it shows in the preview.
+            // Selection highlight — the outline/inspector selection and the
+            // DnD drop target get a non-interactive accent frame.
             let selected = get_path(
                 self.state(),
                 &parse_path("document.selected").unwrap(),
             )
             .and_then(|j| j.as_str())
             .map(str::to_owned)
-                == Some(key.replacen("root", "0", 1).replace('/', "."));
-            if selected {
+                == Some(path.clone());
+            let drop_target = get_path(
+                self.state(),
+                &parse_path("studio.drop_target").unwrap(),
+            )
+            .and_then(|j| j.as_str())
+            .map(str::to_owned)
+                == Some(path.clone());
+            if selected || drop_target {
                 let accent = cx.theme().accent;
                 div()
                     .relative()
@@ -2679,8 +2759,76 @@ impl ForgeView {
             } else {
                 element
             }
+        };
+        // Drag & drop — palette items (`insert_component` handlers) drag a
+        // component tag; the preview also drags nodes (reparent) and accepts
+        // drops at `studio.drop_target`.
+        let tag = component_tag(node);
+        if tag.is_none() && !self.dnd {
+            return element;
         }
+        let weak = cx.entity().downgrade();
+        let mut dnd = div().id(format!("dnd-{key}")).child(element);
+        if let Some(tag) = tag {
+            let ghost: SharedString = tag.clone().into();
+            dnd = dnd.on_drag(ForgeDrag::Component(tag), move |_, _, _, cx| {
+                cx.new(|_| DragGhost(ghost.clone()))
+            });
+        } else {
+            let ghost: SharedString = node.element.name.clone().into();
+            dnd = dnd.on_drag(ForgeDrag::Node(path.clone()), move |_, _, _, cx| {
+                cx.new(|_| DragGhost(ghost.clone()))
+            });
+        }
+        if self.dnd {
+            let move_path = path.clone();
+            let move_weak = weak.clone();
+            dnd = dnd
+                .on_drag_move::<ForgeDrag>(move |_, _, cx| {
+                    try_update(&move_weak, cx, "drag-move", |p, cx| {
+                        p.write(
+                            &parse_path("studio.drop_target").unwrap(),
+                            Json::String(move_path.clone()),
+                            cx,
+                        );
+                    })
+                    .ok();
+                })
+                .on_drop::<ForgeDrag>(move |drag, _, cx| {
+                    try_update(&weak, cx, "drop", |p, cx| {
+                        p.write(
+                            &parse_path("studio.drop_target").unwrap(),
+                            Json::String(path.clone()),
+                            cx,
+                        );
+                        match drag {
+                            ForgeDrag::Component(tag) => {
+                                p.fire_call("drop_component", vec![tag.clone()], cx)
+                            }
+                            ForgeDrag::Node(src) => {
+                                p.fire_call("move_node", vec![src.clone()], cx)
+                            }
+                        }
+                        cx.notify();
+                    })
+                    .ok();
+                });
+        }
+        dnd.into_any_element()
     }
+}
+
+/// The tag a palette item inserts — the `insert_component('Tag')` arg on the
+/// node's click handler doubles as its drag payload.
+fn component_tag(node: &Node) -> Option<String> {
+    node.events
+        .iter()
+        .find(|e| e.handler.name == "insert_component")
+        .and_then(|e| e.handler.args.first())
+        .and_then(|v| match v {
+            Value::String(s) => Some(s.clone()),
+            _ => None,
+        })
 }
 
 impl Render for ForgeView {

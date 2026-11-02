@@ -159,6 +159,8 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "undo",
         "redo",
         "remove_component",
+        "drop_component",
+        "move_node",
         "open_gallery",
         "select_node",
         "prop_changed",
@@ -182,7 +184,8 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     // view state shows in the inspector.
     let shell = cx.entity().downgrade();
     let preview = view.preview("canvas", cx);
-    preview.update(cx, |preview, _| {
+    preview.update(cx, |preview, cx| {
+        preview.set_dnd(true, cx);
         let weak = shell.clone();
         let shared = shared.clone();
         preview.set_sinks(
@@ -423,6 +426,8 @@ fn dispatch(
         "undo" => undo_action(view, shared, cx),
         "redo" => redo_action(view, shared, cx),
         "remove_component" => remove_component(view, shared, cx),
+        "drop_component" => drop_component(view, args, shared, cx),
+        "move_node" => move_node(view, args, shared, cx),
         "pick" => {
             view.report("pick mode — click an element in the preview".to_owned());
             view.preview("canvas", cx)
@@ -735,6 +740,101 @@ fn place_component(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<
         }
     }
     cx.notify();
+}
+
+/// A palette item dropped on a preview node or outline row — the target path
+/// is in `studio.drop_target` (written by the drop handler before this fires).
+fn drop_component(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &mut Context<ForgeView>) {
+    let Some(tag) = args
+        .first()
+        .map(|t| t.trim_matches(|c| c == '"' || c == '\'').to_owned())
+    else {
+        return;
+    };
+    let node = snippet_node(&tag);
+    insert_at(view, shared, node, &tag, cx);
+}
+
+/// A document node dragged onto a preview node or outline row — reparents the
+/// dragged node (`move_node('<path>')`) under `studio.drop_target`.
+fn move_node(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &mut Context<ForgeView>) {
+    let Some(src) = args
+        .first()
+        .map(|p| p.trim_matches(|c| c == '"' || c == '\'').to_owned())
+    else {
+        return;
+    };
+    let Some(target) = get_path(view.state(), &parse_path("studio.drop_target").unwrap())
+        .and_then(|j| j.as_str())
+        .map(str::to_owned)
+    else {
+        return;
+    };
+    record_undo(view, shared, cx);
+    let preview = view.preview("canvas", cx);
+    let mut moved = None;
+    preview.update(cx, |p, cx| {
+        let Some(mut doc) = p.document().cloned() else {
+            return;
+        };
+        if doc.reparent(&src, &target, None)
+            && let Some(index) = doc.node_at(&target).map(|n| n.children.len() - 1)
+        {
+            moved = Some(format!("{target}.{index}"));
+            p.set_document(doc, cx);
+        }
+    });
+    if let Some(path) = moved {
+        view.update_state(&parse_path("document.selected").unwrap(), Json::String(path.clone()), cx);
+        view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(true), cx);
+        status(view, &format!("moved {src} under {target}"), cx);
+        sync_source(view, &preview, cx);
+    } else {
+        status(view, &format!("cannot move {src} under {target}"), cx);
+    }
+    cx.notify();
+}
+
+/// Inserts `node` under `studio.drop_target` (or root), records undo, selects
+/// the new node, and syncs the source pane. Shared by click-to-place and DnD.
+fn insert_at(view: &mut ForgeView, shared: &SharedState, node: Node, tag: &str, cx: &mut Context<ForgeView>) {
+    let target = get_path(view.state(), &parse_path("studio.drop_target").unwrap())
+        .and_then(|j| j.as_str())
+        .map(str::to_owned);
+    record_undo(view, shared, cx);
+    let preview = view.preview("canvas", cx);
+    let mut placed = None;
+    preview.update(cx, |p, cx| {
+        let Some(mut doc) = p.document().cloned() else {
+            return;
+        };
+        let target = target
+            .as_deref()
+            .filter(|path| doc.node_at(path).is_some())
+            .unwrap_or("0");
+        if doc.insert_node(target, node, None)
+            && let Some(index) = doc.node_at(target).map(|n| n.children.len() - 1)
+        {
+            placed = Some(format!("{target}.{index}"));
+            p.set_document(doc, cx);
+        }
+    });
+    if let Some(path) = placed {
+        view.update_state(&parse_path("document.selected").unwrap(), Json::String(path.clone()), cx);
+        view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(true), cx);
+        status(view, &format!("placed {tag} at {path}"), cx);
+        sync_source(view, &preview, cx);
+    }
+    cx.notify();
+}
+
+/// Re-writes `editor.source` from the preview document via the preserving writer.
+fn sync_source(view: &mut ForgeView, preview: &Entity<ForgeView>, cx: &mut Context<ForgeView>) {
+    if let Some(doc) = preview.read(cx).document().cloned() {
+        let src = yaml::to_string_preserving(&doc, &yaml::WriteOptions::default());
+        view.update_state(&parse_path("editor.source").unwrap(), Json::String(src), cx);
+        view.reset_inputs("source");
+    }
 }
 
 /// Parses a palette `snippet` into a `Node` by wrapping it as a document

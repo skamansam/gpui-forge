@@ -129,6 +129,18 @@ impl Document {
         (index < parent.children.len())
             .then(|| parent.children.remove(index))
     }
+
+    /// Moves the node at `path` under `new_parent` (appended, or at `index`).
+    /// Refuses to move the root, or a node into itself/descendants.
+    pub fn reparent(&mut self, path: &str, new_parent: &str, index: Option<usize>) -> bool {
+        if path == "0" || path == new_parent || new_parent.starts_with(&format!("{path}.")) {
+            return false;
+        }
+        let Some(node) = self.remove_node(path) else {
+            return false;
+        };
+        self.insert_node(new_parent, node, index)
+    }
 }
 
 #[derive(Clone, Debug, Default, PartialEq)]

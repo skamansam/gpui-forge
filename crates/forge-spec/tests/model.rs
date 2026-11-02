@@ -69,3 +69,16 @@ fn insert_and_remove_nodes() {
     assert!(doc.remove_node("0").is_none());
     assert!(doc.remove_node("0.9").is_none());
 }
+
+#[test]
+fn reparent_moves_and_guards() {
+    let mut doc = doc();
+    // move Button#b (0.1.1) under the root
+    assert!(doc.reparent("0.1.1", "0", None));
+    assert_eq!(doc.node_at("0.1").unwrap().children.len(), 1);
+    assert_eq!(doc.node_at("0.2").unwrap().id.as_deref(), Some("b"));
+    // cannot move root, into itself, or into a descendant
+    assert!(!doc.reparent("0", "0.1", None));
+    assert!(!doc.reparent("0.1", "0.1", None));
+    assert!(!doc.reparent("0.1", "0.1.0", None));
+}
