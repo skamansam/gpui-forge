@@ -77,6 +77,8 @@ use serde_json::Value as Json;
 /// Called with `hook(args)` when an event fires and no hook is registered for its name.
 pub type HookSink = Rc<dyn Fn(&str, &mut ForgeView, &mut Context<ForgeView>)>;
 
+gpui::actions!(gpui_forge_runtime, [CancelPick]);
+
 /// A drag payload: `Component` comes from palette items (`insert_component`
 /// handlers), `Node` from existing document nodes (reparent drags).
 pub enum ForgeDrag {
@@ -2699,6 +2701,7 @@ impl ForgeView {
             // Element-picker — an absolute overlay ON TOP of the element so
             // clicks/hover land here, not on the child's own handlers.
             let weak = cx.entity().downgrade();
+            let cancel_weak = weak.clone();
             let accent = cx.theme().accent;
             let path = path.clone();
             div()
@@ -2736,6 +2739,18 @@ impl ForgeView {
                                 cx.notify();
                             })
                             .ok();
+                        })
+                        .on_mouse_down(MouseButton::Right, {
+                            let weak = cancel_weak;
+                            move |_, _, cx| {
+                                try_update(&weak, cx, "cancel-place", |p, cx| {
+                                    p.pick = false;
+                                    p.placing = false;
+                                    p.fire_call("cancel_place", vec![], cx);
+                                    cx.notify();
+                                })
+                                .ok();
+                            }
                         }),
                 )
                 .into_any_element()
@@ -2860,12 +2875,24 @@ impl Render for ForgeView {
         for message in self.take_errors() {
             window.push_notification((NotificationType::Error, message), cx);
         }
+        let weak = cx.entity().downgrade();
         div()
             .id("forge-canvas")
             .size_full()
             .overflow_y_scroll()
             .bg(background)
             .text_color(foreground)
+            .on_action::<CancelPick>(move |_, _, cx| {
+                try_update(&weak, cx, "cancel-place", |p, cx| {
+                    if p.pick {
+                        p.pick = false;
+                        p.placing = false;
+                        p.fire_call("cancel_place", vec![], cx);
+                    }
+                    cx.notify();
+                })
+                .ok();
+            })
             .children(content)
     }
 }

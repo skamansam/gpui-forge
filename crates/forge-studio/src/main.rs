@@ -44,6 +44,11 @@ fn main() {
         .with_assets(gpui_kit::assets::AllAssets)
         .run(|cx| {
             gpui_kit::init(cx);
+            cx.bind_keys([gpui::KeyBinding::new(
+                "escape",
+                gpui_forge_runtime::render::CancelPick,
+                None,
+            )]);
             let bounds = Bounds::centered(None, size(px(1400.0), px(900.0)), cx);
             let options = WindowOptions {
                 app_id: Some("gpui-forge".into()),
@@ -161,6 +166,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "remove_component",
         "drop_component",
         "move_node",
+        "cancel_place",
         "open_gallery",
         "select_node",
         "prop_changed",
@@ -428,6 +434,11 @@ fn dispatch(
         "remove_component" => remove_component(view, shared, cx),
         "drop_component" => drop_component(view, args, shared, cx),
         "move_node" => move_node(view, args, shared, cx),
+        "cancel_place" => {
+            view.update_state(&parse_path("studio.placing").unwrap(), Json::Null, cx);
+            status(view, "cancelled", cx);
+            cx.notify();
+        }
         "pick" => {
             view.report("pick mode — click an element in the preview".to_owned());
             view.preview("canvas", cx)
