@@ -606,6 +606,12 @@ root:
                       size: Small
                       tooltip: Pick element in preview
                       on click: pick()
+                    - Button:
+                      icon: trash-2
+                      variant: Ghost
+                      size: Small
+                      tooltip: Delete selected element
+                      on click: remove_component()
                 - forge.Inspector#props:
                   of: canvas
                   selected: bind $document.selected

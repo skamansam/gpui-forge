@@ -158,6 +158,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "pick",
         "undo",
         "redo",
+        "remove_component",
         "open_gallery",
         "select_node",
         "prop_changed",
@@ -421,6 +422,7 @@ fn dispatch(
         "place_component" => place_component(view, shared, cx),
         "undo" => undo_action(view, shared, cx),
         "redo" => redo_action(view, shared, cx),
+        "remove_component" => remove_component(view, shared, cx),
         "pick" => {
             view.report("pick mode — click an element in the preview".to_owned());
             view.preview("canvas", cx)
@@ -759,6 +761,52 @@ fn snippet_node(tag: &str) -> Node {
         content: Some(Value::String(tag.to_owned())),
         ..Default::default()
     }
+}
+
+/// Deletes the selected node (`document.selected`) — undoable, root-excluded.
+fn remove_component(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView>) {
+    let Some(path) = get_path(view.state(), &parse_path("document.selected").unwrap())
+        .and_then(|j| j.as_str())
+        .map(str::to_owned)
+    else {
+        status(view, "nothing selected", cx);
+        return;
+    };
+    if path == "0" {
+        status(view, "cannot remove the root node", cx);
+        return;
+    }
+    record_undo(view, shared, cx);
+    let preview = view.preview("canvas", cx);
+    let mut removed = false;
+    preview.update(cx, |p, cx| {
+        let Some(mut doc) = p.document().cloned() else {
+            return;
+        };
+        if doc.remove_node(&path).is_some() {
+            removed = true;
+            p.set_document(doc, cx);
+        }
+    });
+    if !removed {
+        status(view, &format!("cannot remove {path}"), cx);
+        return;
+    }
+    // Select the parent so the inspector lands somewhere sensible.
+    let parent = path.rsplit_once('.').map(|(p, _)| p.to_owned()).unwrap_or_else(|| "0".into());
+    view.update_state(
+        &parse_path("document.selected").unwrap(),
+        Json::String(parent),
+        cx,
+    );
+    view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(true), cx);
+    status(view, &format!("removed {path}"), cx);
+    if let Some(doc) = preview.read(cx).document().cloned() {
+        let src = yaml::to_string_preserving(&doc, &yaml::WriteOptions::default());
+        view.update_state(&parse_path("editor.source").unwrap(), Json::String(src), cx);
+        view.reset_inputs("source");
+    }
+    cx.notify();
 }
 
 /// Snapshots `(document, source)` before a mutation; clears the redo stack.
