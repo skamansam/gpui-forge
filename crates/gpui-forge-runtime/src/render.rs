@@ -7,7 +7,7 @@
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
-use forge_spec::catalog::{Catalog, PropType};
+use forge_spec::catalog::{Catalog, Children, PropType};
 use forge_spec::value::parse_path;
 use forge_spec::{
     BindingMode, Color, Document, ElementRef, Entries, EventBinding, HandlerRef, Node, Path,
@@ -2773,16 +2773,33 @@ impl ForgeView {
                 == Some(path.clone());
             if selected || drop_target {
                 let accent = cx.theme().accent;
+                // A leaf's drop lands as the next sibling — a bottom bar;
+                // a container's nests inside — a full frame.
+                let into = self
+                    .catalogs
+                    .iter()
+                    .any(|c| c.element(&node.element.name).is_some_and(|d| {
+                        !matches!(d.children, Children::None)
+                    }));
+                let overlay = if drop_target && !into {
+                    div()
+                        .absolute()
+                        .inset_0()
+                        .border_b_2()
+                        .border_color(accent)
+                        .into_any_element()
+                } else {
+                    div()
+                        .absolute()
+                        .inset_0()
+                        .border_2()
+                        .border_color(accent)
+                        .into_any_element()
+                };
                 div()
                     .relative()
                     .child(element)
-                    .child(
-                        div()
-                            .absolute()
-                            .inset_0()
-                            .border_2()
-                            .border_color(accent),
-                    )
+                    .child(overlay)
                     .into_any_element()
             } else {
                 element
