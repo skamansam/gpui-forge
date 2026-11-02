@@ -713,11 +713,10 @@ fn place_component(view: &mut ForgeView, args: &[String], shared: &SharedState, 
             .as_deref()
             .filter(|path| doc.node_at(path).is_some())
             .unwrap_or("0");
+        let into = target == "0" || accepts_children(&shared.borrow().catalogs, &doc, target);
         // Container targets take the node inside; leaf targets take it as
         // the sibling right after.
-        let result = if target == "0"
-            || accepts_children(&shared.borrow().catalogs, &doc, target)
-        {
+        let result = if into {
             doc.insert_node(target, node, None)
                 .then(|| format!("{target}.{}", doc.node_at(target).unwrap().children.len() - 1))
         } else {
@@ -835,11 +834,10 @@ fn insert_at(
             .as_deref()
             .filter(|path| doc.node_at(path).is_some())
             .unwrap_or("0");
+        let into = target == "0" || accepts_children(&shared.borrow().catalogs, &doc, target);
         // Container targets take the node inside; leaf targets take it as
         // the sibling right after.
-        let result = if target == "0"
-            || accepts_children(&shared.borrow().catalogs, &doc, target)
-        {
+        let result = if into {
             doc.insert_node(target, node, None)
                 .then(|| format!("{target}.{}", doc.node_at(target).unwrap().children.len() - 1))
         } else {

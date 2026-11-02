@@ -1296,24 +1296,29 @@ impl ForgeView {
                 .map(|(i, child)| this.render_node(child, &format!("{key}.{i}"), window, cx))
                 .collect::<Vec<_>>()
         };
+        let mut styled = false;
         let element: AnyElement = match node.element.name.as_str() {
             "Box" => {
                 let kids = children(self, window, cx);
-                return container(div(), &node.style, id, kids, cx);
+                styled = true;
+                container(div(), &node.style, id, kids, cx)
             }
             "VStack" => {
                 let kids = children(self, window, cx);
-                return container(v_flex(), &node.style, id, kids, cx);
+                styled = true;
+                container(v_flex(), &node.style, id, kids, cx)
             }
             // `h_flex()` centers children on the cross axis; a Forge `HStack` is a plain
             // flex row, so children stretch (use `align: center` to center them).
             "HStack" => {
                 let kids = children(self, window, cx);
-                return container(div().flex().flex_row(), &node.style, id, kids, cx);
+                styled = true;
+                container(div().flex().flex_row(), &node.style, id, kids, cx)
             }
             "Text" => {
                 let text = self.prop_text(node, "text").unwrap_or_default();
-                return style(div(), &node.style, cx).child(text).into_any_element();
+                styled = true;
+                style(div(), &node.style, cx).child(text).into_any_element()
             }
             "Label" => Label::new(self.prop_text(node, "text").unwrap_or_default())
                 .when_some(self.prop_text(node, "secondary"), |l, s| l.secondary(s))
@@ -1742,7 +1747,8 @@ impl ForgeView {
             }
             "GroupBox" => {
                 let kids = children(self, window, cx);
-                return style(
+                styled = true;
+                style(
                     GroupBox::new()
                         .id(id)
                         .with_variant(group_box_variant(
@@ -1754,7 +1760,7 @@ impl ForgeView {
                     &node.style,
                     cx,
                 )
-                .into_any_element();
+                .into_any_element()
             }
             "Empty" => {
                 let kids = children(self, window, cx);
@@ -1914,7 +1920,8 @@ impl ForgeView {
                     .p_4()
                     .when_some(title, |d, t| d.child(Label::new(t)))
                     .children(kids);
-                return style(el, &node.style, cx).into_any_element();
+                styled = true;
+                style(el, &node.style, cx).into_any_element()
             }
             "Skeleton" => Skeleton::new()
                 .when(self.prop_bool(node, "secondary"), |s| s.secondary())
@@ -2676,13 +2683,17 @@ impl ForgeView {
             }
             other => placeholder(format!("`{other}` is not in the gpui-kit catalog"), cx),
         };
-        let element = wrap(
-            element,
-            &node.style,
-            &format!("forge-{key}"),
-            self.prop_text(node, "tooltip"),
-            cx,
-        );
+        let element = if styled {
+            element
+        } else {
+            wrap(
+                element,
+                &node.style,
+                &format!("forge-{key}"),
+                self.prop_text(node, "tooltip"),
+                cx,
+            )
+        };
         let path = key.replacen("root", "0", 1).replace('/', ".");
         let element = if self.pick {
             // Element-picker — an absolute overlay ON TOP of the element so
