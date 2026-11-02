@@ -2654,7 +2654,31 @@ impl ForgeView {
                 )
                 .into_any_element()
         } else {
-            element
+            // Selection highlight — the outline/inspector selection gets a
+            // non-interactive accent frame so it shows in the preview.
+            let selected = get_path(
+                self.state(),
+                &parse_path("document.selected").unwrap(),
+            )
+            .and_then(|j| j.as_str())
+            .map(str::to_owned)
+                == Some(key.replacen("root", "0", 1).replace('/', "."));
+            if selected {
+                let accent = cx.theme().accent;
+                div()
+                    .relative()
+                    .child(element)
+                    .child(
+                        div()
+                            .absolute()
+                            .inset_0()
+                            .border_2()
+                            .border_color(accent),
+                    )
+                    .into_any_element()
+            } else {
+                element
+            }
         }
     }
 }
