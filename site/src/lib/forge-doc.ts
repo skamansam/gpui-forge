@@ -1,5 +1,6 @@
 // Edits Forge YAML structurally (the editor page) while keeping the text the source of truth.
 import { parseDocument, isMap, isSeq, isScalar, YAMLMap, YAMLSeq, Scalar, Document } from 'yaml';
+import type { Document as ForgeDocument, Node as ForgeNode, Value as ForgeValue } from './forge-model';
 
 export type TreeNode = { path: number[]; key: string; element: string; children: TreeNode[] };
 
@@ -155,7 +156,7 @@ function jsonToNode(n: any): Record<string, unknown> {
 
 /** Builds a Forge YAML `Document` (yaml AST) from a forge-spec JSON document. */
 export function fromJson(text: string): Document | null {
-	let m: any;
+	let m: ForgeDocument;
 	try { m = JSON.parse(text); } catch { return null; }
 	if (!m?.root) return null;
 	const doc = new Document();

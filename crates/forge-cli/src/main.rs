@@ -86,6 +86,10 @@ fn main() {
     let rest: Vec<String> = args.collect();
     let code = match cmd.as_str() {
         "check" | "validate" => check_cmd(&rest),
+        "schema" => {
+            print!("{}", gpui_forge_runtime::forge_spec::json::schema());
+            0
+        }
         "convert" => convert_cmd(&rest),
         "fmt" => fmt_cmd(&rest),
         "build" => build_cmd(&rest),
@@ -110,6 +114,7 @@ fn usage() {
     eprintln!("      --from yaml|json  input format (else detected by extension/content)");
     eprintln!("      --to yaml|json    output format (default: the other one)");
     eprintln!("      -o <path>         output file (default: stdout; `-` reads stdin)");
+    eprintln!("  forge schema                          JSON Schema for the document model");
     eprintln!("  forge preview <doc.forge.yaml>        build + launch the app");
 }
 

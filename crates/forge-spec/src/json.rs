@@ -11,3 +11,9 @@ pub fn from_str(src: &str) -> Result<Document, serde_json::Error> {
 pub fn to_string(doc: &Document) -> String {
     serde_json::to_string_pretty(doc).unwrap_or_default()
 }
+
+/// The JSON Schema for `Document` — generated from the serde model and kept in
+/// lockstep automatically. Emit with `forge schema`.
+pub fn schema() -> String {
+    serde_json::to_string_pretty(&schemars::schema_for!(Document)).unwrap_or_default()
+}

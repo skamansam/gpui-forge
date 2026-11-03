@@ -1,0 +1,507 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Document",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "description": "JSON Schema URL for editors (`$schema`).",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "version": {
+      "type": "string"
+    },
+    "base": {
+      "description": "Base component system; inherited from `forge.toml` when absent.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "imports": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Import"
+      }
+    },
+    "meta": {
+      "type": "array",
+      "items": {
+        "type": "array",
+        "prefixItems": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "minItems": 2,
+        "maxItems": 2
+      }
+    },
+    "dialogs": {
+      "description": "Top-level `Dialog#name:` declarations, opened by `open_dialog(name)`.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Node"
+      }
+    },
+    "root": {
+      "$ref": "#/$defs/Node"
+    }
+  },
+  "required": [
+    "version",
+    "imports",
+    "meta",
+    "dialogs",
+    "root"
+  ],
+  "$defs": {
+    "Import": {
+      "type": "object",
+      "properties": {
+        "alias": {
+          "type": "string"
+        },
+        "library": {
+          "type": "string"
+        },
+        "version": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "alias",
+        "library"
+      ]
+    },
+    "Node": {
+      "type": "object",
+      "properties": {
+        "element": {
+          "$ref": "#/$defs/ElementRef"
+        },
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "content": {
+          "description": "Positional value; the catalog maps it to the element's primary prop.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Value"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "props": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/Value"
+              }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "style": {
+          "type": "array",
+          "items": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/$defs/Value"
+              }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "events": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/EventBinding"
+          }
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Node"
+          }
+        }
+      },
+      "required": [
+        "element",
+        "props",
+        "style",
+        "events",
+        "children"
+      ]
+    },
+    "ElementRef": {
+      "type": "object",
+      "properties": {
+        "namespace": {
+          "description": "Import alias; `None` is the base library.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    },
+    "Value": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "String": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "String"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "Interpolated": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Segment"
+              }
+            }
+          },
+          "required": [
+            "Interpolated"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "Number": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "number",
+                  "format": "double"
+                },
+                "unit": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/Unit"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "value"
+              ]
+            }
+          },
+          "required": [
+            "Number"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "Bool": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "Bool"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "description": "A bare word; the catalog decides whether it is an enum value or plain text.",
+          "type": "object",
+          "properties": {
+            "Enum": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Enum"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "Color": {
+              "$ref": "#/$defs/Color"
+            }
+          },
+          "required": [
+            "Color"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "description": "Theme token path, written `$theme.<path>`.",
+          "type": "object",
+          "properties": {
+            "Token": {
+              "$ref": "#/$defs/Path"
+            }
+          },
+          "required": [
+            "Token"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "List": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Value"
+              }
+            }
+          },
+          "required": [
+            "List"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "description": "A YAML mapping — `highlighting: {languages: [yaml], default: yaml}`.",
+          "type": "object",
+          "properties": {
+            "Map": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/Value"
+                  }
+                ],
+                "minItems": 2,
+                "maxItems": 2
+              }
+            }
+          },
+          "required": [
+            "Map"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "Binding": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "$ref": "#/$defs/Path"
+                },
+                "mode": {
+                  "$ref": "#/$defs/BindingMode"
+                }
+              },
+              "required": [
+                "path",
+                "mode"
+              ]
+            }
+          },
+          "required": [
+            "Binding"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Segment": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "Text": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Text"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "Binding": {
+              "$ref": "#/$defs/Path"
+            }
+          },
+          "required": [
+            "Binding"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Path": {
+      "description": "A path into the view state, e.g. `form.items[0].name`.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/PathSegment"
+      }
+    },
+    "PathSegment": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "Field": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "Field"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "properties": {
+            "Index": {
+              "type": "integer",
+              "format": "uint",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "Index"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Unit": {
+      "type": "string",
+      "enum": [
+        "Px",
+        "Rem",
+        "Percent",
+        "Fr"
+      ]
+    },
+    "Color": {
+      "type": "object",
+      "properties": {
+        "r": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "g": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "b": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "a": {
+          "type": "integer",
+          "format": "uint8",
+          "minimum": 0,
+          "maximum": 255
+        }
+      },
+      "required": [
+        "r",
+        "g",
+        "b",
+        "a"
+      ]
+    },
+    "BindingMode": {
+      "type": "string",
+      "enum": [
+        "OneWay",
+        "TwoWay"
+      ]
+    },
+    "EventBinding": {
+      "type": "object",
+      "properties": {
+        "event": {
+          "type": "string"
+        },
+        "handler": {
+          "$ref": "#/$defs/HandlerRef"
+        }
+      },
+      "required": [
+        "event",
+        "handler"
+      ]
+    },
+    "HandlerRef": {
+      "description": "A hook id resolved by the hook registry at runtime, with arguments.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "args": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Value"
+          }
+        }
+      },
+      "required": [
+        "name",
+        "args"
+      ]
+    }
+  }
+}
