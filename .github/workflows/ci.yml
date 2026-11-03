@@ -80,3 +80,28 @@ jobs:
             fi
             echo "ok: '$features' rejected"
           done
+
+  e2e:
+    name: forge build smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          cache-save-if: ${{ github.ref == 'refs/heads/main' }}
+      - uses: rui314/setup-mold@v1
+      - name: Install Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc g++ clang libfontconfig-dev libwayland-dev \
+            libwebkit2gtk-4.1-dev libxkbcommon-x11-dev libx11-xcb-dev \
+            libssl-dev libzstd-dev libasound2-dev vulkan-validationlayers libvulkan1 xvfb
+      - name: Compile the example app to a native binary
+        run: cargo run -p forge-cli --locked -- build crates/forge-studio/welcome.forge.yaml -o /tmp/forge-welcome
+      - name: Smoke test — the binary launches and stays alive under xvfb
+        run: |
+          timeout 20 xvfb-run -a /tmp/forge-welcome; code=$?
+          # 124 = timeout killed a still-running app — the launch succeeded.
+          if [ "$code" -ne 124 ]; then
+            echo "::error::app exited early with code $code"; exit 1
+          fi
