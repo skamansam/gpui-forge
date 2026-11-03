@@ -5,6 +5,7 @@
 
 pub mod catalog;
 pub mod diagnostic;
+pub mod json;
 pub mod model;
 pub mod source_map;
 pub mod style;

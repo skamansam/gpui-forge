@@ -5,7 +5,7 @@ use std::fmt;
 /// Ordered key/value pairs; order is preserved so hand-edited files diff cleanly.
 pub type Entries = Vec<(String, Value)>;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq)]
 pub struct Document {
     /// JSON Schema URL for editors (`$schema`).
     pub schema: Option<String>,
@@ -20,6 +20,7 @@ pub struct Document {
     /// The YAML source and tree this document was read from, kept so the writer
     /// can splice unchanged regions verbatim (comments, anchors, formatting).
     /// `None` for documents built programmatically.
+    #[serde(skip)]
     pub raw: Option<Raw>,
 }
 
@@ -37,7 +38,7 @@ impl PartialEq for Raw {
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Import {
     pub alias: String,
     pub library: String,
@@ -177,7 +178,7 @@ impl Document {
     }
 }
 
-#[derive(Clone, Debug, Default, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, Default, PartialEq)]
 pub struct Node {
     pub element: ElementRef,
     pub id: Option<String>,
@@ -189,7 +190,7 @@ pub struct Node {
     pub children: Vec<Node>,
 }
 
-#[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, Default, PartialEq, Eq)]
 pub struct ElementRef {
     /// Import alias; `None` is the base library.
     pub namespace: Option<String>,
@@ -205,20 +206,20 @@ impl fmt::Display for ElementRef {
     }
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq)]
 pub struct EventBinding {
     pub event: String,
     pub handler: HandlerRef,
 }
 
 /// A hook id resolved by the hook registry at runtime, with arguments.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq)]
 pub struct HandlerRef {
     pub name: String,
     pub args: Vec<Value>,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq)]
 pub enum Value {
     String(String),
     Interpolated(Vec<Segment>),
@@ -241,13 +242,13 @@ pub enum Value {
     },
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq)]
 pub enum Segment {
     Text(String),
     Binding(Path),
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Unit {
     Px,
     Rem,
@@ -276,7 +277,7 @@ impl Unit {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Color {
     pub r: u8,
     pub g: u8,
@@ -314,17 +315,17 @@ impl fmt::Display for Color {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BindingMode {
     OneWay,
     TwoWay,
 }
 
 /// A path into the view state, e.g. `form.items[0].name`.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct Path(pub Vec<PathSegment>);
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(serde::Serialize, serde::Deserialize, Clone, Debug, PartialEq, Eq)]
 pub enum PathSegment {
     Field(String),
     Index(usize),

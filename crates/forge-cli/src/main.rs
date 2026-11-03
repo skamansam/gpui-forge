@@ -86,6 +86,7 @@ fn main() {
     let rest: Vec<String> = args.collect();
     let code = match cmd.as_str() {
         "check" | "validate" => check_cmd(&rest),
+        "convert" => convert_cmd(&rest),
         "fmt" => fmt_cmd(&rest),
         "build" => build_cmd(&rest),
         "preview" => preview_cmd(&rest),
@@ -105,6 +106,10 @@ fn usage() {
     eprintln!("      --release       release profile (default: dev)");
     eprintln!("      --dir <path>    scaffold dir (default: <doc>/.forge-build/<name>)");
     eprintln!("  forge fmt <doc.forge.yaml>              canonical reformat (stdout or -w)");
+    eprintln!("  forge convert <file>                  between .forge.yaml and JSON");
+    eprintln!("      --from yaml|json  input format (else detected by extension/content)");
+    eprintln!("      --to yaml|json    output format (default: the other one)");
+    eprintln!("      -o <path>         output file (default: stdout; `-` reads stdin)");
     eprintln!("  forge preview <doc.forge.yaml>        build + launch the app");
 }
 
@@ -162,6 +167,83 @@ fn check_cmd(rest: &[String]) -> i32 {
     } else {
         1
     }
+}
+
+/// `.forge.yaml` <-> JSON. Format is detected by extension, then content;
+/// `--from`/`--to` override. `-` as the input reads stdin.
+fn convert_cmd(rest: &[String]) -> i32 {
+    let file = rest.iter().find(|a| !a.starts_with('-') && *a != "--from" && *a != "--to" && *a != "-o");
+    let src = if file.map(|f| f.as_str()) == Some("-") {
+        use std::io::Read;
+        let mut buf = String::new();
+        if std::io::stdin().read_to_string(&mut buf).is_err() {
+            eprintln!("forge: cannot read stdin");
+            return 1;
+        }
+        buf
+    } else {
+        let Some(file) = file else {
+            usage();
+            return 2;
+        };
+        match std::fs::read_to_string(file) {
+            Ok(s) => s,
+            Err(e) => {
+                eprintln!("forge: cannot read {file}: {e}");
+                return 1;
+            }
+        }
+    };
+    let ext_json = file
+        .and_then(|f| Path::new(f).extension())
+        .is_some_and(|e| e == "json");
+    let mut from = opt_value(rest, "--from").unwrap_or_else(|| {
+        if ext_json || src.trim_start().starts_with('{') {
+            "json"
+        } else {
+            "yaml"
+        }
+    });
+    if from == "forge" {
+        from = "yaml";
+    }
+    let to = opt_value(rest, "--to").unwrap_or(if from == "json" { "yaml" } else { "json" });
+    let out = match (from, to) {
+        ("yaml", "yaml") | ("json", "json") => src.clone(),
+        ("yaml", "json") => {
+            match gpui_forge_runtime::forge_spec::yaml::from_str_with_source_map(&src) {
+                Ok((doc, _)) => gpui_forge_runtime::forge_spec::json::to_string(&doc),
+                Err(e) => {
+                    eprintln!("forge: YAML parse failed: {e:?}");
+                    return 1;
+                }
+            }
+        }
+        ("json", "yaml") => match gpui_forge_runtime::forge_spec::json::from_str(&src) {
+            Ok(doc) => gpui_forge_runtime::forge_spec::yaml::to_string(
+                &doc,
+                &gpui_forge_runtime::forge_spec::yaml::WriteOptions::default(),
+            ),
+            Err(e) => {
+                eprintln!("forge: JSON parse failed: {e}");
+                return 1;
+            }
+        },
+        (f, t) => {
+            eprintln!("forge: unknown format conversion {f} -> {t} (supported: yaml, json)");
+            return 2;
+        }
+    };
+    if let Some(path) = opt_value(rest, "-o") {
+        if let Err(e) = std::fs::write(path, &out) {
+            eprintln!("forge: cannot write {path}: {e}");
+            return 1;
+        }
+        println!("forge: wrote {path}");
+    } else {
+        print!("{out}");
+    }
+    0
 }
 
 /// Canonical reformat — the explicit formatter (not the preserving writer,
