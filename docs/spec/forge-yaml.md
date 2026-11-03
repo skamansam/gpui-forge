@@ -45,7 +45,7 @@ root:
 | Key | Required | Meaning |
 |---|---|---|
 | `$schema` | no | Schema URL (also accepted as a `# yaml-language-server: $schema=…` comment) |
-| `forge` | yes | Spec version, as a string (`"0.1"`) |
+| `forge` | yes | Spec version, as a string (`"0.1"`) — see [versioning](#versioning) |
 | `base` | no | Base component system (`gpui-kit`, `bezel`, `adabraka`, `gpui-0.2`, and planned non-GPUI bases `ratatui`, `iced`); defaults to the project's `forge.toml` |
 | `use` | no | Map of import alias → `"<library-id> [<version-req>]"` |
 | `meta` | no | Map of string → string (title, description, …) |

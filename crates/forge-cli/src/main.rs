@@ -85,8 +85,10 @@ fn main() {
     };
     let rest: Vec<String> = args.collect();
     let code = match cmd.as_str() {
-        "check" => check_cmd(&rest),
+        "check" | "validate" => check_cmd(&rest),
+        "fmt" => fmt_cmd(&rest),
         "build" => build_cmd(&rest),
+        "preview" => preview_cmd(&rest),
         _ => {
             usage();
             2
@@ -102,6 +104,8 @@ fn usage() {
     eprintln!("      -o <path>       output binary path (default: ./<name>)");
     eprintln!("      --release       release profile (default: dev)");
     eprintln!("      --dir <path>    scaffold dir (default: <doc>/.forge-build/<name>)");
+    eprintln!("  forge fmt <doc.forge.yaml>              canonical reformat (stdout or -w)");
+    eprintln!("  forge preview <doc.forge.yaml>        build + launch the app");
 }
 
 /// The gpui-forge workspace root — this crate sits at `<root>/crates/forge-cli`.
@@ -157,6 +161,71 @@ fn check_cmd(rest: &[String]) -> i32 {
         0
     } else {
         1
+    }
+}
+
+/// Canonical reformat — the explicit formatter (not the preserving writer,
+/// which is for faithful writes after edits).
+fn fmt_cmd(rest: &[String]) -> i32 {
+    let Some(path) = doc_path(rest) else {
+        usage();
+        return 2;
+    };
+    let src = match std::fs::read_to_string(&path) {
+        Ok(src) => src,
+        Err(e) => {
+            eprintln!("forge: cannot read {}: {e}", path.display());
+            return 1;
+        }
+    };
+    let Ok((doc, _)) = gpui_forge_runtime::forge_spec::yaml::from_str_with_source_map(&src)
+    else {
+        eprintln!("forge: {}: not a valid Forge document", path.display());
+        return 1;
+    };
+    let out = gpui_forge_runtime::forge_spec::yaml::to_string(
+        &doc,
+        &gpui_forge_runtime::forge_spec::yaml::WriteOptions::default(),
+    );
+    if rest.iter().any(|a| a == "-w" || a == "--write") {
+        if let Err(e) = std::fs::write(&path, &out) {
+            eprintln!("forge: cannot write {}: {e}", path.display());
+            return 1;
+        }
+        println!("forge: formatted {}", path.display());
+    } else {
+        print!("{out}");
+    }
+    0
+}
+
+/// Build then launch — a compiled preview of the document.
+fn preview_cmd(rest: &[String]) -> i32 {
+    let code = build_cmd(rest);
+    if code != 0 {
+        return code;
+    }
+    let Some(path) = doc_path(rest) else {
+        return 2;
+    };
+    let path = path.canonicalize().unwrap_or(path);
+    let name = path
+        .file_stem()
+        .unwrap_or_default()
+        .to_string_lossy()
+        .replace('.', "-");
+    let out = opt_value(rest, "-o")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| path.parent().unwrap_or(Path::new(".")).join(&name));
+    match Command::new(&out).spawn() {
+        Ok(_) => {
+            println!("forge: launched {}", out.display());
+            0
+        }
+        Err(e) => {
+            eprintln!("forge: cannot launch {}: {e}", out.display());
+            1
+        }
     }
 }
 

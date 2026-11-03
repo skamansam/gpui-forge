@@ -16,7 +16,7 @@ The project is comprised of six core pillars that work in tandem:
 ### 1. The Forge Schema (`forge-spec`)
 A multi-format specification for defining GPUI element trees. To ensure interoperability, we support:
 *   **Forge YAML:** Plain YAML with a JSON Schema: human-readable, one fact per line for clean Git diffs, and editable with existing YAML tooling.
-*   **JSON/XML:** Standardized formats for machine-to-machine communication between the Web Builder and the Rust Engine.
+*   **JSON:** the machine interchange format between the Web Builder and the Rust Engine (YAML is a JSON superset, so conversion is a serialize, not a translate).
 
 See the draft [Forge YAML format](docs/spec/forge-yaml.md) and [document model](docs/spec/document-model.md).
 
@@ -85,7 +85,7 @@ graph TD
 
     subgraph "Development Phase"
         B --> D[forge-cli]
-        D -->|Convert to XML/JSON| E[External Tools]
+        D -->|Convert to JSON| E[External Tools]
         F[Rust Logic & Hooks] --> G[gpui-forge-runtime]
         B --> G
     end
@@ -105,7 +105,7 @@ graph TD
 *   **UI Framework:** [GPUI](https://www.gpui.rs/)
 *   **Components:** a per-project [base component system](#-base-component-systems): gpui-kit (default), Bezel, adabraka-ui or Vanilla GPUI 0.2
 *   **Web Frontend:** [Svelte](https://svelte.dev/) shell + the base's canvas compiled to WebAssembly
-*   **Serialization:** `serde` (JSON/XML/Custom)
+*   **Serialization:** `saphyr` (YAML), `serde` (JSON)
 
 ## 🗺 Roadmap
 

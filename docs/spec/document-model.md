@@ -3,8 +3,10 @@
 Status: **draft** (spec version `0.1`). Tracks [#3](https://github.com/skamansam/gpui-forge/issues/3).
 
 The document model is the canonical, format-independent AST. [Forge YAML](forge-yaml.md), JSON
-(the same tree as YAML) and XML are its encodings; any document must survive
-`YAML -> model -> JSON -> model -> XML -> model -> YAML` without loss. The model is pure data: it knows nothing about GPUI or any base component system.
+(the same tree as YAML) are its encodings; any document must survive
+`YAML -> model -> JSON -> model -> YAML` without loss. XML was considered and
+dropped — JSON covers the machine-interchange need, so the format matrix stays
+at one authoring format (YAML) plus one machine format (JSON). The model is pure data: it knows nothing about GPUI or any base component system.
 Whether an element, prop or event *exists* is decided later by validation against the catalog
 manifests of the document's base and imported libraries.
 

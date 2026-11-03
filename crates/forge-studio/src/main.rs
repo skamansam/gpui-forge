@@ -538,13 +538,58 @@ fn open_document(shared: SharedState, cx: &mut Context<ForgeView>) {
                     .map(|n| n.to_string_lossy().into_owned())
                     .unwrap_or_else(|| path.display().to_string());
                 let dir = path.parent().map(|p| p.to_path_buf());
-                shared.borrow_mut().file = Some(path);
+                shared.borrow_mut().file = Some(path.clone());
                 load_source(view, &name, &src, dir.as_deref(), &shared, cx);
+                watch_file(path, shared.clone(), cx);
                 view.update_state(&parse_path("studio.tab").unwrap(), Json::from(2), cx);
             }
             Err(e) => status(view, &format!("cannot read {}: {e}", path.display()), cx),
         })
         .ok();
+    })
+    .detach();
+}
+
+/// Watches `path` for external edits — polls mtime, reloads when the on-disk
+/// contents differ from the editor (so our own saves don't trigger a reload).
+/// Stops when a different file is opened.
+fn watch_file(path: PathBuf, shared: SharedState, cx: &mut Context<ForgeView>) {
+    cx.spawn(async move |view, cx| {
+        let mut mtime = std::fs::metadata(&path)
+            .ok()
+            .and_then(|m| m.modified().ok());
+        loop {
+            cx.background_executor()
+                .timer(std::time::Duration::from_secs(1))
+                .await;
+            if shared.borrow().file.as_deref() != Some(path.as_path()) {
+                return;
+            }
+            let new = std::fs::metadata(&path)
+                .ok()
+                .and_then(|m| m.modified().ok());
+            if new.is_none() || new == mtime {
+                continue;
+            }
+            mtime = new;
+            let Ok(src) = std::fs::read_to_string(&path) else {
+                continue;
+            };
+            let path = path.clone();
+            let shared = shared.clone();
+            view.update(cx, move |view, cx| {
+                if source(view) != src {
+                    let name = path
+                        .file_name()
+                        .map(|n| n.to_string_lossy().into_owned())
+                        .unwrap_or_else(|| path.display().to_string());
+                    let dir = path.parent().map(|p| p.to_path_buf());
+                    load_source(view, &name, &src, dir.as_deref(), &shared, cx);
+                    status(view, "reloaded — file changed on disk", cx);
+                }
+            })
+            .ok();
+        }
     })
     .detach();
 }
@@ -643,6 +688,7 @@ fn save_as(shared: SharedState, cx: &mut Context<ForgeView>) {
                         .map(|n| n.to_string_lossy().into_owned())
                         .unwrap_or_else(|| path.display().to_string());
                     shared.borrow_mut().file = Some(path.clone());
+                    watch_file(path.clone(), shared.clone(), cx);
                     view.update_state(
                         &parse_path("studio.file").unwrap(),
                         Json::String(name),
