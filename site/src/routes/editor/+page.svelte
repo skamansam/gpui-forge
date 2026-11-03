@@ -15,6 +15,17 @@
 	let selected = $state<number[]>([]);
 	let diagnostics = $state<Diagnostic[]>([]);
 	let hooks = $state<string[]>([]);
+	let undoStack = $state<string[]>([]);
+	let redoStack = $state<string[]>([]);
+	let fileInput: HTMLInputElement;
+
+	const STORE = 'forge-editor-doc';
+	if (typeof localStorage !== 'undefined' && localStorage.getItem(STORE)) {
+		yaml = localStorage.getItem(STORE)!;
+	}
+	$effect(() => {
+		localStorage.setItem(STORE, yaml);
+	});
 
 	const doc = $derived(F.parse(yaml));
 	const root = $derived(doc ? F.tree(doc) : null);
@@ -30,17 +41,73 @@
 	function edit(change: (d: NonNullable<typeof doc>) => void) {
 		const d = F.parse(yaml);
 		if (!d) return;
+		const before = yaml;
 		change(d);
-		yaml = F.stringify(d);
+		const after = F.stringify(d);
+		if (after === before) return;
+		undoStack = [...undoStack.slice(-99), before];
+		redoStack = [];
+		yaml = after;
+	}
+	function undo() { if (undoStack.length) { redoStack = [...redoStack, yaml]; yaml = undoStack.pop()!; } }
+	function redo() { if (redoStack.length) { undoStack = [...undoStack, yaml]; yaml = redoStack.pop()!; } }
+
+	function onKey(e: KeyboardEvent) {
+		if ((e.target as HTMLElement)?.tagName.match(/INPUT|TEXTAREA|SELECT|CODEMIRROR/)) return;
+		if (e.key === 'Delete' && selected.length) { e.preventDefault(); edit((d) => F.removeNode(d, selected)); selected = selected.slice(0, -1); }
+		if (!e.ctrlKey && !e.metaKey) return;
+		if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); undo(); }
+		if (e.key === 'y' || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); redo(); }
+		if (e.key === 's') { e.preventDefault(); download(); }
+	}
+
+	const stamp = () => new Date().toISOString().slice(0, 10);
+	function downloadText(name: string, text: string, type: string) {
+		const a = document.createElement('a');
+		a.href = URL.createObjectURL(new Blob([text], { type }));
+		a.download = name;
+		a.click();
+		URL.revokeObjectURL(a.href);
+	}
+	function download() { downloadText(`doc-${stamp()}.forge.yaml`, yaml, 'text/yaml'); }
+	function exportJson() {
+		const j = F.toJson(yaml);
+		if (j) downloadText(`doc-${stamp()}.json`, j, 'application/json');
+	}
+	async function openFile(e: Event) {
+		const file = (e.target as HTMLInputElement).files?.[0];
+		if (!file) return;
+		const text = await file.text();
+		if (file.name.endsWith('.json')) {
+			const d = F.fromJson(text);
+			if (d) { yaml = F.stringify(d); } else { alert('Not a forge JSON document'); }
+		} else {
+			yaml = text;
+		}
+		(e.target as HTMLInputElement).value = '';
+	}
+
+	function dropAt(path: number[], e: DragEvent) {
+		const name = e.dataTransfer?.getData('forge-element');
+		if (!name) return;
+		e.preventDefault();
+		// Drop on a container inserts inside; on a leaf it lands next to it.
+		const m = F.nodeAt(doc!, path);
+		const el = m && catalog[F.elementName(F.elementKey(m) ?? '') ?? ''];
+		const target = el?.children ? path : path.slice(0, -1);
+		if (target.length) edit((d) => F.addChild(d, target, name));
+		selected = target;
 	}
 	const at = (d: NonNullable<typeof doc>) => F.nodeAt(d, selected)!;
 </script>
 
 <svelte:head><title>Editor — GPUI Forge</title></svelte:head>
+<svelte:window onkeydown={onKey} />
 
 {#snippet branch(n: F.TreeNode)}
 	<li>
-		<button class="node" class:sel={same(n.path, selected)} onclick={() => (selected = n.path)}>{n.key}</button>
+		<button class="node" class:sel={same(n.path, selected)} onclick={() => (selected = n.path)}
+		ondragover={(e) => e.preventDefault()} ondrop={(e) => dropAt(n.path, e)}>{n.key}</button>
 		{#if n.children.length}<ul>{#each n.children as c (c.path.join('.'))}{@render branch(c)}{/each}</ul>{/if}
 	</li>
 {/snippet}
@@ -51,7 +118,8 @@
 		<p class="hint">{canHaveChildren ? `Click to add inside ${key}` : 'Select a container to add children'}</p>
 		<div class="list">
 			{#each Object.entries(catalog) as [name, el] (name)}
-				<button class="item" disabled={!canHaveChildren} title={el.summary}
+				<button class="item" disabled={!canHaveChildren} title={el.summary} draggable="true"
+					ondragstart={(e) => e.dataTransfer?.setData('forge-element', name)}
 					onclick={() => edit((d) => F.addChild(d, selected, name))}>{name}</button>
 			{/each}
 		</div>
@@ -60,6 +128,8 @@
 	<div class="panel col">
 		<div class="panel-title"><span>Tree</span>
 			<span class="tools">
+				<button disabled={!undoStack.length} onclick={undo} title="Undo (Ctrl+Z)">↩</button>
+				<button disabled={!redoStack.length} onclick={redo} title="Redo (Ctrl+Y)">↪</button>
 				<button disabled={!selected.length} onclick={() => edit((d) => { if (F.moveNode(d, selected, -1)) selected = [...selected.slice(0, -1), selected.at(-1)! - 1]; })}>↑</button>
 				<button disabled={!selected.length} onclick={() => edit((d) => { if (F.moveNode(d, selected, 1)) selected = [...selected.slice(0, -1), selected.at(-1)! + 1]; })}>↓</button>
 				<button disabled={!selected.length} onclick={() => { edit((d) => F.removeNode(d, selected)); selected = selected.slice(0, -1); }}>Delete</button>
@@ -103,7 +173,14 @@
 	</div>
 
 	<div class="panel col">
-		<div class="panel-title"><span>login.forge.yaml</span><span>stays in sync</span></div>
+		<div class="panel-title"><span>login.forge.yaml</span>
+			<span class="tools">
+				<button onclick={() => fileInput.click()} title="Open .forge.yaml or .json">Open</button>
+				<button onclick={download} title="Download .forge.yaml (Ctrl+S)">Save</button>
+				<button onclick={exportJson} title="Download JSON model">JSON</button>
+			</span>
+		</div>
+		<input bind:this={fileInput} type="file" accept=".yaml,.yml,.json,.forge.yaml" hidden onchange={openFile} />
 		<YamlEditor bind:value={yaml} height="calc(100vh - 160px)" />
 	</div>
 </div>
