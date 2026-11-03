@@ -4,6 +4,26 @@
 
 The goal of this project is to bridge the gap between high-level design and low-level Rust implementation, allowing developers to visually compose complex, high-performance user interfaces that can be seamlessly compiled into standalone, production-ready GPUI applications.
 
+## 📦 Current Status
+
+What ships today:
+
+- **`forge-spec`** — the YAML document model, saphyr loader (anchors, aliases,
+  merge keys, source spans), canonical + preserving writers, catalog manifests,
+  and validation. Shipped documents round-trip byte-for-byte.
+- **`gpui-forge-runtime`** — renders any document through `ForgeView` on the
+  gpui-kit base: ~60 catalog elements, state/binding (`{{ path }}`), `on <event>`
+  hook dispatch, dialogs, themes, drag & drop, element picking.
+- **`forge-studio`** — a self-hosted visual builder (its own UI is a Forge
+  document): palette click-to-place and drag-and-drop insertion, outline and
+  inspector panels, two-way source pane, undo/redo, reparent/delete mutations,
+  file open/save with a disk-watch reload, and a Preferences dialog.
+- **`forge` CLI** — `forge check|validate`, `forge fmt`, `forge build`
+  (embeds the document + catalogs into a native app binary), `forge preview`.
+
+Still on the roadmap: codegen compiler mode, platform packaging, project
+manifests, per-base adapters, the web canvas, and the `#[forge_hook]` bridge.
+
 ## 🚀 The Vision
 Traditional GPUI development requires writing imperative Rust code for every layout and element. **GPUI Forge** introduces a declarative workflow: design your interface visually in a desktop or web-based editor, define logic via hooks, and compile the result into a high-performance native binary.
 
