@@ -6,6 +6,74 @@
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+/// `forge.toml` — a Forge project manifest.
+#[allow(dead_code)]
+#[derive(serde::Deserialize, Default)]
+#[serde(default)]
+struct ForgeToml {
+    package: Package,
+    forge: ForgeSection,
+    hooks: Hooks,
+    assets: Assets,
+    libraries: std::collections::HashMap<String, String>,
+}
+
+#[allow(dead_code)]
+#[derive(serde::Deserialize, Default)]
+#[serde(default)]
+struct Package {
+    name: String,
+    version: String,
+    /// Application/bundle id, e.g. `dev.example.my-app`.
+    id: String,
+    icon: String,
+    title: String,
+}
+
+#[allow(dead_code)]
+#[derive(serde::Deserialize, Default)]
+#[serde(default)]
+struct ForgeSection {
+    base: String,
+    /// Entry document, relative to the manifest.
+    document: String,
+}
+
+#[allow(dead_code)]
+#[derive(serde::Deserialize, Default)]
+#[serde(default)]
+struct Hooks {
+    /// Path to a Rust crate that registers hook handlers.
+    krate: String,
+}
+
+#[allow(dead_code)]
+#[derive(serde::Deserialize, Default)]
+#[serde(default)]
+struct Assets {
+    dir: String,
+}
+
+fn load_manifest(start: &Path) -> Option<(PathBuf, ForgeToml)> {
+    let mut dir = Some(start);
+    while let Some(d) = dir {
+        let candidate = d.join("forge.toml");
+        if candidate.exists() {
+            match std::fs::read_to_string(&candidate)
+                .ok()
+                .map(|s| toml::from_str::<ForgeToml>(&s))
+            {
+                Some(Ok(m)) => return Some((d.to_path_buf(), m)),
+                Some(Err(e)) => eprintln!("forge: {}: {e}", candidate.display()),
+                None => {}
+            }
+            return None;
+        }
+        dir = d.parent();
+    }
+    None
+}
+
 const APP_MAIN: &str = r#"use gpui_forge_runtime::base::BASE_ID;
 use gpui_forge_runtime::check;
 use gpui_forge_runtime::render::ForgeView;
@@ -68,6 +136,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+{LIBS}
 forge-spec = { path = "{ROOT}/crates/forge-spec" }
 gpui-forge-runtime = { path = "{ROOT}/crates/gpui-forge-runtime", features = ["base-gpui-kit"] }
 gpui-kit = "=0.8.1"
@@ -85,6 +154,7 @@ fn main() {
     };
     let rest: Vec<String> = args.collect();
     let code = match cmd.as_str() {
+        "new" => new_cmd(&rest),
         "check" | "validate" => check_cmd(&rest),
         "schema" => {
             print!("{}", gpui_forge_runtime::forge_spec::json::schema());
@@ -104,6 +174,7 @@ fn main() {
 
 fn usage() {
     eprintln!("usage:");
+    eprintln!("  forge new <name>                      scaffold a project (forge.toml + doc)");
     eprintln!("  forge check <doc.forge.yaml>            parse + validate");
     eprintln!("  forge build <doc.forge.yaml> [opts]     compile a native app");
     eprintln!("      -o <path>       output binary path (default: ./<name>)");
@@ -138,6 +209,56 @@ fn opt_value<'a>(rest: &'a [String], flag: &str) -> Option<&'a str> {
         .position(|a| a == flag)
         .and_then(|i| rest.get(i + 1))
         .map(String::as_str)
+}
+
+/// Scaffold a project: forge.toml + app.forge.yaml in ./<name>.
+fn new_cmd(rest: &[String]) -> i32 {
+    let Some(name) = rest.iter().find(|a| !a.starts_with('-')).cloned() else {
+        usage();
+        return 2;
+    };
+    let dir = PathBuf::from(&name);
+    if dir.exists() {
+        eprintln!("forge: {} already exists", dir.display());
+        return 1;
+    }
+    let _ = std::fs::create_dir_all(&dir);
+    write(
+        &dir.join("forge.toml"),
+        &format!(
+            r#"[package]
+name = "{name}"
+version = "0.1.0"
+id = "dev.forge.{name}"
+
+[forge]
+base = "gpui-kit"
+document = "app.forge.yaml"
+
+# [assets]
+# dir = "assets"
+
+# [libraries]
+# ely-gpui-components = "^0.4"
+"#
+        ),
+    );
+    write(
+        &dir.join("app.forge.yaml"),
+        r#"forge: "0.1"
+base: gpui-kit
+
+root:
+  VStack:
+  style:
+    padding: 16px
+    gap: 8px
+  children:
+    - Text: Hello, Forge!
+"#,
+    );
+    println!("forge: created {} — `forge build` inside it compiles a native app", dir.display());
+    0
 }
 
 fn check_cmd(rest: &[String]) -> i32 {
@@ -317,17 +438,32 @@ fn preview_cmd(rest: &[String]) -> i32 {
 }
 
 fn build_cmd(rest: &[String]) -> i32 {
-    let Some(path) = doc_path(rest) else {
+    let release = rest.iter().any(|a| a == "--release");
+    // A manifest (forge.toml, a directory, or its parent chain) supplies the
+    // project name, document, base and libraries; an explicit doc overrides it.
+    let manifest_path = doc_path(rest).filter(|p| p.is_dir() || p.file_name() == Some(std::ffi::OsStr::new("forge.toml")));
+    let manifest = manifest_path
+        .as_deref()
+        .map(|p| if p.is_dir() { p.to_path_buf() } else { p.parent().unwrap_or(Path::new(".")).to_path_buf() })
+        .map(|d| load_manifest(&d))
+        .unwrap_or_else(|| load_manifest(&std::env::current_dir().unwrap_or_default()));
+    let (manifest_dir, manifest) = manifest.unwrap_or_else(|| (PathBuf::new(), ForgeToml::default()));
+    let path = doc_path(rest).filter(|p| p.file_name() != Some(std::ffi::OsStr::new("forge.toml")))
+        .or_else(|| manifest.forge.document
+            .is_empty()
+            .then_some(())
+            .and(None::<PathBuf>)
+            .or_else(|| manifest_dir.join(&manifest.forge.document).into()));
+    let Some(path) = path.filter(|p| p.exists()) else {
         usage();
         return 2;
     };
-    let release = rest.iter().any(|a| a == "--release");
     let path = path.canonicalize().unwrap_or(path);
-    let name = path
-        .file_stem()
-        .unwrap_or_default()
-        .to_string_lossy()
-        .replace('.', "-");
+    let name = if manifest.package.name.is_empty() {
+        path.file_stem().unwrap_or_default().to_string_lossy().replace('.', "-")
+    } else {
+        manifest.package.name.clone()
+    };
     let dir = opt_value(rest, "--dir").map(PathBuf::from).unwrap_or_else(|| {
         path.parent()
             .unwrap_or(Path::new("."))
@@ -346,14 +482,28 @@ fn build_cmd(rest: &[String]) -> i32 {
         return 1;
     }
     let root = workspace_root().canonicalize().unwrap_or_else(|_| workspace_root());
-    let title = name.replace('-', " ");
+    let title = if manifest.package.title.is_empty() {
+        name.replace('-', " ")
+    } else {
+        manifest.package.title.clone()
+    };
+    let app_id = if manifest.package.id.is_empty() { name.clone() } else { manifest.package.id.clone() };
+    let libs = manifest
+        .libraries
+        .iter()
+        .map(|(n, v)| format!("{n} = \"{v}\""))
+        .collect::<Vec<_>>()
+        .join("\n");
     write(
         &dir.join("Cargo.toml"),
-        &APP_TOML.replace("{NAME}", &name).replace("{ROOT}", &root.display().to_string()),
+        &APP_TOML
+            .replace("{NAME}", &name)
+            .replace("{ROOT}", &root.display().to_string())
+            .replace("{LIBS}", &libs),
     );
     write(
         &src_dir.join("main.rs"),
-        &APP_MAIN.replace("{APP_ID}", &name).replace("{TITLE}", &title),
+        &APP_MAIN.replace("{APP_ID}", &app_id).replace("{TITLE}", &title),
     );
     write(&dir.join("app.forge.yaml"), &std::fs::read_to_string(&path).unwrap_or_default());
 

@@ -11,6 +11,8 @@ name = "forge"
 path = "src/main.rs"
 
 [dependencies]
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
 gpui-forge-runtime = { workspace = true, features = ["base-gpui-kit"] }
 
 [lints]
