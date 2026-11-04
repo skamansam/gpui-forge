@@ -40,3 +40,21 @@ elements:
         default: false
     events:
       click:
+
+  Badge:
+    summary: Ely status badge.
+    component: ely_core::data_display::Badge
+    content: label
+    children: none
+    props:
+      label: string
+
+  Divider:
+    summary: Ely horizontal/vertical rule.
+    component: ely_core::primitives::Divider
+    children: none
+    props:
+      orientation:
+        type: enum
+        values: [horizontal, vertical]
+        default: horizontal

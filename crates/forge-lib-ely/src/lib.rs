@@ -1,6 +1,8 @@
 //! Adapter for Ely GPUI Components (`use: ely: ely-core` → `ely.*` elements).
 
 use ely_core::buttons::{Button, ButtonVariant, IconButton};
+use ely_core::data_display::Badge;
+use ely_core::primitives::Divider;
 use ely_core::primitives::IconName;
 use ely_core::theme::ControlSize;
 use gpui_forge_runtime::base::kit::*;
@@ -60,6 +62,14 @@ impl ForgeLibrary for Ely {
                 }
                 Some(b.into_any_element())
             }
+            "Badge" => Some(Badge::new(prop_str(node, "label")).into_any_element()),
+            "Divider" => Some(
+                if prop_str_opt(node, "orientation").as_deref() == Some("vertical") {
+                    Divider::vertical().into_any_element()
+                } else {
+                    Divider::horizontal().into_any_element()
+                },
+            ),
             "IconButton" => {
                 let icon = match prop_str_opt(node, "icon").as_deref() {
                     Some("check") => IconName::Check,

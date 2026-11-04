@@ -19,6 +19,9 @@ root:
     - ely.Button: Danger Outline
       variant: Danger
       size: Sm
+    - ely.Badge: Ely Badge
+    - ely.Divider:
+    - Text: Below the divider
     - ely.IconButton:
       icon: check
       tooltip: Done
