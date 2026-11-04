@@ -164,6 +164,7 @@ fn main() {
     let code = match cmd.as_str() {
         "new" => new_cmd(&rest),
         "package" => package_cmd(&rest),
+        "hooks" => hooks_cmd(&rest),
         "check" | "validate" => check_cmd(&rest),
         "schema" => {
             print!("{}", gpui_forge_runtime::forge_spec::json::schema());
@@ -196,6 +197,7 @@ fn usage() {
     eprintln!("      --to yaml|json    output format (default: the other one)");
     eprintln!("      -o <path>         output file (default: stdout; `-` reads stdin)");
     eprintln!("  forge schema                          JSON Schema for the document model");
+    eprintln!("  forge hooks <doc>                     hook manifest (JSON) the doc requires");
     eprintln!("  forge package                         build --release + bundle for this OS");
     eprintln!("  forge preview <doc.forge.yaml>        build + launch the app");
 }
@@ -304,6 +306,69 @@ fn check_cmd(rest: &[String]) -> i32 {
     } else {
         1
     }
+}
+
+/// `forge hooks <doc>` — the hook manifest: every `on <event>` binding in the
+/// document, grouped by handler name with its events and argument shapes.
+/// Emitted as JSON so a hooks crate knows what to implement.
+fn hooks_cmd(rest: &[String]) -> i32 {
+    let Some(path) = doc_path(rest) else {
+        usage();
+        return 2;
+    };
+    let src = match std::fs::read_to_string(&path) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("forge: cannot read {}: {e}", path.display());
+            return 1;
+        }
+    };
+    let catalogs = gpui_forge_runtime::check::catalogs();
+    let (doc, _) =
+        gpui_forge_runtime::check::check(&src, gpui_forge_runtime::base::BASE_ID, &catalogs);
+    let Some(doc) = doc else {
+        eprintln!("forge: {} does not parse", path.display());
+        return 1;
+    };
+    use gpui_forge_runtime::forge_spec::Node;
+    // handler -> sorted (event -> count); keep signature args of last use
+    let mut map: std::collections::BTreeMap<String, (Vec<String>, Vec<String>)> =
+        std::collections::BTreeMap::new();
+    fn walk<'a>(
+        n: &'a Node,
+        map: &mut std::collections::BTreeMap<String, (Vec<String>, Vec<String>)>,
+    ) {
+        for e in &n.events {
+            let entry = map.entry(e.handler.name.clone()).or_default();
+            if !entry.0.contains(&e.event) {
+                entry.0.push(e.event.clone());
+            }
+            entry.1 = e.handler.args.iter().map(|v| format!("{v:?}")).collect();
+        }
+        for c in &n.children {
+            walk(c, map);
+        }
+    }
+    for d in &doc.dialogs {
+        walk(d, &mut map);
+    }
+    walk(&doc.root, &mut map);
+    let hooks: Vec<serde_json::Value> = map
+        .into_iter()
+        .map(|(name, (mut events, args))| {
+            events.sort();
+            serde_json::json!({ "name": name, "events": events, "args": args })
+        })
+        .collect();
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&serde_json::json!({
+            "document": path.display().to_string(),
+            "hooks": hooks,
+        }))
+        .unwrap_or_default()
+    );
+    0
 }
 
 /// `.forge.yaml` <-> JSON. Format is detected by extension, then content;

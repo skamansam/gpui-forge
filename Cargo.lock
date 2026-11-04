@@ -1710,6 +1710,7 @@ version = "0.1.0"
 dependencies = [
  "gpui-forge-runtime",
  "serde",
+ "serde_json",
  "toml 0.8.23",
 ]
 
