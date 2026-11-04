@@ -102,6 +102,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     }
     refresh_recent_menu(&mut view, &load_recents(), cx);
 
+    view.register_library(forge_lib_ely::Ely);
     view.set_base_dir(env!("CARGO_MANIFEST_DIR"));
     let dark = Theme::global(cx).is_dark();
     // Load every vendored theme JSON — `default-theme.json` is only

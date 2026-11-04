@@ -9,6 +9,7 @@ repository.workspace = true
 # Studio's own UI is always built on gpui-kit. Canvases for other bases are
 # rendered out of process by a per-base preview host (#97).
 [dependencies]
+forge-lib-ely = { path = "../forge-lib-ely" }
 forge-hooks = { path = "../forge-hooks" }
 forge-hooks-macros = { path = "../forge-hooks-macros" }
 gpui-forge-runtime = { workspace = true, features = ["base-gpui-kit"] }

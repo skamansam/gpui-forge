@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for the Ely adapter (forge-lib-ely) — `use: ely: ely-core`.
+catalog: "0.1"
+library: ely-core
+name: Ely Components
+version: 0.2.0
+license: MIT
+bases:
+  gpui-kit: "^0.8"
+
+elements:
+  Button:
+    summary: Ely button — variant Primary/Secondary/Outline/Ghost/Subtle/Success/Danger/Link.
+    component: ely_core::buttons::Button
+    content: label
+    children: none
+    props:
+      label: string
+      variant:
+        type: enum
+        values: [Primary, Secondary, Outline, Ghost, Subtle, Success, Danger, Link]
+      size:
+        type: enum
+        values: [Sm, Md, Lg]
+      disabled:
+        type: bool
+        default: false
+    events:
+      click:
+
+  IconButton:
+    summary: Ely icon-only button.
+    component: ely_core::buttons::IconButton
+    children: none
+    props:
+      icon: string
+      tooltip: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      click:
