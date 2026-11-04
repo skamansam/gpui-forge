@@ -85,3 +85,28 @@ elements:
     props:
       text: string
       icon: string
+
+  Spinner:
+    summary: Ely activity spinner.
+    component: ely_core::motion::Spinner
+    children: none
+    props:
+      spinner:
+        type: enum
+        values: [Ring, Dots, Wave, Bars, Pulse]
+        default: Ring
+      size:
+        type: enum
+        values: [Xs, Sm, Md, Lg, Xl, Xxl]
+        default: Md
+
+  Heading:
+    summary: Ely heading (level 1-6).
+    component: ely_core::typography::Heading
+    content: text
+    children: none
+    props:
+      text: string
+      level:
+        type: number
+        default: 1

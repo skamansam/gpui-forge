@@ -24,6 +24,11 @@ root:
       severity: Warning
     - ely.StatusMessage: All systems nominal
       icon: check
+    - ely.Heading: Ely Heading
+      level: 2
+    - ely.Spinner:
+      spinner: Dots
+      size: Md
     - ely.Divider:
     - Text: Below the divider
     - ely.IconButton:

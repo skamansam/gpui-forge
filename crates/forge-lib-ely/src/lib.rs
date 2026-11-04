@@ -3,9 +3,12 @@
 use ely_core::buttons::{Button, ButtonVariant, IconButton};
 use ely_core::data_display::Badge;
 use ely_core::feedback::{Alert, StatusMessage};
+use ely_core::motion::{Spinner, SpinnerStyle};
 use ely_core::primitives::IconName;
 use ely_core::primitives::{Divider, Severity};
 use ely_core::theme::ControlSize;
+use ely_core::theme::IconSize;
+use ely_core::typography::Heading;
 use gpui_forge_runtime::base::kit::*;
 use gpui_forge_runtime::forge_spec::catalog::{self, Catalog};
 use gpui_forge_runtime::forge_spec::{Node, Value};
@@ -83,6 +86,36 @@ impl ForgeLibrary for Ely {
                     m = m.icon(IconName::Check);
                 }
                 Some(m.into_any_element())
+            }
+            "Spinner" => {
+                let style = match prop_str_opt(node, "spinner").as_deref() {
+                    Some("Dots") => SpinnerStyle::Dots,
+                    Some("Wave") => SpinnerStyle::Wave,
+                    Some("Bars") => SpinnerStyle::Bars,
+                    Some("Pulse") => SpinnerStyle::Pulse,
+                    _ => SpinnerStyle::Ring,
+                };
+                let size = match prop_str_opt(node, "size").as_deref() {
+                    Some("Xs") => IconSize::Xs,
+                    Some("Sm") => IconSize::Sm,
+                    Some("Lg") => IconSize::Lg,
+                    Some("Xl") => IconSize::Xl,
+                    Some("Xxl") => IconSize::Xxl,
+                    _ => IconSize::Md,
+                };
+                Some(
+                    Spinner::new(key.to_string())
+                        .style(style)
+                        .size(size)
+                        .into_any_element(),
+                )
+            }
+            "Heading" => {
+                let level = match prop(node, "level") {
+                    Some(Value::Number { value, .. }) => *value as u8,
+                    _ => 1,
+                };
+                Some(Heading::new(level, prop_str(node, "text")).into_any_element())
             }
             "Divider" => Some(
                 if prop_str_opt(node, "orientation").as_deref() == Some("vertical") {
