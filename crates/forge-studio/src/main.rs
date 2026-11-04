@@ -98,6 +98,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     if let Some(doc) = doc {
         view.set_document(doc, cx);
     }
+    refresh_recent_menu(&mut view, &load_recents(), cx);
 
     view.set_base_dir(env!("CARGO_MANIFEST_DIR"));
     let dark = Theme::global(cx).is_dark();
@@ -435,6 +436,11 @@ fn dispatch(
             start_from(view, &["blank".into()], shared, cx);
         }
         "open_document" => open_document(shared.clone(), cx),
+        "open_recent" => {
+            if let Some(path) = args.first().map(PathBuf::from) {
+                load_file(path, view, shared.clone(), cx);
+            }
+        }
         "save_document" => save_document(view, shared, cx),
         "format_document" => format_document(view, shared, cx),
         "apply_theme" => {
@@ -563,23 +569,146 @@ fn open_document(shared: SharedState, cx: &mut Context<ForgeView>) {
         let Some(path) = paths.into_iter().next() else {
             return;
         };
-        view.update(cx, move |view, cx| match std::fs::read_to_string(&path) {
-            Ok(src) => {
-                let name = path
-                    .file_name()
-                    .map(|n| n.to_string_lossy().into_owned())
-                    .unwrap_or_else(|| path.display().to_string());
-                let dir = path.parent().map(|p| p.to_path_buf());
-                shared.borrow_mut().file = Some(path.clone());
-                load_source(view, &name, &src, dir.as_deref(), &shared, cx);
-                watch_file(path, shared.clone(), cx);
-                view.update_state(&parse_path("studio.tab").unwrap(), Json::from(2), cx);
-            }
-            Err(e) => status(view, &format!("cannot read {}: {e}", path.display()), cx),
+        view.update(cx, move |view, cx| {
+            load_file(path, view, shared.clone(), cx);
         })
         .ok();
     })
     .detach();
+}
+
+/// Reads `path` into the editor, updates recents + the menu, starts the
+/// external-change watcher.
+fn load_file(
+    path: PathBuf,
+    view: &mut ForgeView,
+    shared: SharedState,
+    cx: &mut Context<ForgeView>,
+) {
+    match std::fs::read_to_string(&path) {
+        Ok(src) => {
+            let name = path
+                .file_name()
+                .map(|n| n.to_string_lossy().into_owned())
+                .unwrap_or_else(|| path.display().to_string());
+            let dir = path.parent().map(|p| p.to_path_buf());
+            shared.borrow_mut().file = Some(path.clone());
+            load_source(view, &name, &src, dir.as_deref(), &shared, cx);
+            let recents = record_recent(&path);
+            refresh_recent_menu(view, &recents, cx);
+            watch_file(path, shared.clone(), cx);
+            view.update_state(&parse_path("studio.tab").unwrap(), Json::from(2), cx);
+        }
+        Err(e) => status(view, &format!("cannot read {}: {e}", path.display()), cx),
+    }
+}
+
+/// Recent-files list, persisted one absolute path per line under
+/// `~/.local/share/gpui-forge/recent.txt` (first = most recent).
+fn recents_file() -> Option<PathBuf> {
+    std::env::var("HOME")
+        .ok()
+        .map(|h| PathBuf::from(h).join(".local/share/gpui-forge/recent.txt"))
+}
+
+fn load_recents() -> Vec<PathBuf> {
+    recents_file()
+        .and_then(|f| std::fs::read_to_string(f).ok())
+        .map(|s| s.lines().map(PathBuf::from).collect())
+        .unwrap_or_default()
+}
+
+/// Prepends `path` to the recent list, deduping and capping at 8, then
+/// rewrites the store.
+fn record_recent(path: &PathBuf) -> Vec<PathBuf> {
+    let recents: Vec<PathBuf> = std::iter::once(path.clone())
+        .chain(load_recents().into_iter().filter(|p| p != path))
+        .take(8)
+        .collect();
+    if let Some(f) = recents_file() {
+        let _ = std::fs::create_dir_all(f.parent().unwrap());
+        let mut body = recents
+            .iter()
+            .map(|p| p.display().to_string())
+            .collect::<Vec<_>>()
+            .join("\n");
+        body.push('\n');
+        let _ = std::fs::write(f, body);
+    }
+    recents
+}
+
+/// Path of the first node with `id == needle` — used to find named shell
+/// elements like `file-menu` without hardcoding layout indexes.
+fn find_by_id(node: &Node, path: &str, needle: &str) -> Option<String> {
+    if node.id.as_deref() == Some(needle) {
+        return Some(path.to_string());
+    }
+    for (i, child) in node.children.iter().enumerate() {
+        if let Some(p) = find_by_id(child, &format!("{path}.{i}"), needle) {
+            return Some(p);
+        }
+    }
+    None
+}
+
+/// Rebuilds the "Open Recent" section of the File menu by mutating the
+/// studio's own shell document — dogfooding the same Document mutation the
+/// preview editing uses.
+fn refresh_recent_menu(view: &mut ForgeView, recents: &[PathBuf], cx: &mut Context<ForgeView>) {
+    use gpui_forge_runtime::forge_spec::{ElementRef, EventBinding, HandlerRef, Node, Value};
+    let Some(mut doc) = view.document().cloned() else {
+        return;
+    };
+    let Some(menu_path) = find_by_id(&doc.root, "0", "file-menu") else {
+        return;
+    };
+    let Some(menu) = doc.node_at_mut(&menu_path) else {
+        return;
+    };
+    menu.children
+        .retain(|c| !c.id.as_deref().is_some_and(|id| id.starts_with("recent-")));
+    if recents.is_empty() {
+        view.set_document(doc, cx);
+        return;
+    }
+    let sep = Node {
+        element: ElementRef {
+            namespace: None,
+            name: "MenuSeparator".into(),
+        },
+        ..Default::default()
+    };
+    let items: Vec<Node> = recents
+        .iter()
+        .enumerate()
+        .map(|(i, p)| {
+            let label = p
+                .file_name()
+                .map(|n| n.to_string_lossy().into_owned())
+                .unwrap_or_else(|| p.display().to_string());
+            Node {
+                element: ElementRef {
+                    namespace: None,
+                    name: "MenuItem".into(),
+                },
+                id: Some(format!("recent-{i}")),
+                content: Some(Value::String(label)),
+                events: vec![EventBinding {
+                    event: "click".into(),
+                    handler: HandlerRef {
+                        name: "open_recent".into(),
+                        args: vec![Value::String(p.display().to_string())],
+                    },
+                }],
+                ..Default::default()
+            }
+        })
+        .collect();
+    // Drop the recent block in right after "Open…" (index 1).
+    menu.children
+        .splice(2..2, std::iter::once(sep).chain(items));
+    view.set_document(doc, cx);
 }
 
 /// Watches `path` for external edits — polls mtime, reloads when the on-disk
@@ -732,6 +861,8 @@ fn save_as(shared: SharedState, cx: &mut Context<ForgeView>) {
                         .map(|n| n.to_string_lossy().into_owned())
                         .unwrap_or_else(|| path.display().to_string());
                     shared.borrow_mut().file = Some(path.clone());
+                    let recents = record_recent(&path);
+                    refresh_recent_menu(view, &recents, cx);
                     watch_file(path.clone(), shared.clone(), cx);
                     view.update_state(&parse_path("studio.file").unwrap(), Json::String(name), cx);
                     status(view, &format!("saved {}", path.display()), cx);
