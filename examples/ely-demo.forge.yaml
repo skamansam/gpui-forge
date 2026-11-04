@@ -42,7 +42,7 @@ root:
       value: "99.9%"
     - ely.KpiCard:
       label: Revenue
-      value: $42k
+      value: "42k"
     - ely.Meter:
       label: Storage
       value: 68

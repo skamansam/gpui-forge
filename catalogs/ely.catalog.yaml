@@ -139,7 +139,7 @@ elements:
     summary: Ely copy-to-clipboard button.
     component: ely_core::buttons::CopyButton
     children: none
-    props: {text: string, tooltip: string}
+    props: {label: string, text: string, tooltip: string}
   SegmentedControl:
     summary: Ely segmented control — options as children.
     component: ely_core::buttons::SegmentedControl
@@ -170,7 +170,7 @@ elements:
     summary: Ely 0-100 meter bar.
     component: ely_core::data_display::Meter
     children: none
-    props: {value: number}
+    props: {label: string, value: number}
   UsageBar:
     summary: Ely used/total usage bar.
     component: ely_core::data_display::UsageBar
