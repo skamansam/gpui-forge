@@ -58,3 +58,30 @@ elements:
         type: enum
         values: [horizontal, vertical]
         default: horizontal
+
+  Alert:
+    summary: Ely severity alert with title + optional body.
+    component: ely_core::feedback::Alert
+    content: title
+    children: none
+    props:
+      title: string
+      severity:
+        type: enum
+        values: [Info, Success, Warning, Error]
+        default: Info
+      body: string
+      dismissible:
+        type: bool
+        default: false
+    events:
+      dismiss:
+
+  StatusMessage:
+    summary: Ely one-line status text with optional icon.
+    component: ely_core::feedback::StatusMessage
+    content: text
+    children: none
+    props:
+      text: string
+      icon: string

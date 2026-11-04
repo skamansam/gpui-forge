@@ -20,6 +20,10 @@ root:
       variant: Danger
       size: Sm
     - ely.Badge: Ely Badge
+    - ely.Alert: Disk quota almost full
+      severity: Warning
+    - ely.StatusMessage: All systems nominal
+      icon: check
     - ely.Divider:
     - Text: Below the divider
     - ely.IconButton:

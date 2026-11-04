@@ -2,8 +2,9 @@
 
 use ely_core::buttons::{Button, ButtonVariant, IconButton};
 use ely_core::data_display::Badge;
-use ely_core::primitives::Divider;
+use ely_core::feedback::{Alert, StatusMessage};
 use ely_core::primitives::IconName;
+use ely_core::primitives::{Divider, Severity};
 use ely_core::theme::ControlSize;
 use gpui_forge_runtime::base::kit::*;
 use gpui_forge_runtime::forge_spec::catalog::{self, Catalog};
@@ -63,6 +64,26 @@ impl ForgeLibrary for Ely {
                 Some(b.into_any_element())
             }
             "Badge" => Some(Badge::new(prop_str(node, "label")).into_any_element()),
+            "Alert" => {
+                let severity = match prop_str_opt(node, "severity").as_deref() {
+                    Some("Success") => Severity::Success,
+                    Some("Warning") => Severity::Warning,
+                    Some("Danger") => Severity::Danger,
+                    _ => Severity::Info,
+                };
+                let mut a = Alert::new(key.to_string(), severity, prop_str(node, "title"));
+                if let Some(body) = prop_str_opt(node, "body") {
+                    a = a.body(body);
+                }
+                Some(a.into_any_element())
+            }
+            "StatusMessage" => {
+                let mut m = StatusMessage::new(key.to_string(), prop_str(node, "text"));
+                if prop_str_opt(node, "icon").is_some() {
+                    m = m.icon(IconName::Check);
+                }
+                Some(m.into_any_element())
+            }
             "Divider" => Some(
                 if prop_str_opt(node, "orientation").as_deref() == Some("vertical") {
                     Divider::vertical().into_any_element()
