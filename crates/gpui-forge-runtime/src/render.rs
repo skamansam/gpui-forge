@@ -148,6 +148,30 @@ pub type HookHandler = Rc<dyn Fn(&[String], &mut ForgeView, &mut Context<ForgeVi
 
 type Options = Vec<SharedString>;
 
+/// An external element library plugged into the runtime — the adapter contract
+/// from the multi-base RFC: alias + catalog + a render shim for `alias.Name`
+/// elements.
+pub trait ForgeLibrary {
+    /// The `use:` alias this library handles (e.g. "ely" for `ely.VideoPlayer`).
+    fn alias(&self) -> &'static str;
+    /// The library's catalog manifest, merged into the view's catalogs on
+    /// registration so validation/props resolve.
+    fn catalog(&self) -> Option<&Catalog> {
+        None
+    }
+    /// Renders `alias.<element>`; `None` falls through to the unknown-element
+    /// placeholder. The view is read-only here — a shim builds native elements
+    /// from the node + its own state and window/cx.
+    fn render(
+        &self,
+        node: &Node,
+        key: &str,
+        view: &ForgeView,
+        window: &mut Window,
+        cx: &mut Context<ForgeView>,
+    ) -> Option<AnyElement>;
+}
+
 pub struct ForgeView {
     doc: Option<Document>,
     pub catalogs: Vec<Catalog>,
@@ -166,6 +190,7 @@ pub struct ForgeView {
     selects: HashMap<String, Entity<SelectState<Options>>>,
     tabs: HashMap<String, usize>,
     previews: HashMap<String, Entity<ForgeView>>,
+    libraries: Vec<Box<dyn ForgeLibrary>>,
     hooks: HashMap<String, HookHandler>,
     on_hook: Option<HookSink>,
     on_state: Option<StateSink>,
@@ -262,6 +287,7 @@ impl ForgeView {
             selects: HashMap::new(),
             tabs: HashMap::new(),
             previews: HashMap::new(),
+            libraries: Vec::new(),
             hooks: HashMap::new(),
             on_hook: None,
             on_state: None,
@@ -723,6 +749,15 @@ impl ForgeView {
         } else if let Some(sink) = self.on_hook.clone() {
             sink(&format!("{}({})", name, args.join(", ")), self, cx);
         }
+    }
+
+    /// Registers a namespaced-element library: its catalog is merged for
+    /// validation/props and `alias.<name>` elements render through it.
+    pub fn register_library(&mut self, lib: impl ForgeLibrary + 'static) {
+        if let Some(cat) = lib.catalog().cloned() {
+            self.catalogs.push(cat);
+        }
+        self.libraries.push(Box::new(lib));
     }
 
     /// Resolves `src` against `base_dir` when relative — `std::fs` calls use this
@@ -1243,6 +1278,13 @@ impl ForgeView {
                 .as_ref()
                 .and_then(|doc| doc.imports.iter().find(|i| &i.alias == namespace))
                 .map(|import| import.library.as_str());
+            for lib in &self.libraries {
+                if lib.alias() == namespace
+                    && let Some(el) = lib.render(node, key, self, window, cx)
+                {
+                    return el;
+                }
+            }
             let element: AnyElement = match (library, node.element.name.as_str()) {
                 (Some("forge"), "Preview") => {
                     let id = node.id.clone().unwrap_or_else(|| key.to_owned());
