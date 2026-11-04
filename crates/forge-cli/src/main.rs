@@ -28,6 +28,9 @@ struct Package {
     id: String,
     icon: String,
     title: String,
+    /// Package an existing workspace binary instead of a generated app
+    /// (e.g. `binary = "forge-studio"` builds `-p forge-studio`).
+    binary: String,
 }
 
 #[allow(dead_code)]
@@ -386,6 +389,42 @@ fn convert_cmd(rest: &[String]) -> i32 {
 /// AppDir (+AppImage when appimagetool is installed, else a tarball) on
 /// Linux; .app/.nsi scaffolding is emitted for other platforms.
 fn package_cmd(rest: &[String]) -> i32 {
+    let root = workspace_root()
+        .canonicalize()
+        .unwrap_or_else(|_| workspace_root());
+    // Binary mode: the manifest names a workspace crate (e.g. forge-studio) —
+    // release-build it directly instead of scaffolding a generated app.
+    let dir = doc_path(rest)
+        .map(|p| {
+            if p.is_dir() {
+                p
+            } else {
+                p.parent().unwrap_or(Path::new(".")).to_path_buf()
+            }
+        })
+        .unwrap_or_else(|| std::env::current_dir().unwrap_or_default());
+    if let Some((m_dir, manifest)) =
+        load_manifest(&dir).filter(|(_, m)| !m.package.binary.is_empty())
+    {
+        let name = manifest.package.name.clone();
+        eprintln!("forge: building {} (release)", manifest.package.binary);
+        let ok = Command::new("cargo")
+            .args([
+                "build",
+                "--release",
+                "--locked",
+                "-p",
+                &manifest.package.binary,
+            ])
+            .current_dir(&root)
+            .status()
+            .is_ok_and(|s| s.success());
+        if !ok {
+            return 1;
+        }
+        let binary = root.join("target/release").join(&manifest.package.binary);
+        return bundle(&m_dir, &manifest, &name, &binary);
+    }
     let mut build_args: Vec<String> = rest.to_vec();
     build_args.push("--release".into());
     if build_cmd(&build_args) != 0 {
@@ -394,27 +433,29 @@ fn package_cmd(rest: &[String]) -> i32 {
     let Some((m_dir, manifest, _doc, name)) = project(rest) else {
         return 2;
     };
-    let root = workspace_root()
-        .canonicalize()
-        .unwrap_or_else(|_| workspace_root());
     let binary = root.join("target/forge-apps/release").join(&name);
     if !binary.exists() {
         eprintln!("forge: {} not found after build", binary.display());
         return 1;
     }
+    bundle(&m_dir, &manifest, &name, &binary)
+}
+
+/// Wraps a built binary for the host OS into `<manifest-dir>/dist/`.
+fn bundle(m_dir: &Path, manifest: &ForgeToml, name: &str, binary: &Path) -> i32 {
     let title = if manifest.package.title.is_empty() {
         name.replace('-', " ")
     } else {
         manifest.package.title.clone()
     };
-    let out_dir = m_dir.join("dist");
+    let out_dir = m_dir.to_path_buf().join("dist");
     let _ = std::fs::remove_dir_all(&out_dir);
     let _ = std::fs::create_dir_all(&out_dir);
 
     if std::env::consts::OS == "linux" {
         let appdir = out_dir.join(format!("{name}.AppDir"));
         let _ = std::fs::create_dir_all(appdir.join("usr/bin"));
-        let _ = std::fs::copy(&binary, appdir.join("usr/bin").join(&name));
+        let _ = std::fs::copy(binary, appdir.join("usr/bin").join(name));
         write(
             &appdir.join("AppRun"),
             &format!(
@@ -431,12 +472,16 @@ exec "$(dirname "$0")/usr/bin/{name}" "$@"
         );
         if !manifest.package.icon.is_empty() {
             let icon = m_dir.join(&manifest.package.icon);
-            if icon.exists() {
-                let _ = std::fs::copy(&icon, appdir.join(&manifest.package.icon));
-                desktop.push_str(&format!(
-                    "Icon={}\n",
-                    manifest.package.icon.trim_end_matches(".png")
-                ));
+            if let Some(base) = icon.file_name().map(|n| n.to_string_lossy().into_owned()) {
+                if icon.exists() {
+                    let _ = std::fs::copy(&icon, appdir.join(&base));
+                    // Icon= wants the file's name without its extension.
+                    let name = base
+                        .rsplit_once('.')
+                        .map(|(s, _)| s.to_string())
+                        .unwrap_or(base);
+                    desktop.push_str(&format!("Icon={name}\n"));
+                }
             }
         }
         write(&appdir.join(format!("{name}.desktop")), &desktop);
@@ -861,14 +906,15 @@ fn build_cmd(rest: &[String]) -> i32 {
         let src = std::fs::read_to_string(&path).unwrap_or_default();
         if let Ok((doc, _)) = gpui_forge_runtime::forge_spec::yaml::from_str_with_source_map(&src) {
             write(&src_dir.join("doc.rs"), &codegen_doc(&doc));
-            let main = std::fs::read_to_string(src_dir.join("main.rs")).unwrap_or_default()
+            let main = std::fs::read_to_string(src_dir.join("main.rs"))
+                .unwrap_or_default()
                 .replace(
                     r#"const SRC: &str = include_str!("../app.forge.yaml");"#,
                     "mod doc;",
                 )
                 .replace(
                     r#"let (doc, diagnostics) = gpui_forge_runtime::check::check(
-                SRC, gpui_forge_runtime::base::BASE_ID, &catalogs);"#, 
+                SRC, gpui_forge_runtime::base::BASE_ID, &catalogs);"#,
                     r#"let (doc, diagnostics): (
                 Option<gpui_forge_runtime::forge_spec::Document>,
                 Vec<gpui_forge_runtime::forge_spec::Diagnostic>,

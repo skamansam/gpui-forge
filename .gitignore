@@ -1,3 +1,4 @@
 /target
 .forge-build/
 target/forge-apps/
+crates/forge-studio/dist/

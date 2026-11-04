@@ -1,0 +1,7 @@
+[package]
+name = "forge-studio"
+version = "0.1.0"
+id = "dev.forge.forge-studio"
+title = "Forge Studio"
+icon = "../../gpui_forge_icon_medallion.svg"
+binary = "forge-studio"
