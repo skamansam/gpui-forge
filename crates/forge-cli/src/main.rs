@@ -179,6 +179,7 @@ fn usage() {
     eprintln!("  forge build <doc.forge.yaml> [opts]     compile a native app");
     eprintln!("      -o <path>       output binary path (default: ./<name>)");
     eprintln!("      --release       release profile (default: dev)");
+    eprintln!("      --codegen       compile the document to Rust, not embedded YAML");
     eprintln!("      --dir <path>    scaffold dir (default: <doc>/.forge-build/<name>)");
     eprintln!("  forge fmt <doc.forge.yaml>              canonical reformat (stdout or -w)");
     eprintln!("  forge convert <file>                  between .forge.yaml and JSON");
@@ -437,6 +438,96 @@ fn preview_cmd(rest: &[String]) -> i32 {
     }
 }
 
+/// Emits `src/doc.rs`: the document as compiled Rust instead of a runtime
+/// YAML parse — the "codegen" alternative to embed mode.
+fn codegen_doc(doc: &gpui_forge_runtime::forge_spec::Document) -> String {
+    use gpui_forge_runtime::forge_spec::*;
+    fn path(p: &Path) -> String {
+        let segs = p
+            .0
+            .iter()
+            .map(|s| match s {
+                PathSegment::Field(f) => format!("PathSegment::Field({f:?}.into())"),
+                PathSegment::Index(i) => format!("PathSegment::Index({i})"),
+            })
+            .collect::<Vec<_>>()
+            .join(", ");
+        format!("forge_spec::Path(vec![{segs}])")
+    }
+    fn value(v: &Value) -> String {
+        match v {
+            Value::String(t) => format!("Value::String({t:?}.into())"),
+            Value::Number { value: n, unit } => {
+                let u = unit.map(|u| format!("Some(Unit::{u:?})")).unwrap_or("None".into());
+                format!("Value::Number {{ value: {n:?}, unit: {u} }}")
+            }
+            Value::Bool(b) => format!("Value::Bool({b})"),
+            Value::Enum(t) => format!("Value::Enum({t:?}.into())"),
+            Value::Color(c) => format!(
+                "Value::Color(Color {{ r: {}, g: {}, b: {}, a: {} }})",
+                c.r, c.g, c.b, c.a
+            ),
+            Value::Token(p) => format!("Value::Token({})", path(p)),
+            Value::List(items) => {
+                format!("Value::List(vec![{}])", items.iter().map(value).collect::<Vec<_>>().join(", "))
+            }
+            Value::Map(entries) => {
+                format!("Value::Map(vec![{}])", entries.iter().map(|(k, v)| format!("({k:?}.into(), {})", value(v))).collect::<Vec<_>>().join(", "))
+            }
+            Value::Binding { path: p, mode } => {
+                format!("Value::Binding {{ path: {}, mode: BindingMode::{mode:?} }}", path(p))
+            }
+            Value::Interpolated(segs) => {
+                format!("Value::Interpolated(vec![{}])", segs.iter().map(|s| match s {
+                    Segment::Text(t) => format!("Segment::Text({t:?}.into())"),
+                    Segment::Binding(p) => format!("Segment::Binding({})", path(p)),
+                }).collect::<Vec<_>>().join(", "))
+            }
+        }
+    }
+    fn entries(es: &Entries) -> String {
+        format!("vec![{}]", es.iter().map(|(k, v)| format!("({k:?}.into(), {})", value(v))).collect::<Vec<_>>().join(", "))
+    }
+    fn node(n: &Node) -> String {
+        let ns = n.element.namespace.as_ref().map(|s| format!("Some({s:?}.into())")).unwrap_or("None".into());
+        let id = n.id.as_ref().map(|s| format!("Some({s:?}.into())")).unwrap_or("None".into());
+        let content = n.content.as_ref().map(|v| format!("Some({})", value(v))).unwrap_or("None".into());
+        let events = n.events.iter().map(|e| format!(
+            "EventBinding {{ event: {:?}.into(), handler: HandlerRef {{ name: {:?}.into(), args: vec![{}] }} }}",
+            e.event, e.handler.name, e.handler.args.iter().map(value).collect::<Vec<_>>().join(", ")
+        )).collect::<Vec<_>>().join(", ");
+        let kids = n.children.iter().map(node).collect::<Vec<_>>().join(", ");
+        format!("Node {{ element: ElementRef {{ namespace: {ns}, name: {:?}.into() }}, id: {id}, content: {content}, props: {}, style: {}, events: vec![{events}], children: vec![{kids}] }}",
+            n.element.name, entries(&n.props), entries(&n.style))
+    }
+    let dialogs = doc.dialogs.iter().map(node).collect::<Vec<_>>().join(", ");
+    let schema = doc.schema.as_ref().map(|s| format!("Some({s:?}.into())")).unwrap_or("None".into());
+    let base = doc.base.as_ref().map(|s| format!("Some({s:?}.into())")).unwrap_or("None".into());
+    let imports = doc.imports.iter().map(|i| format!(
+        "Import {{ alias: {:?}.into(), library: {:?}.into(), version: {:?} }}",
+        i.alias, i.library, i.version
+    )).collect::<Vec<_>>().join(", ");
+    let meta = doc.meta.iter().map(|(k, v)| format!("({k:?}.into(), {v:?}.into())")).collect::<Vec<_>>().join(", ");
+    format!(
+        "use forge_spec::*;
+
+pub fn document() -> Document {{
+    Document {{
+        schema: {schema},
+        version: {:?}.into(),
+        base: {base},
+        imports: vec![{imports}],
+        meta: vec![{meta}],
+        dialogs: vec![{dialogs}],
+        root: {},
+        raw: None,
+    }}
+}}
+",
+        doc.version, node(&doc.root)
+    )
+}
+
 fn build_cmd(rest: &[String]) -> i32 {
     let release = rest.iter().any(|a| a == "--release");
     // A manifest (forge.toml, a directory, or its parent chain) supplies the
@@ -506,6 +597,22 @@ fn build_cmd(rest: &[String]) -> i32 {
         &APP_MAIN.replace("{APP_ID}", &app_id).replace("{TITLE}", &title),
     );
     write(&dir.join("app.forge.yaml"), &std::fs::read_to_string(&path).unwrap_or_default());
+    if rest.iter().any(|a| a == "--codegen") {
+        let src = std::fs::read_to_string(&path).unwrap_or_default();
+        if let Ok((doc, _)) = gpui_forge_runtime::forge_spec::yaml::from_str_with_source_map(&src) {
+            write(&src_dir.join("doc.rs"), &codegen_doc(&doc));
+            let main = std::fs::read_to_string(src_dir.join("main.rs")).unwrap_or_default()
+                .replace(
+                    r#"const SRC: &str = include_str!("../app.forge.yaml");"#,
+                    "mod doc;",
+                )
+                .replace(
+                    r#"let (doc, diagnostics) = check::check(SRC, BASE_ID, &catalogs);"#, 
+                    r#"let (doc, diagnostics): (Option<forge_spec::Document>, Vec<forge_spec::Diagnostic>) = (Some(doc::document()), Vec::new());"#,
+                );
+            write(&src_dir.join("main.rs"), &main);
+        }
+    }
 
     let profile = if release { "release" } else { "debug" };
     eprintln!("forge: building {name} ({profile}) in {}", dir.display());
