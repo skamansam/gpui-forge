@@ -1,6 +1,7 @@
 //! Adapter for Ely GPUI Components (`use: ely: ely-core` → `ely.*` elements).
 
 use ely_core::buttons::{Button, ButtonVariant, IconButton};
+use ely_core::data_display::Avatar;
 use ely_core::data_display::Badge;
 use ely_core::feedback::{Alert, StatusMessage};
 use ely_core::motion::{Spinner, SpinnerStyle};
@@ -8,7 +9,7 @@ use ely_core::primitives::IconName;
 use ely_core::primitives::{Divider, Severity};
 use ely_core::theme::ControlSize;
 use ely_core::theme::IconSize;
-use ely_core::typography::Heading;
+use ely_core::typography::{Heading, Paragraph, Title};
 use gpui_forge_runtime::base::kit::*;
 use gpui_forge_runtime::forge_spec::catalog::{self, Catalog};
 use gpui_forge_runtime::forge_spec::{Node, Value};
@@ -117,6 +118,11 @@ impl ForgeLibrary for Ely {
                 };
                 Some(Heading::new(level, prop_str(node, "text")).into_any_element())
             }
+            "Avatar" => {
+                Some(Avatar::new(key.to_string(), prop_str(node, "name")).into_any_element())
+            }
+            "Paragraph" => Some(Paragraph::new(prop_str(node, "text")).into_any_element()),
+            "Title" => Some(Title::new(prop_str(node, "text")).into_any_element()),
             "Divider" => Some(
                 if prop_str_opt(node, "orientation").as_deref() == Some("vertical") {
                     Divider::vertical().into_any_element()

@@ -26,6 +26,9 @@ root:
       icon: check
     - ely.Heading: Ely Heading
       level: 2
+    - ely.Title: Ely Title
+    - ely.Avatar: Sam Ramirez
+    - ely.Paragraph: Body text rendered by the Ely adapter.
     - ely.Spinner:
       spinner: Dots
       size: Md

@@ -110,3 +110,27 @@ elements:
       level:
         type: number
         default: 1
+
+  Avatar:
+    summary: Ely user avatar.
+    component: ely_core::data_display::Avatar
+    content: name
+    children: none
+    props:
+      name: string
+
+  Paragraph:
+    summary: Ely body text.
+    component: ely_core::typography::Paragraph
+    content: text
+    children: none
+    props:
+      text: string
+
+  Title:
+    summary: Ely page title.
+    component: ely_core::typography::Title
+    content: text
+    children: none
+    props:
+      text: string
