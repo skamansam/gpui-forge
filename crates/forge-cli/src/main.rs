@@ -80,6 +80,8 @@ use gpui_forge_runtime::render::ForgeView;
 use gpui_kit::prelude::*;
 use gpui_kit::*;
 
+mod themes;
+
 const SRC: &str = include_str!("../app.forge.yaml");
 
 fn main() {
@@ -87,6 +89,10 @@ fn main() {
         .with_assets(gpui_kit::assets::AllAssets)
         .run(|cx| {
             gpui_kit::init(cx);
+            for (_, json) in themes::THEMES {
+                let _ = gpui_kit::component::theme::ThemeRegistry::global_mut(cx)
+                    .load_themes_from_str(json);
+            }
             let catalogs = check::catalogs();
             let (doc, diagnostics) = check::check(SRC, BASE_ID, &catalogs);
             for d in &diagnostics {
@@ -597,6 +603,33 @@ fn build_cmd(rest: &[String]) -> i32 {
         &APP_MAIN.replace("{APP_ID}", &app_id).replace("{TITLE}", &title),
     );
     write(&dir.join("app.forge.yaml"), &std::fs::read_to_string(&path).unwrap_or_default());
+    // Bundle every shipped theme — assets live in the binary, not on disk.
+    let themes_in = root.join("themes");
+    let themes_out = dir.join("themes");
+    let _ = std::fs::create_dir_all(&themes_out);
+    let mut theme_list = Vec::new();
+    if let Ok(entries) = std::fs::read_dir(&themes_in) {
+        for e in entries.flatten() {
+            let name = e.file_name().to_string_lossy().into_owned();
+            if name.ends_with(".json")
+                && std::fs::copy(e.path(), themes_out.join(&name)).is_ok()
+            {
+                theme_list.push(name);
+            }
+        }
+    }
+    let themes_rs = format!(
+        "pub const THEMES: &[(&str, &str)] = &[\n{}\n];\n",
+        theme_list
+            .iter()
+            .map(|n| format!(
+                "    ({:?}, include_str!(\"../themes/{}\")),",
+                n.trim_end_matches(".json"), n
+            ))
+            .collect::<Vec<_>>()
+            .join("\n")
+    );
+    write(&src_dir.join("themes.rs"), &themes_rs);
     if rest.iter().any(|a| a == "--codegen") {
         let src = std::fs::read_to_string(&path).unwrap_or_default();
         if let Ok((doc, _)) = gpui_forge_runtime::forge_spec::yaml::from_str_with_source_map(&src) {
