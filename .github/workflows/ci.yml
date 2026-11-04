@@ -100,7 +100,8 @@ jobs:
         run: cargo run -p forge-cli --locked -- build crates/forge-studio/welcome.forge.yaml -o /tmp/forge-welcome
       - name: Smoke test — the binary launches and stays alive under xvfb
         run: |
-          timeout 20 xvfb-run -a /tmp/forge-welcome; code=$?
+          code=0
+          timeout 20 xvfb-run -a /tmp/forge-welcome || code=$?
           # 124 = timeout killed a still-running app — the launch succeeded.
           if [ "$code" -ne 124 ]; then
             echo "::error::app exited early with code $code"; exit 1

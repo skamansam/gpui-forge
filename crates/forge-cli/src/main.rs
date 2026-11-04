@@ -74,9 +74,7 @@ fn load_manifest(start: &Path) -> Option<(PathBuf, ForgeToml)> {
     None
 }
 
-const APP_MAIN: &str = r#"use gpui_forge_runtime::base::BASE_ID;
-use gpui_forge_runtime::check;
-use gpui_forge_runtime::render::ForgeView;
+const APP_MAIN: &str = r#"use gpui_forge_runtime::render::ForgeView;
 use gpui_kit::prelude::*;
 use gpui_kit::*;
 
@@ -93,8 +91,9 @@ fn main() {
                 let _ = gpui_kit::component::theme::ThemeRegistry::global_mut(cx)
                     .load_themes_from_str(json);
             }
-            let catalogs = check::catalogs();
-            let (doc, diagnostics) = check::check(SRC, BASE_ID, &catalogs);
+            let catalogs = gpui_forge_runtime::check::catalogs();
+            let (doc, diagnostics) = gpui_forge_runtime::check::check(
+                SRC, gpui_forge_runtime::base::BASE_ID, &catalogs);
             for d in &diagnostics {
                 eprintln!("app.forge.yaml:{}:{}: {}", d.pos.line, d.pos.col, d.message);
             }
@@ -868,8 +867,12 @@ fn build_cmd(rest: &[String]) -> i32 {
                     "mod doc;",
                 )
                 .replace(
-                    r#"let (doc, diagnostics) = check::check(SRC, BASE_ID, &catalogs);"#, 
-                    r#"let (doc, diagnostics): (Option<forge_spec::Document>, Vec<forge_spec::Diagnostic>) = (Some(doc::document()), Vec::new());"#,
+                    r#"let (doc, diagnostics) = gpui_forge_runtime::check::check(
+                SRC, gpui_forge_runtime::base::BASE_ID, &catalogs);"#, 
+                    r#"let (doc, diagnostics): (
+                Option<gpui_forge_runtime::forge_spec::Document>,
+                Vec<gpui_forge_runtime::forge_spec::Diagnostic>,
+            ) = (Some(doc::document()), Vec::new());"#,
                 );
             write(&src_dir.join("main.rs"), &main);
         }
