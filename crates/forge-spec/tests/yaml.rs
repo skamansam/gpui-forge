@@ -312,9 +312,7 @@ root:
 
     // Undefined aliases and scalar merges error.
     assert!(errors("forge: \"0.1\"\nroot:\n  Button:\n  <<: *missing\n").contains("anchor"));
-    assert!(
-        errors("forge: \"0.1\"\nroot:\n  Button:\n  <<: 'text'\n").contains("merge key `<<`")
-    );
+    assert!(errors("forge: \"0.1\"\nroot:\n  Button:\n  <<: 'text'\n").contains("merge key `<<`"));
 }
 
 #[test]
@@ -366,7 +364,14 @@ root:
 "#;
     let mut doc = read(src);
     // Change one prop: only that line rewrites canonically.
-    doc.set_prop("0", "gap", Some(Value::Number { value: 12.0, unit: None }));
+    doc.set_prop(
+        "0",
+        "gap",
+        Some(Value::Number {
+            value: 12.0,
+            unit: None,
+        }),
+    );
     let out = preserve(&doc);
     assert!(out.contains("# a comment about the root"));
     assert!(out.contains("- Button#ok: Sign in   # keep me"));
@@ -410,7 +415,10 @@ root:
     let mut doc = read(src);
     doc.remove_node("0.1");
     let mut button = forge_spec::Node::default();
-    button.element = forge_spec::ElementRef { namespace: None, name: "Input".into() };
+    button.element = forge_spec::ElementRef {
+        namespace: None,
+        name: "Input".into(),
+    };
     doc.insert_node("0", button, Some(0));
     let out = preserve(&doc);
     assert!(out.contains("- Button: A"));

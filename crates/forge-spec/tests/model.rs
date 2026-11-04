@@ -1,5 +1,5 @@
-use forge_spec::{Document, ElementRef, Node, Value};
 use forge_spec::yaml;
+use forge_spec::{Document, ElementRef, Node, Value};
 
 fn doc() -> Document {
     yaml::from_str(
@@ -36,12 +36,29 @@ fn node_at_resolves_index_paths() {
 fn set_prop_updates_inserts_and_removes() {
     let mut doc = doc();
     // insert: HStack has no gap yet
-    assert!(doc.set_prop("0.1", "gap", Some(Value::Number { value: 4.0, unit: None })));
+    assert!(doc.set_prop(
+        "0.1",
+        "gap",
+        Some(Value::Number {
+            value: 4.0,
+            unit: None
+        })
+    ));
     let row = doc.node_at("0.1").unwrap();
     assert_eq!(row.props[0].0, "gap");
     // replace again
-    assert!(doc.set_prop("0.1", "gap", Some(Value::Number { value: 9.0, unit: None })));
-    assert!(matches!(doc.node_at("0.1").unwrap().props[0].1, Value::Number { value: 9.0, .. }));
+    assert!(doc.set_prop(
+        "0.1",
+        "gap",
+        Some(Value::Number {
+            value: 9.0,
+            unit: None
+        })
+    ));
+    assert!(matches!(
+        doc.node_at("0.1").unwrap().props[0].1,
+        Value::Number { value: 9.0, .. }
+    ));
     // remove
     assert!(doc.set_prop("0.1", "gap", None));
     assert!(doc.node_at("0.1").unwrap().props.is_empty());
@@ -53,7 +70,10 @@ fn set_prop_updates_inserts_and_removes() {
 fn insert_and_remove_nodes() {
     let mut doc = doc();
     let node = Node {
-        element: ElementRef { namespace: None, name: "Label".into() },
+        element: ElementRef {
+            namespace: None,
+            name: "Label".into(),
+        },
         content: Some(Value::String("new".into())),
         ..Default::default()
     };
@@ -88,7 +108,10 @@ fn insert_after_and_move_after_place_siblings() {
     let mut doc = doc();
     // insert a Label right after the first Button (0.1.0)
     let node = Node {
-        element: ElementRef { namespace: None, name: "Label".into() },
+        element: ElementRef {
+            namespace: None,
+            name: "Label".into(),
+        },
         content: Some(Value::String("x".into())),
         ..Default::default()
     };

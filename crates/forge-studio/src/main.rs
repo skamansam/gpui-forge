@@ -10,14 +10,14 @@ use std::rc::Rc;
 
 use gpui_forge_runtime::base::BASE_ID;
 use gpui_forge_runtime::check;
+use gpui_forge_runtime::forge_spec::Document;
 use gpui_forge_runtime::forge_spec::catalog::Catalog;
 use gpui_forge_runtime::forge_spec::value::parse_path;
 use gpui_forge_runtime::forge_spec::{Diagnostic, ElementRef, Node, Value, yaml};
 use gpui_forge_runtime::render::{ForgeView, get_path, set_path};
-use gpui_kit::component::theme::{Theme, ThemeMode, ThemeRegistry};
-use gpui_kit::component::theme::ThemeSet;
 use gpui_kit::component::WindowExt as _;
-use gpui_forge_runtime::forge_spec::Document;
+use gpui_kit::component::theme::ThemeSet;
+use gpui_kit::component::theme::{Theme, ThemeMode, ThemeRegistry};
 use gpui_kit::{prelude::*, *};
 use serde_json::{Value as Json, json};
 
@@ -67,9 +67,7 @@ fn main() {
                 use gpui_kit::WindowAppearance;
                 Theme::change(
                     match cx.window_appearance() {
-                        WindowAppearance::Dark | WindowAppearance::VibrantDark => {
-                            ThemeMode::Dark
-                        }
+                        WindowAppearance::Dark | WindowAppearance::VibrantDark => ThemeMode::Dark,
                         _ => ThemeMode::Light,
                     },
                     None,
@@ -92,7 +90,10 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     let mut view = ForgeView::new(shared.borrow().catalogs.clone());
     let (doc, diagnostics) = check::check(SHELL, BASE_ID, &shared.borrow().catalogs);
     for d in &diagnostics {
-        eprintln!("studio.forge.yaml:{}:{}: {}", d.pos.line, d.pos.col, d.message);
+        eprintln!(
+            "studio.forge.yaml:{}:{}: {}",
+            d.pos.line, d.pos.col, d.message
+        );
     }
     if let Some(doc) = doc {
         view.set_document(doc, cx);
@@ -239,17 +240,24 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
 /// Routes a fired hook (from the shell or a previewed document) to its implementation.
 /// `open_dialog('name')` — finds the document's `Dialog#name` declaration,
 /// builds a child ForgeView from its contents, and opens it via `WindowExt`.
-fn open_dialog(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &mut Context<ForgeView>) {
+fn open_dialog(
+    view: &mut ForgeView,
+    args: &[String],
+    shared: &SharedState,
+    cx: &mut Context<ForgeView>,
+) {
     let Some(name) = args
         .first()
         .map(|a| a.trim_matches(|c| c == '"' || c == '\'').to_owned())
     else {
         return;
     };
-    let Some(node) = view
-        .document()
-        .and_then(|doc| doc.dialogs.iter().find(|n| n.id.as_deref() == Some(name.as_str())).cloned())
-    else {
+    let Some(node) = view.document().and_then(|doc| {
+        doc.dialogs
+            .iter()
+            .find(|n| n.id.as_deref() == Some(name.as_str()))
+            .cloned()
+    }) else {
         view.report(format!("dialog `{name}` not found"));
         return;
     };
@@ -296,7 +304,10 @@ fn open_dialog(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: 
                 dialogs: vec![],
                 raw: None,
                 root: Node {
-                    element: ElementRef { namespace: None, name: "VStack".into() },
+                    element: ElementRef {
+                        namespace: None,
+                        name: "VStack".into(),
+                    },
                     style: node.style.clone(),
                     children: node.children.clone(),
                     ..Default::default()
@@ -344,7 +355,11 @@ fn apply_theme_name(view: &mut ForgeView, args: &[String], cx: &mut Context<Forg
     let Some(name) = args.first() else {
         return;
     };
-    let Some(config) = ThemeRegistry::global(cx).themes().get(name.as_str()).cloned() else {
+    let Some(config) = ThemeRegistry::global(cx)
+        .themes()
+        .get(name.as_str())
+        .cloned()
+    else {
         view.report(format!("theme `{name}` not found"));
         return;
     };
@@ -358,7 +373,11 @@ fn apply_theme_name(view: &mut ForgeView, args: &[String], cx: &mut Context<Forg
         themes: vec![(*config).clone()],
         ..Default::default()
     }) {
-        view.update_state(&parse_path("studio.theme_json").unwrap(), Json::String(json), cx);
+        view.update_state(
+            &parse_path("studio.theme_json").unwrap(),
+            Json::String(json),
+            cx,
+        );
     }
 }
 
@@ -420,7 +439,15 @@ fn dispatch(
         "format_document" => format_document(view, shared, cx),
         "apply_theme" => {
             let dark = args.first().is_some_and(|a| a == "true");
-            Theme::change(if dark { ThemeMode::Dark } else { ThemeMode::Light }, None, cx);
+            Theme::change(
+                if dark {
+                    ThemeMode::Dark
+                } else {
+                    ThemeMode::Light
+                },
+                None,
+                cx,
+            );
         }
         "apply_theme_name" => apply_theme_name(view, args, cx),
         "apply_theme_json" => apply_theme_json(view, cx),
@@ -468,7 +495,12 @@ fn dispatch(
 
 /// `start_from('welcome'|'gallery'|'blank')` — loads a starter document and shows
 /// the preview tab so the user sees the running app.
-fn start_from(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &mut Context<ForgeView>) {
+fn start_from(
+    view: &mut ForgeView,
+    args: &[String],
+    shared: &SharedState,
+    cx: &mut Context<ForgeView>,
+) {
     let name = match args.first().map(String::as_str) {
         Some("gallery" | "gallery.forge.yaml") => "gallery.forge.yaml",
         Some("forge" | "gallery.forge.forge.yaml") => "gallery.forge.forge.yaml",
@@ -609,9 +641,21 @@ fn load_source(
     let catalogs = shared.borrow().catalogs.clone();
     let (doc, diagnostics) = check::check(src, BASE_ID, &catalogs);
     let mut state = view.state().clone();
-    set_path(&mut state, &parse_path("editor.source").unwrap(), Json::String(src.to_owned()));
-    set_path(&mut state, &parse_path("studio.file").unwrap(), Json::String(name.to_owned()));
-    set_path(&mut state, &parse_path("studio.dirty").unwrap(), Json::Bool(false));
+    set_path(
+        &mut state,
+        &parse_path("editor.source").unwrap(),
+        Json::String(src.to_owned()),
+    );
+    set_path(
+        &mut state,
+        &parse_path("studio.file").unwrap(),
+        Json::String(name.to_owned()),
+    );
+    set_path(
+        &mut state,
+        &parse_path("studio.dirty").unwrap(),
+        Json::Bool(false),
+    );
     set_path(
         &mut state,
         &parse_path("studio.diagnostics").unwrap(),
@@ -689,11 +733,7 @@ fn save_as(shared: SharedState, cx: &mut Context<ForgeView>) {
                         .unwrap_or_else(|| path.display().to_string());
                     shared.borrow_mut().file = Some(path.clone());
                     watch_file(path.clone(), shared.clone(), cx);
-                    view.update_state(
-                        &parse_path("studio.file").unwrap(),
-                        Json::String(name),
-                        cx,
-                    );
+                    view.update_state(&parse_path("studio.file").unwrap(), Json::String(name), cx);
                     status(view, &format!("saved {}", path.display()), cx);
                 }
                 Err(e) => status(view, &format!("cannot save {}: {e}", path.display()), cx),
@@ -756,7 +796,12 @@ fn insert_component(view: &mut ForgeView, args: &[String], cx: &mut Context<Forg
 /// Fires when the preview reports a drop target (`studio.drop_target`) while a
 /// palette item is armed (`studio.placing`): parse the element's snippet into a
 /// node and insert it under the clicked node.
-fn place_component(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &mut Context<ForgeView>) {
+fn place_component(
+    view: &mut ForgeView,
+    args: &[String],
+    shared: &SharedState,
+    cx: &mut Context<ForgeView>,
+) {
     let state = view.state().clone();
     let Some(tag) = get_path(&state, &parse_path("studio.placing").unwrap())
         .and_then(|j| j.as_str())
@@ -783,8 +828,12 @@ fn place_component(view: &mut ForgeView, args: &[String], shared: &SharedState, 
         // Container targets take the node inside; leaf targets take it as
         // the sibling right after.
         let result = if into {
-            doc.insert_node(target, node, None)
-                .then(|| format!("{target}.{}", doc.node_at(target).unwrap().children.len() - 1))
+            doc.insert_node(target, node, None).then(|| {
+                format!(
+                    "{target}.{}",
+                    doc.node_at(target).unwrap().children.len() - 1
+                )
+            })
         } else {
             doc.insert_after(target, node)
         };
@@ -804,11 +853,7 @@ fn place_component(view: &mut ForgeView, args: &[String], shared: &SharedState, 
         status(view, &format!("placed {tag} at {path}"), cx);
         if let Some(doc) = preview.read(cx).document().cloned() {
             let src = yaml::to_string_preserving(&doc, &yaml::WriteOptions::default());
-            view.update_state(
-                &parse_path("editor.source").unwrap(),
-                Json::String(src),
-                cx,
-            );
+            view.update_state(&parse_path("editor.source").unwrap(), Json::String(src), cx);
             view.reset_inputs("source");
         }
     }
@@ -817,7 +862,12 @@ fn place_component(view: &mut ForgeView, args: &[String], shared: &SharedState, 
 
 /// A palette item dropped on a preview node or outline row —
 /// `drop_component('<tag>', '<target-path>')`.
-fn drop_component(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &mut Context<ForgeView>) {
+fn drop_component(
+    view: &mut ForgeView,
+    args: &[String],
+    shared: &SharedState,
+    cx: &mut Context<ForgeView>,
+) {
     let Some(tag) = args
         .first()
         .map(|t| t.trim_matches(|c| c == '"' || c == '\'').to_owned())
@@ -833,7 +883,12 @@ fn drop_component(view: &mut ForgeView, args: &[String], shared: &SharedState, c
 
 /// A document node dragged onto a preview node or outline row —
 /// `move_node('<src-path>', '<target-path>')`.
-fn move_node(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &mut Context<ForgeView>) {
+fn move_node(
+    view: &mut ForgeView,
+    args: &[String],
+    shared: &SharedState,
+    cx: &mut Context<ForgeView>,
+) {
     let Some(src) = args
         .first()
         .map(|p| p.trim_matches(|c| c == '"' || c == '\'').to_owned())
@@ -855,11 +910,14 @@ fn move_node(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &m
         };
         // Container targets take the node inside; leaf targets take it as
         // the sibling right after.
-        let into = target == "0"
-            || accepts_children(&shared.borrow().catalogs, &doc, &target);
+        let into = target == "0" || accepts_children(&shared.borrow().catalogs, &doc, &target);
         let result = if into {
-            doc.reparent(&src, &target, None)
-                .then(|| format!("{target}.{}", doc.node_at(&target).unwrap().children.len() - 1))
+            doc.reparent(&src, &target, None).then(|| {
+                format!(
+                    "{target}.{}",
+                    doc.node_at(&target).unwrap().children.len() - 1
+                )
+            })
         } else {
             doc.move_after(&src, &target)
         };
@@ -869,7 +927,11 @@ fn move_node(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &m
         }
     });
     if let Some(path) = moved {
-        view.update_state(&parse_path("document.selected").unwrap(), Json::String(path.clone()), cx);
+        view.update_state(
+            &parse_path("document.selected").unwrap(),
+            Json::String(path.clone()),
+            cx,
+        );
         view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(true), cx);
         status(view, &format!("moved {src} under {target}"), cx);
         sync_source(view, &preview, cx);
@@ -904,8 +966,12 @@ fn insert_at(
         // Container targets take the node inside; leaf targets take it as
         // the sibling right after.
         let result = if into {
-            doc.insert_node(target, node, None)
-                .then(|| format!("{target}.{}", doc.node_at(target).unwrap().children.len() - 1))
+            doc.insert_node(target, node, None).then(|| {
+                format!(
+                    "{target}.{}",
+                    doc.node_at(target).unwrap().children.len() - 1
+                )
+            })
         } else {
             doc.insert_after(target, node)
         };
@@ -915,7 +981,11 @@ fn insert_at(
         }
     });
     if let Some(path) = placed {
-        view.update_state(&parse_path("document.selected").unwrap(), Json::String(path.clone()), cx);
+        view.update_state(
+            &parse_path("document.selected").unwrap(),
+            Json::String(path.clone()),
+            cx,
+        );
         view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(true), cx);
         status(view, &format!("placed {tag} at {path}"), cx);
         sync_source(view, &preview, cx);
@@ -927,13 +997,12 @@ fn insert_at(
 fn accepts_children(catalogs: &[Catalog], doc: &Document, path: &str) -> bool {
     doc.node_at(path).is_some_and(|node| {
         catalogs.iter().any(|c| {
-            c.element(&node.element.name)
-                .is_some_and(|def| {
-                    !matches!(
-                        def.children,
-                        gpui_forge_runtime::forge_spec::catalog::Children::None
-                    )
-                })
+            c.element(&node.element.name).is_some_and(|def| {
+                !matches!(
+                    def.children,
+                    gpui_forge_runtime::forge_spec::catalog::Children::None
+                )
+            })
         })
     })
 }
@@ -1003,7 +1072,10 @@ fn remove_component(view: &mut ForgeView, shared: &SharedState, cx: &mut Context
         return;
     }
     // Select the parent so the inspector lands somewhere sensible.
-    let parent = path.rsplit_once('.').map(|(p, _)| p.to_owned()).unwrap_or_else(|| "0".into());
+    let parent = path
+        .rsplit_once('.')
+        .map(|(p, _)| p.to_owned())
+        .unwrap_or_else(|| "0".into());
     view.update_state(
         &parse_path("document.selected").unwrap(),
         Json::String(parent),
@@ -1053,11 +1125,7 @@ fn restore(
         other(&mut shared.borrow_mut()).push((current, source(view)));
     }
     preview.update(cx, |p, cx| p.set_document(doc, cx));
-    view.update_state(
-        &parse_path("editor.source").unwrap(),
-        Json::String(src),
-        cx,
-    );
+    view.update_state(&parse_path("editor.source").unwrap(), Json::String(src), cx);
     view.reset_inputs("source");
     view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(true), cx);
 }
@@ -1081,7 +1149,11 @@ fn copy_snippet(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeVie
         return;
     };
     cx.write_to_clipboard(ClipboardItem::new_string(snippet.to_owned()));
-    status(view, &format!("copied a `{name}` snippet to the clipboard"), cx);
+    status(
+        view,
+        &format!("copied a `{name}` snippet to the clipboard"),
+        cx,
+    );
 }
 
 /// A node snippet for each palette element.
@@ -1092,9 +1164,13 @@ fn snippet(name: &str) -> Option<&'static str> {
         "Textarea" => "- Textarea:\n  value: bind $form.text\n  rows: 3",
         "Checkbox" => "- Checkbox: Label\n  checked: bind $form.flag",
         "Switch" => "- Switch: Label\n  checked: bind $form.flag",
-        "RadioGroup" => "- RadioGroup:\n  selected: bind $form.choice\n  children:\n    - Radio: One\n    - Radio: Two",
+        "RadioGroup" => {
+            "- RadioGroup:\n  selected: bind $form.choice\n  children:\n    - Radio: One\n    - Radio: Two"
+        }
         "Select" => "- Select:\n  options: [One, Two]\n  value: bind $form.choice",
-        "Tabs" => "- Tabs:\n  children:\n    - Tab: One\n      children:\n        - Text: first panel\n    - Tab: Two\n      children:\n        - Text: second panel",
+        "Tabs" => {
+            "- Tabs:\n  children:\n    - Tab: One\n      children:\n        - Text: first panel\n    - Tab: Two\n      children:\n        - Text: second panel"
+        }
         "VStack" => "- VStack:\n  children:\n    - Text: Hello",
         "HStack" => "- HStack:\n  children:\n    - Text: Hello",
         "GroupBox" => "- GroupBox: Title\n  variant: Outline\n  children:\n    - Text: Hello",
@@ -1155,7 +1231,12 @@ fn problem_count(diagnostics: &[Diagnostic]) -> String {
 /// new value into the preview's document at `document.selected` and re-render.
 /// `style_changed('<style-prop>')` — the Inspector's Style tab writes the bound
 /// `document.edits.style.<name>` value back into the node's `style` entries.
-fn style_changed(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &mut Context<ForgeView>) {
+fn style_changed(
+    view: &mut ForgeView,
+    args: &[String],
+    shared: &SharedState,
+    cx: &mut Context<ForgeView>,
+) {
     let Some(name) = args.first() else {
         return;
     };
@@ -1179,7 +1260,12 @@ fn style_changed(view: &mut ForgeView, args: &[String], shared: &SharedState, cx
     });
 }
 
-fn prop_changed(view: &mut ForgeView, args: &[String], shared: &SharedState, cx: &mut Context<ForgeView>) {
+fn prop_changed(
+    view: &mut ForgeView,
+    args: &[String],
+    shared: &SharedState,
+    cx: &mut Context<ForgeView>,
+) {
     let Some(prop) = args.first() else {
         return;
     };
@@ -1205,11 +1291,7 @@ fn prop_changed(view: &mut ForgeView, args: &[String], shared: &SharedState, cx:
     // entity from the bound path so the new text shows.
     if let Some(doc) = preview.read(cx).document().cloned() {
         let src = yaml::to_string_preserving(&doc, &yaml::WriteOptions::default());
-        view.update_state(
-            &parse_path("editor.source").unwrap(),
-            Json::String(src),
-            cx,
-        );
+        view.update_state(&parse_path("editor.source").unwrap(), Json::String(src), cx);
         view.reset_inputs("source");
     }
 }

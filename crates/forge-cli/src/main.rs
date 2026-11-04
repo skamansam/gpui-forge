@@ -266,7 +266,10 @@ root:
     - Text: Hello, Forge!
 "#,
     );
-    println!("forge: created {} — `forge build` inside it compiles a native app", dir.display());
+    println!(
+        "forge: created {} — `forge build` inside it compiles a native app",
+        dir.display()
+    );
     0
 }
 
@@ -283,11 +286,8 @@ fn check_cmd(rest: &[String]) -> i32 {
         }
     };
     let catalogs = gpui_forge_runtime::check::catalogs();
-    let (doc, diagnostics) = gpui_forge_runtime::check::check(
-        &src,
-        gpui_forge_runtime::base::BASE_ID,
-        &catalogs,
-    );
+    let (doc, diagnostics) =
+        gpui_forge_runtime::check::check(&src, gpui_forge_runtime::base::BASE_ID, &catalogs);
     let name = path.display();
     for d in &diagnostics {
         eprintln!("{name}:{}:{}: {}", d.pos.line, d.pos.col, d.message);
@@ -307,7 +307,9 @@ fn check_cmd(rest: &[String]) -> i32 {
 /// `.forge.yaml` <-> JSON. Format is detected by extension, then content;
 /// `--from`/`--to` override. `-` as the input reads stdin.
 fn convert_cmd(rest: &[String]) -> i32 {
-    let file = rest.iter().find(|a| !a.starts_with('-') && *a != "--from" && *a != "--to" && *a != "-o");
+    let file = rest
+        .iter()
+        .find(|a| !a.starts_with('-') && *a != "--from" && *a != "--to" && *a != "-o");
     let src = if file.map(|f| f.as_str()) == Some("-") {
         use std::io::Read;
         let mut buf = String::new();
@@ -393,13 +395,19 @@ fn package_cmd(rest: &[String]) -> i32 {
     let Some((m_dir, manifest, _doc, name)) = project(rest) else {
         return 2;
     };
-    let root = workspace_root().canonicalize().unwrap_or_else(|_| workspace_root());
+    let root = workspace_root()
+        .canonicalize()
+        .unwrap_or_else(|_| workspace_root());
     let binary = root.join("target/forge-apps/release").join(&name);
     if !binary.exists() {
         eprintln!("forge: {} not found after build", binary.display());
         return 1;
     }
-    let title = if manifest.package.title.is_empty() { name.replace('-', " ") } else { manifest.package.title.clone() };
+    let title = if manifest.package.title.is_empty() {
+        name.replace('-', " ")
+    } else {
+        manifest.package.title.clone()
+    };
     let out_dir = m_dir.join("dist");
     let _ = std::fs::remove_dir_all(&out_dir);
     let _ = std::fs::create_dir_all(&out_dir);
@@ -408,10 +416,17 @@ fn package_cmd(rest: &[String]) -> i32 {
         let appdir = out_dir.join(format!("{name}.AppDir"));
         let _ = std::fs::create_dir_all(appdir.join("usr/bin"));
         let _ = std::fs::copy(&binary, appdir.join("usr/bin").join(&name));
-        write(&appdir.join("AppRun"), &format!(r#"#!/bin/sh
+        write(
+            &appdir.join("AppRun"),
+            &format!(
+                r#"#!/bin/sh
 exec "$(dirname "$0")/usr/bin/{name}" "$@"
-"#));
-        let _ = Command::new("chmod").args(["+x", &appdir.join("AppRun").to_string_lossy()]).status();
+"#
+            ),
+        );
+        let _ = Command::new("chmod")
+            .args(["+x", &appdir.join("AppRun").to_string_lossy()])
+            .status();
         let mut desktop = format!(
             "[Desktop Entry]\nType=Application\nName={title}\nExec={name}\nCategories=Development;\nTerminal=false\n"
         );
@@ -419,7 +434,10 @@ exec "$(dirname "$0")/usr/bin/{name}" "$@"
             let icon = m_dir.join(&manifest.package.icon);
             if icon.exists() {
                 let _ = std::fs::copy(&icon, appdir.join(&manifest.package.icon));
-                desktop.push_str(&format!("Icon={}\n", manifest.package.icon.trim_end_matches(".png")));
+                desktop.push_str(&format!(
+                    "Icon={}\n",
+                    manifest.package.icon.trim_end_matches(".png")
+                ));
             }
         }
         write(&appdir.join(format!("{name}.desktop")), &desktop);
@@ -434,33 +452,51 @@ exec "$(dirname "$0")/usr/bin/{name}" "$@"
         }
         let tar = out_dir.join(format!("{name}.tar.gz"));
         let ok = Command::new("tar")
-            .arg("-czf").arg(&tar).arg("-C").arg(&out_dir).arg(appdir.file_name().unwrap())
+            .arg("-czf")
+            .arg(&tar)
+            .arg("-C")
+            .arg(&out_dir)
+            .arg(appdir.file_name().unwrap())
             .status()
             .is_ok_and(|s| s.success());
-        println!("forge: appimagetool not found — packed AppDir to {}", tar.display());
+        println!(
+            "forge: appimagetool not found — packed AppDir to {}",
+            tar.display()
+        );
         return if ok { 0 } else { 1 };
     }
     if std::env::consts::OS == "macos" {
         let app = out_dir.join(format!("{name}.app/Contents"));
         let _ = std::fs::create_dir_all(app.join("MacOS"));
         let _ = std::fs::copy(&binary, app.join("MacOS").join(&name));
-        let id = if manifest.package.id.is_empty() { format!("dev.forge.{name}") } else { manifest.package.id.clone() };
-        write(&app.join("Info.plist"), &format!(
-            r#"<?xml version="1.0" encoding="UTF-8"?>
+        let id = if manifest.package.id.is_empty() {
+            format!("dev.forge.{name}")
+        } else {
+            manifest.package.id.clone()
+        };
+        write(
+            &app.join("Info.plist"),
+            &format!(
+                r#"<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0"><dict>
   <key>CFBundleExecutable</key><string>{name}</string>
   <key>CFBundleIdentifier</key><string>{id}</string>
   <key>CFBundleName</key><string>{title}</string>
   <key>CFBundlePackageType</key><string>APPL</string>
   <key>CFBundleShortVersionString</key><string>{}</string>
-</dict></plist>"#, manifest.package.version));
+</dict></plist>"#,
+                manifest.package.version
+            ),
+        );
         println!("forge: packaged {}", app.parent().unwrap().display());
         return 0;
     }
     if std::env::consts::OS == "windows" {
         let zip = out_dir.join(format!("{name}.zip"));
-        write(&out_dir.join(format!("{name}.nsi")),
-            &format!(r#"Name "{title}"
+        write(
+            &out_dir.join(format!("{name}.nsi")),
+            &format!(
+                r#"Name "{title}"
 OutFile "{name}-setup.exe"
 InstallDir "$PROGRAMFILES\{title}"
 Section
@@ -469,8 +505,14 @@ Section
   CreateShortcut "$DESKTOP\{title}.lnk" "$INSTDIR\{name}.exe"
 SectionEnd
 "#,
-                binary.display()));
-        let _ = Command::new("zip").arg("-j").arg(&zip).arg(&binary).status();
+                binary.display()
+            ),
+        );
+        let _ = Command::new("zip")
+            .arg("-j")
+            .arg(&zip)
+            .arg(&binary)
+            .status();
         println!("forge: binary zip + {name}.nsi in {}", out_dir.display());
         return 0;
     }
@@ -492,8 +534,7 @@ fn fmt_cmd(rest: &[String]) -> i32 {
             return 1;
         }
     };
-    let Ok((doc, _)) = gpui_forge_runtime::forge_spec::yaml::from_str_with_source_map(&src)
-    else {
+    let Ok((doc, _)) = gpui_forge_runtime::forge_spec::yaml::from_str_with_source_map(&src) else {
         eprintln!("forge: {}: not a valid Forge document", path.display());
         return 1;
     };
@@ -548,22 +589,23 @@ fn preview_cmd(rest: &[String]) -> i32 {
 fn codegen_doc(doc: &gpui_forge_runtime::forge_spec::Document) -> String {
     use gpui_forge_runtime::forge_spec::*;
     fn path(p: &Path) -> String {
-        let segs = p
-            .0
-            .iter()
-            .map(|s| match s {
-                PathSegment::Field(f) => format!("PathSegment::Field({f:?}.into())"),
-                PathSegment::Index(i) => format!("PathSegment::Index({i})"),
-            })
-            .collect::<Vec<_>>()
-            .join(", ");
+        let segs =
+            p.0.iter()
+                .map(|s| match s {
+                    PathSegment::Field(f) => format!("PathSegment::Field({f:?}.into())"),
+                    PathSegment::Index(i) => format!("PathSegment::Index({i})"),
+                })
+                .collect::<Vec<_>>()
+                .join(", ");
         format!("forge_spec::Path(vec![{segs}])")
     }
     fn value(v: &Value) -> String {
         match v {
             Value::String(t) => format!("Value::String({t:?}.into())"),
             Value::Number { value: n, unit } => {
-                let u = unit.map(|u| format!("Some(Unit::{u:?})")).unwrap_or("None".into());
+                let u = unit
+                    .map(|u| format!("Some(Unit::{u:?})"))
+                    .unwrap_or("None".into());
                 format!("Value::Number {{ value: {n:?}, unit: {u} }}")
             }
             Value::Bool(b) => format!("Value::Bool({b})"),
@@ -574,45 +616,106 @@ fn codegen_doc(doc: &gpui_forge_runtime::forge_spec::Document) -> String {
             ),
             Value::Token(p) => format!("Value::Token({})", path(p)),
             Value::List(items) => {
-                format!("Value::List(vec![{}])", items.iter().map(value).collect::<Vec<_>>().join(", "))
+                format!(
+                    "Value::List(vec![{}])",
+                    items.iter().map(value).collect::<Vec<_>>().join(", ")
+                )
             }
             Value::Map(entries) => {
-                format!("Value::Map(vec![{}])", entries.iter().map(|(k, v)| format!("({k:?}.into(), {})", value(v))).collect::<Vec<_>>().join(", "))
+                format!(
+                    "Value::Map(vec![{}])",
+                    entries
+                        .iter()
+                        .map(|(k, v)| format!("({k:?}.into(), {})", value(v)))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )
             }
             Value::Binding { path: p, mode } => {
-                format!("Value::Binding {{ path: {}, mode: BindingMode::{mode:?} }}", path(p))
+                format!(
+                    "Value::Binding {{ path: {}, mode: BindingMode::{mode:?} }}",
+                    path(p)
+                )
             }
             Value::Interpolated(segs) => {
-                format!("Value::Interpolated(vec![{}])", segs.iter().map(|s| match s {
-                    Segment::Text(t) => format!("Segment::Text({t:?}.into())"),
-                    Segment::Binding(p) => format!("Segment::Binding({})", path(p)),
-                }).collect::<Vec<_>>().join(", "))
+                format!(
+                    "Value::Interpolated(vec![{}])",
+                    segs.iter()
+                        .map(|s| match s {
+                            Segment::Text(t) => format!("Segment::Text({t:?}.into())"),
+                            Segment::Binding(p) => format!("Segment::Binding({})", path(p)),
+                        })
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )
             }
         }
     }
     fn entries(es: &Entries) -> String {
-        format!("vec![{}]", es.iter().map(|(k, v)| format!("({k:?}.into(), {})", value(v))).collect::<Vec<_>>().join(", "))
+        format!(
+            "vec![{}]",
+            es.iter()
+                .map(|(k, v)| format!("({k:?}.into(), {})", value(v)))
+                .collect::<Vec<_>>()
+                .join(", ")
+        )
     }
     fn node(n: &Node) -> String {
-        let ns = n.element.namespace.as_ref().map(|s| format!("Some({s:?}.into())")).unwrap_or("None".into());
-        let id = n.id.as_ref().map(|s| format!("Some({s:?}.into())")).unwrap_or("None".into());
-        let content = n.content.as_ref().map(|v| format!("Some({})", value(v))).unwrap_or("None".into());
+        let ns = n
+            .element
+            .namespace
+            .as_ref()
+            .map(|s| format!("Some({s:?}.into())"))
+            .unwrap_or("None".into());
+        let id =
+            n.id.as_ref()
+                .map(|s| format!("Some({s:?}.into())"))
+                .unwrap_or("None".into());
+        let content = n
+            .content
+            .as_ref()
+            .map(|v| format!("Some({})", value(v)))
+            .unwrap_or("None".into());
         let events = n.events.iter().map(|e| format!(
             "EventBinding {{ event: {:?}.into(), handler: HandlerRef {{ name: {:?}.into(), args: vec![{}] }} }}",
             e.event, e.handler.name, e.handler.args.iter().map(value).collect::<Vec<_>>().join(", ")
         )).collect::<Vec<_>>().join(", ");
         let kids = n.children.iter().map(node).collect::<Vec<_>>().join(", ");
-        format!("Node {{ element: ElementRef {{ namespace: {ns}, name: {:?}.into() }}, id: {id}, content: {content}, props: {}, style: {}, events: vec![{events}], children: vec![{kids}] }}",
-            n.element.name, entries(&n.props), entries(&n.style))
+        format!(
+            "Node {{ element: ElementRef {{ namespace: {ns}, name: {:?}.into() }}, id: {id}, content: {content}, props: {}, style: {}, events: vec![{events}], children: vec![{kids}] }}",
+            n.element.name,
+            entries(&n.props),
+            entries(&n.style)
+        )
     }
     let dialogs = doc.dialogs.iter().map(node).collect::<Vec<_>>().join(", ");
-    let schema = doc.schema.as_ref().map(|s| format!("Some({s:?}.into())")).unwrap_or("None".into());
-    let base = doc.base.as_ref().map(|s| format!("Some({s:?}.into())")).unwrap_or("None".into());
-    let imports = doc.imports.iter().map(|i| format!(
-        "Import {{ alias: {:?}.into(), library: {:?}.into(), version: {:?} }}",
-        i.alias, i.library, i.version
-    )).collect::<Vec<_>>().join(", ");
-    let meta = doc.meta.iter().map(|(k, v)| format!("({k:?}.into(), {v:?}.into())")).collect::<Vec<_>>().join(", ");
+    let schema = doc
+        .schema
+        .as_ref()
+        .map(|s| format!("Some({s:?}.into())"))
+        .unwrap_or("None".into());
+    let base = doc
+        .base
+        .as_ref()
+        .map(|s| format!("Some({s:?}.into())"))
+        .unwrap_or("None".into());
+    let imports = doc
+        .imports
+        .iter()
+        .map(|i| {
+            format!(
+                "Import {{ alias: {:?}.into(), library: {:?}.into(), version: {:?} }}",
+                i.alias, i.library, i.version
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(", ");
+    let meta = doc
+        .meta
+        .iter()
+        .map(|(k, v)| format!("({k:?}.into(), {v:?}.into())"))
+        .collect::<Vec<_>>()
+        .join(", ");
     format!(
         "use forge_spec::*;
 
@@ -629,26 +732,39 @@ pub fn document() -> Document {{
     }}
 }}
 ",
-        doc.version, node(&doc.root)
+        doc.version,
+        node(&doc.root)
     )
 }
 
 /// Resolves the project: a forge.toml on the arg path or up from cwd, plus
 /// the entry document and package name.
 fn project(rest: &[String]) -> Option<(PathBuf, ForgeToml, PathBuf, String)> {
-    let manifest_path = doc_path(rest).filter(|p| p.is_dir() || p.file_name() == Some(std::ffi::OsStr::new("forge.toml")));
+    let manifest_path = doc_path(rest)
+        .filter(|p| p.is_dir() || p.file_name() == Some(std::ffi::OsStr::new("forge.toml")));
     let manifest = manifest_path
         .as_deref()
-        .map(|p| if p.is_dir() { p.to_path_buf() } else { p.parent().unwrap_or(Path::new(".")).to_path_buf() })
+        .map(|p| {
+            if p.is_dir() {
+                p.to_path_buf()
+            } else {
+                p.parent().unwrap_or(Path::new(".")).to_path_buf()
+            }
+        })
         .map(|d| load_manifest(&d))
         .unwrap_or_else(|| load_manifest(&std::env::current_dir().unwrap_or_default()));
-    let (manifest_dir, manifest) = manifest.unwrap_or_else(|| (PathBuf::new(), ForgeToml::default()));
-    let path = doc_path(rest).filter(|p| p.file_name() != Some(std::ffi::OsStr::new("forge.toml")))
+    let (manifest_dir, manifest) =
+        manifest.unwrap_or_else(|| (PathBuf::new(), ForgeToml::default()));
+    let path = doc_path(rest)
+        .filter(|p| p.file_name() != Some(std::ffi::OsStr::new("forge.toml")))
         .or_else(|| manifest_dir.join(&manifest.forge.document).into());
     let path = path.filter(|p| p.exists())?;
     let path = path.canonicalize().unwrap_or(path);
     let name = if manifest.package.name.is_empty() {
-        path.file_stem().unwrap_or_default().to_string_lossy().replace('.', "-")
+        path.file_stem()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .replace('.', "-")
     } else {
         manifest.package.name.clone()
     };
@@ -661,12 +777,14 @@ fn build_cmd(rest: &[String]) -> i32 {
         usage();
         return 2;
     };
-    let dir = opt_value(rest, "--dir").map(PathBuf::from).unwrap_or_else(|| {
-        path.parent()
-            .unwrap_or(Path::new("."))
-            .join(".forge-build")
-            .join(&name)
-    });
+    let dir = opt_value(rest, "--dir")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| {
+            path.parent()
+                .unwrap_or(Path::new("."))
+                .join(".forge-build")
+                .join(&name)
+        });
     let out = opt_value(rest, "-o")
         .map(PathBuf::from)
         .unwrap_or_else(|| path.parent().unwrap_or(Path::new(".")).join(&name));
@@ -678,13 +796,19 @@ fn build_cmd(rest: &[String]) -> i32 {
         eprintln!("forge: cannot create {}: {e}", dir.display());
         return 1;
     }
-    let root = workspace_root().canonicalize().unwrap_or_else(|_| workspace_root());
+    let root = workspace_root()
+        .canonicalize()
+        .unwrap_or_else(|_| workspace_root());
     let title = if manifest.package.title.is_empty() {
         name.replace('-', " ")
     } else {
         manifest.package.title.clone()
     };
-    let app_id = if manifest.package.id.is_empty() { name.clone() } else { manifest.package.id.clone() };
+    let app_id = if manifest.package.id.is_empty() {
+        name.clone()
+    } else {
+        manifest.package.id.clone()
+    };
     let libs = manifest
         .libraries
         .iter()
@@ -700,9 +824,14 @@ fn build_cmd(rest: &[String]) -> i32 {
     );
     write(
         &src_dir.join("main.rs"),
-        &APP_MAIN.replace("{APP_ID}", &app_id).replace("{TITLE}", &title),
+        &APP_MAIN
+            .replace("{APP_ID}", &app_id)
+            .replace("{TITLE}", &title),
     );
-    write(&dir.join("app.forge.yaml"), &std::fs::read_to_string(&path).unwrap_or_default());
+    write(
+        &dir.join("app.forge.yaml"),
+        &std::fs::read_to_string(&path).unwrap_or_default(),
+    );
     // Bundle every shipped theme — assets live in the binary, not on disk.
     let themes_in = root.join("themes");
     let themes_out = dir.join("themes");
@@ -711,9 +840,7 @@ fn build_cmd(rest: &[String]) -> i32 {
     if let Ok(entries) = std::fs::read_dir(&themes_in) {
         for e in entries.flatten() {
             let name = e.file_name().to_string_lossy().into_owned();
-            if name.ends_with(".json")
-                && std::fs::copy(e.path(), themes_out.join(&name)).is_ok()
-            {
+            if name.ends_with(".json") && std::fs::copy(e.path(), themes_out.join(&name)).is_ok() {
                 theme_list.push(name);
             }
         }
@@ -724,7 +851,8 @@ fn build_cmd(rest: &[String]) -> i32 {
             .iter()
             .map(|n| format!(
                 "    ({:?}, include_str!(\"../themes/{}\")),",
-                n.trim_end_matches(".json"), n
+                n.trim_end_matches(".json"),
+                n
             ))
             .collect::<Vec<_>>()
             .join("\n")
@@ -771,7 +899,11 @@ fn build_cmd(rest: &[String]) -> i32 {
     }
     let binary = root.join("target/forge-apps").join(profile).join(&name);
     if let Err(e) = std::fs::copy(&binary, &out) {
-        eprintln!("forge: cannot copy {} -> {}: {e}", binary.display(), out.display());
+        eprintln!(
+            "forge: cannot copy {} -> {}: {e}",
+            binary.display(),
+            out.display()
+        );
         return 1;
     }
     println!("forge: built {}", out.display());

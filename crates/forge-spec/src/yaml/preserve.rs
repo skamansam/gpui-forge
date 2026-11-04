@@ -122,9 +122,7 @@ fn end_line(node: &MarkedYamlOwned) -> usize {
     }
     .max(node.span.start.line());
     let inner = match &node.data {
-        YamlDataOwned::Mapping(m) => m
-            .back()
-            .map(|(k, v)| end_line(v).max(k.span.start.line())),
+        YamlDataOwned::Mapping(m) => m.back().map(|(k, v)| end_line(v).max(k.span.start.line())),
         YamlDataOwned::Sequence(s) => s.last().map(end_line),
         _ => None,
     };
@@ -199,7 +197,11 @@ fn emit_pending_top(
                 Some(version) => format!("{} {version}", import.library),
                 None => import.library.clone(),
             };
-            write::line(out, 2, &format!("{}: {}", import.alias, write::text_scalar(&spec)));
+            write::line(
+                out,
+                2,
+                &format!("{}: {}", import.alias, write::text_scalar(&spec)),
+            );
         }
     }
     if !doc.meta.is_empty() && seen.insert("meta".to_owned()) {
@@ -229,13 +231,19 @@ fn splice_top_field(
     let (a, b) = (k.span.start.line(), end_line(v));
     let unchanged = match key {
         "$schema" => doc.schema.as_deref().is_some_and(|s| {
-            reparse(v).and_then(|y| read::reparse_text(ctx.src, y)).as_deref() == Some(s)
+            reparse(v)
+                .and_then(|y| read::reparse_text(ctx.src, y))
+                .as_deref()
+                == Some(s)
         }),
         "forge" => reparse(v)
             .and_then(|y| read::reparse_text(ctx.src, y))
             .is_some_and(|t| t == doc.version),
         "base" => doc.base.as_deref().is_some_and(|s| {
-            reparse(v).and_then(|y| read::reparse_text(ctx.src, y)).as_deref() == Some(s)
+            reparse(v)
+                .and_then(|y| read::reparse_text(ctx.src, y))
+                .as_deref()
+                == Some(s)
         }),
         "use" => reparse(v)
             .map(|y| read::reparse_imports(ctx.src, y))
@@ -308,16 +316,21 @@ fn splice_named_node(
     }
     if v.span.start.line() == a {
         // Inline value (`root: {Window: ...}`) — canonical entry + body.
-        write::line(out, k.span.start.col(), &format!("{key}:", key = {
-            scalar_text(k).map(|(t, _)| t).unwrap_or_default()
-        }));
+        write::line(
+            out,
+            k.span.start.col(),
+            &format!(
+                "{key}:",
+                key = { scalar_text(k).map(|(t, _)| t).unwrap_or_default() }
+            ),
+        );
         write::write_node(out, model, 2, false, ctx.options);
         return;
     }
     let head_changed = dialog
-        && baseline.as_ref().is_some_and(|b| {
-            b.element != model.element || b.id != model.id
-        });
+        && baseline
+            .as_ref()
+            .is_some_and(|b| b.element != model.element || b.id != model.id);
     if head_changed {
         write::write_head(out, model, k.span.start.col(), false, ctx.options);
     } else {
@@ -386,12 +399,14 @@ fn splice_map(
         .collect();
 
     // A merged facet cannot be removed by an override — flatten the node.
-    let flattened = baseline.props.iter().any(|(k, _)| {
-        !explicit.contains(k) && !model.props.iter().any(|(mk, _)| mk == k)
-    }) || baseline.events.iter().any(|e| {
-        !explicit.contains(&format!("on {}", e.event))
-            && !model.events.iter().any(|me| me.event == e.event)
-    });
+    let flattened = baseline
+        .props
+        .iter()
+        .any(|(k, _)| !explicit.contains(k) && !model.props.iter().any(|(mk, _)| mk == k))
+        || baseline.events.iter().any(|e| {
+            !explicit.contains(&format!("on {}", e.event))
+                && !model.events.iter().any(|me| me.event == e.event)
+        });
     if flattened {
         write::write_entries(out, model, indent, ctx.options);
         return;
@@ -428,7 +443,13 @@ fn splice_map(
         if Some(i) == head_index {
             if head_differs {
                 let dash = col.saturating_sub(2);
-                write::write_head(out, model, if seq_item { dash } else { col }, seq_item, ctx.options);
+                write::write_head(
+                    out,
+                    model,
+                    if seq_item { dash } else { col },
+                    seq_item,
+                    ctx.options,
+                );
             } else {
                 emit(out, ctx.lines, a, b);
             }
@@ -441,10 +462,7 @@ fn splice_map(
         } else if let Some(event) = key.strip_prefix("on ") {
             match model.events.iter().find(|e| e.event == event.trim()) {
                 Some(binding)
-                    if baseline
-                        .events
-                        .iter()
-                        .find(|e| e.event == binding.event)
+                    if baseline.events.iter().find(|e| e.event == binding.event)
                         == Some(binding) =>
                 {
                     emit(out, ctx.lines, a, b)
@@ -604,7 +622,13 @@ fn splice_children(
         if baseline_child == child {
             emit(out, ctx.lines, ia, ib);
         } else if is_alias_site(ctx, item) || !matches!(item.data, YamlDataOwned::Mapping(_)) {
-            write::write_node(out, child, item.span.start.col().saturating_sub(2), true, ctx.options);
+            write::write_node(
+                out,
+                child,
+                item.span.start.col().saturating_sub(2),
+                true,
+                ctx.options,
+            );
         } else {
             splice_map(ctx, out, item, child, baseline_child, true);
         }

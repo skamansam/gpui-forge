@@ -12,9 +12,9 @@ use std::cell::RefCell;
 use std::rc::Rc;
 
 use forge_spec::catalog::Catalog;
+use gpui_forge_runtime::render::ForgeView;
 use gpui_kit::component::theme::{Theme, ThemeMode};
 use gpui_kit::{prelude::*, *};
-use gpui_forge_runtime::render::ForgeView;
 use wasm_bindgen::prelude::*;
 
 /// The base component system this canvas renders with.

@@ -13,7 +13,10 @@ fn catalogs() -> Vec<Catalog> {
 
 fn check(src: &str, base: &str, catalogs: &[Catalog]) -> (bool, Vec<Diagnostic>) {
     match yaml::from_str_with_source_map(src) {
-        Ok((doc, map)) => (true, forge_spec::validate::validate(&doc, base, catalogs, Some(&map))),
+        Ok((doc, map)) => (
+            true,
+            forge_spec::validate::validate(&doc, base, catalogs, Some(&map)),
+        ),
         Err(errors) => (false, errors.0),
     }
 }

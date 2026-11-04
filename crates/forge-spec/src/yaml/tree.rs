@@ -118,7 +118,10 @@ fn convert(node: MarkedYamlOwned) -> Result<YNode, Diagnostic> {
                 let key = match convert(key)? {
                     YNode::Scalar(key) => key,
                     other => {
-                        return Err(Diagnostic::new(other.pos(), "mapping keys must be plain text"));
+                        return Err(Diagnostic::new(
+                            other.pos(),
+                            "mapping keys must be plain text",
+                        ));
                     }
                 };
                 let value = convert(value)?;

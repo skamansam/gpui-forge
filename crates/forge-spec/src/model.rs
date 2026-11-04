@@ -38,7 +38,9 @@ impl PartialEq for Raw {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema, Clone, Debug, PartialEq, Eq)]
+#[derive(
+    serde::Serialize, serde::Deserialize, schemars::JsonSchema, Clone, Debug, PartialEq, Eq,
+)]
 pub struct Import {
     pub alias: String,
     pub library: String,
@@ -82,12 +84,10 @@ impl Document {
             return false;
         };
         match value {
-            Some(value) => {
-                match node.props.iter_mut().find(|(k, _)| k == name) {
-                    Some((_, slot)) => *slot = value,
-                    None => node.props.push((name.to_owned(), value)),
-                }
-            }
+            Some(value) => match node.props.iter_mut().find(|(k, _)| k == name) {
+                Some((_, slot)) => *slot = value,
+                None => node.props.push((name.to_owned(), value)),
+            },
             None => node.props.retain(|(k, _)| k != name),
         }
         true
@@ -100,12 +100,10 @@ impl Document {
             return false;
         };
         match value {
-            Some(value) => {
-                match node.style.iter_mut().find(|(k, _)| k == name) {
-                    Some((_, slot)) => *slot = value,
-                    None => node.style.push((name.to_owned(), value)),
-                }
-            }
+            Some(value) => match node.style.iter_mut().find(|(k, _)| k == name) {
+                Some((_, slot)) => *slot = value,
+                None => node.style.push((name.to_owned(), value)),
+            },
             None => node.style.retain(|(k, _)| k != name),
         }
         true
@@ -117,7 +115,9 @@ impl Document {
         let Some(parent) = self.node_at_mut(path) else {
             return false;
         };
-        let index = index.unwrap_or(parent.children.len()).min(parent.children.len());
+        let index = index
+            .unwrap_or(parent.children.len())
+            .min(parent.children.len());
         parent.children.insert(index, node);
         true
     }
@@ -127,8 +127,7 @@ impl Document {
         let (parent_path, index) = path.rsplit_once('.')?;
         let index: usize = index.parse().ok()?;
         let parent = self.node_at_mut(parent_path)?;
-        (index < parent.children.len())
-            .then(|| parent.children.remove(index))
+        (index < parent.children.len()).then(|| parent.children.remove(index))
     }
 
     /// Inserts `node` as the sibling immediately after `after` — into its
@@ -178,7 +177,9 @@ impl Document {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema, Clone, Debug, Default, PartialEq)]
+#[derive(
+    serde::Serialize, serde::Deserialize, schemars::JsonSchema, Clone, Debug, Default, PartialEq,
+)]
 pub struct Node {
     pub element: ElementRef,
     pub id: Option<String>,
@@ -190,7 +191,9 @@ pub struct Node {
     pub children: Vec<Node>,
 }
 
-#[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema, Clone, Debug, Default, PartialEq, Eq)]
+#[derive(
+    serde::Serialize, serde::Deserialize, schemars::JsonSchema, Clone, Debug, Default, PartialEq, Eq,
+)]
 pub struct ElementRef {
     /// Import alias; `None` is the base library.
     pub namespace: Option<String>,
@@ -248,7 +251,9 @@ pub enum Segment {
     Binding(Path),
 }
 
-#[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema, Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(
+    serde::Serialize, serde::Deserialize, schemars::JsonSchema, Clone, Copy, Debug, PartialEq, Eq,
+)]
 pub enum Unit {
     Px,
     Rem,
@@ -277,7 +282,9 @@ impl Unit {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema, Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(
+    serde::Serialize, serde::Deserialize, schemars::JsonSchema, Clone, Copy, Debug, PartialEq, Eq,
+)]
 pub struct Color {
     pub r: u8,
     pub g: u8,
@@ -315,17 +322,23 @@ impl fmt::Display for Color {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema, Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(
+    serde::Serialize, serde::Deserialize, schemars::JsonSchema, Clone, Copy, Debug, PartialEq, Eq,
+)]
 pub enum BindingMode {
     OneWay,
     TwoWay,
 }
 
 /// A path into the view state, e.g. `form.items[0].name`.
-#[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema, Clone, Debug, PartialEq, Eq)]
+#[derive(
+    serde::Serialize, serde::Deserialize, schemars::JsonSchema, Clone, Debug, PartialEq, Eq,
+)]
 pub struct Path(pub Vec<PathSegment>);
 
-#[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema, Clone, Debug, PartialEq, Eq)]
+#[derive(
+    serde::Serialize, serde::Deserialize, schemars::JsonSchema, Clone, Debug, PartialEq, Eq,
+)]
 pub enum PathSegment {
     Field(String),
     Index(usize),

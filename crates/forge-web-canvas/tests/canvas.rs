@@ -1,5 +1,5 @@
-use forge_web_canvas::check::{catalogs, check, to_json};
 use forge_web_canvas::BASE;
+use forge_web_canvas::check::{catalogs, check, to_json};
 use forge_web_canvas::render::set_path;
 
 #[test]
@@ -24,7 +24,7 @@ fn invalid_document_still_renders() {
 
 #[test]
 fn syntax_error_reports_position() {
-    let (doc, diagnostics) =  check("forge: \"0.1\"\nroot: [\n", BASE, &catalogs());
+    let (doc, diagnostics) = check("forge: \"0.1\"\nroot: [\n", BASE, &catalogs());
     assert!(doc.is_none());
     let json: serde_json::Value = serde_json::from_str(&to_json(&diagnostics)).unwrap();
     assert!(json[0]["line"].as_u64().unwrap() >= 1);

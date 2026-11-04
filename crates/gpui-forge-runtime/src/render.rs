@@ -13,43 +13,39 @@ use forge_spec::{
     BindingMode, Color, Document, ElementRef, Entries, EventBinding, HandlerRef, Node, Path,
     PathSegment, Segment, Unit, Value,
 };
+use gpui_kit::component::Colorize;
+use gpui_kit::component::TitleBar;
+use gpui_kit::component::WindowExt;
 use gpui_kit::component::accordion::Accordion;
-use gpui_kit::component::setting::{SettingGroup, SettingItem, SettingPage, Settings};
 use gpui_kit::component::alert::{Alert, AlertVariant};
 use gpui_kit::component::avatar::{Avatar, AvatarGroup};
 use gpui_kit::component::badge::Badge;
 use gpui_kit::component::breadcrumb::{Breadcrumb, BreadcrumbItem};
 use gpui_kit::component::button::{Button, ButtonVariant, ButtonVariants};
+use gpui_kit::component::calendar::{Calendar, CalendarState};
 use gpui_kit::component::checkbox::Checkbox;
 use gpui_kit::component::collapsible::Collapsible;
-use gpui_kit::component::menu::{DropdownMenu as _, PopupMenuItem};
-use gpui_kit::component::notification::NotificationType;
-use gpui_kit::component::tooltip::Tooltip;
-use gpui_kit::component::WindowExt;
 use gpui_kit::component::color_picker::{ColorPicker, ColorPickerEvent, ColorPickerState};
-use gpui_kit::component::Colorize;
+use gpui_kit::component::date_picker::{DatePicker, DatePickerState};
 use gpui_kit::component::description_list::{DescriptionItem, DescriptionList};
-use gpui_kit::component::form::{Field, Form};
 use gpui_kit::component::empty::{
     Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyMediaVariant, EmptyTitle,
 };
+use gpui_kit::component::form::{Field, Form};
 use gpui_kit::component::group_box::{GroupBox, GroupBoxVariant, GroupBoxVariants};
 use gpui_kit::component::input::{
-    Editor, EditorState, Input, InputEvent, InputState, NumberInput, OtpEvent, OtpInput,
-    OtpState, Textarea, TextareaState,
+    Editor, EditorState, Input, InputEvent, InputState, NumberInput, OtpEvent, OtpInput, OtpState,
+    Textarea, TextareaState,
 };
 use gpui_kit::component::kbd::Kbd;
 use gpui_kit::component::label::Label;
 use gpui_kit::component::link::Link;
 use gpui_kit::component::list::{List, ListDelegate, ListEvent, ListItem, ListState};
+use gpui_kit::component::menu::{DropdownMenu as _, PopupMenuItem};
 use gpui_kit::component::message::{
     Message, MessageAvatar, MessageContent, MessageFooter, MessageHeader,
 };
-use gpui_kit::component::table::{
-    Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader,
-};
-use gpui_kit::component::time_field::{TimeField, TimeFieldState};
-use gpui_kit::component::TitleBar;
+use gpui_kit::component::notification::NotificationType;
 use gpui_kit::component::pagination::Pagination;
 use gpui_kit::component::progress::{Progress, ProgressCircle};
 use gpui_kit::component::radio::{Radio, RadioGroup};
@@ -57,6 +53,7 @@ use gpui_kit::component::rating::Rating;
 use gpui_kit::component::resizable::{ResizablePanel, h_resizable, resizable_panel, v_resizable};
 use gpui_kit::component::select::{Select, SelectEvent, SelectState};
 use gpui_kit::component::separator::Separator;
+use gpui_kit::component::setting::{SettingGroup, SettingItem, SettingPage, Settings};
 use gpui_kit::component::sidebar::{Sidebar, SidebarCollapsible, SidebarMenu, SidebarMenuItem};
 use gpui_kit::component::skeleton::Skeleton;
 use gpui_kit::component::slider::{Slider, SliderEvent, SliderState, SliderValue};
@@ -65,10 +62,13 @@ use gpui_kit::component::status_bar::StatusBar;
 use gpui_kit::component::stepper::{Stepper, StepperItem};
 use gpui_kit::component::switch::Switch;
 use gpui_kit::component::tab::{Tab, TabBar, TabVariant};
+use gpui_kit::component::table::{
+    Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader,
+};
 use gpui_kit::component::tag::{Tag, TagVariant};
-use gpui_kit::component::calendar::{Calendar, CalendarState};
-use gpui_kit::component::date_picker::{DatePicker, DatePickerState};
+use gpui_kit::component::time_field::{TimeField, TimeFieldState};
 use gpui_kit::component::toolbar::Toolbar;
+use gpui_kit::component::tooltip::Tooltip;
 use gpui_kit::component::tree::{Tree, TreeItem, TreeState};
 use gpui_kit::component::{ActiveTheme, Disableable, Icon, IndexPath, Sizable, Size, v_flex};
 use gpui_kit::{prelude::*, *};
@@ -613,8 +613,7 @@ impl ForgeView {
 
     /// Builds a `TableHead` — shared by `Table` header cells and standalone nodes.
     fn table_head(&self, node: &Node) -> TableHead {
-        let mut head = TableHead::new()
-            .child(self.prop_text(node, "label").unwrap_or_default());
+        let mut head = TableHead::new().child(self.prop_text(node, "label").unwrap_or_default());
         if let Some(n) = self.prop(node, "col-span").and_then(|v| self.number(v)) {
             head = head.col_span(n as usize);
         }
@@ -628,8 +627,7 @@ impl ForgeView {
 
     /// Builds a `TableCell` — shared by `Table` body/footer cells and standalone nodes.
     fn table_cell(&self, node: &Node) -> TableCell {
-        let mut cell = TableCell::new()
-            .child(self.prop_text(node, "value").unwrap_or_default());
+        let mut cell = TableCell::new().child(self.prop_text(node, "value").unwrap_or_default());
         if let Some(n) = self.prop(node, "col-span").and_then(|v| self.number(v)) {
             cell = cell.col_span(n as usize);
         }
@@ -672,13 +670,7 @@ impl ForgeView {
     }
 
     /// `Style` tab write-through — `style_changed` → `doc.set_style`.
-    pub fn set_node_style(
-        &mut self,
-        path: &str,
-        name: &str,
-        json: &Json,
-        cx: &mut Context<Self>,
-    ) {
+    pub fn set_node_style(&mut self, path: &str, name: &str, json: &Json, cx: &mut Context<Self>) {
         let value = if json.is_null() {
             None
         } else {
@@ -748,11 +740,7 @@ impl ForgeView {
     /// Drains accumulated errors — the host captures them to show or handle.
     pub fn take_errors(&mut self) -> Vec<String> {
         let mut errors = std::mem::take(&mut self.errors);
-        errors.append(
-            &mut PENDING_ERRORS
-                .lock()
-                .unwrap_or_else(|e| e.into_inner()),
-        );
+        errors.append(&mut PENDING_ERRORS.lock().unwrap_or_else(|e| e.into_inner()));
         errors
     }
 
@@ -860,9 +848,7 @@ impl ForgeView {
                         "value",
                         vec![(
                             "options".to_owned(),
-                            Value::List(
-                                values.iter().map(|v| Value::Enum(v.clone())).collect(),
-                            ),
+                            Value::List(values.iter().map(|v| Value::Enum(v.clone())).collect()),
                         )],
                     ),
                     PropType::Number => ("NumberInput", "value", vec![]),
@@ -872,7 +858,10 @@ impl ForgeView {
                 let mut props = vec![(bind_prop.to_owned(), bind)];
                 props.extend(extra);
                 let control = Node {
-                    element: ElementRef { namespace: None, name: element.into() },
+                    element: ElementRef {
+                        namespace: None,
+                        name: element.into(),
+                    },
                     props,
                     events: vec![EventBinding {
                         event: "change".into(),
@@ -884,7 +873,10 @@ impl ForgeView {
                     ..Default::default()
                 };
                 Some(Node {
-                    element: ElementRef { namespace: None, name: "FormField".into() },
+                    element: ElementRef {
+                        namespace: None,
+                        name: "FormField".into(),
+                    },
                     props: vec![("label".to_owned(), Value::String(prop.name.clone()))],
                     children: vec![control],
                     ..Default::default()
@@ -893,13 +885,19 @@ impl ForgeView {
             .collect();
         let prop_children = if fields.is_empty() {
             vec![Node {
-                element: ElementRef { namespace: None, name: "Text".into() },
+                element: ElementRef {
+                    namespace: None,
+                    name: "Text".into(),
+                },
                 content: Some(Value::String("no catalog props".into())),
                 ..Default::default()
             }]
         } else {
             vec![Node {
-                element: ElementRef { namespace: None, name: "Form".into() },
+                element: ElementRef {
+                    namespace: None,
+                    name: "Form".into(),
+                },
                 props: vec![("label-layout".to_owned(), Value::Enum("Vertical".into()))],
                 children: fields,
                 ..Default::default()
@@ -908,13 +906,19 @@ impl ForgeView {
         // Style tab — one `Input` per `style:` entry, bound `document.edits.style.<name>`.
         let style_children = if target.style.is_empty() {
             vec![Node {
-                element: ElementRef { namespace: None, name: "Text".into() },
+                element: ElementRef {
+                    namespace: None,
+                    name: "Text".into(),
+                },
                 content: Some(Value::String("no style entries".into())),
                 ..Default::default()
             }]
         } else {
             vec![Node {
-                element: ElementRef { namespace: None, name: "Form".into() },
+                element: ElementRef {
+                    namespace: None,
+                    name: "Form".into(),
+                },
                 props: vec![("label-layout".to_owned(), Value::Enum("Vertical".into()))],
                 children: target
                     .style
@@ -928,7 +932,10 @@ impl ForgeView {
                             }
                         };
                         let control = Node {
-                            element: ElementRef { namespace: None, name: "Input".into() },
+                            element: ElementRef {
+                                namespace: None,
+                                name: "Input".into(),
+                            },
                             props: vec![(
                                 "value".to_owned(),
                                 Value::Binding {
@@ -960,16 +967,25 @@ impl ForgeView {
             }]
         };
         let tabs = Node {
-            element: ElementRef { namespace: None, name: "Tabs".into() },
+            element: ElementRef {
+                namespace: None,
+                name: "Tabs".into(),
+            },
             children: vec![
                 Node {
-                    element: ElementRef { namespace: None, name: "Tab".into() },
+                    element: ElementRef {
+                        namespace: None,
+                        name: "Tab".into(),
+                    },
                     props: vec![("label".to_owned(), Value::String("Properties".into()))],
                     children: prop_children,
                     ..Default::default()
                 },
                 Node {
-                    element: ElementRef { namespace: None, name: "Tab".into() },
+                    element: ElementRef {
+                        namespace: None,
+                        name: "Tab".into(),
+                    },
                     props: vec![("label".to_owned(), Value::String("Style".into()))],
                     children: style_children,
                     ..Default::default()
@@ -1099,16 +1115,8 @@ impl ForgeView {
 
     /// Builds `TreeItem` data recursively; each node's row content is pre-rendered into
     /// `map` under its id for the `render_item` closure to hand out per paint.
-    fn tree_data(
-        &mut self,
-        node: &Node,
-        key: &str,
-        nodes: &mut HashMap<String, Node>,
-    ) -> TreeItem {
-        let id = node
-            .id
-            .clone()
-            .unwrap_or_else(|| key.to_owned());
+    fn tree_data(&mut self, node: &Node, key: &str, nodes: &mut HashMap<String, Node>) -> TreeItem {
+        let id = node.id.clone().unwrap_or_else(|| key.to_owned());
         let label = self.prop_text(node, "label").unwrap_or_default();
         let mut data = TreeItem::new(&id, &label);
         if self.prop_bool(node, "expanded") {
@@ -1155,7 +1163,10 @@ impl ForgeView {
         let weak = cx.entity().downgrade();
         let clicked = node.clone();
         item.on_click(move |_, _, cx| {
-            try_update(&weak, cx, "event", |this, cx| this.fire(&clicked, "click", cx)).ok();
+            try_update(&weak, cx, "event", |this, cx| {
+                this.fire(&clicked, "click", cx)
+            })
+            .ok();
         })
     }
 
@@ -1182,7 +1193,10 @@ impl ForgeView {
         }
         field = field
             .required(self.prop_bool(node, "required"))
-            .visible(!matches!(self.prop(node, "visible"), Some(Value::Bool(false))))
+            .visible(!matches!(
+                self.prop(node, "visible"),
+                Some(Value::Bool(false))
+            ))
             .label_indent(self.prop_bool(node, "label-indent"));
         match self.prop_text(node, "align").as_deref() {
             Some("center") => field = field.items_center(),
@@ -1277,17 +1291,20 @@ impl ForgeView {
                     }
                 }
                 _ => placeholder(
-                    format!("`{namespace}.{}` is not provided by this adapter yet", node.element.name),
+                    format!(
+                        "`{namespace}.{}` is not provided by this adapter yet",
+                        node.element.name
+                    ),
                     cx,
                 ),
             };
             return wrap(
-            element,
-            &node.style,
-            &format!("forge-{key}"),
-            self.prop_text(node, "tooltip"),
-            cx,
-        );
+                element,
+                &node.style,
+                &format!("forge-{key}"),
+                self.prop_text(node, "tooltip"),
+                cx,
+            );
         }
         let id = SharedString::from(format!("forge-{key}"));
         let weak = cx.entity().downgrade();
@@ -1341,7 +1358,10 @@ impl ForgeView {
                     .when(self.prop_bool(node, "outline"), |b| b.outline())
                     .when(self.prop_bool(node, "compact"), |b| b.compact())
                     .on_click(move |_, _, cx| {
-                        try_update(&weak, cx, "event", |this, cx| this.fire(&clicked, "click", cx)).ok();
+                        try_update(&weak, cx, "event", |this, cx| {
+                            this.fire(&clicked, "click", cx)
+                        })
+                        .ok();
                     })
                     .into_any_element()
             }
@@ -1392,8 +1412,10 @@ impl ForgeView {
                             let weak = weak2.clone();
                             let child = child.clone();
                             item = item.on_click(move |_, _, cx| {
-                                try_update(&weak, cx, "event", |this, cx| this.fire(&child, "click", cx))
-                                    .ok();
+                                try_update(&weak, cx, "event", |this, cx| {
+                                    this.fire(&child, "click", cx)
+                                })
+                                .ok();
                             });
                             menu = menu.item(item);
                         }
@@ -1793,7 +1815,10 @@ impl ForgeView {
                     .disabled(self.prop_bool(node, "disabled"))
                     .child(self.prop_text(node, "label").unwrap_or_default())
                     .on_click(move |_, _, cx| {
-                        try_update(&weak, cx, "event", |this, cx| this.fire(&clicked, "click", cx)).ok();
+                        try_update(&weak, cx, "event", |this, cx| {
+                            this.fire(&clicked, "click", cx)
+                        })
+                        .ok();
                     })
                     .into_any_element()
             }
@@ -1882,7 +1907,9 @@ impl ForgeView {
                     .into_any_element()
             }
             "Kbd" => match Keystroke::parse(Box::leak(
-                self.prop_text(node, "keys").unwrap_or_default().into_boxed_str(),
+                self.prop_text(node, "keys")
+                    .unwrap_or_default()
+                    .into_boxed_str(),
             )) {
                 Ok(stroke) => Kbd::new(stroke)
                     .appearance(!matches!(
@@ -1933,10 +1960,8 @@ impl ForgeView {
                     .children
                     .iter()
                     .map(|child| {
-                        BreadcrumbItem::new(
-                            self.prop_text(child, "label").unwrap_or_default(),
-                        )
-                        .disabled(self.prop_bool(child, "disabled"))
+                        BreadcrumbItem::new(self.prop_text(child, "label").unwrap_or_default())
+                            .disabled(self.prop_bool(child, "disabled"))
                     })
                     .collect();
                 Breadcrumb::new().children(items).into_any_element()
@@ -2042,9 +2067,7 @@ impl ForgeView {
                             self.prop_text(child, "label").unwrap_or_default(),
                         )
                         .value(self.prop_text(child, "value").unwrap_or_default());
-                        if let Some(span) =
-                            self.prop(child, "span").and_then(|v| self.number(v))
-                        {
+                        if let Some(span) = self.prop(child, "span").and_then(|v| self.number(v)) {
                             item = item.span(span as usize);
                         }
                         item
@@ -2064,10 +2087,9 @@ impl ForgeView {
                         self.prop(node, "columns").and_then(|v| self.number(v)),
                         |l, n| l.columns(n as usize),
                     )
-                    .when_some(
-                        self.prop(node, "label-width").and_then(length),
-                        |l, w| l.label_width(w),
-                    )
+                    .when_some(self.prop(node, "label-width").and_then(length), |l, w| {
+                        l.label_width(w)
+                    })
                     .into_any_element()
             }
             "StatusBar" => {
@@ -2083,8 +2105,11 @@ impl ForgeView {
             }
             "Avatar" => self.avatar(node).into_any_element(),
             "AvatarGroup" => {
-                let avatars: Vec<Avatar> =
-                    node.children.iter().map(|child| self.avatar(child)).collect();
+                let avatars: Vec<Avatar> = node
+                    .children
+                    .iter()
+                    .map(|child| self.avatar(child))
+                    .collect();
                 AvatarGroup::new()
                     .children(avatars)
                     .when_some(
@@ -2099,8 +2124,8 @@ impl ForgeView {
                     .children
                     .iter()
                     .map(|child| {
-                        let mut item = StepperItem::new()
-                            .disabled(self.prop_bool(child, "disabled"));
+                        let mut item =
+                            StepperItem::new().disabled(self.prop_bool(child, "disabled"));
                         if let Some(name) = self.prop_text(child, "icon") {
                             item = item.icon(icon(&name));
                         }
@@ -2146,8 +2171,16 @@ impl ForgeView {
                             .and_then(|v| self.number(v))
                             .unwrap_or_default();
                         let mut state = SliderState::new()
-                            .min(self.prop(node, "min").and_then(|v| self.number(v)).unwrap_or_default() as f32)
-                            .max(self.prop(node, "max").and_then(|v| self.number(v)).unwrap_or(100.0) as f32);
+                            .min(
+                                self.prop(node, "min")
+                                    .and_then(|v| self.number(v))
+                                    .unwrap_or_default() as f32,
+                            )
+                            .max(
+                                self.prop(node, "max")
+                                    .and_then(|v| self.number(v))
+                                    .unwrap_or(100.0) as f32,
+                            );
                         if let Some(step) = self.prop(node, "step").and_then(|v| self.number(v)) {
                             state = state.step(step as f32);
                         }
@@ -2254,9 +2287,7 @@ impl ForgeView {
                     .children
                     .iter()
                     .enumerate()
-                    .map(|(i, child)| {
-                        self.form_field(child, &format!("{key}/{i}"), window, cx)
-                    })
+                    .map(|(i, child)| self.form_field(child, &format!("{key}/{i}"), window, cx))
                     .collect();
                 let form = if self
                     .prop_text(node, "layout")
@@ -2316,8 +2347,8 @@ impl ForgeView {
                         let state = cx.new(|cx| OtpState::new(length, window, cx));
                         let path = self.two_way(node, "value");
                         let changed = node.clone();
-                        let subscription = cx.subscribe(&state, move |this, state, event, cx| {
-                            match event {
+                        let subscription =
+                            cx.subscribe(&state, move |this, state, event, cx| match event {
                                 OtpEvent::Change => {
                                     if let Some(path) = &path {
                                         let value = state.read(cx).value().to_string();
@@ -2329,8 +2360,7 @@ impl ForgeView {
                                     this.fire(&changed, "complete", cx);
                                 }
                                 _ => {}
-                            }
-                        });
+                            });
                         self.subscriptions.push(subscription);
                         self.otps.insert(key.to_owned(), state.clone());
                         state
@@ -2379,10 +2409,9 @@ impl ForgeView {
                     None => {
                         let state = cx.new(|cx| TimeFieldState::new(window, cx));
                         let changed = node.clone();
-                        let subscription =
-                            cx.subscribe(&state, move |this, _state, _event, cx| {
-                                this.fire(&changed, "change", cx);
-                            });
+                        let subscription = cx.subscribe(&state, move |this, _state, _event, cx| {
+                            this.fire(&changed, "change", cx);
+                        });
                         self.subscriptions.push(subscription);
                         self.time_fields.insert(key.to_owned(), state.clone());
                         state
@@ -2411,8 +2440,7 @@ impl ForgeView {
                     let kids = self.slot_children(child, &format!("{key}/{i}"), window, cx);
                     match child.element.name.as_str() {
                         "MessageAvatar" => {
-                            message = message
-                                .avatar_slot(MessageAvatar::new().children(kids));
+                            message = message.avatar_slot(MessageAvatar::new().children(kids));
                         }
                         "MessageHeader" => {
                             message = message.header(MessageHeader::new().children(kids));
@@ -2434,11 +2462,8 @@ impl ForgeView {
                     let key = format!("{key}/{i}");
                     match child.element.name.as_str() {
                         "TableHeader" => {
-                            let heads: Vec<TableHead> = child
-                                .children
-                                .iter()
-                                .map(|h| self.table_head(h))
-                                .collect();
+                            let heads: Vec<TableHead> =
+                                child.children.iter().map(|h| self.table_head(h)).collect();
                             table = table.child(TableHeader::new().children(heads));
                         }
                         "TableBody" | "TableFooter" => {
@@ -2447,13 +2472,9 @@ impl ForgeView {
                                 .iter()
                                 .enumerate()
                                 .map(|(_j, r)| {
-                                    let cells: Vec<TableCell> = r
-                                        .children
-                                        .iter()
-                                        .map(|c| self.table_cell(c))
-                                        .collect();
-                                    gpui_kit::component::table::TableRow::new()
-                                        .children(cells)
+                                    let cells: Vec<TableCell> =
+                                        r.children.iter().map(|c| self.table_cell(c)).collect();
+                                    gpui_kit::component::table::TableRow::new().children(cells)
                                 })
                                 .collect();
                             table = if child.element.name.as_str() == "TableFooter" {
@@ -2464,8 +2485,7 @@ impl ForgeView {
                             let _ = key;
                         }
                         "TableCaption" => {
-                            let kids =
-                                self.slot_children(child, &key, window, cx);
+                            let kids = self.slot_children(child, &key, window, cx);
                             table = table.child(TableCaption::new().children(kids));
                         }
                         _ => {}
@@ -2481,12 +2501,9 @@ impl ForgeView {
                     .iter()
                     .enumerate()
                     .map(|(i, child)| {
-                        let kids =
-                            self.slot_children(child, &format!("{key}/{i}"), window, cx);
+                        let kids = self.slot_children(child, &format!("{key}/{i}"), window, cx);
                         let mut panel = resizable_panel().children(kids);
-                        if let Some(n) =
-                            self.prop(child, "size").and_then(|v| self.number(v))
-                        {
+                        if let Some(n) = self.prop(child, "size").and_then(|v| self.number(v)) {
                             panel = panel.size(px(n as f32));
                         }
                         match (
@@ -2517,8 +2534,8 @@ impl ForgeView {
                 group.children(panels).into_any_element()
             }
             "Sidebar" => {
-                let mut sidebar = Sidebar::<SidebarMenu>::new(id)
-                    .collapsed(self.prop_bool(node, "collapsed"));
+                let mut sidebar =
+                    Sidebar::<SidebarMenu>::new(id).collapsed(self.prop_bool(node, "collapsed"));
                 if self
                     .prop_text(node, "side")
                     .is_some_and(|s| s.eq_ignore_ascii_case("right"))
@@ -2615,15 +2632,13 @@ impl ForgeView {
                     .children
                     .iter()
                     .enumerate()
-                    .map(|(i, child)| {
-                        self.tree_data(child, &format!("{key}/{i}"), &mut nodes)
-                    })
+                    .map(|(i, child)| self.tree_data(child, &format!("{key}/{i}"), &mut nodes))
                     .collect();
                 let state = match self.trees.get(key) {
                     Some(state) => {
                         state.update(cx, |state, cx| {
-                            *state = std::mem::replace(state, TreeState::new(cx))
-                                .items(items.clone());
+                            *state =
+                                std::mem::replace(state, TreeState::new(cx)).items(items.clone());
                         });
                         state.clone()
                     }
@@ -2655,26 +2670,26 @@ impl ForgeView {
                     if let Some(node) = nodes.get(&id).cloned() {
                         let key = format!("{key}/{id}");
                         if let Some(row) = try_update(&weak, cx, "tree row", |view, cx| {
-                                let mut row = div().flex().flex_row().gap_2();
-                                if let Some(name) = view.prop_text(&node, "icon") {
-                                    row = row.child(icon(&name));
+                            let mut row = div().flex().flex_row().gap_2();
+                            if let Some(name) = view.prop_text(&node, "icon") {
+                                row = row.child(icon(&name));
+                            }
+                            if let Some(label) = view.prop_text(&node, "label") {
+                                row = row.child(label);
+                            }
+                            for (i, child) in node.children.iter().enumerate() {
+                                if child.element.name.as_str() != "TreeItem" {
+                                    row = row.child(view.render_node(
+                                        child,
+                                        &format!("{key}/{i}"),
+                                        window,
+                                        cx,
+                                    ));
                                 }
-                                if let Some(label) = view.prop_text(&node, "label") {
-                                    row = row.child(label);
-                                }
-                                for (i, child) in node.children.iter().enumerate() {
-                                    if child.element.name.as_str() != "TreeItem" {
-                                        row = row.child(view.render_node(
-                                            child,
-                                            &format!("{key}/{i}"),
-                                            window,
-                                            cx,
-                                        ));
-                                    }
-                                }
-                                row
-                            })
-                            .ok()
+                            }
+                            row
+                        })
+                        .ok()
                         {
                             item = item.child(row);
                         }
@@ -2713,11 +2728,7 @@ impl ForgeView {
                         .absolute()
                         .inset_0()
                         .cursor_pointer()
-                        .hover(move |s| {
-                            s.bg(accent.alpha(0.35))
-                                .border_2()
-                                .border_color(accent)
-                        })
+                        .hover(move |s| s.bg(accent.alpha(0.35)).border_2().border_color(accent))
                         .on_click(move |_, _, cx| {
                             try_update(&weak, cx, "pick", |p, cx| {
                                 p.pick = false;
@@ -2757,30 +2768,22 @@ impl ForgeView {
         } else {
             // Selection highlight — the outline/inspector selection and the
             // DnD drop target get a non-interactive accent frame.
-            let selected = get_path(
-                self.state(),
-                &parse_path("document.selected").unwrap(),
-            )
-            .and_then(|j| j.as_str())
-            .map(str::to_owned)
+            let selected = get_path(self.state(), &parse_path("document.selected").unwrap())
+                .and_then(|j| j.as_str())
+                .map(str::to_owned)
                 == Some(path.clone());
-            let drop_target = get_path(
-                self.state(),
-                &parse_path("studio.drop_target").unwrap(),
-            )
-            .and_then(|j| j.as_str())
-            .map(str::to_owned)
+            let drop_target = get_path(self.state(), &parse_path("studio.drop_target").unwrap())
+                .and_then(|j| j.as_str())
+                .map(str::to_owned)
                 == Some(path.clone());
             if selected || drop_target {
                 let accent = cx.theme().accent;
                 // A leaf's drop lands as the next sibling — a bottom bar;
                 // a container's nests inside — a full frame.
-                let into = self
-                    .catalogs
-                    .iter()
-                    .any(|c| c.element(&node.element.name).is_some_and(|d| {
-                        !matches!(d.children, Children::None)
-                    }));
+                let into = self.catalogs.iter().any(|c| {
+                    c.element(&node.element.name)
+                        .is_some_and(|d| !matches!(d.children, Children::None))
+                });
                 let overlay = if drop_target && !into {
                     div()
                         .absolute()
@@ -2848,11 +2851,7 @@ impl ForgeView {
                         );
                         match drag {
                             ForgeDrag::Component(tag) => {
-                                p.fire_call(
-                                    "drop_component",
-                                    vec![tag.clone(), path.clone()],
-                                    cx,
-                                )
+                                p.fire_call("drop_component", vec![tag.clone(), path.clone()], cx)
                             }
                             ForgeDrag::Node(src) => {
                                 p.fire_call("move_node", vec![src.clone(), path.clone()], cx)
@@ -2954,9 +2953,7 @@ fn wrap(
         )
         .overflow_y_scroll();
         if let Some(tip) = tooltip {
-            wrapper = wrapper.tooltip(move |_, cx| {
-                cx.new(|_| Tooltip::new(tip.clone())).into()
-            });
+            wrapper = wrapper.tooltip(move |_, cx| cx.new(|_| Tooltip::new(tip.clone())).into());
         }
         wrapper.child(element).into_any_element()
     } else if let Some(tip) = tooltip {
@@ -2964,25 +2961,22 @@ fn wrap(
         style(
             div()
                 .id(SharedString::from(format!("{id}-tip")))
-                .tooltip(move |_, cx| {
-                    cx.new(|_| Tooltip::new(tip.clone())).into()
-                }),
+                .tooltip(move |_, cx| cx.new(|_| Tooltip::new(tip.clone())).into()),
             entries,
             cx,
         )
         .child(element)
         .into_any_element()
     } else {
-        style(div(), entries, cx)
-            .child(element)
-            .into_any_element()
+        style(div(), entries, cx).child(element).into_any_element()
     }
 }
 
 /// Whether a `style:` map asks for a scrolling element (`overflow: scroll`).
 fn scrollable(entries: &Entries) -> bool {
     entries.iter().any(|(key, value)| {
-        key == "overflow" && matches!(value, Value::Enum(word) | Value::String(word) if word == "scroll")
+        key == "overflow"
+            && matches!(value, Value::Enum(word) | Value::String(word) if word == "scroll")
     })
 }
 

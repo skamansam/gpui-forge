@@ -3,11 +3,11 @@
 use std::collections::HashMap;
 
 use super::tree::{self, Scalar, YNode};
-use crate::value::Quoting;
 use crate::SPEC_VERSION;
 use crate::diagnostic::{Diagnostic, Diagnostics, Pos};
 use crate::model::{Document, ElementRef, EventBinding, Import, Node, Value};
 use crate::source_map::{NodeSpans, SourceMap};
+use crate::value::Quoting;
 use crate::value::{
     self, is_element_name, is_ident, is_namespace, is_prop_key, is_two_way, parse_handler,
 };
