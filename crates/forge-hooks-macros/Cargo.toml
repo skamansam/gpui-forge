@@ -1,0 +1,18 @@
+[package]
+name = "forge-hooks-macros"
+description = "Procedural macros for forge-hooks: #[forge_hook]."
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+repository.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2", features = ["full"] }
+
+[lints]
+workspace = true

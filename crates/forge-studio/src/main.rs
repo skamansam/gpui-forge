@@ -38,6 +38,8 @@ struct Shared {
 }
 
 type SharedState = Rc<RefCell<Shared>>;
+/// The hook context type for `#[forge_hook]` wrappers.
+type HookCtx = SharedState;
 
 fn main() {
     gpui_kit::application()
@@ -352,7 +354,13 @@ fn open_dialog(
 
 /// `apply_theme_name('Theme name')` — the titlebar `Select` writes `studio.theme`
 /// and fires this; swaps the theme config + mode to match.
-fn apply_theme_name(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeView>) {
+#[forge_hooks_macros::forge_hook]
+fn apply_theme_name(
+    view: &mut ForgeView,
+    _ctx: &HookCtx,
+    args: &[String],
+    cx: &mut Context<ForgeView>,
+) {
     let Some(name) = args.first() else {
         return;
     };
@@ -384,7 +392,13 @@ fn apply_theme_name(view: &mut ForgeView, args: &[String], cx: &mut Context<Forg
 
 /// `reset_theme()` — the Themes tab's reset icon — restores the registry's
 /// default light/dark theme for the current mode.
-fn reset_theme(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
+#[forge_hooks_macros::forge_hook]
+fn reset_theme(
+    view: &mut ForgeView,
+    _ctx: &HookCtx,
+    _args: &[String],
+    cx: &mut Context<ForgeView>,
+) {
     let registry = ThemeRegistry::global(cx);
     let dark = Theme::global(cx).is_dark();
     let default = if dark {
@@ -399,7 +413,13 @@ fn reset_theme(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
 
 /// `apply_theme_json()` — parse `studio.theme_json` (a `ThemeSet`) and apply the
 /// first theme, so the user can edit a builtin theme's JSON and see it live.
-fn apply_theme_json(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
+#[forge_hooks_macros::forge_hook]
+fn apply_theme_json(
+    view: &mut ForgeView,
+    _ctx: &HookCtx,
+    _args: &[String],
+    cx: &mut Context<ForgeView>,
+) {
     let json = view
         .state()
         .get("studio")
@@ -430,6 +450,11 @@ fn dispatch(
     shared: &SharedState,
     cx: &mut Context<ForgeView>,
 ) {
+    // Registry first — #[forge_hook] functions register via inventory and need
+    // no arm here; anything unhandled falls through to the legacy match.
+    if forge_hooks::dispatch::<SharedState>(shared, view, name, args, cx) {
+        return;
+    }
     match name {
         "new_document" => {
             shared.borrow_mut().file = None;
@@ -455,12 +480,9 @@ fn dispatch(
                 cx,
             );
         }
-        "apply_theme_name" => apply_theme_name(view, args, cx),
-        "apply_theme_json" => apply_theme_json(view, cx),
-        "reset_theme" => reset_theme(view, cx),
+        // apply_theme_name/apply_theme_json/reset_theme: registry hooks
         "source_changed" => reload(view, shared, cx),
-        "copy_snippet" => copy_snippet(view, args, cx),
-        "insert_component" => insert_component(view, args, cx),
+        // copy_snippet/insert_component: registry hooks
         "place_component" => place_component(view, args, shared, cx),
         "undo" => undo_action(view, shared, cx),
         "redo" => redo_action(view, shared, cx),
@@ -895,7 +917,13 @@ fn format_document(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<
 
 /// Palette click — arms click-to-place: the next preview click inserts the
 /// element's snippet under that node. Clicking the palette again cancels.
-fn insert_component(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeView>) {
+#[forge_hooks_macros::forge_hook]
+fn insert_component(
+    view: &mut ForgeView,
+    _ctx: &HookCtx,
+    args: &[String],
+    cx: &mut Context<ForgeView>,
+) {
     let Some(tag) = args.first().cloned() else {
         return;
     };
@@ -1271,7 +1299,13 @@ fn redo_action(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<Forg
     restore(view, shared, |s| &mut s.redo, |s| &mut s.undo, cx);
 }
 
-fn copy_snippet(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeView>) {
+#[forge_hooks_macros::forge_hook]
+fn copy_snippet(
+    view: &mut ForgeView,
+    _ctx: &HookCtx,
+    args: &[String],
+    cx: &mut Context<ForgeView>,
+) {
     let Some(name) = args.first() else {
         return;
     };

@@ -1,5 +1,7 @@
 [workspace]
-members = ["crates/*"]
+members = [
+    "crates/forge-hooks",
+    "crates/forge-hooks-macros","crates/*"]
 resolver = "3"
 
 [workspace.package]

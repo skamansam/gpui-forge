@@ -1721,6 +1721,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "forge-hooks"
+version = "0.1.0"
+dependencies = [
+ "gpui-forge-runtime",
+ "inventory",
+]
+
+[[package]]
+name = "forge-hooks-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
 name = "forge-spec"
 version = "0.1.0"
 dependencies = [
@@ -1735,6 +1752,8 @@ dependencies = [
 name = "forge-studio"
 version = "0.1.0"
 dependencies = [
+ "forge-hooks",
+ "forge-hooks-macros",
  "gpui-forge-runtime",
  "gpui-kit",
  "serde_json",
