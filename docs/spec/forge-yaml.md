@@ -180,13 +180,13 @@ YAML gotchas the validator reports with a fix hint:
 
 ## Schema and editor support
 
-- `forge schema --base <base>` generates a JSON Schema from the base's and imported libraries'
-  catalog manifests, so editors validate and complete element-specific props, not just structure.
-- A published, structure-only schema per spec version lives at
-  `https://gpui-forge.rudeboy.dev/schema/<version>/<base>.json`.
-- Editor association: the `$schema` key, the `yaml-language-server` comment, or a `*.forge.yaml`
-  file-name mapping (to be registered with SchemaStore). Which of these each editor honours is
-  verified in [#6](https://github.com/skamansam/gpui-forge/issues/6).
+- `forge schema` emits the JSON Schema for the document model — generated from
+  the serde types via schemars, so it cannot drift from `forge-spec`.
+- `forge convert` turns a `.forge.yaml` document into that JSON form (and back),
+  and `site/static/schema/forge-doc.schema.json` ships the generated schema
+  alongside generated TypeScript declarations for the web editor.
+- Editor association: the `$schema` key, the `yaml-language-server` comment, or a
+  `*.forge.yaml` file-name mapping.
 - Schema validation is a convenience. `forge-spec` validation is authoritative (unique ids,
   binding rules, base compatibility).
 

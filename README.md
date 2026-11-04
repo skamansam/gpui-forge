@@ -18,11 +18,19 @@ What ships today:
   document): palette click-to-place and drag-and-drop insertion, outline and
   inspector panels, two-way source pane, undo/redo, reparent/delete mutations,
   file open/save with a disk-watch reload, and a Preferences dialog.
-- **`forge` CLI** — `forge check|validate`, `forge fmt`, `forge build`
-  (embeds the document + catalogs into a native app binary), `forge preview`.
+- **`forge` CLI** — `forge check|validate`, `forge fmt`, `forge new`
+  (project scaffold with `forge.toml`), `forge convert` (YAML ↔ JSON),
+  `forge schema` (JSON Schema from the serde model), `forge build`
+  (embeds the document + catalogs + all themes into a native app;
+  `--codegen` compiles the document to Rust), `forge package` (AppDir /
+  .app / NSIS scaffolding), `forge preview` (build + launch).
+- **`forge-web`** — a Svelte editor/playground at `site/` backed by the
+  `forge-web-canvas` WASM runtime: palette drag-and-drop, outline,
+  inspector, undo/redo, localStorage persistence, JSON/.forge
+  import-export, and schema-generated TypeScript types.
 
-Still on the roadmap: codegen compiler mode, platform packaging, project
-manifests, per-base adapters, the web canvas, and the `#[forge_hook]` bridge.
+Still on the roadmap: per-base adapters, the `#[forge_hook]` bridge,
+and Studio packaging.
 
 ## 🚀 The Vision
 Traditional GPUI development requires writing imperative Rust code for every layout and element. **GPUI Forge** introduces a declarative workflow: design your interface visually in a desktop or web-based editor, define logic via hooks, and compile the result into a high-performance native binary.
