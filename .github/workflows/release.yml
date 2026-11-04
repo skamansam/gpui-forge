@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  binaries:
+    name: forge binary (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: ubuntu-latest, target: linux-x86_64 }
+          - { os: macos-latest, target: macos-aarch64 }
+          - { os: windows-latest, target: windows-x86_64 }
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc g++ clang libfontconfig-dev libwayland-dev \
+            libwebkit2gtk-4.1-dev libxkbcommon-x11-dev libx11-xcb-dev \
+            libssl-dev libzstd-dev libasound2-dev vulkan-validationlayers libvulkan1
+      - name: Build forge
+        run: cargo build --release --locked -p forge-cli
+      - name: Package artifact
+        shell: bash
+        run: |
+          bin=target/release/forge; [ "$RUNNER_OS" = "Windows" ] && bin=$bin.exe
+          mkdir -p dist && cp "$bin" "dist/forge-${{ matrix.target }}${bin:+${bin:+.exe} }"
+      - name: Upload binary to the release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/forge-${{ matrix.target }}*
