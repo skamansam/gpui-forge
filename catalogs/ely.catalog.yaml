@@ -134,3 +134,146 @@ elements:
     children: none
     props:
       text: string
+
+  CopyButton:
+    summary: Ely copy-to-clipboard button.
+    component: ely_core::buttons::CopyButton
+    children: none
+    props: {text: string, tooltip: string}
+  SegmentedControl:
+    summary: Ely segmented control — options as children.
+    component: ely_core::buttons::SegmentedControl
+    children: any
+  ToggleButton:
+    summary: Ely toggle button.
+    component: ely_core::buttons::ToggleButton
+    content: label
+    children: none
+    props: {label: string, disabled: bool}
+    events: {click:}
+  TrendIndicator:
+    summary: Ely change indicator (up/down arrow + value).
+    component: ely_core::data_display::TrendIndicator
+    children: none
+    props: {change: number}
+  Statistic:
+    summary: Ely labeled statistic.
+    component: ely_core::data_display::Statistic
+    children: none
+    props: {label: string, value: string}
+  KpiCard:
+    summary: Ely KPI card wrapping a Statistic.
+    component: ely_core::data_display::KpiCard
+    children: none
+    props: {label: string, value: string}
+  Meter:
+    summary: Ely 0-100 meter bar.
+    component: ely_core::data_display::Meter
+    children: none
+    props: {value: number}
+  UsageBar:
+    summary: Ely used/total usage bar.
+    component: ely_core::data_display::UsageBar
+    children: none
+    props: {used: number, total: number}
+  QrCode:
+    summary: Ely QR code.
+    component: ely_core::data_display::QrCode
+    children: none
+    props: {data: string}
+  TimelineItem:
+    summary: Ely timeline item.
+    component: ely_core::data_display::TimelineItem
+    content: text
+    children: none
+    props: {text: string}
+  Banner:
+    summary: Ely severity banner.
+    component: ely_core::feedback::Banner
+    content: text
+    children: none
+    props: {text: string, severity: {type: enum, values: [Info, Success, Warning, Danger], default: Info}}
+  Callout:
+    summary: Ely severity callout.
+    component: ely_core::feedback::Callout
+    content: text
+    children: none
+    props: {text: string, severity: {type: enum, values: [Info, Success, Warning, Danger], default: Info}}
+  InlineMessage:
+    summary: Ely inline severity message.
+    component: ely_core::feedback::InlineMessage
+    content: text
+    children: none
+    props: {text: string, severity: {type: enum, values: [Info, Success, Warning, Danger], default: Info}}
+  EmptyState:
+    summary: Ely empty-state placeholder.
+    component: ely_core::feedback::EmptyState
+    children: none
+    props: {title: string, body: string}
+  Switch:
+    summary: Ely on/off switch.
+    component: ely_core::forms::Switch
+    children: none
+    props: {checked: bool}
+    events: {change:}
+  Rating:
+    summary: Ely star rating.
+    component: ely_core::forms::Rating
+    children: none
+    props: {value: number, max: number}
+    events: {change:}
+  Stepper:
+    summary: Ely numeric stepper.
+    component: ely_core::forms::Stepper
+    children: none
+    props: {value: number, min: number, max: number}
+    events: {change:}
+  Tag:
+    summary: Ely tag/chip label.
+    component: ely_core::primitives::Tag
+    content: label
+    children: none
+    props: {label: string}
+  Icon:
+    summary: Ely standalone icon.
+    component: ely_core::primitives::Icon
+    children: none
+    props: {icon: string, size: {type: enum, values: [Xs, Sm, Md, Lg, Xl, Xxl], default: Md}}
+  Subtitle:
+    summary: Ely subtitle text.
+    component: ely_core::typography::Subtitle
+    content: text
+    children: none
+    props: {text: string}
+  Caption:
+    summary: Ely caption text.
+    component: ely_core::typography::Caption
+    content: text
+    children: none
+    props: {text: string}
+  Label:
+    summary: Ely form label text.
+    component: ely_core::typography::Label
+    content: text
+    children: none
+    props: {text: string}
+  Overline:
+    summary: Ely overline text.
+    component: ely_core::typography::Overline
+    content: text
+    children: none
+    props: {text: string}
+  Container:
+    summary: Ely size-constrained container.
+    component: ely_core::layout::Container
+    children: any
+    props: {size: {type: enum, values: [Xs, Sm, Md, Lg, Xl], default: Md}}
+  AspectRatio:
+    summary: Ely aspect-ratio box (children fill).
+    component: ely_core::layout::AspectRatio
+    children: any
+    props: {ratio: number}
+  ZStack:
+    summary: Ely z-stacked layers (children overlap).
+    component: ely_core::layout::ZStack
+    children: any

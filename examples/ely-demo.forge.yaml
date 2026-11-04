@@ -37,3 +37,34 @@ root:
     - ely.IconButton:
       icon: check
       tooltip: Done
+    - ely.Statistic:
+      label: Uptime
+      value: "99.9%"
+    - ely.KpiCard:
+      label: Revenue
+      value: $42k
+    - ely.Meter:
+      label: Storage
+      value: 68
+    - ely.UsageBar:
+      total: 100
+    - ely.TrendIndicator:
+      change: 12.5
+    - ely.Banner: Deploy queued
+      severity: Info
+    - ely.InlineMessage: Syncing…
+      severity: Warning
+    - ely.QrCode:
+      data: "https://gpui.rs"
+    - ely.TimelineItem: v0.2 shipped
+    - ely.Subtitle: Section subtitle
+    - ely.Caption: fine print
+    - ely.Label: Field label
+    - ely.Overline: OVERLINE
+    - ely.Icon:
+      icon: check
+      size: Lg
+    - ely.CopyButton:
+      label: Copy
+    - ely.AspectRatio:
+      ratio: 1.77

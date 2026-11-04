@@ -1,15 +1,15 @@
 //! Adapter for Ely GPUI Components (`use: ely: ely-core` → `ely.*` elements).
 
-use ely_core::buttons::{Button, ButtonVariant, IconButton};
-use ely_core::data_display::Avatar;
-use ely_core::data_display::Badge;
-use ely_core::feedback::{Alert, StatusMessage};
+use ely_core::buttons::{Button, ButtonVariant, CopyButton, IconButton};
+use ely_core::data_display::{
+    Avatar, Badge, KpiCard, Meter, QrCode, Statistic, TimelineItem, TrendIndicator, UsageBar,
+};
+use ely_core::feedback::{Alert, Banner, InlineMessage, StatusMessage};
+use ely_core::layout::{AspectRatio, Container, ZStack};
 use ely_core::motion::{Spinner, SpinnerStyle};
-use ely_core::primitives::IconName;
-use ely_core::primitives::{Divider, Severity};
-use ely_core::theme::ControlSize;
-use ely_core::theme::IconSize;
-use ely_core::typography::{Heading, Paragraph, Title};
+use ely_core::primitives::{Divider, Icon, IconName, Severity};
+use ely_core::theme::{ContainerSize, ControlSize, IconSize};
+use ely_core::typography::{Caption, Heading, Label, Overline, Paragraph, Subtitle, Title};
 use gpui_forge_runtime::base::kit::*;
 use gpui_forge_runtime::forge_spec::catalog::{self, Catalog};
 use gpui_forge_runtime::forge_spec::{Node, Value};
@@ -130,6 +130,69 @@ impl ForgeLibrary for Ely {
                     Divider::horizontal().into_any_element()
                 },
             ),
+            "CopyButton" => {
+                Some(CopyButton::new(key.to_string(), prop_str(node, "label")).into_any_element())
+            }
+            "TrendIndicator" => Some(
+                TrendIndicator::new(prop_num(node, "change").unwrap_or(0.0)).into_any_element(),
+            ),
+            "Statistic" => Some(
+                Statistic::new(
+                    prop_str_opt(node, "label").unwrap_or_default(),
+                    prop_str_opt(node, "value").unwrap_or_default(),
+                    prop_num(node, "change").unwrap_or(0.0),
+                )
+                .into_any_element(),
+            ),
+            "KpiCard" => Some(
+                KpiCard::new(Statistic::new(
+                    prop_str_opt(node, "label").unwrap_or_default(),
+                    prop_str_opt(node, "value").unwrap_or_default(),
+                    prop_num(node, "change").unwrap_or(0.0),
+                ))
+                .into_any_element(),
+            ),
+            "Meter" => Some(
+                Meter::new(
+                    key.to_string(),
+                    prop_str_opt(node, "label").unwrap_or_default(),
+                    prop_num(node, "value").unwrap_or(0.0) as f32,
+                )
+                .into_any_element(),
+            ),
+            "UsageBar" => {
+                Some(UsageBar::new(prop_num(node, "total").unwrap_or(100.0)).into_any_element())
+            }
+            "QrCode" => QrCode::new(prop_str_opt(node, "data").unwrap_or_default())
+                .ok()
+                .map(|q| q.into_any_element()),
+            "TimelineItem" => Some(TimelineItem::new(prop_str(node, "text")).into_any_element()),
+            "Banner" => Some(
+                Banner::new(key.to_string(), severity_of(node), prop_str(node, "text"))
+                    .into_any_element(),
+            ),
+            "InlineMessage" => Some(
+                InlineMessage::new(severity_of(node), prop_str(node, "text")).into_any_element(),
+            ),
+            "Icon" => Some(Icon::new(icon_of(node)).into_any_element()),
+            "Subtitle" => Some(Subtitle::new(prop_str(node, "text")).into_any_element()),
+            "Caption" => Some(Caption::new(prop_str(node, "text")).into_any_element()),
+            "Label" => Some(Label::new(prop_str(node, "text")).into_any_element()),
+            "Overline" => Some(Overline::new(prop_str(node, "text")).into_any_element()),
+            "Container" => {
+                let size = match prop_str_opt(node, "size").as_deref() {
+                    Some("Xs") => ContainerSize::Sm,
+                    Some("Sm") => ContainerSize::Sm,
+                    Some("Lg") => ContainerSize::Lg,
+                    Some("Xl") => ContainerSize::Lg,
+                    _ => ContainerSize::Md,
+                };
+                Some(Container::new(size).into_any_element())
+            }
+            "AspectRatio" => Some(
+                AspectRatio::new(prop_num(node, "ratio").unwrap_or(1.0) as f32).into_any_element(),
+            ),
+            "ZStack" => Some(ZStack::new().into_any_element()),
             "IconButton" => {
                 let icon = match prop_str_opt(node, "icon").as_deref() {
                     Some("check") => IconName::Check,
@@ -180,4 +243,34 @@ fn prop_str(node: &Node, name: &str) -> String {
 
 fn prop_bool(node: &Node, name: &str) -> bool {
     matches!(prop(node, name), Some(Value::Bool(true)))
+}
+
+fn prop_num(node: &Node, name: &str) -> Option<f64> {
+    match prop(node, name)? {
+        Value::Number { value, .. } => Some(*value),
+        _ => None,
+    }
+}
+
+fn severity_of(node: &Node) -> Severity {
+    match prop_str_opt(node, "severity").as_deref() {
+        Some("Success") => Severity::Success,
+        Some("Warning") => Severity::Warning,
+        Some("Danger") => Severity::Danger,
+        _ => Severity::Info,
+    }
+}
+
+fn icon_of(node: &Node) -> IconName {
+    match prop_str_opt(node, "icon").as_deref() {
+        Some("check") => IconName::Check,
+        Some("circle-check") => IconName::CircleCheck,
+        Some("file-plus") => IconName::FilePlus,
+        Some("folder-plus") => IconName::FolderPlus,
+        Some("menu") => IconName::Menu,
+        Some("list-checks") => IconName::ListChecks,
+        Some("square-check") => IconName::SquareCheck,
+        Some("check-check") => IconName::CheckCheck,
+        _ => IconName::Plus,
+    }
 }
