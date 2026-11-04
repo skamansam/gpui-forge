@@ -165,6 +165,7 @@ fn main() {
         "new" => new_cmd(&rest),
         "package" => package_cmd(&rest),
         "hooks" => hooks_cmd(&rest),
+        "license" => license_cmd(&rest),
         "check" | "validate" => check_cmd(&rest),
         "schema" => {
             print!("{}", gpui_forge_runtime::forge_spec::json::schema());
@@ -198,6 +199,9 @@ fn usage() {
     eprintln!("      -o <path>         output file (default: stdout; `-` reads stdin)");
     eprintln!("  forge schema                          JSON Schema for the document model");
     eprintln!("  forge hooks <doc>                     hook manifest (JSON) the doc requires");
+    eprintln!(
+        "  forge license <doc>                   license report for base + imported libraries"
+    );
     eprintln!("  forge package                         build --release + bundle for this OS");
     eprintln!("  forge preview <doc.forge.yaml>        build + launch the app");
 }
@@ -365,6 +369,74 @@ fn hooks_cmd(rest: &[String]) -> i32 {
         }))
         .unwrap_or_default()
     );
+    0
+}
+
+/// `forge license <doc>` — the license report: every library the document
+/// links (base + `use:` imports) with its declared license, flagging copyleft
+/// licenses that the app's packaging must account for (#82).
+fn license_cmd(rest: &[String]) -> i32 {
+    let Some(path) = doc_path(rest) else {
+        usage();
+        return 2;
+    };
+    let src = match std::fs::read_to_string(&path) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("forge: cannot read {}: {e}", path.display());
+            return 1;
+        }
+    };
+    let catalogs = gpui_forge_runtime::check::catalogs();
+    let (doc, _) =
+        gpui_forge_runtime::check::check(&src, gpui_forge_runtime::base::BASE_ID, &catalogs);
+    let Some(doc) = doc else {
+        eprintln!("forge: {} does not parse", path.display());
+        return 1;
+    };
+    let find = |id: &str| catalogs.iter().find(|c| c.library == id);
+    let mut libs: Vec<serde_json::Value> = Vec::new();
+    let mut warnings = 0;
+    let mut push = |id: String, role: &str| {
+        let (license, name) = find(&id)
+            .map(|c| {
+                (
+                    c.license.clone(),
+                    c.name.clone().unwrap_or_else(|| id.clone()),
+                )
+            })
+            .unwrap_or((None, id.clone()));
+        let copyleft = license.as_deref().is_some_and(|l| {
+            let l = l.to_uppercase();
+            l.contains("GPL") || l.contains("AGPL")
+        });
+        if copyleft {
+            warnings += 1;
+        }
+        libs.push(serde_json::json!({
+            "library": id, "name": name, "role": role,
+            "license": license, "copyleft": copyleft,
+        }));
+    };
+    push(
+        doc.base.clone().unwrap_or_else(|| "gpui-kit".into()),
+        "base",
+    );
+    for i in &doc.imports {
+        push(i.library.clone(), "import");
+    }
+    println!(
+        "{}",
+        serde_json::to_string_pretty(&serde_json::json!({
+            "document": path.display().to_string(),
+            "libraries": libs,
+            "copyleft_warnings": warnings,
+        }))
+        .unwrap_or_default()
+    );
+    if warnings > 0 {
+        eprintln!("forge: {warnings} copyleft license(s) — packaging must keep these opt-in");
+    }
     0
 }
 
