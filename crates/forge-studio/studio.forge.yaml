@@ -346,6 +346,90 @@ root:
                         tooltip: Tree
                         on click: insert_component('Tree')
               - AccordionItem:
+                title: Ely
+                children:
+                  - HStack:
+                    style: {gap: 4px}
+                    children:
+                      - Button:
+                        icon: mouse-pointer-click
+                        variant: Ghost
+                        size: Small
+                        tooltip: ely.Button
+                        on click: insert_component('ely.Button')
+                      - Button:
+                        icon: badge
+                        variant: Ghost
+                        size: Small
+                        tooltip: ely.Badge
+                        on click: insert_component('ely.Badge')
+                      - Button:
+                        icon: minus
+                        variant: Ghost
+                        size: Small
+                        tooltip: ely.Divider
+                        on click: insert_component('ely.Divider')
+                      - Button:
+                        icon: alert-circle
+                        variant: Ghost
+                        size: Small
+                        tooltip: ely.Alert
+                        on click: insert_component('ely.Alert')
+                  - HStack:
+                    style: {gap: 4px}
+                    children:
+                      - Button:
+                        icon: message-circle
+                        variant: Ghost
+                        size: Small
+                        tooltip: ely.StatusMessage
+                        on click: insert_component('ely.StatusMessage')
+                      - Button:
+                        icon: loader-2
+                        variant: Ghost
+                        size: Small
+                        tooltip: ely.Spinner
+                        on click: insert_component('ely.Spinner')
+                      - Button:
+                        icon: type
+                        variant: Ghost
+                        size: Small
+                        tooltip: ely.Heading
+                        on click: insert_component('ely.Heading')
+                      - Button:
+                        icon: user-circle
+                        variant: Ghost
+                        size: Small
+                        tooltip: ely.Avatar
+                        on click: insert_component('ely.Avatar')
+                  - HStack:
+                    style: {gap: 4px}
+                    children:
+                      - Button:
+                        icon: align-left
+                        variant: Ghost
+                        size: Small
+                        tooltip: ely.Paragraph
+                        on click: insert_component('ely.Paragraph')
+                      - Button:
+                        icon: trending-up
+                        variant: Ghost
+                        size: Small
+                        tooltip: ely.TrendIndicator
+                        on click: insert_component('ely.TrendIndicator')
+                      - Button:
+                        icon: gauge
+                        variant: Ghost
+                        size: Small
+                        tooltip: ely.Meter
+                        on click: insert_component('ely.Meter')
+                      - Button:
+                        icon: bar-chart-2
+                        variant: Ghost
+                        size: Small
+                        tooltip: ely.Statistic
+                        on click: insert_component('ely.Statistic')
+              - AccordionItem:
                 title: Navigation
                 children:
                   - HStack:

@@ -190,7 +190,7 @@ pub struct ForgeView {
     selects: HashMap<String, Entity<SelectState<Options>>>,
     tabs: HashMap<String, usize>,
     previews: HashMap<String, Entity<ForgeView>>,
-    libraries: Vec<Box<dyn ForgeLibrary>>,
+    pub libraries: Vec<Box<dyn ForgeLibrary>>,
     hooks: HashMap<String, HookHandler>,
     on_hook: Option<HookSink>,
     on_state: Option<StateSink>,

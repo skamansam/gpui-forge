@@ -980,6 +980,22 @@ fn place_component(
         let Some(mut doc) = p.document().cloned() else {
             return;
         };
+        // Namespaced tag — make sure the `use:` import for the alias exists.
+        if let Some(ns) = node.element.namespace.as_ref()
+            && !doc.imports.iter().any(|i| &i.alias == ns)
+        {
+            let library = view
+                .libraries
+                .iter()
+                .find(|l| l.alias() == ns.as_str())
+                .and_then(|l| l.catalog().map(|c| c.library.clone()))
+                .unwrap_or_else(|| ns.clone());
+            doc.imports.push(gpui_forge_runtime::forge_spec::Import {
+                alias: ns.clone(),
+                library,
+                version: None,
+            });
+        }
         let target = target
             .as_deref()
             .filter(|path| doc.node_at(path).is_some())
@@ -1118,6 +1134,22 @@ fn insert_at(
         let Some(mut doc) = p.document().cloned() else {
             return;
         };
+        // Namespaced tag — make sure the `use:` import for the alias exists.
+        if let Some(ns) = node.element.namespace.as_ref()
+            && !doc.imports.iter().any(|i| &i.alias == ns)
+        {
+            let library = view
+                .libraries
+                .iter()
+                .find(|l| l.alias() == ns.as_str())
+                .and_then(|l| l.catalog().map(|c| c.library.clone()))
+                .unwrap_or_else(|| ns.clone());
+            doc.imports.push(gpui_forge_runtime::forge_spec::Import {
+                alias: ns.clone(),
+                library,
+                version: None,
+            });
+        }
         let target = target
             .as_deref()
             .filter(|path| doc.node_at(path).is_some())
@@ -1192,11 +1224,12 @@ fn snippet_node(tag: &str) -> Node {
             return node;
         }
     }
+    let (namespace, name) = match tag.split_once('.') {
+        Some((ns, n)) => (Some(ns.to_owned()), n.to_owned()),
+        None => (None, tag.to_owned()),
+    };
     Node {
-        element: ElementRef {
-            name: tag.to_owned(),
-            namespace: None,
-        },
+        element: ElementRef { name, namespace },
         content: Some(Value::String(tag.to_owned())),
         ..Default::default()
     }
