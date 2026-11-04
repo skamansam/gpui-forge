@@ -161,6 +161,7 @@ fn main() {
     let rest: Vec<String> = args.collect();
     let code = match cmd.as_str() {
         "new" => new_cmd(&rest),
+        "package" => package_cmd(&rest),
         "check" | "validate" => check_cmd(&rest),
         "schema" => {
             print!("{}", gpui_forge_runtime::forge_spec::json::schema());
@@ -193,6 +194,7 @@ fn usage() {
     eprintln!("      --to yaml|json    output format (default: the other one)");
     eprintln!("      -o <path>         output file (default: stdout; `-` reads stdin)");
     eprintln!("  forge schema                          JSON Schema for the document model");
+    eprintln!("  forge package                         build --release + bundle for this OS");
     eprintln!("  forge preview <doc.forge.yaml>        build + launch the app");
 }
 
@@ -379,6 +381,103 @@ fn convert_cmd(rest: &[String]) -> i32 {
     0
 }
 
+/// `forge package` — release-build, then wrap for the host OS: an
+/// AppDir (+AppImage when appimagetool is installed, else a tarball) on
+/// Linux; .app/.nsi scaffolding is emitted for other platforms.
+fn package_cmd(rest: &[String]) -> i32 {
+    let mut build_args: Vec<String> = rest.to_vec();
+    build_args.push("--release".into());
+    if build_cmd(&build_args) != 0 {
+        return 1;
+    }
+    let Some((m_dir, manifest, _doc, name)) = project(rest) else {
+        return 2;
+    };
+    let root = workspace_root().canonicalize().unwrap_or_else(|_| workspace_root());
+    let binary = root.join("target/forge-apps/release").join(&name);
+    if !binary.exists() {
+        eprintln!("forge: {} not found after build", binary.display());
+        return 1;
+    }
+    let title = if manifest.package.title.is_empty() { name.replace('-', " ") } else { manifest.package.title.clone() };
+    let out_dir = m_dir.join("dist");
+    let _ = std::fs::remove_dir_all(&out_dir);
+    let _ = std::fs::create_dir_all(&out_dir);
+
+    if std::env::consts::OS == "linux" {
+        let appdir = out_dir.join(format!("{name}.AppDir"));
+        let _ = std::fs::create_dir_all(appdir.join("usr/bin"));
+        let _ = std::fs::copy(&binary, appdir.join("usr/bin").join(&name));
+        write(&appdir.join("AppRun"), &format!(r#"#!/bin/sh
+exec "$(dirname "$0")/usr/bin/{name}" "$@"
+"#));
+        let _ = Command::new("chmod").args(["+x", &appdir.join("AppRun").to_string_lossy()]).status();
+        let mut desktop = format!(
+            "[Desktop Entry]\nType=Application\nName={title}\nExec={name}\nCategories=Development;\nTerminal=false\n"
+        );
+        if !manifest.package.icon.is_empty() {
+            let icon = m_dir.join(&manifest.package.icon);
+            if icon.exists() {
+                let _ = std::fs::copy(&icon, appdir.join(&manifest.package.icon));
+                desktop.push_str(&format!("Icon={}\n", manifest.package.icon.trim_end_matches(".png")));
+            }
+        }
+        write(&appdir.join(format!("{name}.desktop")), &desktop);
+        if Command::new("appimagetool")
+            .arg(&appdir)
+            .arg(out_dir.join(format!("{name}-{}.AppImage", std::env::consts::ARCH)))
+            .status()
+            .is_ok()
+        {
+            println!("forge: packaged {}", out_dir.display());
+            return 0;
+        }
+        let tar = out_dir.join(format!("{name}.tar.gz"));
+        let ok = Command::new("tar")
+            .arg("-czf").arg(&tar).arg("-C").arg(&out_dir).arg(appdir.file_name().unwrap())
+            .status()
+            .is_ok_and(|s| s.success());
+        println!("forge: appimagetool not found — packed AppDir to {}", tar.display());
+        return if ok { 0 } else { 1 };
+    }
+    if std::env::consts::OS == "macos" {
+        let app = out_dir.join(format!("{name}.app/Contents"));
+        let _ = std::fs::create_dir_all(app.join("MacOS"));
+        let _ = std::fs::copy(&binary, app.join("MacOS").join(&name));
+        let id = if manifest.package.id.is_empty() { format!("dev.forge.{name}") } else { manifest.package.id.clone() };
+        write(&app.join("Info.plist"), &format!(
+            r#"<?xml version="1.0" encoding="UTF-8"?>
+<plist version="1.0"><dict>
+  <key>CFBundleExecutable</key><string>{name}</string>
+  <key>CFBundleIdentifier</key><string>{id}</string>
+  <key>CFBundleName</key><string>{title}</string>
+  <key>CFBundlePackageType</key><string>APPL</string>
+  <key>CFBundleShortVersionString</key><string>{}</string>
+</dict></plist>"#, manifest.package.version));
+        println!("forge: packaged {}", app.parent().unwrap().display());
+        return 0;
+    }
+    if std::env::consts::OS == "windows" {
+        let zip = out_dir.join(format!("{name}.zip"));
+        write(&out_dir.join(format!("{name}.nsi")),
+            &format!(r#"Name "{title}"
+OutFile "{name}-setup.exe"
+InstallDir "$PROGRAMFILES\{title}"
+Section
+  SetOutPath $INSTDIR
+  File "{}"
+  CreateShortcut "$DESKTOP\{title}.lnk" "$INSTDIR\{name}.exe"
+SectionEnd
+"#,
+                binary.display()));
+        let _ = Command::new("zip").arg("-j").arg(&zip).arg(&binary).status();
+        println!("forge: binary zip + {name}.nsi in {}", out_dir.display());
+        return 0;
+    }
+    eprintln!("forge: no packager for {}", std::env::consts::OS);
+    1
+}
+
 /// Canonical reformat — the explicit formatter (not the preserving writer,
 /// which is for faithful writes after edits).
 fn fmt_cmd(rest: &[String]) -> i32 {
@@ -534,10 +633,9 @@ pub fn document() -> Document {{
     )
 }
 
-fn build_cmd(rest: &[String]) -> i32 {
-    let release = rest.iter().any(|a| a == "--release");
-    // A manifest (forge.toml, a directory, or its parent chain) supplies the
-    // project name, document, base and libraries; an explicit doc overrides it.
+/// Resolves the project: a forge.toml on the arg path or up from cwd, plus
+/// the entry document and package name.
+fn project(rest: &[String]) -> Option<(PathBuf, ForgeToml, PathBuf, String)> {
     let manifest_path = doc_path(rest).filter(|p| p.is_dir() || p.file_name() == Some(std::ffi::OsStr::new("forge.toml")));
     let manifest = manifest_path
         .as_deref()
@@ -546,20 +644,22 @@ fn build_cmd(rest: &[String]) -> i32 {
         .unwrap_or_else(|| load_manifest(&std::env::current_dir().unwrap_or_default()));
     let (manifest_dir, manifest) = manifest.unwrap_or_else(|| (PathBuf::new(), ForgeToml::default()));
     let path = doc_path(rest).filter(|p| p.file_name() != Some(std::ffi::OsStr::new("forge.toml")))
-        .or_else(|| manifest.forge.document
-            .is_empty()
-            .then_some(())
-            .and(None::<PathBuf>)
-            .or_else(|| manifest_dir.join(&manifest.forge.document).into()));
-    let Some(path) = path.filter(|p| p.exists()) else {
-        usage();
-        return 2;
-    };
+        .or_else(|| manifest_dir.join(&manifest.forge.document).into());
+    let path = path.filter(|p| p.exists())?;
     let path = path.canonicalize().unwrap_or(path);
     let name = if manifest.package.name.is_empty() {
         path.file_stem().unwrap_or_default().to_string_lossy().replace('.', "-")
     } else {
         manifest.package.name.clone()
+    };
+    Some((manifest_dir, manifest, path, name))
+}
+
+fn build_cmd(rest: &[String]) -> i32 {
+    let release = rest.iter().any(|a| a == "--release");
+    let Some((_m_dir, manifest, path, name)) = project(rest) else {
+        usage();
+        return 2;
     };
     let dir = opt_value(rest, "--dir").map(PathBuf::from).unwrap_or_else(|| {
         path.parent()
