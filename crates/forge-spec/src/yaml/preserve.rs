@@ -62,14 +62,11 @@ pub(crate) fn preserving(doc: &Document, options: &WriteOptions) -> Option<Strin
                         .dialogs
                         .iter()
                         .position(|d| d.element == el && d.id == id);
-                    match index {
-                        Some(i) => {
-                            covered_dialogs[i] = true;
-                            splice_named_node(&ctx, &mut out, k, v, &doc.dialogs[i], true);
-                        }
-                        // Dialog removed from the model — drop its region.
-                        None => {}
+                    if let Some(i) = index {
+                        covered_dialogs[i] = true;
+                        splice_named_node(&ctx, &mut out, k, v, &doc.dialogs[i], true);
                     }
+                    // Dialog removed from the model — drop its region.
                 }
                 // Fragment slots and unknown keys are kept verbatim.
                 None => emit(&mut out, ctx.lines, a, b),
@@ -284,12 +281,10 @@ fn splice_top_field(
                     }
                 }
             }
-            "meta" => {
-                if !doc.meta.is_empty() {
-                    write::line(out, 0, "meta:");
-                    for (key, text) in &doc.meta {
-                        write::line(out, 2, &format!("{key}: {text}"));
-                    }
+            "meta" if !doc.meta.is_empty() => {
+                write::line(out, 0, "meta:");
+                for (key, text) in &doc.meta {
+                    write::line(out, 2, &format!("{key}: {text}"));
                 }
             }
             _ => {}
@@ -471,7 +466,7 @@ fn splice_map(
                 None => {}
             }
         } else if is_prop_key(key) {
-            match model.props.iter().find(|(mk, _)| mk == &key) {
+            match model.props.iter().find(|(mk, _)| mk == key) {
                 Some((_, value)) if reparse_value(ctx, v, true).as_ref() == Some(value) => {
                     emit(out, ctx.lines, a, b)
                 }
@@ -525,6 +520,7 @@ fn splice_map(
 }
 
 /// `style:` block — verbatim when unchanged, per-entry splice otherwise.
+#[allow(clippy::too_many_arguments)]
 fn splice_style(
     ctx: &Ctx,
     out: &mut String,
@@ -585,6 +581,7 @@ fn splice_style(
 
 /// `children:` block — verbatim when unchanged, per-item splice when the
 /// length matches, canonical replacement otherwise.
+#[allow(clippy::too_many_arguments)]
 fn splice_children(
     ctx: &Ctx,
     out: &mut String,

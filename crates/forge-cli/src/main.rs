@@ -334,10 +334,7 @@ fn hooks_cmd(rest: &[String]) -> i32 {
     // handler -> sorted (event -> count); keep signature args of last use
     let mut map: std::collections::BTreeMap<String, (Vec<String>, Vec<String>)> =
         std::collections::BTreeMap::new();
-    fn walk<'a>(
-        n: &'a Node,
-        map: &mut std::collections::BTreeMap<String, (Vec<String>, Vec<String>)>,
-    ) {
+    fn walk(n: &Node, map: &mut std::collections::BTreeMap<String, (Vec<String>, Vec<String>)>) {
         for e in &n.events {
             let entry = map.entry(e.handler.name.clone()).or_default();
             if !entry.0.contains(&e.event) {
@@ -537,16 +534,16 @@ exec "$(dirname "$0")/usr/bin/{name}" "$@"
         );
         if !manifest.package.icon.is_empty() {
             let icon = m_dir.join(&manifest.package.icon);
-            if let Some(base) = icon.file_name().map(|n| n.to_string_lossy().into_owned()) {
-                if icon.exists() {
-                    let _ = std::fs::copy(&icon, appdir.join(&base));
-                    // Icon= wants the file's name without its extension.
-                    let name = base
-                        .rsplit_once('.')
-                        .map(|(s, _)| s.to_string())
-                        .unwrap_or(base);
-                    desktop.push_str(&format!("Icon={name}\n"));
-                }
+            if let Some(base) = icon.file_name().map(|n| n.to_string_lossy().into_owned())
+                && icon.exists()
+            {
+                let _ = std::fs::copy(&icon, appdir.join(&base));
+                // Icon= wants the file's name without its extension.
+                let name = base
+                    .rsplit_once('.')
+                    .map(|(s, _)| s.to_string())
+                    .unwrap_or(base);
+                desktop.push_str(&format!("Icon={name}\n"));
             }
         }
         write(&appdir.join(format!("{name}.desktop")), &desktop);
@@ -577,7 +574,7 @@ exec "$(dirname "$0")/usr/bin/{name}" "$@"
     if std::env::consts::OS == "macos" {
         let app = out_dir.join(format!("{name}.app/Contents"));
         let _ = std::fs::create_dir_all(app.join("MacOS"));
-        let _ = std::fs::copy(&binary, app.join("MacOS").join(&name));
+        let _ = std::fs::copy(binary, app.join("MacOS").join(name));
         let id = if manifest.package.id.is_empty() {
             format!("dev.forge.{name}")
         } else {
@@ -617,11 +614,7 @@ SectionEnd
                 binary.display()
             ),
         );
-        let _ = Command::new("zip")
-            .arg("-j")
-            .arg(&zip)
-            .arg(&binary)
-            .status();
+        let _ = Command::new("zip").arg("-j").arg(&zip).arg(binary).status();
         println!("forge: binary zip + {name}.nsi in {}", out_dir.display());
         return 0;
     }

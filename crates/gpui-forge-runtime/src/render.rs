@@ -679,7 +679,7 @@ impl ForgeView {
             self.catalogs
                 .first()
                 .and_then(|catalog| catalog.element(&element))
-                .and_then(|def| def.prop(&name))
+                .and_then(|def| def.prop(name))
                 .map(|prop| prop.ty.clone())
         };
         let value = if json.is_null() {
@@ -1171,6 +1171,7 @@ impl ForgeView {
     }
 
     /// Builds a `SidebarMenuItem` — recursively nests `SidebarMenuItem` children.
+    #[allow(clippy::only_used_in_recursion)]
     fn sidebar_item(
         &mut self,
         node: &Node,
@@ -1522,17 +1523,15 @@ impl ForgeView {
                         });
                         let path = self.two_way(node, "value");
                         let changed = node.clone();
-                        let subscription =
-                            cx.subscribe(&state, move |this, state, event, cx| match event {
-                                InputEvent::Change => {
-                                    if let Some(path) = &path {
-                                        let value = state.read(cx).value().to_string();
-                                        this.write(path, Json::String(value), cx);
-                                    }
-                                    this.fire(&changed, "change", cx);
+                        let subscription = cx.subscribe(&state, move |this, state, event, cx| {
+                            if let InputEvent::Change = event {
+                                if let Some(path) = &path {
+                                    let value = state.read(cx).value().to_string();
+                                    this.write(path, Json::String(value), cx);
                                 }
-                                _ => {}
-                            });
+                                this.fire(&changed, "change", cx);
+                            }
+                        });
                         self.subscriptions.push(subscription);
                         self.textareas.insert(state_key, state.clone());
                         state
@@ -1559,17 +1558,15 @@ impl ForgeView {
                         });
                         let path = self.two_way(node, "value");
                         let changed = node.clone();
-                        let subscription =
-                            cx.subscribe(&state, move |this, state, event, cx| match event {
-                                InputEvent::Change => {
-                                    if let Some(path) = &path {
-                                        let value = state.read(cx).value().to_string();
-                                        this.write(path, Json::String(value), cx);
-                                    }
-                                    this.fire(&changed, "change", cx);
+                        let subscription = cx.subscribe(&state, move |this, state, event, cx| {
+                            if let InputEvent::Change = event {
+                                if let Some(path) = &path {
+                                    let value = state.read(cx).value().to_string();
+                                    this.write(path, Json::String(value), cx);
                                 }
-                                _ => {}
-                            });
+                                this.fire(&changed, "change", cx);
+                            }
+                        });
                         self.subscriptions.push(subscription);
                         self.inputs.insert(key.to_owned(), state.clone());
                         state
@@ -1613,17 +1610,15 @@ impl ForgeView {
                         });
                         let path = self.two_way(node, "value");
                         let changed = node.clone();
-                        let subscription =
-                            cx.subscribe(&state, move |this, state, event, cx| match event {
-                                InputEvent::Change => {
-                                    if let Some(path) = &path {
-                                        let value = state.read(cx).value().to_string();
-                                        this.write(path, Json::String(value), cx);
-                                    }
-                                    this.fire(&changed, "change", cx);
+                        let subscription = cx.subscribe(&state, move |this, state, event, cx| {
+                            if let InputEvent::Change = event {
+                                if let Some(path) = &path {
+                                    let value = state.read(cx).value().to_string();
+                                    this.write(path, Json::String(value), cx);
                                 }
-                                _ => {}
-                            });
+                                this.fire(&changed, "change", cx);
+                            }
+                        });
                         self.subscriptions.push(subscription);
                         self.editors.insert(state_key, state.clone());
                         state
@@ -2512,8 +2507,7 @@ impl ForgeView {
                             let rows: Vec<gpui_kit::component::table::TableRow> = child
                                 .children
                                 .iter()
-                                .enumerate()
-                                .map(|(_j, r)| {
+                                .map(|r| {
                                     let cells: Vec<TableCell> =
                                         r.children.iter().map(|c| self.table_cell(c)).collect();
                                     gpui_kit::component::table::TableRow::new().children(cells)
@@ -2548,14 +2542,11 @@ impl ForgeView {
                         if let Some(n) = self.prop(child, "size").and_then(|v| self.number(v)) {
                             panel = panel.size(px(n as f32));
                         }
-                        match (
+                        if let (Some(min), Some(max)) = (
                             self.prop(child, "min-size").and_then(|v| self.number(v)),
                             self.prop(child, "max-size").and_then(|v| self.number(v)),
                         ) {
-                            (Some(min), Some(max)) => {
-                                panel = panel.size_range(px(min as f32)..px(max as f32));
-                            }
-                            _ => {}
+                            panel = panel.size_range(px(min as f32)..px(max as f32));
                         }
                         panel
                             .when(self.prop_bool(child, "fixed"), |p| p.fixed())
@@ -2711,7 +2702,7 @@ impl ForgeView {
                     let id = entry.item().id.to_string();
                     if let Some(node) = nodes.get(&id).cloned() {
                         let key = format!("{key}/{id}");
-                        if let Some(row) = try_update(&weak, cx, "tree row", |view, cx| {
+                        if let Ok(row) = try_update(&weak, cx, "tree row", |view, cx| {
                             let mut row = div().flex().flex_row().gap_2();
                             if let Some(name) = view.prop_text(&node, "icon") {
                                 row = row.child(icon(&name));
@@ -2730,9 +2721,7 @@ impl ForgeView {
                                 }
                             }
                             row
-                        })
-                        .ok()
-                        {
+                        }) {
                             item = item.child(row);
                         }
                     }

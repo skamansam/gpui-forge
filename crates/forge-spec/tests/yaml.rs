@@ -414,10 +414,12 @@ root:
 "#;
     let mut doc = read(src);
     doc.remove_node("0.1");
-    let mut button = forge_spec::Node::default();
-    button.element = forge_spec::ElementRef {
-        namespace: None,
-        name: "Input".into(),
+    let button = forge_spec::Node {
+        element: forge_spec::ElementRef {
+            namespace: None,
+            name: "Input".into(),
+        },
+        ..Default::default()
     };
     doc.insert_node("0", button, Some(0));
     let out = preserve(&doc);
