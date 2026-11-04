@@ -46,7 +46,7 @@ A multi-format specification for defining GPUI element trees. To ensure interope
 *   **Forge YAML:** Plain YAML with a JSON Schema: human-readable, one fact per line for clean Git diffs, and editable with existing YAML tooling.
 *   **JSON:** the machine interchange format between the Web Builder and the Rust Engine (YAML is a JSON superset, so conversion is a serialize, not a translate).
 
-See the draft [Forge YAML format](docs/spec/forge-yaml.md) and [document model](docs/spec/document-model.md).
+See the draft [Forge YAML format](docs/spec/forge-yaml.md) and [document model](docs/spec/document-model.md). [Writing a Forge adapter](docs/guide/adapters.md) covers integrating third-party GPUI component libraries (the `forge-lib-ely` pattern).
 
 ### 2. The Forge Converter (`forge-cli`)
 A powerful command-line utility used to transform interface definitions between all supported formats (e.g., converting a JSON blob from the web editor into a `.forge` file for the desktop editor).
