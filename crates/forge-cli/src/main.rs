@@ -235,6 +235,25 @@ fn new_cmd(rest: &[String]) -> i32 {
         usage();
         return 2;
     };
+    // `--base <id>` picks the component system — validated against the
+    // shipped registry (#91/#98).
+    let base = rest
+        .windows(2)
+        .find(|w| w[0] == "--base")
+        .map(|w| w[1].clone())
+        .unwrap_or_else(|| "gpui-kit".into());
+    let known = gpui_forge_runtime::check::bases();
+    if !known.iter().any(|b| b.id == base) {
+        eprintln!(
+            "forge: unknown base `{base}` — registered: {}",
+            known
+                .iter()
+                .map(|b| b.id.as_str())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+        return 1;
+    }
     let dir = PathBuf::from(&name);
     if dir.exists() {
         eprintln!("forge: {} already exists", dir.display());
@@ -250,7 +269,7 @@ version = "0.1.0"
 id = "dev.forge.{name}"
 
 [forge]
-base = "gpui-kit"
+base = "{base}"
 document = "app.forge.yaml"
 
 # [assets]
@@ -263,8 +282,9 @@ document = "app.forge.yaml"
     );
     write(
         &dir.join("app.forge.yaml"),
-        r#"forge: "0.1"
-base: gpui-kit
+        &format!(
+            r#"forge: "0.1"
+base: {base}
 
 root:
   VStack:
@@ -273,7 +293,8 @@ root:
     gap: 8px
   children:
     - Text: Hello, Forge!
-"#,
+"#
+        ),
     );
     println!(
         "forge: created {} — `forge build` inside it compiles a native app",
