@@ -1812,6 +1812,7 @@ version = "0.1.0"
 dependencies = [
  "gpui-forge-runtime",
  "inventory",
+ "serde_json",
 ]
 
 [[package]]
