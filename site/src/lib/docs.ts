@@ -1,11 +1,17 @@
 import { marked } from 'marked';
 import { resolve } from '$app/paths';
 
-const files = import.meta.glob('../../../docs/spec/*.md', {
+const spec = import.meta.glob('../../../docs/spec/*.md', {
 	query: '?raw',
 	import: 'default',
 	eager: true
 }) as Record<string, string>;
+const guide = import.meta.glob('../../../docs/guide/*.md', {
+	query: '?raw',
+	import: 'default',
+	eager: true
+}) as Record<string, string>;
+const files = { ...spec, ...guide };
 
 const REPO_SPEC = 'https://github.com/skamansam/gpui-forge/blob/main/docs/spec/';
 
@@ -29,6 +35,12 @@ export const docs: Doc[] = Object.entries(files)
 	.sort((a, b) => order(a.slug) - order(b.slug));
 
 function order(slug: string) {
-	const i = ['forge-yaml', 'document-model', 'style-layout', 'catalog-manifest'].indexOf(slug);
+	const i = [
+		'forge-yaml',
+		'document-model',
+		'style-layout',
+		'catalog-manifest',
+		'adapters'
+	].indexOf(slug);
 	return i < 0 ? 99 : i;
 }
