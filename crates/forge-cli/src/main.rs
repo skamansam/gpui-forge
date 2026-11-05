@@ -82,6 +82,7 @@ use gpui_kit::prelude::*;
 use gpui_kit::*;
 
 mod themes;
+{LIB_USE}
 
 const SRC: &str = include_str!("../app.forge.yaml");
 
@@ -127,6 +128,7 @@ fn main() {
                 let doc = doc.clone();
                 cx.new(move |cx| {
                     let mut view = ForgeView::new(catalogs);
+{LIB_REGISTER}
                     if let Some(doc) = doc {
                         view.set_document(doc, cx);
                     }
@@ -145,6 +147,7 @@ edition = "2024"
 
 [dependencies]
 {LIBS}
+{LIB_DEPS}
 forge-spec = { path = "{ROOT}/crates/forge-spec" }
 gpui-forge-runtime = { path = "{ROOT}/crates/gpui-forge-runtime", features = ["base-gpui-kit"] }
 gpui-kit = "=0.8.1"
@@ -1130,18 +1133,73 @@ fn build_cmd(rest: &[String]) -> i32 {
         .map(|(n, v)| format!("{n} = \"{v}\""))
         .collect::<Vec<_>>()
         .join("\n");
+    // Wire the document's `use:` imports to adapter crates: path dep +
+    // register_library call per known library (#loose-ends).
+    let doc_src = std::fs::read_to_string(&path).unwrap_or_default();
+    let (built_doc, _) = gpui_forge_runtime::check::check(
+        &doc_src,
+        gpui_forge_runtime::base::BASE_ID,
+        &gpui_forge_runtime::check::catalogs(),
+    );
+    let mut lib_deps = Vec::new();
+    let mut lib_uses = Vec::new();
+    let mut lib_register = Vec::new();
+    if let Some(doc) = &built_doc {
+        for import in &doc.imports {
+            match import.library.as_str() {
+                "ely-core" => {
+                    lib_deps.push(format!(
+                        "forge-lib-ely = {{ path = \"{}\" }}",
+                        root.join("crates/forge-lib-ely").display()
+                    ));
+                    lib_uses.push("use forge_lib_ely::Ely;".to_string());
+                    lib_register.push("    view.register_library(Ely);".to_string());
+                }
+                "template-lib" => {
+                    lib_deps.push(format!(
+                        "forge-lib-template = {{ path = \"{}\" }}",
+                        root.join("crates/forge-lib-template").display()
+                    ));
+                    lib_uses.push("use forge_lib_template::Template;".to_string());
+                    lib_register.push("    view.register_library(Template);".to_string());
+                }
+                other => eprintln!("forge: no adapter crate known for `{other}` — skipped"),
+            }
+        }
+    }
     write(
         &dir.join("Cargo.toml"),
         &APP_TOML
             .replace("{NAME}", &name)
             .replace("{ROOT}", &root.display().to_string())
-            .replace("{LIBS}", &libs),
+            .replace("{LIBS}", &libs)
+            .replace(
+                "{LIB_DEPS}",
+                &lib_deps.join(
+                    "
+",
+                ),
+            ),
     );
     write(
         &src_dir.join("main.rs"),
         &APP_MAIN
             .replace("{APP_ID}", &app_id)
-            .replace("{TITLE}", &title),
+            .replace("{TITLE}", &title)
+            .replace(
+                "{LIB_USE}",
+                &lib_uses.join(
+                    "
+",
+                ),
+            )
+            .replace(
+                "{LIB_REGISTER}",
+                &lib_register.join(
+                    "
+",
+                ),
+            ),
     );
     write(
         &dir.join("app.forge.yaml"),
