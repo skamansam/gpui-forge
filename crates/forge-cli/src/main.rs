@@ -97,7 +97,7 @@ fn main() {
             }
             let catalogs = gpui_forge_runtime::check::catalogs();
             let (doc, diagnostics) = gpui_forge_runtime::check::check(
-                SRC, gpui_forge_runtime::base::BASE_ID, &catalogs);
+                SRC, "{BASE_ID}", &catalogs);
             for d in &diagnostics {
                 eprintln!("app.forge.yaml:{}:{}: {}", d.pos.line, d.pos.col, d.message);
             }
@@ -1143,6 +1143,10 @@ fn build_cmd(rest: &[String]) -> i32 {
     let mut lib_deps = Vec::new();
     let mut lib_uses = Vec::new();
     let mut lib_register = Vec::new();
+    let doc_base = built_doc
+        .as_ref()
+        .and_then(|d| d.base.clone())
+        .unwrap_or_else(|| gpui_forge_runtime::base::BASE_ID.to_string());
     if let Some(doc) = &built_doc {
         for import in &doc.imports {
             match import.library.as_str() {
@@ -1184,6 +1188,7 @@ fn build_cmd(rest: &[String]) -> i32 {
         &src_dir.join("main.rs"),
         &APP_MAIN
             .replace("{APP_ID}", &app_id)
+            .replace("{BASE_ID}", &doc_base)
             .replace("{TITLE}", &title)
             .replace(
                 "{LIB_USE}",
