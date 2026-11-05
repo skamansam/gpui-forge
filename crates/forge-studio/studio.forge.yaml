@@ -104,6 +104,7 @@ root:
         - VStack#palette:
           style:
             width: 230px
+            height: full
             padding: 8px
             gap: 8px
             overflow: scroll
