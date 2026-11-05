@@ -1840,6 +1840,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "forge-preview"
+version = "0.1.0"
+dependencies = [
+ "gpui-forge-runtime",
+ "gpui-kit",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "forge-spec"
 version = "0.1.0"
 dependencies = [
