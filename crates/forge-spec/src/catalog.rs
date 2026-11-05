@@ -42,6 +42,9 @@ pub struct ElementDef {
     pub component: Option<String>,
     /// Prop that receives the node's positional content (`Button: Sign in`).
     pub content: Option<String>,
+    /// Palette metadata: icon + accordion group (docs/tooling only).
+    pub icon: Option<String>,
+    pub group: Option<String>,
     pub props: Vec<PropDef>,
     pub events: Vec<EventDef>,
     pub children: Children,
@@ -317,6 +320,8 @@ impl Loader {
             summary: None,
             component: None,
             content: None,
+            icon: None,
+            group: None,
             props: Vec::new(),
             events: Vec::new(),
             children: Children::None,
@@ -326,6 +331,8 @@ impl Loader {
             match key.text.as_str() {
                 "summary" => element.summary = self.text(val),
                 "component" => element.component = self.text(val),
+                "icon" => element.icon = self.text(val),
+                "group" => element.group = self.text(val),
                 "content" => {
                     content_pos = val.pos();
                     element.content = self.text(val);
@@ -341,7 +348,7 @@ impl Loader {
                 "children" => element.children = self.children(val),
                 _ => self.unknown(
                     &key,
-                    "`summary`, `component`, `content`, `props`, `events` or `children`",
+                    "`summary`, `component`, `content`, `props`, `events`, `children`, `icon` or `group`",
                 ),
             }
         }

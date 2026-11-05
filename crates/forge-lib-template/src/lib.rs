@@ -66,10 +66,7 @@ impl ForgeLibrary for Template {
 }
 
 fn prop<'a>(node: &'a Node, name: &str) -> Option<&'a Value> {
-    node.props
-        .iter()
-        .find(|(k, _)| k == name)
-        .map(|(_, v)| v)
+    node.props.iter().find(|(k, _)| k == name).map(|(_, v)| v)
 }
 
 fn prop_str_opt(node: &Node, name: &str) -> Option<String> {

@@ -401,7 +401,11 @@ impl ForgeView {
         let selected = get_path(self.state(), &parse_path("studio.palette_lib").unwrap())
             .and_then(|j| j.as_str())
             .map(str::to_owned)
-            .unwrap_or_else(|| libs.first().map(|(_, id, _)| id.clone()).unwrap_or_default());
+            .unwrap_or_else(|| {
+                libs.first()
+                    .map(|(_, id, _)| id.clone())
+                    .unwrap_or_default()
+            });
         let current_label = libs
             .iter()
             .find(|(_, id, _)| id == &selected)
@@ -443,17 +447,33 @@ impl ForgeView {
             .find(|(_, id, _)| id == &selected)
             .map(|(_, _, p)| p.clone())
             .unwrap_or_default();
-        let mut grid = v_flex().gap_1().w_full();
+        // Accordion groups of icon buttons — `icon:`/`group:` are palette
+        // metadata declared per element in the catalog manifest.
+        let mut groups: Vec<(String, Vec<(String, String, String)>)> = Vec::new();
         if let Some(cat) = self.catalogs.iter().find(|c| c.library == selected) {
             for def in &cat.elements {
+                let group = def.group.clone().unwrap_or_else(|| "Elements".into());
                 let name = def.name.clone();
                 let tag = if prefix.is_empty() {
                     name.clone()
                 } else {
                     format!("{prefix}.{name}")
                 };
-                // Synthesised node carrying the `on click: insert_component('<tag>')`
-                // binding — click runs through the same fire path as real elements.
+                let icon_name = def.icon.clone().unwrap_or_else(|| "component".into());
+                match groups.iter_mut().find(|(g, _)| g == &group) {
+                    Some((_, items)) => items.push((name, tag, icon_name)),
+                    None => groups.push((group, vec![(name, tag, icon_name)])),
+                }
+            }
+        }
+        let mut grid = Accordion::new(SharedString::from(format!("{key}-groups")))
+            .multiple(true)
+            .bordered(false);
+        for (group, items) in groups {
+            let mut row = div().flex().flex_row().flex_wrap().gap_1();
+            for (name, tag, icon_name) in items {
+                // Synthesised node carrying `on click: insert_component('<tag>')` —
+                // clicks run through the same fire path as real elements.
                 let synth = Node {
                     element: ElementRef {
                         name: "Button".into(),
@@ -469,11 +489,12 @@ impl ForgeView {
                     ..Default::default()
                 };
                 let weak = weak.clone();
-                grid = grid.child(
+                row = row.child(
                     Button::new(SharedString::from(format!("{key}-{name}")))
-                        .label(SharedString::from(name.clone()))
+                        .icon(icon(&icon_name))
                         .with_variant(ButtonVariant::Ghost)
                         .with_size(size("small"))
+                        .tooltip(name)
                         .on_click(move |_, _, cx| {
                             try_update(&weak, cx, "event", |this, cx| {
                                 this.fire(&synth, "click", cx)
@@ -482,6 +503,10 @@ impl ForgeView {
                         }),
                 );
             }
+            let item = gpui_kit::component::accordion::AccordionItem::new()
+                .title(SharedString::from(group))
+                .child(row);
+            grid = grid.item(move |_| item);
         }
         div()
             .flex()

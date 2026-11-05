@@ -11,21 +11,29 @@ bases:
 
 elements:
   Box:
+    icon: square
+    group: Layout
     summary: Plain container; layout comes entirely from `style`.
     component: gpui::Div
     children: any
 
   VStack:
+    icon: rows-3
+    group: Layout
     summary: Vertical flex container.
     component: gpui_kit::base::v_flex
     children: any
 
   HStack:
+    icon: columns-3
+    group: Layout
     summary: Horizontal flex container; children stretch on the cross axis by default.
     component: gpui::Div
     children: any
 
   Dialog:
+    icon: square
+    group: Windows
     summary: A top-level `Dialog#id:` declaration — opened via `open_dialog(name)`;
       inline usage renders its contents in a bordered box.
     component: gpui_component::dialog::Dialog
@@ -63,6 +71,8 @@ elements:
     children: any
 
   Text:
+    icon: type
+    group: Display
     summary: A run of text.
     component: gpui::SharedString
     content: text
@@ -72,6 +82,8 @@ elements:
         required: true
 
   Label:
+    icon: tag
+    group: Display
     summary: Text with an optional secondary line.
     component: gpui_component::label::Label
     content: text
@@ -85,6 +97,8 @@ elements:
         default: false
 
   Button:
+    icon: mouse-pointer-click
+    group: Input
     summary: Clickable button.
     component: gpui_component::button::Button
     content: label
@@ -116,6 +130,8 @@ elements:
       click:
 
   Input:
+    icon: text-cursor
+    group: Input
     summary: Single-line text input.
     component: gpui_component::input::Input
     content: value
@@ -166,6 +182,8 @@ elements:
       change: string
 
   Editor:
+    icon: edit-3
+    group: Input
     summary: Code editor with line numbers and optional syntax highlighting.
     component: gpui_component::input::Editor
     content: value
@@ -200,6 +218,8 @@ elements:
       change: string
 
   Checkbox:
+    icon: check-square
+    group: Input
     summary: Checkbox with an optional label.
     component: gpui_component::checkbox::Checkbox
     content: label
@@ -251,6 +271,8 @@ elements:
     children: [Radio]
 
   Radio:
+    icon: circle-dot
+    group: Input
     summary: One option of a `RadioGroup`.
     component: gpui_component::radio::Radio
     content: label
@@ -261,6 +283,8 @@ elements:
         default: false
 
   Select:
+    icon: chevron-down-square
+    group: Input
     summary: Dropdown for picking one option.
     component: gpui_component::select::Select
     props:
@@ -284,6 +308,8 @@ elements:
       change: string
 
   Tabs:
+    icon: layout-panel-top
+    group: Navigation
     summary: Tab bar; each `Tab` holds its panel's content.
     component: gpui_component::tab::TabBar
     props:
@@ -313,6 +339,8 @@ elements:
     children: any
 
   Separator:
+    icon: minus
+    group: Layout
     summary: Horizontal rule or vertical divider with an optional label.
     component: gpui_component::separator::Separator
     content: label
@@ -327,6 +355,8 @@ elements:
         default: false
 
   DropdownMenu:
+    icon: menu
+    group: Input
     summary: A button that opens a dropdown `PopupMenu` of `MenuItem`s.
     component: gpui_component::menu::dropdown_menu::DropdownMenuPopover
     props:
@@ -366,6 +396,8 @@ elements:
     component: gpui_component::menu::popup_menu::PopupMenuItem
 
   GroupBox:
+    icon: group
+    group: Layout
     summary: Titled section grouping related content.
     component: gpui_component::group_box::GroupBox
     content: title
@@ -381,6 +413,8 @@ elements:
     children: any
 
   Empty:
+    icon: ghost
+    group: Layout
     summary: Placeholder for a section with nothing to show yet.
     component: gpui_component::empty::Empty
     content: title
@@ -391,6 +425,8 @@ elements:
     children: any
 
   Link:
+    icon: link
+    group: Display
     summary: Hyperlink.
     component: gpui_component::link::Link
     content: label
@@ -404,6 +440,8 @@ elements:
       click:
 
   Badge:
+    icon: badge
+    group: Display
     summary: Count or dot shown on top of its child.
     component: gpui_component::badge::Badge
     content: count
@@ -431,6 +469,8 @@ elements:
         default: false
 
   Icon:
+    icon: star
+    group: Display
     summary: Icon from the gpui-kit icon set.
     component: gpui_component::icon::Icon
     content: name
@@ -445,6 +485,8 @@ elements:
       color: color
 
   Image:
+    icon: image
+    group: Display
     summary: A full-color image — raster formats, URLs, asset keys, and multicolor SVGs.
     component: gpui::img
     props:
@@ -466,6 +508,8 @@ elements:
       color: color
 
   Alert:
+    icon: alert-circle
+    group: Display
     summary: Callout for status messages, optionally a banner.
     component: gpui_component::alert::Alert
     content: message
@@ -509,6 +553,8 @@ elements:
         default: false
 
   Breadcrumb:
+    icon: chevron-right
+    group: Navigation
     summary: Trail of `BreadcrumbItem`s.
     component: gpui_component::breadcrumb::Breadcrumb
     children: [BreadcrumbItem]
@@ -526,6 +572,8 @@ elements:
         default: false
 
   Pagination:
+    icon: more-horizontal
+    group: Navigation
     summary: Page switcher.
     component: gpui_component::pagination::Pagination
     props:
@@ -638,6 +686,8 @@ elements:
     children: any
 
   Avatar:
+    icon: user-circle
+    group: Display
     summary: User avatar image or initials.
     component: gpui_component::avatar::Avatar
     props:
@@ -664,6 +714,8 @@ elements:
     children: [Avatar]
 
   Stepper:
+    icon: list-ordered
+    group: Navigation
     summary: Numbered/stepping indicator.
     component: gpui_component::stepper::Stepper
     props:
@@ -697,6 +749,8 @@ elements:
         default: false
 
   NumberInput:
+    icon: hash
+    group: Input
     summary: Numeric input with step controls.
     component: gpui_component::input::NumberInput
     content: value
@@ -719,6 +773,8 @@ elements:
       change: string
 
   Slider:
+    icon: sliders-horizontal
+    group: Input
     summary: Value slider.
     component: gpui_component::slider::Slider
     props:
@@ -747,6 +803,8 @@ elements:
       change: number
 
   Accordion:
+    icon: chevrons-up-down
+    group: Navigation
     summary: Expandable sections of `AccordionItem`s.
     component: gpui_component::accordion::Accordion
     props:
@@ -835,6 +893,8 @@ elements:
     children: any
 
   ColorPicker:
+    icon: palette
+    group: Input
     summary: Color swatch that opens a color picker popup.
     component: gpui_component::color_picker::ColorPicker
     props:
@@ -848,6 +908,8 @@ elements:
       change: color
 
   OtpInput:
+    icon: key-round
+    group: Input
     summary: One-time-code input cells.
     component: gpui_component::input::OtpInput
     props:
@@ -868,6 +930,8 @@ elements:
       complete: string
 
   DatePicker:
+    icon: calendar
+    group: Input
     summary: Date input with calendar popup.
     component: gpui_component::time::DatePicker
     props:
@@ -903,6 +967,8 @@ elements:
       change: string
 
   TitleBar:
+    icon: square-top
+    group: Layout
     summary: Custom titlebar with window controls; children render inside the titlebar row.
     component: gpui_component::title_bar::TitleBar
     children: any
@@ -939,6 +1005,8 @@ elements:
     children: any
 
   Table:
+    icon: table
+    group: Display
     summary: Static table of `TableHeader`/`TableBody`/`TableFooter`/`TableCaption`.
     component: gpui_component::table::Table
     children: [TableHeader, TableBody, TableFooter, TableCaption]
@@ -991,6 +1059,8 @@ elements:
     children: any
 
   Resizable:
+    icon: expand
+    group: Windows
     summary: Split-pane group of `ResizablePanel`s with drag handles.
     component: gpui_base::resizable::ResizablePanelGroup
     props:
@@ -1020,6 +1090,8 @@ elements:
     children: any
 
   Sidebar:
+    icon: panel-left
+    group: Layout
     summary: Collapsible app sidebar; `SidebarHeader`/`SidebarFooter` children map to the header/footer slots, `SidebarMenu` children become items.
     component: gpui_component::sidebar::Sidebar
     props:
@@ -1052,6 +1124,8 @@ elements:
     children: [SidebarMenuItem]
 
   SidebarMenuItem:
+    icon: menu
+    group: Navigation
     summary: One navigable item (or nested group) in a `SidebarMenu`.
     component: gpui_component::sidebar::SidebarMenuItem
     content: label
@@ -1075,6 +1149,8 @@ elements:
     children: [SidebarMenuItem]
 
   List:
+    icon: list
+    group: Display
     summary: Virtualized list of rows — children are the row template list.
     component: gpui_component::list::List
     props:
@@ -1088,6 +1164,8 @@ elements:
     children: any
 
   Tree:
+    icon: folder-tree
+    group: Display
     summary: Expandable tree of `TreeItem`s.
     component: gpui_component::tree::Tree
     children: [TreeItem]

@@ -10,6 +10,8 @@ bases:
 
 elements:
   Button:
+    icon: mouse-pointer-click
+    group: Buttons
     summary: Ely button — variant Primary/Secondary/Outline/Ghost/Subtle/Success/Danger/Link.
     component: ely_core::buttons::Button
     content: label
@@ -29,6 +31,8 @@ elements:
       click:
 
   IconButton:
+    icon: mouse-pointer-2
+    group: Buttons
     summary: Ely icon-only button.
     component: ely_core::buttons::IconButton
     children: none
@@ -42,6 +46,8 @@ elements:
       click:
 
   Badge:
+    icon: badge
+    group: Display
     summary: Ely status badge.
     component: ely_core::data_display::Badge
     content: label
@@ -50,6 +56,8 @@ elements:
       label: string
 
   Divider:
+    icon: minus
+    group: Layout
     summary: Ely horizontal/vertical rule.
     component: ely_core::primitives::Divider
     children: none
@@ -60,6 +68,8 @@ elements:
         default: horizontal
 
   Alert:
+    icon: alert-circle
+    group: Feedback
     summary: Ely severity alert with title + optional body.
     component: ely_core::feedback::Alert
     content: title
@@ -78,6 +88,8 @@ elements:
       dismiss:
 
   StatusMessage:
+    icon: info
+    group: Feedback
     summary: Ely one-line status text with optional icon.
     component: ely_core::feedback::StatusMessage
     content: text
@@ -87,6 +99,8 @@ elements:
       icon: string
 
   Spinner:
+    icon: loader-2
+    group: Feedback
     summary: Ely activity spinner.
     component: ely_core::motion::Spinner
     children: none
@@ -101,6 +115,8 @@ elements:
         default: Md
 
   Heading:
+    icon: heading
+    group: Type
     summary: Ely heading (level 1-6).
     component: ely_core::typography::Heading
     content: text
@@ -112,6 +128,8 @@ elements:
         default: 1
 
   Avatar:
+    icon: user-circle
+    group: Display
     summary: Ely user avatar.
     component: ely_core::data_display::Avatar
     content: name
@@ -120,6 +138,8 @@ elements:
       name: string
 
   Paragraph:
+    icon: align-left
+    group: Type
     summary: Ely body text.
     component: ely_core::typography::Paragraph
     content: text
@@ -128,6 +148,8 @@ elements:
       text: string
 
   Title:
+    icon: type
+    group: Type
     summary: Ely page title.
     component: ely_core::typography::Title
     content: text
@@ -136,6 +158,8 @@ elements:
       text: string
 
   CopyButton:
+    icon: clipboard
+    group: Buttons
     summary: Ely copy-to-clipboard button.
     component: ely_core::buttons::CopyButton
     children: none
@@ -152,42 +176,58 @@ elements:
     props: {label: string, disabled: bool}
     events: {click:}
   TrendIndicator:
+    icon: trending-up
+    group: Display
     summary: Ely change indicator (up/down arrow + value).
     component: ely_core::data_display::TrendIndicator
     children: none
     props: {change: number}
   Statistic:
+    icon: bar-chart-2
+    group: Display
     summary: Ely labeled statistic.
     component: ely_core::data_display::Statistic
     children: none
     props: {label: string, value: string}
   KpiCard:
+    icon: credit-card
+    group: Display
     summary: Ely KPI card wrapping a Statistic.
     component: ely_core::data_display::KpiCard
     children: none
     props: {label: string, value: string}
   Meter:
+    icon: gauge
+    group: Display
     summary: Ely 0-100 meter bar.
     component: ely_core::data_display::Meter
     children: none
     props: {label: string, value: number}
   UsageBar:
+    icon: bar-chart
+    group: Display
     summary: Ely used/total usage bar.
     component: ely_core::data_display::UsageBar
     children: none
     props: {used: number, total: number}
   QrCode:
+    icon: qr-code
+    group: Display
     summary: Ely QR code.
     component: ely_core::data_display::QrCode
     children: none
     props: {data: string}
   TimelineItem:
+    icon: clock
+    group: Display
     summary: Ely timeline item.
     component: ely_core::data_display::TimelineItem
     content: text
     children: none
     props: {text: string}
   Banner:
+    icon: megaphone
+    group: Feedback
     summary: Ely severity banner.
     component: ely_core::feedback::Banner
     content: text
@@ -200,6 +240,8 @@ elements:
     children: none
     props: {text: string, severity: {type: enum, values: [Info, Success, Warning, Danger], default: Info}}
   InlineMessage:
+    icon: message-circle
+    group: Feedback
     summary: Ely inline severity message.
     component: ely_core::feedback::InlineMessage
     content: text
@@ -235,29 +277,39 @@ elements:
     children: none
     props: {label: string}
   Icon:
+    icon: star
+    group: Display
     summary: Ely standalone icon.
     component: ely_core::primitives::Icon
     children: none
     props: {icon: string, size: {type: enum, values: [Xs, Sm, Md, Lg, Xl, Xxl], default: Md}}
   Subtitle:
+    icon: subtitles
+    group: Type
     summary: Ely subtitle text.
     component: ely_core::typography::Subtitle
     content: text
     children: none
     props: {text: string}
   Caption:
+    icon: text
+    group: Type
     summary: Ely caption text.
     component: ely_core::typography::Caption
     content: text
     children: none
     props: {text: string}
   Label:
+    icon: tag
+    group: Type
     summary: Ely form label text.
     component: ely_core::typography::Label
     content: text
     children: none
     props: {text: string}
   Overline:
+    icon: text
+    group: Type
     summary: Ely overline text.
     component: ely_core::typography::Overline
     content: text
@@ -269,11 +321,15 @@ elements:
     children: any
     props: {size: {type: enum, values: [Xs, Sm, Md, Lg, Xl], default: Md}}
   AspectRatio:
+    icon: crop
+    group: Layout
     summary: Ely aspect-ratio box (children fill).
     component: ely_core::layout::AspectRatio
     children: any
     props: {ratio: number}
   ZStack:
+    icon: layers
+    group: Layout
     summary: Ely z-stacked layers (children overlap).
     component: ely_core::layout::ZStack
     children: any
