@@ -51,6 +51,7 @@ use gpui_kit::component::progress::{Progress, ProgressCircle};
 use gpui_kit::component::radio::{Radio, RadioGroup};
 use gpui_kit::component::rating::Rating;
 use gpui_kit::component::resizable::{ResizablePanel, h_resizable, resizable_panel, v_resizable};
+use gpui_kit::component::scroll::ScrollableElement as _;
 use gpui_kit::component::select::{Select, SelectEvent, SelectState};
 use gpui_kit::component::separator::Separator;
 use gpui_kit::component::setting::{SettingGroup, SettingItem, SettingPage, Settings};
@@ -3097,7 +3098,7 @@ impl Render for ForgeView {
         div()
             .id("forge-canvas")
             .size_full()
-            .overflow_y_scroll()
+            .overflow_y_scrollbar()
             .bg(background)
             .text_color(foreground)
             .on_action::<CancelPick>(move |_, _, cx| {
@@ -3126,7 +3127,7 @@ fn container(
 ) -> AnyElement {
     if scrollable(entries) {
         style(element.id(id), entries, cx)
-            .overflow_y_scroll()
+            .overflow_y_scrollbar()
             .children(kids)
             .into_any_element()
     } else {
@@ -3152,12 +3153,14 @@ fn wrap(
             div().id(SharedString::from(format!("{id}-scroll"))),
             entries,
             cx,
-        )
-        .overflow_y_scroll();
+        );
         if let Some(tip) = tooltip {
             wrapper = wrapper.tooltip(move |_, cx| cx.new(|_| Tooltip::new(tip.clone())).into());
         }
-        wrapper.child(element).into_any_element()
+        wrapper
+            .overflow_y_scrollbar()
+            .child(element)
+            .into_any_element()
     } else if let Some(tip) = tooltip {
         // Tooltips need interactivity — the wrapper must be stateful.
         style(

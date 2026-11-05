@@ -84,4 +84,3 @@ fn prop_str(node: &Node, name: &str) -> Option<String> {
         })
         .or_else(|| prop_str_opt(node, name))
 }
-
