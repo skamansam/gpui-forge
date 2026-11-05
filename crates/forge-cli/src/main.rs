@@ -502,8 +502,7 @@ fn migrate_cmd(rest: &[String]) -> i32 {
     // Last positional is the doc — `--base`'s value is a positional too.
     let Some(path) = rest
         .iter()
-        .filter(|a| !a.starts_with('-'))
-        .last()
+        .rfind(|a| !a.starts_with('-'))
         .map(PathBuf::from)
         .filter(|p| p.exists())
     else {

@@ -450,7 +450,8 @@ impl ForgeView {
             .unwrap_or_default();
         // Accordion groups of icon buttons — `icon:`/`group:` are palette
         // metadata declared per element in the catalog manifest.
-        let mut groups: Vec<(String, Vec<(String, String, String)>)> = Vec::new();
+        type PaletteItem = (String, String, String); // name, insert tag, icon
+        let mut groups: Vec<(String, Vec<PaletteItem>)> = Vec::new();
         if let Some(cat) = self.catalogs.iter().find(|c| c.library == selected) {
             for def in &cat.elements {
                 let group = def.group.clone().unwrap_or_else(|| "Elements".into());
