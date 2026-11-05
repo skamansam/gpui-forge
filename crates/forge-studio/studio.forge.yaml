@@ -19,6 +19,9 @@ appMenu: &appMenu
     - MenuItem: Open…
       icon: folder-open
       on click: open_document()
+    - MenuItem: Open Project…
+      icon: package-open
+      on click: open_project()
     - MenuItem: Format
       icon: sparkles
       on click: format_document()

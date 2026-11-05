@@ -155,6 +155,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     for name in [
         "new_document",
         "open_document",
+        "open_project",
         "save_document",
         "format_document",
         "apply_theme",
@@ -462,6 +463,7 @@ fn dispatch(
             start_from(view, &["blank".into()], shared, cx);
         }
         "open_document" => open_document(shared.clone(), cx),
+        "open_project" => open_project(shared.clone(), cx),
         "open_recent" => {
             if let Some(path) = args.first().map(PathBuf::from) {
                 load_file(path, view, shared.clone(), cx);
@@ -598,6 +600,72 @@ fn open_document(shared: SharedState, cx: &mut Context<ForgeView>) {
         .ok();
     })
     .detach();
+}
+
+/// `open_project()` — pick a `forge.toml`; the manifest's `forge.document`
+/// path resolves relative to it and becomes the loaded document, while
+/// `studio.project` tracks the project directory (#49).
+fn open_project(shared: SharedState, cx: &mut Context<ForgeView>) {
+    let receiver = cx.prompt_for_paths(PathPromptOptions {
+        files: true,
+        directories: false,
+        multiple: false,
+        prompt: Some("Open a Forge project (forge.toml)".into()),
+    });
+    cx.spawn(async move |view, cx| {
+        let Ok(Ok(Some(paths))) = receiver.await else {
+            return;
+        };
+        let Some(toml) = paths.into_iter().next() else {
+            return;
+        };
+        view.update(cx, move |view, cx| {
+            load_project(toml, view, shared.clone(), cx);
+        })
+        .ok();
+    })
+    .detach();
+}
+
+/// Reads `key = "value"` lines out of a manifest's `[forge]` section — the
+/// manifest format is flat enough that a scan beats a TOML dependency.
+fn manifest_value(src: &str, key: &str) -> Option<String> {
+    let forge = src.split("[forge]").nth(1)?.split('[').next()?;
+    forge.lines().map(str::trim).find_map(|l| {
+        l.strip_prefix(key)?
+            .trim_start_matches('=')
+            .trim()
+            .strip_prefix('"')?
+            .strip_suffix('"')
+            .map(str::to_owned)
+    })
+}
+
+fn load_project(
+    toml: PathBuf,
+    view: &mut ForgeView,
+    shared: SharedState,
+    cx: &mut Context<ForgeView>,
+) {
+    let src = match std::fs::read_to_string(&toml) {
+        Ok(s) => s,
+        Err(e) => {
+            status(view, &format!("cannot read {}: {e}", toml.display()), cx);
+            return;
+        }
+    };
+    let Some(rel) = manifest_value(&src, "document") else {
+        status(view, "forge.toml has no forge.document", cx);
+        return;
+    };
+    let dir = toml.parent().map(|p| p.to_path_buf()).unwrap_or_default();
+    let doc_path = dir.join(&rel);
+    view.update_state(
+        &parse_path("studio.project").unwrap(),
+        Json::String(dir.display().to_string()),
+        cx,
+    );
+    load_file(doc_path, view, shared, cx);
 }
 
 /// Reads `path` into the editor, updates recents + the menu, starts the
