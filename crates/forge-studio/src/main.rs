@@ -156,6 +156,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "new_document",
         "open_document",
         "open_project",
+        "preview_in_host",
         "save_document",
         "format_document",
         "apply_theme",
@@ -464,6 +465,7 @@ fn dispatch(
         }
         "open_document" => open_document(shared.clone(), cx),
         "open_project" => open_project(shared.clone(), cx),
+        "preview_in_host" => preview_in_host(view, shared.clone(), cx),
         "open_recent" => {
             if let Some(path) = args.first().map(PathBuf::from) {
                 load_file(path, view, shared.clone(), cx);
@@ -625,6 +627,49 @@ fn open_project(shared: SharedState, cx: &mut Context<ForgeView>) {
         .ok();
     })
     .detach();
+}
+
+/// `preview_in_host()` — spawn the out-of-process preview host (#97) on the
+/// current document: the host renders its own GPUI graph, Studio feeds it
+/// the doc path over the JSON control channel.
+fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<ForgeView>) {
+    use std::sync::Mutex;
+    static HOST: Mutex<Option<std::process::Child>> = Mutex::new(None);
+
+    let Some(path) = shared.borrow().file.clone() else {
+        status(view, "open a document first", cx);
+        return;
+    };
+    // Restart the host against the fresh path.
+    let mut guard = HOST.lock().unwrap();
+    if let Some(mut old) = guard.take() {
+        let _ = old.kill();
+        let _ = old.wait();
+    }
+    let binary = std::env::current_exe()
+        .ok()
+        .and_then(|e| e.parent().map(|p| p.join("forge-preview")))
+        .unwrap_or_else(|| "forge-preview".into());
+    match std::process::Command::new(&binary)
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::inherit())
+        .stderr(std::process::Stdio::inherit())
+        .spawn()
+    {
+        Ok(mut child) => {
+            if let Some(mut stdin) = child.stdin.take() {
+                use std::io::Write;
+                let _ = writeln!(
+                    stdin,
+                    "{}",
+                    serde_json::json!({"cmd":"load","doc":path.display().to_string()})
+                );
+            }
+            *guard = Some(child);
+            status(view, "preview host launched", cx);
+        }
+        Err(e) => status(view, &format!("cannot spawn forge-preview: {e}"), cx),
+    }
 }
 
 /// Reads `key = "value"` lines out of a manifest's `[forge]` section — the

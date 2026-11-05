@@ -22,6 +22,9 @@ appMenu: &appMenu
     - MenuItem: Open Project…
       icon: package-open
       on click: open_project()
+    - MenuItem: Preview in Host…
+      icon: app-window
+      on click: preview_in_host()
     - MenuItem: Format
       icon: sparkles
       on click: format_document()
