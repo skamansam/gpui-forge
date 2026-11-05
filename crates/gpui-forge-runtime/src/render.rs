@@ -1479,19 +1479,60 @@ impl ForgeView {
             let element: AnyElement = match (library, node.element.name.as_str()) {
                 (Some("forge"), "Preview") => {
                     let id = node.id.clone().unwrap_or_else(|| key.to_owned());
-                    let empty_text = self.prop_text(node, "placeholder");
-                    let catalogs = self.catalogs.clone();
-                    self.previews
-                        .entry(id)
-                        .or_insert_with(|| {
-                            cx.new(|_| {
-                                let mut view = ForgeView::new(catalogs);
-                                view.empty_text = empty_text;
-                                view
+                    // `remote:` non-empty — the document previews in an
+                    // out-of-process host (#97); the element is a framed card
+                    // instead of a nested view, and `on click:` fires through
+                    // the hook path (Studio uses it to raise the host window).
+                    if let Some(remote) = self.prop_text(node, "remote").filter(|t| !t.is_empty()) {
+                        let weak = cx.entity().downgrade();
+                        let node = node.clone();
+                        let theme = cx.theme();
+                        div()
+                            .id(format!("preview-remote-{key}"))
+                            .size_full()
+                            .flex()
+                            .items_center()
+                            .justify_center()
+                            .cursor_pointer()
+                            .on_click(move |_, _, cx| {
+                                try_update(&weak, cx, "event", |this, cx| {
+                                    this.fire(&node, "click", cx)
+                                })
+                                .ok();
                             })
-                        })
-                        .clone()
-                        .into_any_element()
+                            .child(
+                                div()
+                                    .flex()
+                                    .flex_col()
+                                    .items_center()
+                                    .gap_2()
+                                    .child(icon("app-window"))
+                                    .child(
+                                        div().text_sm().text_color(theme.foreground).child(remote),
+                                    )
+                                    .child(
+                                        div()
+                                            .text_xs()
+                                            .text_color(theme.muted_foreground)
+                                            .child("rendered by the preview host — click to focus"),
+                                    ),
+                            )
+                            .into_any_element()
+                    } else {
+                        let empty_text = self.prop_text(node, "placeholder");
+                        let catalogs = self.catalogs.clone();
+                        self.previews
+                            .entry(id)
+                            .or_insert_with(|| {
+                                cx.new(|_| {
+                                    let mut view = ForgeView::new(catalogs);
+                                    view.empty_text = empty_text;
+                                    view
+                                })
+                            })
+                            .clone()
+                            .into_any_element()
+                    }
                 }
                 (Some("forge"), "Outline") => {
                     let of = self.prop_text(node, "of").unwrap_or_default();

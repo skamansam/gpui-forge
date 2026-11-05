@@ -229,6 +229,8 @@ root:
                 - Tab: Preview
                   children:
                     - forge.Preview#canvas:
+                      remote: "{$studio.host}"
+                      on click: raise_host()
                       style: 
                         grow: true
                         border: 1px

@@ -12,6 +12,7 @@
 //!   {"cmd":"place","on":<bool>}        → click-to-place mode
 //!   {"cmd":"dnd","on":<bool>}          → node drags / drop targets
 //!   {"cmd":"select","path":"<path>"}   → mirrors Studio's outline selection
+//!   {"cmd":"raise"}                    → focuses the host window
 //!   {"cmd":"quit"}                     → exits
 //! stdout replies:
 //!   {"event":"ready","base":"<id>"}
@@ -33,6 +34,7 @@ enum HostMsg {
     Place(bool),
     Dnd(bool),
     Select(String),
+    Raise,
     Quit,
 }
 
@@ -81,6 +83,9 @@ fn main() {
                     if let Some(path) = v["path"].as_str() {
                         let _ = tx.send(HostMsg::Select(path.to_string()));
                     }
+                }
+                Some("raise") => {
+                    let _ = tx.send(HostMsg::Raise);
                 }
                 Some("quit") => {
                     let _ = tx.send(HostMsg::Quit);
@@ -167,6 +172,21 @@ fn main() {
                                             serde_json::Value::String(path),
                                             cx,
                                         ),
+                                        HostMsg::Raise => {
+                                            // Deferred — a window update from
+                                            // inside the entity update would
+                                            // hit the leased slot.
+                                            cx.defer(|cx| {
+                                                for handle in cx.windows() {
+                                                    let _ = handle.update(
+                                                        cx,
+                                                        |_, window, _| {
+                                                            window.activate_window()
+                                                        },
+                                                    );
+                                                }
+                                            });
+                                        }
                                         HostMsg::Quit => quit = true,
                                     }
                                 }

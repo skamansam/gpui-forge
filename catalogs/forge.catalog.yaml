@@ -17,6 +17,15 @@ elements:
       placeholder:
         type: string
         summary: Shown while the host application has not set a document.
+      remote:
+        type: string
+        summary: "Non-empty → the document previews in an out-of-process host;
+          the element renders a framed card with this label instead of a
+          nested view."
+    events:
+      click:
+        summary: Fired when the remote-preview card is clicked (e.g. to focus
+          the host window).
     children: none
 
   Outline:

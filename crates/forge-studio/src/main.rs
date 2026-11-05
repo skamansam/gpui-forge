@@ -195,6 +195,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "open_document",
         "open_project",
         "preview_in_host",
+        "raise_host",
         "save_document",
         "format_document",
         "apply_theme",
@@ -505,6 +506,7 @@ fn dispatch(
         "open_document" => open_document(shared.clone(), cx),
         "open_project" => open_project(shared.clone(), cx),
         "preview_in_host" => preview_in_host(view, shared.clone(), cx),
+        "raise_host" => host_send(&json!({"cmd":"raise"})),
         "open_recent" => {
             if let Some(path) = args.first().map(PathBuf::from) {
                 load_file(path, view, shared.clone(), cx);
