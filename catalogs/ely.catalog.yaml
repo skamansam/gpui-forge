@@ -165,10 +165,14 @@ elements:
     children: none
     props: {label: string, text: string, tooltip: string}
   SegmentedControl:
+    icon: columns-4
+    group: Buttons
     summary: Ely segmented control — options as children.
     component: ely_core::buttons::SegmentedControl
     children: any
   ToggleButton:
+    icon: toggle-left
+    group: Buttons
     summary: Ely toggle button.
     component: ely_core::buttons::ToggleButton
     content: label
@@ -234,6 +238,8 @@ elements:
     children: none
     props: {text: string, severity: {type: enum, values: [Info, Success, Warning, Danger], default: Info}}
   Callout:
+    icon: message-circle-question-mark
+    group: Feedback
     summary: Ely severity callout.
     component: ely_core::feedback::Callout
     content: text
@@ -248,29 +254,39 @@ elements:
     children: none
     props: {text: string, severity: {type: enum, values: [Info, Success, Warning, Danger], default: Info}}
   EmptyState:
+    icon: ghost
+    group: Feedback
     summary: Ely empty-state placeholder.
     component: ely_core::feedback::EmptyState
     children: none
     props: {title: string, body: string}
   Switch:
+    icon: toggle-left
+    group: Forms
     summary: Ely on/off switch.
     component: ely_core::forms::Switch
     children: none
     props: {checked: bool}
     events: {change:}
   Rating:
+    icon: star-half
+    group: Forms
     summary: Ely star rating.
     component: ely_core::forms::Rating
     children: none
     props: {value: number, max: number}
     events: {change:}
   Stepper:
+    icon: list-ordered
+    group: Forms
     summary: Ely numeric stepper.
     component: ely_core::forms::Stepper
     children: none
     props: {value: number, min: number, max: number}
     events: {change:}
   Tag:
+    icon: tag
+    group: Display
     summary: Ely tag/chip label.
     component: ely_core::primitives::Tag
     content: label
@@ -316,6 +332,8 @@ elements:
     children: none
     props: {text: string}
   Container:
+    icon: square
+    group: Layout
     summary: Ely size-constrained container.
     component: ely_core::layout::Container
     children: any

@@ -42,11 +42,15 @@ elements:
     children: any
 
   Settings:
+    icon: settings
+    group: Windows
     summary: Grouped settings pages.
     component: gpui_component::setting::Settings
     children: any
 
   SettingPage:
+    icon: book-open
+    group: Windows
     summary: A page inside `Settings`.
     component: gpui_component::setting::SettingPage
     content: text
@@ -55,6 +59,8 @@ elements:
     children: any
 
   SettingsGroup:
+    icon: folder-tree
+    group: Windows
     summary: A titled group of `SettingItem`s inside a `SettingPage`.
     component: gpui_component::setting::SettingGroup
     content: text
@@ -63,6 +69,8 @@ elements:
     children: any
 
   SettingItem:
+    icon: pen-line
+    group: Windows
     summary: A row inside a `SettingsGroup` — a title plus a field element.
     component: gpui_component::setting::SettingItem
     content: text
@@ -158,6 +166,8 @@ elements:
       submit: string
 
   Textarea:
+    icon: text
+    group: Input
     summary: Multi-line text input.
     component: gpui_component::input::Textarea
     content: value
@@ -236,6 +246,8 @@ elements:
       change: bool
 
   Switch:
+    icon: toggle-left
+    group: Input
     summary: On/off toggle.
     component: gpui_component::switch::Switch
     content: label
@@ -252,6 +264,8 @@ elements:
       change: bool
 
   RadioGroup:
+    icon: circle-dot
+    group: Input
     summary: A set of mutually exclusive options.
     component: gpui_component::radio::RadioGroup
     props:
@@ -326,6 +340,8 @@ elements:
     children: [Tab]
 
   Tab:
+    icon: panel-top
+    group: Navigation
     summary: One tab of `Tabs`; its children are the panel content.
     component: gpui_component::tab::Tab
     content: label
@@ -376,6 +392,8 @@ elements:
     children: [MenuItem, MenuSeparator]
 
   MenuItem:
+    icon: menu
+    group: Navigation
     summary: One clickable entry in a `DropdownMenu`.
     component: gpui_component::menu::popup_menu::PopupMenuItem
     content: label
@@ -392,6 +410,8 @@ elements:
       click:
 
   MenuSeparator:
+    icon: minus
+    group: Navigation
     summary: Divider line between `MenuItem`s in a `DropdownMenu`.
     component: gpui_component::menu::popup_menu::PopupMenuItem
 
@@ -455,6 +475,8 @@ elements:
     children: any
 
   Tag:
+    icon: tag
+    group: Display
     summary: Small label for status or categories.
     component: gpui_component::tag::Tag
     content: label
@@ -501,6 +523,8 @@ elements:
         default: Contain
 
   Spinner:
+    icon: loader-circle
+    group: Display
     summary: Loading spinner.
     component: gpui_component::spinner::Spinner
     props:
@@ -530,6 +554,8 @@ elements:
         default: true
 
   Kbd:
+    icon: keyboard
+    group: Display
     summary: Keycap, e.g. `ctrl-o`.
     component: gpui_component::kbd::Kbd
     content: keys
@@ -545,6 +571,8 @@ elements:
         default: true
 
   Skeleton:
+    icon: square-dashed
+    group: Display
     summary: Loading placeholder block.
     component: gpui_component::skeleton::Skeleton
     props:
@@ -560,6 +588,8 @@ elements:
     children: [BreadcrumbItem]
 
   BreadcrumbItem:
+    icon: chevron-right
+    group: Navigation
     summary: One crumb in a `Breadcrumb`.
     component: gpui_component::breadcrumb::BreadcrumbItem
     content: label
@@ -595,6 +625,8 @@ elements:
       change: number
 
   Rating:
+    icon: star-half
+    group: Input
     summary: Star rating input or display.
     component: gpui_component::rating::Rating
     props:
@@ -616,6 +648,8 @@ elements:
       change: number
 
   Toolbar:
+    icon: wrench
+    group: Input
     summary: Horizontal toolbar grouping controls.
     component: gpui_component::toolbar::Toolbar
     props:
@@ -625,6 +659,8 @@ elements:
     children: any
 
   Progress:
+    icon: loader-pinwheel
+    group: Display
     summary: Linear progress bar.
     component: gpui_component::progress::Progress
     props:
@@ -638,6 +674,8 @@ elements:
       color: color
 
   ProgressCircle:
+    icon: chart-pie
+    group: Display
     summary: Circular progress indicator.
     component: gpui_component::progress::ProgressCircle
     props:
@@ -650,6 +688,8 @@ elements:
       color: color
 
   DescriptionList:
+    icon: list-ordered
+    group: Display
     summary: Label/value grid (definition list).
     component: gpui_component::description_list::DescriptionList
     props:
@@ -666,6 +706,8 @@ elements:
     children: [DescriptionItem]
 
   DescriptionItem:
+    icon: align-horizontal-justify-center
+    group: Display
     summary: One row in a `DescriptionList`.
     component: gpui_component::description_list::DescriptionItem
     content: label
@@ -681,6 +723,8 @@ elements:
         default: 1
 
   StatusBar:
+    icon: panel-bottom
+    group: Layout
     summary: Window status bar; first child goes left, second goes right.
     component: gpui_component::status_bar::StatusBar
     children: any
@@ -702,6 +746,8 @@ elements:
         summary: Placeholder icon.
 
   AvatarGroup:
+    icon: users-round
+    group: Display
     summary: Overlapping stack of `Avatar`s.
     component: gpui_component::avatar::AvatarGroup
     props:
@@ -738,6 +784,8 @@ elements:
     children: [StepperItem]
 
   StepperItem:
+    icon: circle-dot
+    group: Navigation
     summary: One step in a `Stepper`.
     component: gpui_component::stepper::StepperItem
     content: label
@@ -823,6 +871,8 @@ elements:
     children: [AccordionItem]
 
   AccordionItem:
+    icon: chevrons-up-down
+    group: Navigation
     summary: One expandable section in an `Accordion`.
     component: gpui_component::accordion::AccordionItem
     content: title
@@ -840,6 +890,8 @@ elements:
     children: any
 
   Collapsible:
+    icon: chevron-down
+    group: Layout
     summary: Show/hide container driven by an `open` prop.
     component: gpui_component::collapsible::Collapsible
     props:
@@ -849,6 +901,8 @@ elements:
     children: any
 
   Form:
+    icon: file-text
+    group: Input
     summary: Labeled form grid of `FormField`s.
     component: gpui_component::form::Form
     props:
@@ -867,6 +921,8 @@ elements:
     children: [FormField]
 
   FormField:
+    icon: text-cursor-input
+    group: Input
     summary: One labeled row in a `Form`.
     component: gpui_component::form::Field
     content: label
@@ -946,6 +1002,8 @@ elements:
       change: string
 
   Calendar:
+    icon: calendar-days
+    group: Input
     summary: Inline month calendar.
     component: gpui_component::time::Calendar
     props:
@@ -954,6 +1012,8 @@ elements:
         default: false
 
   TimeField:
+    icon: clock-3
+    group: Input
     summary: Time-of-day input.
     component: gpui_component::time_field::TimeField
     props:
@@ -974,6 +1034,8 @@ elements:
     children: any
 
   Message:
+    icon: message-square
+    group: Display
     summary: Chat-style message; children are the Message* slots below.
     component: gpui_component::message::Message
     props:
@@ -985,21 +1047,29 @@ elements:
     children: any
 
   MessageAvatar:
+    icon: circle-user-round
+    group: Display
     summary: Avatar slot inside a `Message`.
     component: gpui_component::message::MessageAvatar
     children: any
 
   MessageHeader:
+    icon: panel-top
+    group: Display
     summary: Header slot inside a `Message`.
     component: gpui_component::message::MessageHeader
     children: any
 
   MessageContent:
+    icon: align-center-vertical
+    group: Display
     summary: Body slot inside a `Message`.
     component: gpui_component::message::MessageContent
     children: any
 
   MessageFooter:
+    icon: panel-bottom
+    group: Display
     summary: Footer slot inside a `Message`.
     component: gpui_component::message::MessageFooter
     children: any
@@ -1012,31 +1082,43 @@ elements:
     children: [TableHeader, TableBody, TableFooter, TableCaption]
 
   TableHeader:
+    icon: panel-top
+    group: Display
     summary: Header row group of a `Table`.
     component: gpui_component::table::TableHeader
     children: [TableHead]
 
   TableBody:
+    icon: align-center-vertical
+    group: Display
     summary: Row group of a `Table`.
     component: gpui_component::table::TableBody
     children: [TableRow]
 
   TableFooter:
+    icon: panel-bottom
+    group: Display
     summary: Footer row group of a `Table`.
     component: gpui_component::table::TableFooter
     children: [TableRow]
 
   TableCaption:
+    icon: text-cursor
+    group: Display
     summary: Caption of a `Table`.
     component: gpui_component::table::TableCaption
     children: any
 
   TableRow:
+    icon: rows-2
+    group: Display
     summary: A row of `TableCell`s in a `Table`.
     component: gpui_component::table::TableRow
     children: [TableCell, TableHead]
 
   TableHead:
+    icon: columns-2
+    group: Display
     summary: Header cell in a `Table`.
     component: gpui_component::table::TableHead
     props:
@@ -1048,6 +1130,8 @@ elements:
     children: any
 
   TableCell:
+    icon: square
+    group: Display
     summary: Data cell in a `Table`.
     component: gpui_component::table::TableCell
     props:
@@ -1071,6 +1155,8 @@ elements:
     children: [ResizablePanel]
 
   ResizablePanel:
+    icon: stretch-horizontal
+    group: Layout
     summary: One pane in a `Resizable` group.
     component: gpui_base::resizable::ResizablePanel
     props:
@@ -1109,16 +1195,22 @@ elements:
     children: any
 
   SidebarHeader:
+    icon: panel-left
+    group: Layout
     summary: Header slot inside a `Sidebar`.
     component: gpui_component::sidebar::SidebarHeader
     children: any
 
   SidebarFooter:
+    icon: panel-left-open
+    group: Layout
     summary: Footer slot inside a `Sidebar`.
     component: gpui_component::sidebar::SidebarFooter
     children: any
 
   SidebarMenu:
+    icon: menu
+    group: Layout
     summary: A group of `SidebarMenuItem`s in a `Sidebar`.
     component: gpui_component::sidebar::SidebarMenu
     children: [SidebarMenuItem]
@@ -1171,6 +1263,8 @@ elements:
     children: [TreeItem]
 
   TreeItem:
+    icon: corner-down-right
+    group: Navigation
     summary: One node in a `Tree`; `TreeItem` children become sub-items, other children render as row content.
     component: gpui_base::tree::TreeItem
     content: label
