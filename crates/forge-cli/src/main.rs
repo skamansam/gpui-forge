@@ -166,6 +166,7 @@ fn main() {
         "package" => package_cmd(&rest),
         "hooks" => hooks_cmd(&rest),
         "license" => license_cmd(&rest),
+        "bases" => bases_cmd(),
         "check" | "validate" => check_cmd(&rest),
         "schema" => {
             print!("{}", gpui_forge_runtime::forge_spec::json::schema());
@@ -437,6 +438,26 @@ fn license_cmd(rest: &[String]) -> i32 {
     if warnings > 0 {
         eprintln!("forge: {warnings} copyleft license(s) — packaging must keep these opt-in");
     }
+    0
+}
+
+/// `forge bases` — the registered component-system bases (id, GPUI pin,
+/// platforms, theme system) a document's `base:` can target.
+fn bases_cmd() -> i32 {
+    let out: Vec<serde_json::Value> = gpui_forge_runtime::check::bases()
+        .iter()
+        .map(|b| {
+            serde_json::json!({
+                "id": b.id, "name": b.name,
+                "gpui": format!("{} {}", b.gpui_crate, b.gpui_version),
+                "library": format!("{} {}", b.library_crate, b.library_version),
+                "toolchain": b.toolchain, "platforms": b.platforms,
+                "wasm": b.wasm, "theme": b.theme, "catalog": b.catalog,
+                "license": b.license, "libraries": b.libraries,
+            })
+        })
+        .collect();
+    println!("{}", serde_json::to_string_pretty(&out).unwrap_or_default());
     0
 }
 

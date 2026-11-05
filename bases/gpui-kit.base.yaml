@@ -1,0 +1,22 @@
+# Base manifest — see docs/design/multi-base.md
+base: "0.1"
+id: gpui-kit
+name: GPUI Kit
+description: gpui-component + gpui-kit on the gpui-pre 0.3.x graph — the primary Forge base.
+
+gpui:
+  crate: gpui-pre
+  version: "0.3.10"
+library:
+  crate: gpui-kit
+  version: "0.8"
+toolchain: stable
+platforms: [linux, macos, windows]
+wasm: true
+theme: gpui-kit              # theme system this base consumes
+catalog: gpui-kit            # base catalog id (catalogs/gpui-kit.catalog.yaml)
+license: Apache-2.0
+
+libraries:                   # adapters known compatible with this base
+  ely-core: {version: "0.2", crate: ely-core, license: MIT}
+  template-lib: {version: "0.1", crate: forge-lib-template, license: MIT}

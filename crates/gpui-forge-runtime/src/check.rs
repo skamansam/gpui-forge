@@ -1,5 +1,6 @@
 //! Parsing and validation, kept free of GPUI so it is testable on any target.
 
+use forge_spec::base::Base;
 use forge_spec::catalog::{self, Catalog};
 use forge_spec::{Diagnostic, Document, validate, yaml};
 
@@ -19,6 +20,15 @@ pub fn catalogs() -> Vec<Catalog> {
 
 /// Reads and validates `src` for `base`. The document is returned whenever it parses, even with
 /// validation errors, so a canvas can keep showing as much as it can.
+/// The bases shipped with this build — the registry `base:` validates against
+/// and the CLI/Studio/compiler pick from (#91).
+pub fn bases() -> Vec<Base> {
+    vec![
+        Base::from_yaml(include_str!("../../../bases/gpui-kit.base.yaml"))
+            .expect("bundled gpui-kit base manifest is valid"),
+    ]
+}
+
 pub fn check(src: &str, base: &str, catalogs: &[Catalog]) -> (Option<Document>, Vec<Diagnostic>) {
     match yaml::from_str_with_source_map(src) {
         Ok((doc, map)) => {
