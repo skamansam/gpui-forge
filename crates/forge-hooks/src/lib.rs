@@ -110,3 +110,28 @@ fn get_state_path<'a>(state: &'a serde_json::Value, path: &str) -> Option<&'a se
     }
     Some(node)
 }
+
+impl<'a> HookCtx<'a> {
+    /// Spawns an async task for a hook (#57) — file I/O, network, timers.
+    /// The closure gets the view's weak entity + an async context; it may
+    /// `weak.update(cx, |view, cx| ...)` when the work finishes.
+    ///
+    /// ```ignore
+    /// ctx.spawn(|view, cx| async move {
+    ///     let data = fetch().await;
+    ///     view.update(cx, |this, cx| this.set_ready(data, cx)).ok();
+    /// });
+    /// ```
+    pub fn spawn<F, Fut>(&mut self, f: F) -> gpui_forge_runtime::base::kit::Task<Fut>
+    where
+        F: std::ops::AsyncFnOnce(
+                gpui_forge_runtime::base::kit::WeakEntity<ForgeView>,
+                &mut gpui_forge_runtime::base::kit::AsyncApp,
+            ) -> Fut
+            + 'static,
+        Fut: std::future::Future + 'static,
+        Fut::Output: 'static,
+    {
+        self.cx.spawn(f)
+    }
+}

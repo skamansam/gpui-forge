@@ -60,8 +60,9 @@ preview's document — Studio's `record_undo` snapshots before each.
 
 ## Open gaps
 
-- **No async hooks** — handlers are synchronous; `spawn`/background work is
-  #57's design space (a `HookCtx` exposing a task queue).
+- **Async hooks** — `HookCtx::spawn` launches a GPUI `Task` from a handler
+  (file I/O, network, timers); the task updates the view through its weak
+  entity when it finishes.
 - **No structured context** — hooks get `&mut ForgeView` today; a typed
   `HookCtx` (state reader/writer + preview handles + diagnostics) is #56.
 - **Library-element events unwired** — adapter `on click:` validates but
