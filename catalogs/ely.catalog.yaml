@@ -68,7 +68,7 @@ elements:
         default: horizontal
 
   Alert:
-    icon: alert-circle
+    icon: circle-alert
     group: Feedback
     summary: Ely severity alert with title + optional body.
     component: ely_core::feedback::Alert
@@ -99,7 +99,7 @@ elements:
       icon: string
 
   Spinner:
-    icon: loader-2
+    icon: loader-circle
     group: Feedback
     summary: Ely activity spinner.
     component: ely_core::motion::Spinner
@@ -128,7 +128,7 @@ elements:
         default: 1
 
   Avatar:
-    icon: user-circle
+    icon: circle-user
     group: Display
     summary: Ely user avatar.
     component: ely_core::data_display::Avatar
@@ -138,7 +138,7 @@ elements:
       name: string
 
   Paragraph:
-    icon: align-left
+    icon: text
     group: Type
     summary: Ely body text.
     component: ely_core::typography::Paragraph
@@ -183,7 +183,7 @@ elements:
     children: none
     props: {change: number}
   Statistic:
-    icon: bar-chart-2
+    icon: chart-column
     group: Display
     summary: Ely labeled statistic.
     component: ely_core::data_display::Statistic
@@ -204,7 +204,7 @@ elements:
     children: none
     props: {label: string, value: number}
   UsageBar:
-    icon: bar-chart
+    icon: chart-bar
     group: Display
     summary: Ely used/total usage bar.
     component: ely_core::data_display::UsageBar
@@ -284,7 +284,7 @@ elements:
     children: none
     props: {icon: string, size: {type: enum, values: [Xs, Sm, Md, Lg, Xl, Xxl], default: Md}}
   Subtitle:
-    icon: subtitles
+    icon: captions
     group: Type
     summary: Ely subtitle text.
     component: ely_core::typography::Subtitle
@@ -292,7 +292,7 @@ elements:
     children: none
     props: {text: string}
   Caption:
-    icon: text
+    icon: text-cursor-input
     group: Type
     summary: Ely caption text.
     component: ely_core::typography::Caption
@@ -308,7 +308,7 @@ elements:
     children: none
     props: {text: string}
   Overline:
-    icon: text
+    icon: minus
     group: Type
     summary: Ely overline text.
     component: ely_core::typography::Overline

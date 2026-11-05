@@ -32,7 +32,7 @@ elements:
     children: any
 
   Dialog:
-    icon: square
+    icon: app-window
     group: Windows
     summary: A top-level `Dialog#id:` declaration — opened via `open_dialog(name)`;
       inline usage renders its contents in a bordered box.
@@ -130,7 +130,7 @@ elements:
       click:
 
   Input:
-    icon: text-cursor
+    icon: text-cursor-input
     group: Input
     summary: Single-line text input.
     component: gpui_component::input::Input
@@ -182,7 +182,7 @@ elements:
       change: string
 
   Editor:
-    icon: edit-3
+    icon: pen
     group: Input
     summary: Code editor with line numbers and optional syntax highlighting.
     component: gpui_component::input::Editor
@@ -218,7 +218,7 @@ elements:
       change: string
 
   Checkbox:
-    icon: check-square
+    icon: square-check
     group: Input
     summary: Checkbox with an optional label.
     component: gpui_component::checkbox::Checkbox
@@ -283,7 +283,7 @@ elements:
         default: false
 
   Select:
-    icon: chevron-down-square
+    icon: square-chevron-down
     group: Input
     summary: Dropdown for picking one option.
     component: gpui_component::select::Select
@@ -508,7 +508,7 @@ elements:
       color: color
 
   Alert:
-    icon: alert-circle
+    icon: circle-alert
     group: Display
     summary: Callout for status messages, optionally a banner.
     component: gpui_component::alert::Alert
@@ -572,7 +572,7 @@ elements:
         default: false
 
   Pagination:
-    icon: more-horizontal
+    icon: ellipsis
     group: Navigation
     summary: Page switcher.
     component: gpui_component::pagination::Pagination
@@ -686,7 +686,7 @@ elements:
     children: any
 
   Avatar:
-    icon: user-circle
+    icon: circle-user
     group: Display
     summary: User avatar image or initials.
     component: gpui_component::avatar::Avatar
@@ -967,7 +967,7 @@ elements:
       change: string
 
   TitleBar:
-    icon: square-top
+    icon: panel-top
     group: Layout
     summary: Custom titlebar with window controls; children render inside the titlebar row.
     component: gpui_component::title_bar::TitleBar
