@@ -505,6 +505,7 @@ impl ForgeView {
             }
             let item = gpui_kit::component::accordion::AccordionItem::new()
                 .title(SharedString::from(group))
+                .open(true)
                 .child(row);
             grid = grid.item(move |_| item);
         }
