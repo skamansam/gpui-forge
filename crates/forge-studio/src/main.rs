@@ -37,6 +37,35 @@ struct Shared {
     redo: Vec<(Document, String)>,
 }
 
+/// The running `forge-preview` process (#97) — stdin for commands, stdout
+/// drained by a reader thread into the event channel the pump loop owns.
+struct Host {
+    child: std::process::Child,
+    stdin: std::process::ChildStdin,
+    /// Spawn generation — `Closed` events from a superseded host are ignored
+    /// so a restart can't report the new host as dead.
+    generation: u64,
+}
+
+/// A line the host wrote on stdout, decoded.
+enum HostEvent {
+    Ready {
+        base: String,
+    },
+    Diagnostics(Vec<String>),
+    /// A hook fired in the host's view, as `name(args)` — the `on_hook` sink.
+    Call(String),
+    /// The host's whole view state after a write — the `on_state` sink.
+    State(Json),
+    /// stdout reached EOF — the host exited (or was killed for a restart).
+    Closed {
+        generation: u64,
+    },
+}
+
+static HOST: std::sync::Mutex<Option<Host>> = std::sync::Mutex::new(None);
+static HOST_GEN: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+
 type SharedState = Rc<RefCell<Shared>>;
 /// The hook context type for `#[forge_hook]` wrappers.
 type HookCtx = SharedState;
@@ -51,6 +80,15 @@ fn main() {
                 gpui_forge_runtime::render::CancelPick,
                 None,
             )]);
+            // Reap the preview host on any quit path — the `quit` hook is only
+            // one of them (window close, Cmd-Q…).
+            cx.on_app_quit(|_| async move {
+                if let Some(mut host) = HOST.lock().unwrap().take() {
+                    let _ = host.child.kill();
+                    let _ = host.child.wait();
+                }
+            })
+            .detach();
             let bounds = Bounds::centered(None, size(px(1400.0), px(900.0)), cx);
             let options = WindowOptions {
                 app_id: Some("gpui-forge".into()),
@@ -216,15 +254,16 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
             }),
             Rc::new(move |state, _, cx| {
                 let shell = shell.clone();
-                let state = state.to_string();
+                let state = state.clone();
                 cx.defer(move |cx| {
                     shell
                         .update(cx, |view, cx| {
                             view.update_state(
                                 &parse_path("preview.state").unwrap(),
-                                Json::String(state.clone()),
+                                Json::String(state.to_string()),
                                 cx,
                             );
+                            mirror_document_state(view, &state, cx);
                         })
                         .ok();
                 });
@@ -496,6 +535,8 @@ fn dispatch(
         "move_node" => move_node(view, args, shared, cx),
         "cancel_place" => {
             view.update_state(&parse_path("studio.placing").unwrap(), Json::Null, cx);
+            host_send(&json!({"cmd":"pick","on":false}));
+            host_send(&json!({"cmd":"place","on":false}));
             status(view, "cancelled", cx);
             cx.notify();
         }
@@ -503,6 +544,7 @@ fn dispatch(
             view.report("pick mode — click an element in the preview".to_owned());
             view.preview("canvas", cx)
                 .update(cx, |p, cx| p.set_pick(true, cx));
+            host_send(&json!({"cmd":"pick","on":true}));
         }
         "open_dialog" => open_dialog(view, args, shared, cx),
         "open_gallery" => start_from(view, &["gallery".into()], shared, cx),
@@ -517,7 +559,13 @@ fn dispatch(
         "select_node" => select_node(view, args, cx),
         "prop_changed" => prop_changed(view, args, shared, cx),
         "style_changed" => style_changed(view, args, shared, cx),
-        "quit" => cx.quit(),
+        "quit" => {
+            if let Some(mut host) = HOST.lock().unwrap().take() {
+                let _ = host.child.kill();
+                let _ = host.child.wait();
+            }
+            cx.quit();
+        }
         "test_error" => {
             view.report("test toast — simulated error".to_owned());
             cx.notify();
@@ -631,45 +679,224 @@ fn open_project(shared: SharedState, cx: &mut Context<ForgeView>) {
 
 /// `preview_in_host()` — spawn the out-of-process preview host (#97) on the
 /// current document: the host renders its own GPUI graph, Studio feeds it
-/// the doc path over the JSON control channel.
+/// the doc path over the JSON control channel and reads its events back —
+/// `call`/`state` lines play the same role as the embedded preview's sinks.
 fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<ForgeView>) {
-    use std::sync::Mutex;
-    static HOST: Mutex<Option<std::process::Child>> = Mutex::new(None);
-
     let Some(path) = shared.borrow().file.clone() else {
         status(view, "open a document first", cx);
         return;
     };
-    // Restart the host against the fresh path.
-    let mut guard = HOST.lock().unwrap();
-    if let Some(mut old) = guard.take() {
-        let _ = old.kill();
-        let _ = old.wait();
-    }
     let binary = std::env::current_exe()
         .ok()
         .and_then(|e| e.parent().map(|p| p.join("forge-preview")))
         .unwrap_or_else(|| "forge-preview".into());
-    match std::process::Command::new(&binary)
+    let spawned = std::process::Command::new(&binary)
         .stdin(std::process::Stdio::piped())
-        .stdout(std::process::Stdio::inherit())
+        .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::inherit())
-        .spawn()
-    {
-        Ok(mut child) => {
-            if let Some(mut stdin) = child.stdin.take() {
-                use std::io::Write;
-                let _ = writeln!(
-                    stdin,
-                    "{}",
-                    serde_json::json!({"cmd":"load","doc":path.display().to_string()})
-                );
-            }
-            *guard = Some(child);
-            status(view, "preview host launched", cx);
+        .spawn();
+    let mut child = match spawned {
+        Ok(child) => child,
+        Err(e) => {
+            status(view, &format!("cannot spawn forge-preview: {e}"), cx);
+            return;
         }
-        Err(e) => status(view, &format!("cannot spawn forge-preview: {e}"), cx),
+    };
+    let Some(stdin) = child.stdin.take() else {
+        status(view, "cannot spawn forge-preview: no stdin", cx);
+        return;
+    };
+    let generation = HOST_GEN.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
+    // stdout → HostEvent lines, one JSON value per line. EOF (host exit or a
+    // restart's kill) reports `Closed` so the pump loop below can retire.
+    let (tx, rx) = std::sync::mpsc::channel::<HostEvent>();
+    if let Some(stdout) = child.stdout.take() {
+        std::thread::spawn(move || {
+            use std::io::BufRead;
+            for line in std::io::BufReader::new(stdout)
+                .lines()
+                .map_while(Result::ok)
+            {
+                let Ok(v) = serde_json::from_str::<Json>(&line) else {
+                    continue;
+                };
+                let event = match v["event"].as_str() {
+                    Some("ready") => HostEvent::Ready {
+                        base: v["base"].as_str().unwrap_or_default().to_owned(),
+                    },
+                    Some("diagnostics") => HostEvent::Diagnostics(
+                        v["items"]
+                            .as_array()
+                            .map(|a| {
+                                a.iter()
+                                    .filter_map(|i| i.as_str().map(str::to_owned))
+                                    .collect()
+                            })
+                            .unwrap_or_default(),
+                    ),
+                    Some("call") => {
+                        HostEvent::Call(v["call"].as_str().unwrap_or_default().to_owned())
+                    }
+                    Some("state") => HostEvent::State(v["state"].clone()),
+                    _ => continue,
+                };
+                if tx.send(event).is_err() {
+                    return;
+                }
+            }
+            let _ = tx.send(HostEvent::Closed { generation });
+        });
     }
+    // Restart the host against the fresh path — the killed host's reader hits
+    // EOF and its pump retires on `Closed` (ignored for the new generation).
+    {
+        let mut guard = HOST.lock().unwrap();
+        if let Some(mut old) = guard.take() {
+            let _ = old.child.kill();
+            let _ = old.child.wait();
+        }
+        *guard = Some(Host {
+            child,
+            stdin,
+            generation,
+        });
+    }
+    host_send(&json!({"cmd":"load","doc":path.display().to_string()}));
+    host_send(&json!({"cmd":"dnd","on":true}));
+    cx.spawn(async move |view, cx| {
+        loop {
+            cx.background_executor()
+                .timer(std::time::Duration::from_millis(50))
+                .await;
+            let mut events = Vec::new();
+            while let Ok(event) = rx.try_recv() {
+                let done = matches!(event, HostEvent::Closed { .. });
+                events.push(event);
+                if done {
+                    break;
+                }
+            }
+            if events.is_empty() {
+                continue;
+            }
+            let mut done = false;
+            let alive = view
+                .update(cx, |view, cx| {
+                    for event in events.drain(..) {
+                        done = matches!(event, HostEvent::Closed { .. });
+                        host_event(view, event, &shared, cx);
+                    }
+                })
+                .is_ok();
+            if done || !alive {
+                return;
+            }
+        }
+    })
+    .detach();
+    status(view, "preview host launched", cx);
+}
+
+/// A line decoded from the host's stdout — the out-of-process twin of the
+/// embedded preview's `on_hook`/`on_state` sinks.
+fn host_event(
+    view: &mut ForgeView,
+    event: HostEvent,
+    shared: &SharedState,
+    cx: &mut Context<ForgeView>,
+) {
+    match event {
+        HostEvent::Ready { base } => {
+            view.update_state(
+                &parse_path("studio.host").unwrap(),
+                Json::String(format!("preview host: {base}")),
+                cx,
+            );
+            status(view, &format!("preview host ready ({base})"), cx);
+        }
+        HostEvent::Diagnostics(items) => {
+            // The host checks with ITS base's catalogs — for a foreign-base
+            // doc these are the accurate diagnostics, not Studio's own.
+            let text = if items.is_empty() {
+                "no problems".to_owned()
+            } else {
+                items.join("\n")
+            };
+            view.update_state(
+                &parse_path("studio.diagnostics").unwrap(),
+                Json::String(text),
+                cx,
+            );
+        }
+        HostEvent::Call(call) => {
+            let (name, args) = parse_call(&call);
+            dispatch(view, &name, &args, shared, cx);
+            // The dispatch may have mutated the preview doc (place/move/drop)
+            // — push the synced source back so the host re-renders it.
+            host_send(&json!({"cmd":"source","src": source(view)}));
+        }
+        HostEvent::State(state) => {
+            view.update_state(
+                &parse_path("preview.state").unwrap(),
+                Json::String(state.to_string()),
+                cx,
+            );
+            mirror_document_state(view, &state, cx);
+        }
+        HostEvent::Closed { generation } => {
+            let mut guard = HOST.lock().unwrap();
+            if guard.as_ref().is_some_and(|h| h.generation == generation) {
+                if let Some(mut host) = guard.take() {
+                    let _ = host.child.kill();
+                    let _ = host.child.wait();
+                }
+                drop(guard);
+                view.update_state(&parse_path("studio.host").unwrap(), Json::Null, cx);
+                status(view, "preview host exited", cx);
+            }
+        }
+    }
+}
+
+/// State paths the preview (embedded or hosted) mirrors into the shell so
+/// outline/inspector interactions work identically either way. Writes are
+/// skipped when the value already matches — the host echoes `document.selected`
+/// back on `select`, and without the guard that echo would loop forever.
+fn mirror_document_state(view: &mut ForgeView, state: &Json, cx: &mut Context<ForgeView>) {
+    let selected = parse_path("document.selected").unwrap();
+    let value = get_path(state, &selected).cloned().unwrap_or(Json::Null);
+    if get_path(view.state(), &selected) != Some(&value) {
+        view.update_state(&selected, value, cx);
+        if let Some(path) = get_path(view.state(), &selected).and_then(|j| j.as_str()) {
+            let path = path.to_owned();
+            view.update_state(
+                &parse_path("status.message").unwrap(),
+                Json::String(format!("selected {path}")),
+                cx,
+            );
+        }
+    }
+    let drop_target = parse_path("studio.drop_target").unwrap();
+    let value = get_path(state, &drop_target).cloned().unwrap_or(Json::Null);
+    if get_path(view.state(), &drop_target) != Some(&value) {
+        view.update_state(&drop_target, value, cx);
+    }
+}
+
+/// Sends one JSON line to the running host's stdin — a no-op without a host.
+fn host_send(value: &Json) {
+    use std::io::Write;
+    let mut guard = HOST.lock().unwrap();
+    if let Some(host) = guard.as_mut() {
+        let _ = writeln!(host.stdin, "{value}");
+        let _ = host.stdin.flush();
+    }
+}
+
+/// Pushes the current `editor.source` to the host — after doc mutations and
+/// on every edit, so the out-of-process preview stays live-synced.
+fn host_send_source(view: &ForgeView) {
+    host_send(&json!({"cmd":"source","src": source(view)}));
 }
 
 /// Reads `key = "value"` lines out of a manifest's `[forge]` section — the
@@ -942,6 +1169,7 @@ fn load_source(
                 .update(cx, |p, _| p.set_base_dir(dir.to_path_buf()));
         }
     }
+    host_send_source(view);
 }
 
 /// `on change: source_changed()` — re-check the source on every edit and keep the
@@ -964,6 +1192,7 @@ fn reload(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView
     if let Some(doc) = doc {
         view.set_preview_document("canvas", doc, cx);
     }
+    host_send_source(view);
 }
 
 fn save_document(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView>) {
@@ -1049,6 +1278,7 @@ fn insert_component(
         // Same palette item clicked while armed — cancel place mode.
         view.update_state(&parse_path("studio.placing").unwrap(), Json::Null, cx);
         preview.update(cx, |p, cx| p.set_placing(false, cx));
+        host_send(&json!({"cmd":"place","on":false}));
         status(view, "place cancelled", cx);
         return;
     }
@@ -1058,6 +1288,7 @@ fn insert_component(
         cx,
     );
     preview.update(cx, |p, cx| p.set_placing(true, cx));
+    host_send(&json!({"cmd":"place","on":true}));
     status(
         view,
         &format!("placing {tag} — click a container in the preview (palette again to cancel)"),
@@ -1615,6 +1846,7 @@ fn select_node(view: &mut ForgeView, _args: &[String], cx: &mut Context<ForgeVie
         .and_then(|j| j.as_str())
         .unwrap_or_default()
         .to_owned();
+    host_send(&json!({"cmd":"select","path": path}));
     view.update_state(
         &parse_path("status.message").unwrap(),
         Json::String(format!("selected {path}")),

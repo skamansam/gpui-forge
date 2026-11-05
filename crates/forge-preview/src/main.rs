@@ -6,13 +6,18 @@
 //! gpui 0.2, Bezel, adabraka) are each a host binary, not a linked adapter.
 //!
 //! Protocol (newline-delimited JSON on stdin):
-//!   {"cmd":"load","doc":"<path>"}   → renders the document
-//!   {"cmd":"source","src":"<yaml>"} → live-synced source
-//!   {"cmd":"quit"}                  → exits
+//!   {"cmd":"load","doc":"<path>"}      → renders the document
+//!   {"cmd":"source","src":"<yaml>"}    → live-synced source
+//!   {"cmd":"pick","on":<bool>}         → element-picker mode
+//!   {"cmd":"place","on":<bool>}        → click-to-place mode
+//!   {"cmd":"dnd","on":<bool>}          → node drags / drop targets
+//!   {"cmd":"select","path":"<path>"}   → mirrors Studio's outline selection
+//!   {"cmd":"quit"}                     → exits
 //! stdout replies:
 //!   {"event":"ready","base":"<id>"}
 //!   {"event":"diagnostics","items":[...]}
-//!   {"event":"pick","path":"<node-path>"}
+//!   {"event":"call","call":"name(args)"}  — a hook fired in the previewed doc
+//!   {"event":"state","state":{...}}       — the view state after a write
 
 use gpui_forge_runtime::check;
 use gpui_forge_runtime::render::ForgeView;
@@ -24,7 +29,19 @@ use std::sync::mpsc;
 
 enum HostMsg {
     Source(String),
+    Pick(bool),
+    Place(bool),
+    Dnd(bool),
+    Select(String),
     Quit,
+}
+
+/// One JSON line on stdout — each `writeln!` locks stdout once, so lines from
+/// the reader thread and the UI thread never interleave.
+fn emit(value: serde_json::Value) {
+    let mut out = std::io::stdout();
+    let _ = writeln!(out, "{value}");
+    let _ = out.flush();
 }
 
 fn main() {
@@ -32,28 +49,37 @@ fn main() {
     let (tx, rx) = mpsc::channel::<HostMsg>();
     std::thread::spawn(move || {
         let stdin = std::io::stdin();
-        let mut out = std::io::stdout();
-        let _ = writeln!(
-            out,
-            "{}",
-            json!({"event":"ready","base": gpui_forge_runtime::base::BASE_ID})
-        );
-        let _ = out.flush();
+        emit(json!({"event":"ready","base": gpui_forge_runtime::base::BASE_ID}));
         for line in stdin.lock().lines().map_while(Result::ok) {
             let Ok(v) = serde_json::from_str::<serde_json::Value>(&line) else {
                 continue;
             };
+            let on = v["on"].as_bool().unwrap_or(true);
             match v["cmd"].as_str() {
                 Some("load") => {
-                    if let Some(p) = v["doc"].as_str() {
-                        if let Ok(src) = std::fs::read_to_string(p) {
-                            let _ = tx.send(HostMsg::Source(src));
-                        }
+                    if let Some(p) = v["doc"].as_str()
+                        && let Ok(src) = std::fs::read_to_string(p)
+                    {
+                        let _ = tx.send(HostMsg::Source(src));
                     }
                 }
                 Some("source") => {
                     if let Some(src) = v["src"].as_str() {
                         let _ = tx.send(HostMsg::Source(src.to_string()));
+                    }
+                }
+                Some("pick") => {
+                    let _ = tx.send(HostMsg::Pick(on));
+                }
+                Some("place") => {
+                    let _ = tx.send(HostMsg::Place(on));
+                }
+                Some("dnd") => {
+                    let _ = tx.send(HostMsg::Dnd(on));
+                }
+                Some("select") => {
+                    if let Some(path) = v["path"].as_str() {
+                        let _ = tx.send(HostMsg::Select(path.to_string()));
                     }
                 }
                 Some("quit") => {
@@ -85,6 +111,20 @@ fn main() {
                 move |_, cx| {
                     cx.new(move |cx| {
                         let mut view = ForgeView::new(check::catalogs());
+                        // Node drags/drop targets match Studio's embedded preview.
+                        view.set_dnd(true, cx);
+                        // Everything the view would tell an in-process host —
+                        // fired hooks and state writes — goes out over stdout so
+                        // Studio sees pick/drop/doc events exactly like the
+                        // embedded `forge.Preview` sinks deliver them.
+                        view.set_sinks(
+                            std::rc::Rc::new(|call, _, _| {
+                                emit(json!({"event":"call","call": call}));
+                            }),
+                            std::rc::Rc::new(|state, _, _| {
+                                emit(json!({"event":"state","state": state}));
+                            }),
+                        );
                         // Control channel polled on a timer — doc syncs and
                         // quit commands arrive after window creation too.
                         cx.spawn(async move |view, cx| loop {
@@ -109,18 +149,24 @@ fn main() {
                                                 gpui_forge_runtime::base::BASE_ID,
                                                 &catalogs,
                                             );
-                                            let mut out = std::io::stdout();
-                                            let _ = writeln!(
-                                                out,
-                                                "{}",
-                                                json!({"event":"diagnostics","items":
-                                                    diags.iter().map(|d| d.message.clone()).collect::<Vec<_>>()})
+                                            emit(json!({"event":"diagnostics","items":
+                                                diags.iter().map(|d| d.message.clone()).collect::<Vec<_>>()})
                                             );
-                                            let _ = out.flush();
                                             if let Some(doc) = doc {
                                                 view.set_document(doc, cx);
                                             }
                                         }
+                                        HostMsg::Pick(on) => view.set_pick(on, cx),
+                                        HostMsg::Place(on) => view.set_placing(on, cx),
+                                        HostMsg::Dnd(on) => view.set_dnd(on, cx),
+                                        HostMsg::Select(path) => view.update_state(
+                                            &gpui_forge_runtime::forge_spec::value::parse_path(
+                                                "document.selected",
+                                            )
+                                            .unwrap(),
+                                            serde_json::Value::String(path),
+                                            cx,
+                                        ),
                                         HostMsg::Quit => quit = true,
                                     }
                                 }
