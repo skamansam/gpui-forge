@@ -3098,7 +3098,6 @@ impl Render for ForgeView {
         div()
             .id("forge-canvas")
             .size_full()
-            .overflow_y_scrollbar()
             .bg(background)
             .text_color(foreground)
             .on_action::<CancelPick>(move |_, _, cx| {
