@@ -1,0 +1,27 @@
+# Upstream porting tracker
+
+Libraries whose GPUI dependency doesn't match a registered base, plus how
+each gets supported. Only libraries that fit **no** base belong here —
+crates on `gpui 0.2` go through the Vanilla GPUI 0.2 base (#96); crates on
+`gpui-pre 0.3.x` work today via the gpui-kit base.
+
+| Library | Upstream GPUI | Path to support | Status |
+|---|---|---|---|
+| ely-core | gpui-pre 0.3.10 | **done** — forge-lib-ely adapter | shipped |
+| gpui-video-player | gpui-pre (feature) | adapter (#77); GStreamer system dep | deferred |
+| zorite-markdown/editor | gpui 0.2 | adapter (#78); GPL-3.0 stays opt-in | deferred |
+| hig-gpui | gpui-kit 0.7.3 | needs upstream bump to gpui-kit 0.8 (#90) | needs port |
+| gpui-flow | Zed git | port to gpui-pre (#89) | needs port |
+| ferrum-flow | gpui 0.2 | via Vanilla GPUI 0.2 base (#86) | waits on #96 |
+| rhythm-gpui | gpui 0.2 | via Vanilla GPUI 0.2 base (#87) | waits on #96 |
+| gpui-symbols | gpui 0.2 | via Vanilla GPUI 0.2 base (#88) | waits on #96 |
+| Base GPUI | Zed git | port to gpui-pre (#85) | needs port |
+| Bezel | Zed git | base def + adapter (#94) | needs port |
+| adabraka-ui | gpui 0.2 | base def + adapter (#95) | waits on #96 |
+| ratatui | — | own base, not a GPUI lib (#112) | separate |
+| iced | — | own base, not a GPUI lib (#113) | separate |
+
+**Porting means** a fork or upstream PR moving the crate's `gpui` dep to
+`gpui-pre 0.3.10` (the gpui-kit base pin) or confirming it on `gpui 0.2`
+(for the Vanilla base). A landed port then follows the adapter checklist
+in `docs/guide/adapters.md`.
