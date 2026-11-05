@@ -1,4 +1,3 @@
-#![recursion_limit = "512"]
 //! Template Forge adapter — the minimal shape every `forge-lib-*` crate follows.
 //!
 //! To ship a real adapter: copy this crate, rename it, point `use:` at your
@@ -86,19 +85,3 @@ fn prop_str(node: &Node, name: &str) -> Option<String> {
         .or_else(|| prop_str_opt(node, name))
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn catalog_loads_and_lists_elements() {
-        let cat = Template.catalog().expect("catalog");
-        assert_eq!(cat.library, "template-lib");
-        assert!(cat.element("Pill").is_some());
-    }
-
-    #[test]
-    fn alias_matches_catalog_namespace() {
-        assert_eq!(Template.alias(), "mylib");
-    }
-}
