@@ -16,6 +16,7 @@ root:
     - ely.Button: Primary Ely Button
       variant: Primary
       size: Md
+      on click: status('clicked ely button')
     - ely.Button: Danger Outline
       variant: Danger
       size: Sm

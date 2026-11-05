@@ -1454,6 +1454,24 @@ impl ForgeView {
                 if lib.alias() == namespace
                     && let Some(el) = lib.render(node, key, self, window, cx)
                 {
+                    // Adapter events — `on click:` on library elements wraps the
+                    // widget in an interactive div that fires through the hook
+                    // path, so adapters get events without the render signature
+                    // carrying mutable view state.
+                    if node.events.iter().any(|e| e.event == "click") {
+                        let weak = cx.entity().downgrade();
+                        let node = node.clone();
+                        return div()
+                            .id(format!("lib-{key}"))
+                            .child(el)
+                            .on_click(move |_, _, cx| {
+                                try_update(&weak, cx, "event", |this, cx| {
+                                    this.fire(&node, "click", cx)
+                                })
+                                .ok();
+                            })
+                            .into_any_element();
+                    }
                     return el;
                 }
             }
