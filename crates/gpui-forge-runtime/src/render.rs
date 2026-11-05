@@ -466,12 +466,32 @@ impl ForgeView {
                 }
             }
         }
+        // Open state lives in studio.palette_open (indices) — groups start open
+        // (untracked == open) and header clicks toggle via the accordion callback.
+        let open_path = parse_path("studio.palette_open").unwrap();
+        let open_set: Vec<usize> = get_path(self.state(), &open_path)
+            .and_then(|j| j.as_array().cloned())
+            .map(|a| {
+                a.iter()
+                    .filter_map(|v| v.as_u64().map(|u| u as usize))
+                    .collect()
+            })
+            .unwrap_or_default();
+        let weak_toggle = cx.entity().downgrade();
+        let open_path_c = open_path.clone();
         let mut grid = Accordion::new(SharedString::from(format!("{key}-groups")))
             .multiple(true)
-            .bordered(false);
-        for (group, items) in groups {
+            .bordered(false)
+            .on_toggle_click(move |indices: &[usize], _, cx| {
+                let open_path = open_path_c.clone();
+                try_update(&weak_toggle, cx, "palette", |this, cx| {
+                    this.update_state(&open_path, Json::from(indices.to_vec()), cx)
+                })
+                .ok();
+            });
+        for (i, (group, items)) in groups.iter().enumerate() {
             let mut row = div().flex().flex_row().flex_wrap().gap_1();
-            for (name, tag, icon_name) in items {
+            for (name, tag, icon_name) in items.iter().cloned() {
                 // Synthesised node carrying `on click: insert_component('<tag>')` —
                 // clicks run through the same fire path as real elements.
                 let synth = Node {
@@ -483,29 +503,39 @@ impl ForgeView {
                         event: "click".into(),
                         handler: HandlerRef {
                             name: "insert_component".into(),
-                            args: vec![Value::String(tag)],
+                            args: vec![Value::String(tag.clone())],
                         },
                     }],
                     ..Default::default()
                 };
                 let weak = weak.clone();
+                let ghost: SharedString = tag.clone().into();
                 row = row.child(
-                    Button::new(SharedString::from(format!("{key}-{name}")))
-                        .icon(icon(&icon_name))
-                        .with_variant(ButtonVariant::Ghost)
-                        .with_size(size("small"))
-                        .tooltip(name)
-                        .on_click(move |_, _, cx| {
-                            try_update(&weak, cx, "event", |this, cx| {
-                                this.fire(&synth, "click", cx)
-                            })
-                            .ok();
+                    div()
+                        .id(format!("pal-{key}-{name}"))
+                        .child(
+                            Button::new(SharedString::from(format!("{key}-{name}")))
+                                .icon(icon(&icon_name))
+                                .with_variant(ButtonVariant::Ghost)
+                                .with_size(size("small"))
+                                .tooltip(name)
+                                .on_click(move |_, _, cx| {
+                                    try_update(&weak, cx, "event", |this, cx| {
+                                        this.fire(&synth, "click", cx)
+                                    })
+                                    .ok();
+                                }),
+                        )
+                        .on_drag(ForgeDrag::Component(tag.clone()), move |_, _, _, cx| {
+                            cx.new(|_| DragGhost(ghost.clone()))
                         }),
                 );
             }
+            // Untracked (empty open_set) means "everything open" — the default.
+            let open = open_set.is_empty() || open_set.contains(&i);
             let item = gpui_kit::component::accordion::AccordionItem::new()
-                .title(SharedString::from(group))
-                .open(true)
+                .title(SharedString::from(group.clone()))
+                .open(open)
                 .child(row);
             grid = grid.item(move |_| item);
         }
