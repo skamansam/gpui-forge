@@ -354,6 +354,8 @@ root:
         - Box:
           style:
             grow: true
+        - Label: "{$studio.project}"
+          secondary: true
         - Label: "{$studio.file}"
         - Tag: "forge {$studio.spec}"
           outline: true
