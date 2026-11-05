@@ -109,7 +109,6 @@ root:
             overflow: scroll
           children:
             - forge.Palette:
-              style: {height: full}
         - Separator:
           tooltip: Separator
           orientation: Vertical
