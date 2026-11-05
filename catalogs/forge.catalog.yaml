@@ -53,3 +53,10 @@ elements:
         type: string
         summary: Shown when nothing is selected.
     children: none
+
+  Palette:
+    summary: Catalog-driven element palette — a dropdown selects the library
+      (base or a registered ForgeLibrary) and a button grid inserts its
+      elements via insert_component.
+    component: forge::Palette
+    children: none

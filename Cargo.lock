@@ -1832,6 +1832,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "forge-lib-template"
+version = "0.1.0"
+dependencies = [
+ "gpui-forge-runtime",
+]
+
+[[package]]
 name = "forge-spec"
 version = "0.1.0"
 dependencies = [

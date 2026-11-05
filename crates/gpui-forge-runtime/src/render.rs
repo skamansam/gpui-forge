@@ -379,6 +379,120 @@ impl ForgeView {
         self.on_state = Some(on_state);
     }
 
+    /// `forge.Palette` — a catalog-driven element palette: a dropdown selects
+    /// the library (base or any registered `ForgeLibrary`), and a grid of
+    /// buttons inserts its elements through the `insert_component` hook.
+    fn palette(&mut self, _node: &Node, key: &str, cx: &mut Context<Self>) -> AnyElement {
+        // (label, library id, tag prefix) — skip the `forge` intrinsics catalog.
+        let mut libs: Vec<(String, String, String)> = Vec::new();
+        for cat in &self.catalogs {
+            if cat.library == "forge" {
+                continue;
+            }
+            let alias = self
+                .libraries
+                .iter()
+                .find(|l| l.catalog().is_some_and(|c| c.library == cat.library))
+                .map(|l| l.alias().to_string())
+                .unwrap_or_default();
+            let label = cat.name.clone().unwrap_or_else(|| cat.library.clone());
+            libs.push((label, cat.library.clone(), alias));
+        }
+        let selected = get_path(self.state(), &parse_path("studio.palette_lib").unwrap())
+            .and_then(|j| j.as_str())
+            .map(str::to_owned)
+            .unwrap_or_else(|| libs.first().map(|(_, id, _)| id.clone()).unwrap_or_default());
+        let current_label = libs
+            .iter()
+            .find(|(_, id, _)| id == &selected)
+            .map(|(l, _, _)| l.clone())
+            .unwrap_or_else(|| selected.clone());
+
+        let weak_menu = cx.entity().downgrade();
+        let weak = cx.entity().downgrade();
+        let selector = Button::new(SharedString::from(format!("{key}-lib")))
+            .label(SharedString::from(current_label))
+            .with_variant(ButtonVariant::Secondary)
+            .with_size(size("small"))
+            .dropdown_menu({
+                let libs = libs.clone();
+                move |menu, _, _| {
+                    let mut menu = menu;
+                    for (label, id, _) in &libs {
+                        let weak = weak_menu.clone();
+                        let id = id.clone();
+                        menu = menu.item(PopupMenuItem::new(label.clone()).on_click(
+                            move |_, _, cx| {
+                                try_update(&weak, cx, "palette", |this, cx| {
+                                    this.update_state(
+                                        &parse_path("studio.palette_lib").unwrap(),
+                                        Json::String(id.clone()),
+                                        cx,
+                                    )
+                                })
+                                .ok();
+                            },
+                        ));
+                    }
+                    menu
+                }
+            });
+
+        let prefix = libs
+            .iter()
+            .find(|(_, id, _)| id == &selected)
+            .map(|(_, _, p)| p.clone())
+            .unwrap_or_default();
+        let mut grid = v_flex().gap_1().w_full();
+        if let Some(cat) = self.catalogs.iter().find(|c| c.library == selected) {
+            for def in &cat.elements {
+                let name = def.name.clone();
+                let tag = if prefix.is_empty() {
+                    name.clone()
+                } else {
+                    format!("{prefix}.{name}")
+                };
+                // Synthesised node carrying the `on click: insert_component('<tag>')`
+                // binding — click runs through the same fire path as real elements.
+                let synth = Node {
+                    element: ElementRef {
+                        name: "Button".into(),
+                        namespace: None,
+                    },
+                    events: vec![EventBinding {
+                        event: "click".into(),
+                        handler: HandlerRef {
+                            name: "insert_component".into(),
+                            args: vec![Value::String(tag)],
+                        },
+                    }],
+                    ..Default::default()
+                };
+                let weak = weak.clone();
+                grid = grid.child(
+                    Button::new(SharedString::from(format!("{key}-{name}")))
+                        .label(SharedString::from(name.clone()))
+                        .with_variant(ButtonVariant::Ghost)
+                        .with_size(size("small"))
+                        .on_click(move |_, _, cx| {
+                            try_update(&weak, cx, "event", |this, cx| {
+                                this.fire(&synth, "click", cx)
+                            })
+                            .ok();
+                        }),
+                );
+            }
+        }
+        div()
+            .flex()
+            .flex_col()
+            .gap_2()
+            .w_full()
+            .child(selector)
+            .child(grid)
+            .into_any_element()
+    }
+
     fn fire(&mut self, node: &Node, event: &str, cx: &mut Context<Self>) {
         let Some(binding) = node.events.iter().find(|e| e.event == event) else {
             return;
@@ -1333,6 +1447,7 @@ impl ForgeView {
                         None => placeholder(empty_text, cx),
                     }
                 }
+                (Some("forge"), "Palette") => self.palette(node, key, cx),
                 _ => placeholder(
                     format!(
                         "`{namespace}.{}` is not provided by this adapter yet",

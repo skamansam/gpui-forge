@@ -1,0 +1,13 @@
+[package]
+name = "forge-lib-template"
+description = "Template Forge adapter — copy this crate to wrap a third-party GPUI component library."
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+repository.workspace = true
+
+[dependencies]
+gpui-forge-runtime = { path = "../gpui-forge-runtime" }
+
+[lints]
+workspace = true
