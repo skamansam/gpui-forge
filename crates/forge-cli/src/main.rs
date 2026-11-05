@@ -167,6 +167,7 @@ fn main() {
         "hooks" => hooks_cmd(&rest),
         "license" => license_cmd(&rest),
         "bases" => bases_cmd(),
+        "migrate" => migrate_cmd(&rest),
         "check" | "validate" => check_cmd(&rest),
         "schema" => {
             print!("{}", gpui_forge_runtime::forge_spec::json::schema());
@@ -479,6 +480,104 @@ fn bases_cmd() -> i32 {
         })
         .collect();
     println!("{}", serde_json::to_string_pretty(&out).unwrap_or_default());
+    0
+}
+
+/// `forge migrate --base <id> <doc>` — point a document at another base:
+/// rewrites `base:` (preserving the file when the writer can), then reports
+/// elements missing from the target's catalog and imports the base doesn't
+/// list as compatible (#101).
+fn migrate_cmd(rest: &[String]) -> i32 {
+    let Some(base) = rest
+        .windows(2)
+        .find(|w| w[0] == "--base")
+        .map(|w| w[1].clone())
+    else {
+        usage();
+        return 2;
+    };
+    // Last positional is the doc — `--base`'s value is a positional too.
+    let Some(path) = rest
+        .iter()
+        .filter(|a| !a.starts_with('-'))
+        .last()
+        .map(PathBuf::from)
+        .filter(|p| p.exists())
+    else {
+        usage();
+        return 2;
+    };
+    let bases = gpui_forge_runtime::check::bases();
+    let Some(target) = bases.iter().find(|b| b.id == base) else {
+        eprintln!(
+            "forge: unknown base `{base}` — registered: {}",
+            bases
+                .iter()
+                .map(|b| b.id.as_str())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+        return 1;
+    };
+    let src = match std::fs::read_to_string(&path) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("forge: cannot read {}: {e}", path.display());
+            return 1;
+        }
+    };
+    let catalogs = gpui_forge_runtime::check::catalogs();
+    let (doc, _) = gpui_forge_runtime::check::check(&src, &base, &catalogs);
+    let Some(mut doc) = doc else {
+        eprintln!("forge: {} does not parse", path.display());
+        return 1;
+    };
+    let from = doc.base.clone().unwrap_or_default();
+    doc.base = Some(base.clone());
+    let target_cat = catalogs.iter().find(|c| c.library == target.catalog);
+    // Elements whose names aren't in the target's catalog.
+    let mut missing: Vec<String> = Vec::new();
+    if let Some(cat) = target_cat {
+        let mut stack = vec![doc.root.clone()];
+        while let Some(n) = stack.pop() {
+            for c in &n.children {
+                if c.element.namespace.is_none() && cat.element(&c.element.name).is_none() {
+                    missing.push(c.element.name.clone());
+                }
+            }
+            stack.extend(n.children.clone());
+        }
+    }
+    // Imports the target doesn't list as compatible.
+    let incompatible: Vec<String> = doc
+        .imports
+        .iter()
+        .filter(|i| !target.libraries.contains(&i.library))
+        .map(|i| i.library.clone())
+        .collect();
+    let out = gpui_forge_runtime::forge_spec::yaml::to_string_preserving(
+        &doc,
+        &gpui_forge_runtime::forge_spec::yaml::WriteOptions::default(),
+    );
+    if let Err(e) = std::fs::write(&path, &out) {
+        eprintln!("forge: cannot write {}: {e}", path.display());
+        return 1;
+    }
+    println!("forge: {} → base {base} (was {from})", path.display());
+    if !missing.is_empty() {
+        missing.sort();
+        missing.dedup();
+        eprintln!(
+            "forge: elements missing from {base}: {}",
+            missing.join(", ")
+        );
+    }
+    if !incompatible.is_empty() {
+        eprintln!(
+            "forge: imports not listed compatible with {base}: {}",
+            incompatible.join(", ")
+        );
+    }
     0
 }
 
