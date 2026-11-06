@@ -32,12 +32,18 @@ use std::io::{BufRead, Write};
 use std::sync::mpsc;
 
 enum HostMsg {
-    Source(String),
+    Source {
+        src: String,
+        dir: Option<std::path::PathBuf>,
+    },
     Pick(bool),
     Place(bool),
     Dnd(bool),
     Select(String),
-    Theme { name: Option<String>, dark: bool },
+    Theme {
+        name: Option<String>,
+        dark: bool,
+    },
     Raise,
     Quit,
 }
@@ -66,12 +72,17 @@ fn main() {
                     if let Some(p) = v["doc"].as_str()
                         && let Ok(src) = std::fs::read_to_string(p)
                     {
-                        let _ = tx.send(HostMsg::Source(src));
+                        let dir = std::path::Path::new(p).parent().map(|d| d.to_path_buf());
+                        let _ = tx.send(HostMsg::Source { src, dir });
                     }
                 }
                 Some("source") => {
                     if let Some(src) = v["src"].as_str() {
-                        let _ = tx.send(HostMsg::Source(src.to_string()));
+                        let dir = v["dir"].as_str().map(std::path::PathBuf::from);
+                        let _ = tx.send(HostMsg::Source {
+                            src: src.to_string(),
+                            dir,
+                        });
                     }
                 }
                 Some("pick") => {
@@ -171,7 +182,10 @@ fn main() {
                             let _ = view.update(cx, |view: &mut ForgeView, cx| {
                                 for msg in msgs.drain(..) {
                                     match msg {
-                                        HostMsg::Source(src) => {
+                                        HostMsg::Source { src, dir } => {
+                                            if let Some(dir) = dir {
+                                                view.set_base_dir(dir);
+                                            }
                                             let catalogs = view.catalogs.clone();
                                             let (doc, diags) = check::check(
                                                 &src,

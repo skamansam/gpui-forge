@@ -30,6 +30,9 @@ const BLANK: &str = "forge: \"0.1\"\nbase: gpui-kit\n\nroot:\n  VStack:\n  style
 struct Shared {
     /// The file `editor.source` was loaded from; `None` for embedded documents.
     file: Option<PathBuf>,
+    /// The directory the current document lives in — asset paths resolve
+    /// here and it's forwarded to the preview host as `base_dir`.
+    dir: Option<PathBuf>,
     catalogs: Vec<Catalog>,
     /// Undo/redo — snapshots of `(document, editor source)` taken before each
     /// mutation, so a step back restores the editor text exactly.
@@ -122,6 +125,7 @@ fn main() {
 fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     let shared: SharedState = Rc::new(RefCell::new(Shared {
         file: None,
+        dir: None,
         catalogs: check::catalogs(),
         undo: Vec::new(),
         redo: Vec::new(),
@@ -689,10 +693,9 @@ fn open_project(shared: SharedState, cx: &mut Context<ForgeView>) {
 /// the doc path over the JSON control channel and reads its events back —
 /// `call`/`state` lines play the same role as the embedded preview's sinks.
 fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<ForgeView>) {
-    let Some(path) = shared.borrow().file.clone() else {
-        status(view, "open a document first", cx);
-        return;
-    };
+    // `load` for file-backed docs (also seeds the host's base_dir); unsaved
+    // documents go over `source` — the editor buffer is the document.
+    let file = shared.borrow().file.clone();
     let binary = std::env::current_exe()
         .ok()
         .and_then(|e| e.parent().map(|p| p.join("forge-preview")))
@@ -768,7 +771,11 @@ fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<F
             generation,
         });
     }
-    host_send(&json!({"cmd":"load","doc":path.display().to_string()}));
+    if let Some(path) = &file {
+        host_send(&json!({"cmd":"load","doc":path.display().to_string()}));
+    } else {
+        host_send_source(view, &shared);
+    }
     host_send(&json!({"cmd":"dnd","on":true}));
     host_send_theme(view);
     cx.spawn(async move |view, cx| {
@@ -841,7 +848,7 @@ fn host_event(
             dispatch(view, &name, &args, shared, cx);
             // The dispatch may have mutated the preview doc (place/move/drop)
             // — push the synced source back so the host re-renders it.
-            host_send(&json!({"cmd":"source","src": source(view)}));
+            host_send_source(view, shared);
         }
         HostEvent::State(state) => {
             view.update_state(
@@ -903,8 +910,9 @@ fn host_send(value: &Json) {
 
 /// Pushes the current `editor.source` to the host — after doc mutations and
 /// on every edit, so the out-of-process preview stays live-synced.
-fn host_send_source(view: &ForgeView) {
-    host_send(&json!({"cmd":"source","src": source(view)}));
+fn host_send_source(view: &ForgeView, shared: &SharedState) {
+    let dir = shared.borrow().dir.clone();
+    host_send(&json!({"cmd":"source","src": source(view),"dir": dir}));
 }
 
 /// Sends the current theme to the host — the registry name when `studio.theme`
@@ -1187,6 +1195,9 @@ fn load_source(
     // Sync the editor's text without firing `source_changed` — a fresh load
     // is clean, not a user edit.
     view.reset_inputs("source");
+    if let Some(dir) = dir {
+        shared.borrow_mut().dir = Some(dir.to_path_buf());
+    }
     if let Some(doc) = doc {
         view.set_preview_document("canvas", doc, cx);
         if let Some(dir) = dir {
@@ -1194,7 +1205,7 @@ fn load_source(
                 .update(cx, |p, _| p.set_base_dir(dir.to_path_buf()));
         }
     }
-    host_send_source(view);
+    host_send_source(view, shared);
 }
 
 /// `on change: source_changed()` — re-check the source on every edit and keep the
@@ -1217,7 +1228,7 @@ fn reload(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView
     if let Some(doc) = doc {
         view.set_preview_document("canvas", doc, cx);
     }
-    host_send_source(view);
+    host_send_source(view, shared);
 }
 
 fn save_document(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView>) {
