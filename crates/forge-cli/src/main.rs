@@ -320,8 +320,14 @@ fn check_cmd(rest: &[String]) -> i32 {
         }
     };
     let catalogs = gpui_forge_runtime::check::catalogs();
-    let (doc, diagnostics) =
-        gpui_forge_runtime::check::check(&src, gpui_forge_runtime::base::BASE_ID, &catalogs);
+    // `forge check` has no project context — the document's own `base:` is the
+    // validation context (the compiled base when undeclared), so foreign-base
+    // documents are still checkable.
+    let base = gpui_forge_runtime::forge_spec::yaml::from_str(&src)
+        .ok()
+        .and_then(|d| d.base)
+        .unwrap_or_else(|| gpui_forge_runtime::base::BASE_ID.to_string());
+    let (doc, diagnostics) = gpui_forge_runtime::check::check(&src, &base, &catalogs);
     let name = path.display();
     for d in &diagnostics {
         eprintln!("{name}:{}:{}: {}", d.pos.line, d.pos.col, d.message);

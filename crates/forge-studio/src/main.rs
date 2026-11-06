@@ -1278,6 +1278,15 @@ fn load_source(
     );
     set_path(
         &mut state,
+        &parse_path("studio.doc_base").unwrap(),
+        Json::String(
+            doc.as_ref()
+                .and_then(|d| d.base.clone())
+                .unwrap_or_else(|| BASE_ID.to_owned()),
+        ),
+    );
+    set_path(
+        &mut state,
         &parse_path("status.message").unwrap(),
         Json::String(problem_count(&diagnostics)),
     );
@@ -1308,6 +1317,15 @@ fn reload(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView
     view.update_state(
         &parse_path("studio.diagnostics").unwrap(),
         Json::String(problems(&diagnostics)),
+        cx,
+    );
+    view.update_state(
+        &parse_path("studio.doc_base").unwrap(),
+        Json::String(
+            doc.as_ref()
+                .and_then(|d| d.base.clone())
+                .unwrap_or_else(|| BASE_ID.to_owned()),
+        ),
         cx,
     );
     view.update_state(

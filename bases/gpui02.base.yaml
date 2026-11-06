@@ -1,0 +1,23 @@
+# Base manifest — see docs/design/multi-base.md
+# Scaffold for #96 (vanilla GPUI 0.2 + guise). Registered so `forge new --base
+# gpui02`, Studio's picker and forge-web can target it; the render adapter that
+# lets a `base-gpui02` binary compile lands with the upstream-port work.
+base: "0.1"
+id: gpui02
+name: GPUI 0.2 · guise
+description: crates.io gpui 0.2.2 with guise (Mantine-style) components — desktop only.
+
+gpui:
+  crate: gpui
+  version: "0.2.2"
+library:
+  crate: guise-ui        # published name; the library is `guise`
+  version: "1.10"
+toolchain: stable
+platforms: [linux, macos, windows]
+wasm: false
+theme: guise             # theme system this base consumes
+catalog: gpui02          # base catalog id (catalogs/gpui02.catalog.yaml)
+license: MIT
+
+libraries: {}            # no compatible adapters registered yet

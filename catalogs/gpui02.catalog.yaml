@@ -1,0 +1,216 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for the gpui02 base — guise components on crates.io gpui
+# 0.2.2. Scaffold for #96: shared-vocab layout names (VStack → guise Stack)
+# plus guise-native elements; extend as the adapter port lands.
+# Format: docs/spec/catalog-manifest.md
+catalog: "0.1"
+library: gpui02
+name: guise
+version: 0.1.0
+license: MIT
+bases:
+  gpui02: "*"
+
+elements:
+  VStack:
+    icon: rows-3
+    group: Layout
+    summary: Vertical flex container (guise `Stack`).
+    component: guise::layout::Stack
+    children: any
+
+  HStack:
+    icon: columns-3
+    group: Layout
+    summary: Horizontal flex container (guise `Group`).
+    component: guise::layout::Group
+    children: any
+
+  Center:
+    icon: align-center-horizontal
+    group: Layout
+    summary: Centers its children on both axes.
+    component: guise::layout::Center
+    children: any
+
+  Container:
+    icon: square
+    group: Layout
+    summary: Width-constrained page container.
+    component: guise::layout::Container
+    children: any
+
+  Space:
+    icon: separator-horizontal
+    group: Layout
+    summary: Fixed empty space between siblings.
+    component: guise::layout::Space
+    props:
+      size:
+        type: enum
+        values: [Xs, Sm, Md, Lg, Xl]
+        default: Md
+
+  Divider:
+    icon: minus
+    group: Layout
+    summary: Horizontal rule between sections.
+    component: guise::layout::Divider
+    props:
+      label: string
+
+  Paper:
+    icon: square-stack
+    group: Layout
+    summary: Elevated surface — background, radius and shadow from the theme.
+    component: guise::Paper
+    children: any
+
+  Title:
+    icon: type
+    group: Display
+    summary: Heading text, theme-scaled by `order`.
+    component: guise::Title
+    content: text
+    props:
+      text:
+        type: string
+        required: true
+      order:
+        type: enum
+        values: [H1, H2, H3, H4, H5, H6]
+        default: H3
+
+  Text:
+    icon: pilcrow
+    group: Display
+    summary: A run of text.
+    component: guise::Text
+    content: text
+    props:
+      text:
+        type: string
+        required: true
+
+  Badge:
+    icon: badge
+    group: Display
+    summary: Small status/label chip.
+    component: guise::Badge
+    content: text
+    props:
+      text:
+        type: string
+        required: true
+      variant:
+        type: enum
+        values: [Default, Filled, Light, Outline, Subtle, Transparent, White]
+        default: Light
+      color: string
+
+  Card:
+    icon: square-stack
+    group: Display
+    summary: Bordered surface grouping related content.
+    component: guise::Card
+    children: any
+
+  Button:
+    icon: mouse-pointer-click
+    group: Input
+    summary: Clickable button — Mantine variants and theme colors.
+    component: guise::Button
+    content: label
+    props:
+      label: string
+      variant:
+        type: enum
+        values: [Default, Filled, Light, Outline, Subtle, Transparent, White]
+        default: Filled
+      color: string
+      size:
+        type: enum
+        values: [Xs, Sm, Md, Lg, Xl]
+        default: Md
+      disabled:
+        type: bool
+        default: false
+    events:
+      click:
+
+  TextInput:
+    icon: text-cursor-input
+    group: Input
+    summary: Single-line text input with label, description and error.
+    component: guise::input::TextInput
+    props:
+      label: string
+      placeholder: string
+      description: string
+      error: string
+      value: string
+    events:
+      change:
+
+  Checkbox:
+    icon: square-check
+    group: Input
+    summary: Togglable labelled checkbox.
+    component: guise::input::Checkbox
+    content: label
+    props:
+      label: string
+      checked:
+        type: bool
+        default: false
+    events:
+      change:
+
+  Switch:
+    icon: toggle-left
+    group: Input
+    summary: On/off toggle.
+    component: guise::input::Switch
+    content: label
+    props:
+      label: string
+      checked:
+        type: bool
+        default: false
+    events:
+      change:
+
+  Select:
+    icon: chevrons-up-down
+    group: Input
+    summary: Dropdown pick-one input.
+    component: guise::input::Select
+    props:
+      label: string
+      placeholder: string
+      options: string
+      value: string
+    events:
+      change:
+
+  Progress:
+    icon: rectangle-horizontal
+    group: Feedback
+    summary: Progress bar, 0–100.
+    component: guise::feedback::Progress
+    props:
+      value: number
+      color: string
+
+  Alert:
+    icon: triangle-alert
+    group: Feedback
+    summary: Attention banner with title and message.
+    component: guise::feedback::Alert
+    content: text
+    props:
+      text:
+        type: string
+        required: true
+      title: string
+      color: string

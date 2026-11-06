@@ -384,10 +384,15 @@ impl ForgeView {
     /// the library (base or any registered `ForgeLibrary`), and a grid of
     /// buttons inserts its elements through the `insert_component` hook.
     fn palette(&mut self, _node: &Node, key: &str, cx: &mut Context<Self>) -> AnyElement {
-        // (label, library id, tag prefix) — skip the `forge` intrinsics catalog.
+        // (label, library id, tag prefix) — skip the `forge` intrinsics catalog
+        // and any catalog the edited document's base doesn't support (#98).
+        let doc_base = get_path(self.state(), &parse_path("studio.doc_base").unwrap())
+            .and_then(|j| j.as_str())
+            .unwrap_or(crate::base::BASE_ID)
+            .to_owned();
         let mut libs: Vec<(String, String, String)> = Vec::new();
         for cat in &self.catalogs {
-            if cat.library == "forge" {
+            if cat.library == "forge" || !cat.supports_base(&doc_base) {
                 continue;
             }
             let alias = self
