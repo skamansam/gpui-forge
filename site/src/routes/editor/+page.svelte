@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { parse as parseYaml } from 'yaml';
-	import catalogSource from '../../../../catalogs/gpui-kit.catalog.yaml?raw';
+	import { parse as parseYaml, isMap } from 'yaml';
 	import Canvas, { type Diagnostic } from '#lib/Canvas.svelte';
 	import YamlEditor from '#lib/YamlEditor.svelte';
 	import Diagnostics from '#lib/Diagnostics.svelte';
@@ -9,7 +8,23 @@
 
 	type Prop = { type?: string; values?: string[]; default?: unknown; summary?: string } | string;
 	type Element = { summary?: string; content?: string; props?: Record<string, Prop>; children?: unknown };
-	const catalog: Record<string, Element> = parseYaml(catalogSource).elements;
+	type Base = { id: string; name?: string; catalog?: string; libraries?: Record<string, unknown> };
+
+	// The shipped registry — every `bases/*.base.yaml` manifest and every
+	// `catalogs/*.catalog.yaml`, keyed by library id (#98 base picker).
+	const baseFiles = import.meta.glob('../../../../bases/*.base.yaml', {
+		query: '?raw', import: 'default', eager: true,
+	});
+	const catalogFiles = import.meta.glob('../../../../catalogs/*.catalog.yaml', {
+		query: '?raw', import: 'default', eager: true,
+	});
+	const bases: Base[] = Object.values(baseFiles).map((s) => parseYaml(s as string));
+	const catalogs: Record<string, Record<string, Element>> = Object.fromEntries(
+		Object.values(catalogFiles).map((s) => {
+			const m = parseYaml(s as string);
+			return [m.library, m.elements];
+		}),
+	);
 
 	let yaml = $state(examples[0].yaml);
 	let selected = $state<number[]>([]);
@@ -31,6 +46,31 @@
 	const root = $derived(doc ? F.tree(doc) : null);
 	const node = $derived(doc ? F.nodeAt(doc, selected) : null);
 	const key = $derived(node ? F.elementKey(node) : undefined);
+
+	// The doc's declared base (first registered when undeclared) drives the
+	// palette: its catalog plus every `use:`-imported library the base marks
+	// compatible. `forge.*` intrinsics stay out of the palette.
+	const docBase = $derived(String(doc?.get('base') ?? ''));
+	const baseId = $derived(bases.some((b) => b.id === docBase) ? docBase : (bases[0]?.id ?? 'gpui-kit'));
+	const baseDef = $derived(bases.find((b) => b.id === baseId));
+	const catalog = $derived(catalogs[baseDef?.catalog ?? 'gpui-kit'] ?? {});
+	const libs = $derived.by(() => {
+		const out: { id: string; tag: string; elements: Record<string, Element> }[] = [
+			{ id: baseId, tag: '', elements: catalog },
+		];
+		const use = doc?.get('use');
+		const compatible = new Set(Object.keys(baseDef?.libraries ?? {}));
+		if (isMap(use)) {
+			for (const it of use.items) {
+				const alias = String((it.key as { value?: string })?.value ?? it.key);
+				const lib = String((it.value as { value?: string })?.value ?? it.value);
+				if (lib === 'forge' || !compatible.has(lib) || !catalogs[lib]) continue;
+				out.push({ id: `${alias} (${lib})`, tag: `${alias}.`, elements: catalogs[lib] });
+			}
+		}
+		return out;
+	});
+
 	const def = $derived(key ? catalog[F.elementName(key)] : undefined);
 	const canHaveChildren = $derived(!!def?.children);
 
@@ -114,13 +154,21 @@
 
 <div class="editor">
 	<div class="panel col palette">
-		<div class="panel-title"><span>Components</span><span>gpui-kit</span></div>
+		<div class="panel-title"><span>Components</span>
+			<select value={baseId} title="base component system"
+				onchange={(e) => edit((d) => d.set('base', e.currentTarget.value))}>
+				{#each bases as b (b.id)}<option value={b.id}>{b.name ?? b.id}</option>{/each}
+			</select>
+		</div>
 		<p class="hint">{canHaveChildren ? `Click to add inside ${key}` : 'Select a container to add children'}</p>
 		<div class="list">
-			{#each Object.entries(catalog) as [name, el] (name)}
-				<button class="item" disabled={!canHaveChildren} title={el.summary} draggable="true"
-					ondragstart={(e) => e.dataTransfer?.setData('forge-element', name)}
-					onclick={() => edit((d) => F.addChild(d, selected, name))}>{name}</button>
+			{#each libs as lib (lib.id)}
+				{#if lib.tag}<div class="lib">{lib.id}</div>{/if}
+				{#each Object.entries(lib.elements) as [name, el] (lib.tag + name)}
+					<button class="item" disabled={!canHaveChildren} title={el.summary} draggable="true"
+						ondragstart={(e) => e.dataTransfer?.setData('forge-element', lib.tag + name)}
+						onclick={() => edit((d) => F.addChild(d, selected, lib.tag + name))}>{lib.tag}{name}</button>
+				{/each}
 			{/each}
 		</div>
 	</div>
@@ -190,6 +238,7 @@
 	.col { display: flex; flex-direction: column; min-width: 0; }
 	.hint { color: var(--muted); font-size: 12px; margin: 8px 12px; }
 	.list { display: flex; flex-direction: column; overflow: auto; }
+	.lib { color: var(--muted); font-size: 11px; margin: 8px 12px 2px; text-transform: uppercase; letter-spacing: 0.05em; }
 	.item { text-align: left; background: none; border: 0; color: var(--fg); padding: 5px 12px; font: 13px var(--mono); cursor: pointer; }
 	.item:hover:not(:disabled) { background: var(--panel-2); color: var(--accent-2); }
 	.item:disabled { color: #52525b; cursor: default; }
