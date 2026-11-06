@@ -914,8 +914,9 @@ impl ForgeView {
     }
 
     /// Fires a registered hook by name, bubbling to the host's sink when this
-    /// view doesn't handle it — the shared path for events and drops.
-    fn fire_call(&mut self, name: &str, args: Vec<String>, cx: &mut Context<Self>) {
+    /// view doesn't handle it — the shared path for events and drops. Public
+    /// so hosts can trigger doc events programmatically (tests, IPC).
+    pub fn fire_call(&mut self, name: &str, args: Vec<String>, cx: &mut Context<Self>) {
         if let Some(handler) = self.hooks.get(name).cloned() {
             handler(&args, self, cx);
         } else if let Some(sink) = self.on_hook.clone() {
