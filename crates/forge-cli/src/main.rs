@@ -149,8 +149,8 @@ edition = "2024"
 {LIBS}
 {LIB_DEPS}
 forge-spec = { path = "{ROOT}/crates/forge-spec" }
-gpui-forge-runtime = { path = "{ROOT}/crates/gpui-forge-runtime", features = ["base-gpui-kit"] }
-gpui-kit = "=0.8.1"
+gpui-forge-runtime = { path = "{ROOT}/crates/gpui-forge-runtime", features = ["{BASE_FEATURE}"] }
+{BASE_LIB_DEP}
 serde_json = "1"
 
 # A generated app sits inside the gpui-forge checkout but is its own workspace.
@@ -1147,6 +1147,21 @@ fn build_cmd(rest: &[String]) -> i32 {
         .as_ref()
         .and_then(|d| d.base.clone())
         .unwrap_or_else(|| gpui_forge_runtime::base::BASE_ID.to_string());
+    // The base manifest drives the generated crate: its library pin and the
+    // runtime `base-<id>` feature fill Cargo.toml; its toolchain lands in
+    // rust-toolchain.toml (#100).
+    let bases = gpui_forge_runtime::check::bases();
+    let Some(base) = bases.iter().find(|b| b.id == doc_base) else {
+        eprintln!(
+            "forge: document targets unknown base `{doc_base}` — registered: {}",
+            bases
+                .iter()
+                .map(|b| b.id.as_str())
+                .collect::<Vec<_>>()
+                .join(", ")
+        );
+        return 1;
+    };
     if let Some(doc) = &built_doc {
         for import in &doc.imports {
             match import.library.as_str() {
@@ -1182,8 +1197,19 @@ fn build_cmd(rest: &[String]) -> i32 {
                     "
 ",
                 ),
+            )
+            .replace("{BASE_FEATURE}", &format!("base-{}", base.id))
+            .replace(
+                "{BASE_LIB_DEP}",
+                &format!("{} = \"{}\"", base.library_crate, base.library_version),
             ),
     );
+    if !base.toolchain.is_empty() {
+        write(
+            &dir.join("rust-toolchain.toml"),
+            &format!("[toolchain]\nchannel = \"{}\"\n", base.toolchain),
+        );
+    }
     write(
         &src_dir.join("main.rs"),
         &APP_MAIN
