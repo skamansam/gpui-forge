@@ -431,6 +431,7 @@ fn apply_theme_name(
             cx,
         );
     }
+    host_send_theme(view);
 }
 
 /// `reset_theme()` — the Themes tab's reset icon — restores the registry's
@@ -452,6 +453,7 @@ fn reset_theme(
     let name = default.name.to_string();
     Theme::update(cx, |theme| theme.apply_config(&default));
     view.update_state(&parse_path("studio.theme").unwrap(), Json::String(name), cx);
+    host_send_theme(view);
 }
 
 /// `apply_theme_json()` — parse `studio.theme_json` (a `ThemeSet`) and apply the
@@ -481,6 +483,7 @@ fn apply_theme_json(
             let name = config.name.to_string();
             Theme::update(cx, |theme| theme.apply_config(&Rc::new(config)));
             view.update_state(&parse_path("studio.theme").unwrap(), Json::String(name), cx);
+            host_send_theme(view);
         }
         Err(e) => view.report(format!("theme json: {e}")),
     }
@@ -525,6 +528,8 @@ fn dispatch(
                 None,
                 cx,
             );
+            view.update_state(&parse_path("studio.dark").unwrap(), Json::Bool(dark), cx);
+            host_send(&json!({"cmd":"theme","dark": dark}));
         }
         // apply_theme_name/apply_theme_json/reset_theme: registry hooks
         "source_changed" => reload(view, shared, cx),
@@ -765,6 +770,7 @@ fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<F
     }
     host_send(&json!({"cmd":"load","doc":path.display().to_string()}));
     host_send(&json!({"cmd":"dnd","on":true}));
+    host_send_theme(view);
     cx.spawn(async move |view, cx| {
         loop {
             cx.background_executor()
@@ -899,6 +905,23 @@ fn host_send(value: &Json) {
 /// on every edit, so the out-of-process preview stays live-synced.
 fn host_send_source(view: &ForgeView) {
     host_send(&json!({"cmd":"source","src": source(view)}));
+}
+
+/// Sends the current theme to the host — the registry name when `studio.theme`
+/// names a config, else just the light/dark mode.
+fn host_send_theme(view: &ForgeView) {
+    match get_path(view.state(), &parse_path("studio.theme").unwrap())
+        .and_then(|j| j.as_str())
+        .map(str::to_owned)
+    {
+        Some(name) => host_send(&json!({"cmd":"theme","name": name})),
+        None => {
+            let dark = get_path(view.state(), &parse_path("studio.dark").unwrap())
+                .and_then(|j| j.as_bool())
+                .unwrap_or_default();
+            host_send(&json!({"cmd":"theme","dark": dark}));
+        }
+    }
 }
 
 /// Reads `key = "value"` lines out of a manifest's `[forge]` section — the

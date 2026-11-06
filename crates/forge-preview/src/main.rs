@@ -12,6 +12,8 @@
 //!   {"cmd":"place","on":<bool>}        → click-to-place mode
 //!   {"cmd":"dnd","on":<bool>}          → node drags / drop targets
 //!   {"cmd":"select","path":"<path>"}   → mirrors Studio's outline selection
+//!   {"cmd":"theme","name":"<name>"}    → applies a registry theme by name
+//!   {"cmd":"theme","dark":<bool>}      → light/dark mode with current theme
 //!   {"cmd":"raise"}                    → focuses the host window
 //!   {"cmd":"quit"}                     → exits
 //! stdout replies:
@@ -22,6 +24,7 @@
 
 use gpui_forge_runtime::check;
 use gpui_forge_runtime::render::ForgeView;
+use gpui_kit::component::theme::{Theme, ThemeMode, ThemeRegistry};
 use gpui_kit::prelude::*;
 use gpui_kit::*;
 use serde_json::json;
@@ -34,6 +37,7 @@ enum HostMsg {
     Place(bool),
     Dnd(bool),
     Select(String),
+    Theme { name: Option<String>, dark: bool },
     Raise,
     Quit,
 }
@@ -84,6 +88,12 @@ fn main() {
                         let _ = tx.send(HostMsg::Select(path.to_string()));
                     }
                 }
+                Some("theme") => {
+                    let _ = tx.send(HostMsg::Theme {
+                        name: v["name"].as_str().map(str::to_owned),
+                        dark: v["dark"].as_bool().unwrap_or_default(),
+                    });
+                }
                 Some("raise") => {
                     let _ = tx.send(HostMsg::Raise);
                 }
@@ -100,6 +110,20 @@ fn main() {
         .with_assets(gpui_kit::assets::AllAssets)
         .run(move |cx| {
             gpui_kit::init(cx);
+            // Same theme catalog as Studio — `theme` commands resolve names
+            // against the workspace `themes/` dir.
+            let themes_dir =
+                std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../themes");
+            if let Ok(entries) = std::fs::read_dir(&themes_dir) {
+                for entry in entries.flatten() {
+                    if entry.path().extension().and_then(|s| s.to_str()) == Some("json")
+                        && let Ok(content) = std::fs::read_to_string(entry.path())
+                    {
+                        let _ = ThemeRegistry::global_mut(cx)
+                            .load_themes_from_str(&content);
+                    }
+                }
+            }
             let bounds = Bounds::centered(None, size(px(800.0), px(600.0)), cx);
             gpui_kit::open_window(
                 WindowOptions {
@@ -172,6 +196,28 @@ fn main() {
                                             serde_json::Value::String(path),
                                             cx,
                                         ),
+                                        HostMsg::Theme { name, dark } => {
+                                            let config = name.as_deref().and_then(|n| {
+                                                ThemeRegistry::global(cx)
+                                                    .themes()
+                                                    .get(n)
+                                                    .cloned()
+                                            });
+                                            match config {
+                                                Some(config) => Theme::update(cx, |t| {
+                                                    t.apply_config(&config)
+                                                }),
+                                                None => Theme::change(
+                                                    if dark {
+                                                        ThemeMode::Dark
+                                                    } else {
+                                                        ThemeMode::Light
+                                                    },
+                                                    None,
+                                                    cx,
+                                                ),
+                                            }
+                                        }
                                         HostMsg::Raise => {
                                             // Deferred — a window update from
                                             // inside the entity update would
