@@ -17,6 +17,14 @@ pub fn catalogs() -> Vec<Catalog> {
             .expect("bundled ely catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/gpui02.catalog.yaml"))
             .expect("bundled gpui02 catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/adabraka.catalog.yaml"))
+            .expect("bundled adabraka catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/bezel.catalog.yaml"))
+            .expect("bundled bezel catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/ratatui.catalog.yaml"))
+            .expect("bundled ratatui catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/iced.catalog.yaml"))
+            .expect("bundled iced catalog is valid"),
     ]
 }
 
@@ -30,6 +38,14 @@ pub fn bases() -> Vec<Base> {
             .expect("bundled gpui-kit base manifest is valid"),
         Base::from_yaml(include_str!("../../../bases/gpui02.base.yaml"))
             .expect("bundled gpui02 base manifest is valid"),
+        Base::from_yaml(include_str!("../../../bases/adabraka.base.yaml"))
+            .expect("bundled adabraka base manifest is valid"),
+        Base::from_yaml(include_str!("../../../bases/bezel.base.yaml"))
+            .expect("bundled bezel base manifest is valid"),
+        Base::from_yaml(include_str!("../../../bases/ratatui.base.yaml"))
+            .expect("bundled ratatui base manifest is valid"),
+        Base::from_yaml(include_str!("../../../bases/iced.base.yaml"))
+            .expect("bundled iced base manifest is valid"),
     ]
 }
 

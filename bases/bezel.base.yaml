@@ -1,0 +1,22 @@
+# Base manifest — see docs/design/multi-base.md
+# Scaffold for #94. crate/version pins land with the adapter port — Bezel is
+# crabtalk's fork-track, not a crates.io release.
+base: "0.1"
+id: bezel
+name: Bezel
+description: Bezel components on the bezel-gpui (crabtalk) fork of Zed's GPUI — WASM via bezel-gpui-web.
+
+gpui:
+  crate: bezel-gpui
+  version: "0.1"
+library:
+  crate: bezel
+  version: "0.1"
+toolchain: stable
+platforms: [linux, macos, windows]
+wasm: true
+theme: bezel             # environment-based theme bridge lands with the adapter
+catalog: bezel
+license: MIT
+
+libraries: {}            # bezel-chart/editor/canvas/markdown/terminal/icons/motion adapters later

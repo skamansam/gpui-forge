@@ -1,0 +1,70 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for the bezel base — minimal scaffold for #94; the real
+# component set lands with the adapter port (bezel ecosystem: chart, editor,
+# canvas, markdown, terminal, icons, motion).
+# Format: docs/spec/catalog-manifest.md
+catalog: "0.1"
+library: bezel
+name: Bezel
+version: 0.1.0
+license: MIT
+bases:
+  bezel: "*"
+
+elements:
+  VStack:
+    icon: rows-3
+    group: Layout
+    summary: Vertical flex container.
+    component: bezel::VStack
+    children: any
+
+  HStack:
+    icon: columns-3
+    group: Layout
+    summary: Horizontal flex container.
+    component: bezel::HStack
+    children: any
+
+  Text:
+    icon: pilcrow
+    group: Display
+    summary: A run of text.
+    component: bezel::Text
+    content: text
+    props:
+      text:
+        type: string
+        required: true
+
+  Button:
+    icon: mouse-pointer-click
+    group: Input
+    summary: Clickable button.
+    component: bezel::Button
+    content: label
+    props:
+      label: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      click:
+
+  Input:
+    icon: text-cursor-input
+    group: Input
+    summary: Single-line text input.
+    component: bezel::Input
+    props:
+      placeholder: string
+      value: string
+    events:
+      change:
+
+  Card:
+    icon: square-stack
+    group: Display
+    summary: Bordered surface grouping related content.
+    component: bezel::Card
+    children: any

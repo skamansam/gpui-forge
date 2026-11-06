@@ -1,0 +1,22 @@
+# Base manifest — see docs/design/multi-base.md
+# Scaffold for #112 — the non-GPUI TUI base. `gpui` carries the toolkit stack
+# entry (ratatui itself); a terminal surface, not a GPUI window.
+base: "0.1"
+id: ratatui
+name: Ratatui
+description: Terminal UI base on ratatui — Forge documents describe TUI apps through the same loader/catalog pipeline.
+
+gpui:
+  crate: ratatui
+  version: "0.30"
+library:
+  crate: ratatui
+  version: "0.30"
+toolchain: stable
+platforms: [linux, macos, windows]
+wasm: false
+theme: ratatui
+catalog: ratatui
+license: MIT
+
+libraries: {}

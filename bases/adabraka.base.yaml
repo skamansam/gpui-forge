@@ -1,0 +1,22 @@
+# Base manifest — see docs/design/multi-base.md
+# Scaffold for #95. Nightly toolchain — generated projects pin
+# rust-toolchain.toml to nightly automatically (#100).
+base: "0.1"
+id: adabraka
+name: adabraka-ui
+description: adabraka-ui (shadcn-flavored, ~85 components) on the adabraka-gpui 0.5 fork — desktop only, requires nightly Rust.
+
+gpui:
+  crate: adabraka-gpui
+  version: "0.5"
+library:
+  crate: adabraka-ui
+  version: "0.5"
+toolchain: nightly
+platforms: [linux, macos, windows]
+wasm: false
+theme: adabraka
+catalog: adabraka
+license: MIT
+
+libraries: {}

@@ -1,0 +1,102 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for the ratatui TUI base. Scaffold for #112 — elements are
+# terminal widgets/layouts; `style:` adapts to ratatui constraints.
+# Format: docs/spec/catalog-manifest.md
+catalog: "0.1"
+library: ratatui
+name: Ratatui
+version: 0.1.0
+license: MIT
+bases:
+  ratatui: "*"
+
+elements:
+  VStack:
+    icon: rows-3
+    group: Layout
+    summary: Vertical layout constraint — children stack top-down.
+    component: ratatui::layout::Layout
+    children: any
+
+  HStack:
+    icon: columns-3
+    group: Layout
+    summary: Horizontal layout constraint — children flow left-right.
+    component: ratatui::layout::Layout
+    children: any
+
+  Text:
+    icon: pilcrow
+    group: Display
+    summary: Paragraph of styled terminal text.
+    component: ratatui::widgets::Paragraph
+    content: text
+    props:
+      text:
+        type: string
+        required: true
+      wrap:
+        type: bool
+        default: false
+
+  Block:
+    icon: square
+    group: Display
+    summary: Bordered block with optional title — the TUI frame primitive.
+    component: ratatui::widgets::Block
+    props:
+      title: string
+      borders:
+        type: bool
+        default: true
+    children: any
+
+  List:
+    icon: list
+    group: Display
+    summary: Scrollable list of text items.
+    component: ratatui::widgets::List
+    props:
+      items: string
+    events:
+      select:
+
+  Table:
+    icon: table
+    group: Display
+    summary: Rows and columns of cells.
+    component: ratatui::widgets::Table
+    props:
+      header: string
+      rows: string
+
+  Gauge:
+    icon: rectangle-horizontal
+    group: Feedback
+    summary: Filled gauge, 0–100.
+    component: ratatui::widgets::Gauge
+    props:
+      value: number
+      label: string
+
+  Tabs:
+    icon: layout-list
+    group: Input
+    summary: Tab strip selecting a pane index.
+    component: ratatui::widgets::Tabs
+    props:
+      titles: string
+      selected: number
+    events:
+      select:
+
+  Input:
+    icon: text-cursor-input
+    group: Input
+    summary: Single-line terminal input.
+    component: ratatui::widgets::Paragraph
+    props:
+      placeholder: string
+      value: string
+    events:
+      change:

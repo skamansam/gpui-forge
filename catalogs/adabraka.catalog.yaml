@@ -1,0 +1,172 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for the adabraka base — adabraka-ui components (shadcn
+# flavor) on the adabraka-gpui fork. Scaffold for #95.
+# Format: docs/spec/catalog-manifest.md
+catalog: "0.1"
+library: adabraka
+name: adabraka-ui
+version: 0.1.0
+license: MIT
+bases:
+  adabraka: "*"
+
+elements:
+  VStack:
+    icon: rows-3
+    group: Layout
+    summary: Vertical flex container.
+    component: adabraka_ui::stack::VStack
+    children: any
+
+  HStack:
+    icon: columns-3
+    group: Layout
+    summary: Horizontal flex container.
+    component: adabraka_ui::stack::HStack
+    children: any
+
+  Card:
+    icon: square-stack
+    group: Layout
+    summary: shadcn-style card — header, content, footer sections.
+    component: adabraka_ui::card::Card
+    children: any
+
+  Text:
+    icon: pilcrow
+    group: Display
+    summary: A run of text.
+    component: adabraka_ui::text::Text
+    content: text
+    props:
+      text:
+        type: string
+        required: true
+
+  Badge:
+    icon: badge
+    group: Display
+    summary: Small status chip.
+    component: adabraka_ui::badge::Badge
+    content: text
+    props:
+      text:
+        type: string
+        required: true
+      variant:
+        type: enum
+        values: [Default, Secondary, Destructive, Outline]
+        default: Default
+
+  Avatar:
+    icon: circle-user
+    group: Display
+    summary: User avatar with image or initials fallback.
+    component: adabraka_ui::avatar::Avatar
+    props:
+      src: string
+      fallback: string
+
+  Button:
+    icon: mouse-pointer-click
+    group: Input
+    summary: shadcn button variants.
+    component: adabraka_ui::button::Button
+    content: label
+    props:
+      label: string
+      variant:
+        type: enum
+        values: [Default, Destructive, Outline, Secondary, Ghost, Link]
+        default: Default
+      size:
+        type: enum
+        values: [Sm, Md, Lg, Icon]
+        default: Md
+      disabled:
+        type: bool
+        default: false
+    events:
+      click:
+
+  Input:
+    icon: text-cursor-input
+    group: Input
+    summary: Single-line text input.
+    component: adabraka_ui::input::Input
+    props:
+      placeholder: string
+      value: string
+    events:
+      change:
+
+  Checkbox:
+    icon: square-check
+    group: Input
+    summary: Labelled checkbox.
+    component: adabraka_ui::checkbox::Checkbox
+    content: label
+    props:
+      label: string
+      checked:
+        type: bool
+        default: false
+    events:
+      change:
+
+  Switch:
+    icon: toggle-left
+    group: Input
+    summary: On/off toggle.
+    component: adabraka_ui::switch::Switch
+    props:
+      checked:
+        type: bool
+        default: false
+    events:
+      change:
+
+  Select:
+    icon: chevrons-up-down
+    group: Input
+    summary: Dropdown pick-one input.
+    component: adabraka_ui::select::Select
+    props:
+      options: string
+      value: string
+      placeholder: string
+    events:
+      change:
+
+  Progress:
+    icon: rectangle-horizontal
+    group: Feedback
+    summary: Progress bar, 0–100.
+    component: adabraka_ui::progress::Progress
+    props:
+      value: number
+
+  Alert:
+    icon: triangle-alert
+    group: Feedback
+    summary: shadcn alert — title + description, default/destructive.
+    component: adabraka_ui::alert::Alert
+    content: text
+    props:
+      text:
+        type: string
+        required: true
+      title: string
+      variant:
+        type: enum
+        values: [Default, Destructive]
+        default: Default
+
+  Dialog:
+    icon: app-window
+    group: Windows
+    summary: Modal dialog.
+    component: adabraka_ui::dialog::Dialog
+    props:
+      title: string
+    children: any

@@ -1,0 +1,127 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for the iced base — Elm-style widgets over winit/wgpu.
+# Scaffold for #113.
+# Format: docs/spec/catalog-manifest.md
+catalog: "0.1"
+library: iced
+name: Iced
+version: 0.1.0
+license: MIT
+bases:
+  iced: "*"
+
+elements:
+  VStack:
+    icon: rows-3
+    group: Layout
+    summary: Vertical widget column (iced `column`).
+    component: iced::widget::Column
+    children: any
+
+  HStack:
+    icon: columns-3
+    group: Layout
+    summary: Horizontal widget row (iced `row`).
+    component: iced::widget::Row
+    children: any
+
+  Container:
+    icon: square
+    group: Layout
+    summary: Sized/styled single-child wrapper.
+    component: iced::widget::Container
+    children: any
+
+  Text:
+    icon: pilcrow
+    group: Display
+    summary: A run of text.
+    component: iced::widget::Text
+    content: text
+    props:
+      text:
+        type: string
+        required: true
+      size: number
+
+  Button:
+    icon: mouse-pointer-click
+    group: Input
+    summary: Clickable button — `on click:` is the Elm message.
+    component: iced::widget::Button
+    content: label
+    props:
+      label: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      click:
+
+  Input:
+    icon: text-cursor-input
+    group: Input
+    summary: Single-line text input (iced `text_input`).
+    component: iced::widget::TextInput
+    props:
+      placeholder: string
+      value: string
+    events:
+      change:
+
+  Checkbox:
+    icon: square-check
+    group: Input
+    summary: Labelled checkbox.
+    component: iced::widget::Checkbox
+    content: label
+    props:
+      label: string
+      checked:
+        type: bool
+        default: false
+    events:
+      change:
+
+  Switch:
+    icon: toggle-left
+    group: Input
+    summary: On/off toggler.
+    component: iced::widget::Toggler
+    content: label
+    props:
+      label: string
+      checked:
+        type: bool
+        default: false
+    events:
+      change:
+
+  Slider:
+    icon: sliders-horizontal
+    group: Input
+    summary: Numeric slider over a range.
+    component: iced::widget::Slider
+    props:
+      min: number
+      max: number
+      value: number
+    events:
+      change:
+
+  Progress:
+    icon: rectangle-horizontal
+    group: Feedback
+    summary: Progress bar over a range.
+    component: iced::widget::ProgressBar
+    props:
+      min: number
+      max: number
+      value: number
+
+  Scrollable:
+    icon: scroll
+    group: Layout
+    summary: Scrollable container.
+    component: iced::widget::Scrollable
+    children: any
