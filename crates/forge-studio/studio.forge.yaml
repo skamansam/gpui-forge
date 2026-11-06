@@ -16,6 +16,9 @@ appMenu: &appMenu
     - MenuItem: New
       icon: file-plus
       on click: new_document()
+    - MenuItem: New Project…
+      icon: package-open
+      on click: open_dialog("new-project")
     - MenuItem: Open…
       icon: folder-open
       on click: open_document()
@@ -88,6 +91,32 @@ Dialog#preferences:
                   children:
                     - Select:
                       options: ["Light", "Dark", "System"]
+
+# File → New Project… — scaffolds forge.toml + app.forge.yaml like `forge new`
+Dialog#new-project:
+  style:
+    width: 420px
+    padding: 16px
+    gap: 12px
+    border-radius: 8px
+    background: $theme.background
+    border: 1px solid $theme.border
+  children:
+    - Text: New Forge project
+      style: {size: lg, weight: semibold}
+    - Input:
+      value: bind $name
+      placeholder: project name
+    - Select:
+      options: $bases
+      value: bind $base
+      placeholder: base component system
+    - HStack:
+      style: {justify: end, gap: 8px}
+      children:
+        - Button: Create
+          variant: Primary
+          on click: create_project()
 
 root:
   VStack#studio:

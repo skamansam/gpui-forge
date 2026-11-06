@@ -198,6 +198,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "new_document",
         "open_document",
         "open_project",
+        "create_project",
         "preview_in_host",
         "raise_host",
         "save_document",
@@ -365,6 +366,19 @@ fn open_dialog(
             },
             cx,
         );
+        // Seed fields dialogs bind against — the base registry for pickers,
+        // defaults for the New Project form.
+        v.set_state(
+            json!({
+                "name": "app",
+                "base": BASE_ID,
+                "bases": check::bases()
+                    .iter()
+                    .map(|b| b.id.clone())
+                    .collect::<Vec<String>>(),
+            }),
+            cx,
+        );
         v
     });
     // The hook runs inside the main window's own update cycle — `App::windows()`
@@ -512,6 +526,7 @@ fn dispatch(
         }
         "open_document" => open_document(shared.clone(), cx),
         "open_project" => open_project(shared.clone(), cx),
+        "create_project" => create_project(view, shared.clone(), cx),
         "preview_in_host" => preview_in_host(view, shared.clone(), cx),
         "raise_host" => host_send(&json!({"cmd":"raise"})),
         "open_recent" => {
@@ -681,6 +696,81 @@ fn open_project(shared: SharedState, cx: &mut Context<ForgeView>) {
             return;
         };
         view.update(cx, move |view, cx| {
+            load_project(toml, view, shared.clone(), cx);
+        })
+        .ok();
+    })
+    .detach();
+}
+
+/// `create_project()` — the New Project dialog's Create button (#98): reads the
+/// dialog's `name`/`base` fields (its state lands in `dialog.state` as JSON),
+/// prompts for a parent folder, scaffolds `forge.toml` + `app.forge.yaml` like
+/// `forge new`, then opens the project.
+fn create_project(view: &mut ForgeView, shared: SharedState, cx: &mut Context<ForgeView>) {
+    let fields = get_path(view.state(), &parse_path("dialog.state").unwrap())
+        .and_then(|j| j.as_str())
+        .and_then(|s| serde_json::from_str::<Json>(s).ok())
+        .unwrap_or_default();
+    let name = fields["name"]
+        .as_str()
+        .unwrap_or_default()
+        .trim()
+        .to_owned();
+    let base = fields["base"]
+        .as_str()
+        .unwrap_or_default()
+        .trim()
+        .to_owned();
+    let base = if base.is_empty() {
+        BASE_ID.to_owned()
+    } else {
+        base
+    };
+    if name.is_empty() || name.contains(['/', '\\']) {
+        status(view, "project name required (no slashes)", cx);
+        return;
+    }
+    if !check::bases().iter().any(|b| b.id == base) {
+        status(view, &format!("unknown base `{base}`"), cx);
+        return;
+    }
+    let receiver = cx.prompt_for_paths(PathPromptOptions {
+        files: false,
+        directories: true,
+        multiple: false,
+        prompt: Some("Choose a parent folder for the project".into()),
+    });
+    cx.spawn(async move |view, cx| {
+        let Ok(Ok(Some(paths))) = receiver.await else {
+            return;
+        };
+        let Some(parent) = paths.into_iter().next() else {
+            return;
+        };
+        view.update(cx, move |view, cx| {
+            let dir = parent.join(&name);
+            if dir.exists() {
+                status(view, &format!("{} already exists", dir.display()), cx);
+                return;
+            }
+            if let Err(e) = std::fs::create_dir_all(&dir) {
+                status(view, &format!("cannot create {}: {e}", dir.display()), cx);
+                return;
+            }
+            let toml = dir.join("forge.toml");
+            let manifest = format!(
+                "[package]\nname = \"{name}\"\nversion = \"0.1.0\"\nid = \"dev.forge.{name}\"\n\n[forge]\nbase = \"{base}\"\ndocument = \"app.forge.yaml\"\n"
+            );
+            let doc = format!(
+                "forge: \"0.1\"\nbase: {base}\n\nroot:\n  VStack:\n  style:\n    padding: 16px\n    gap: 8px\n  children:\n    - Text: Hello, Forge!\n"
+            );
+            if std::fs::write(&toml, &manifest).is_err()
+                || std::fs::write(dir.join("app.forge.yaml"), &doc).is_err()
+            {
+                status(view, "project files could not be written", cx);
+                return;
+            }
             load_project(toml, view, shared.clone(), cx);
         })
         .ok();
