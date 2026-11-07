@@ -276,6 +276,16 @@ root:
                           style:
                             size: xs
                             color: $theme.muted_foreground
+                - Tab: Vars
+                  children:
+                    - VStack:
+                      style: {grow: true, padding: 12px, gap: 8px, overflow: scroll}
+                      children:
+                        - Text: State variables
+                          style: {size: lg, weight: semibold}
+                        - Text: Every bound `{$path}` var in the document — edit scalars, watch the app react.
+                          style: {size: sm, color: $theme.muted_foreground}
+                        - forge.Vars:
                 - Tab: Themes
                   children:
                     - HStack:

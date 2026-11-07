@@ -74,3 +74,9 @@ elements:
       elements via insert_component.
     component: forge::Palette
     children: none
+
+  Vars:
+    summary: Live state inspector — every state var as an editable row; add
+      new vars; bound `{$path}` elements react to edits.
+    component: forge::Vars
+    children: none

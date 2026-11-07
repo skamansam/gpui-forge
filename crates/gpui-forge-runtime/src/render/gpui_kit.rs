@@ -388,6 +388,178 @@ impl ForgeView {
         self.on_state = Some(on_state);
     }
 
+    /// `forge.Vars` — a live state inspector: every top-level `state`
+    /// object flattened to dotted paths, editable scalars wired through
+    /// `self.inputs` + `InputEvent::Change`, and an "add" row for new vars.
+    fn vars(
+        &mut self,
+        _node: &Node,
+        key: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        fn flatten(prefix: &str, json: &Json, out: &mut Vec<(String, Json)>) {
+            match json {
+                Json::Object(map) => {
+                    for (k, v) in map {
+                        flatten(&format!("{prefix}{k}."), v, out);
+                    }
+                }
+                _ => out.push((prefix.trim_end_matches('.').to_owned(), json.clone())),
+            }
+        }
+        let mut rows: Vec<(String, Json)> = Vec::new();
+        flatten("", self.state(), &mut rows);
+        rows.sort_by(|a, b| a.0.cmp(&b.0));
+
+        let mut list = div().flex().flex_col().gap_2();
+        for (path, value) in rows {
+            let state_key = format!("vars-{key}-{path}");
+            let display = match &value {
+                Json::String(s) => s.clone(),
+                _ => value.to_string(),
+            };
+            // Scalars: an Input whose Change writes back via update_state —
+            // bound `{$path}` elements re-render to the new value live.
+            let row_edit = match &value {
+                Json::String(_) | Json::Number(_) | Json::Bool(_) => {
+                    let state = match self.inputs.get(&state_key) {
+                        Some(s) => s.clone(),
+                        None => {
+                            let s = cx.new(|cx| {
+                                InputState::new(window, cx).default_value(display.clone())
+                            });
+                            let path = parse_path(&path).unwrap();
+                            let weak = cx.entity().downgrade();
+                            let sub = cx.subscribe(&s, move |_this, s, event, cx| {
+                                if matches!(event, InputEvent::Change) {
+                                    let v = s.read(cx).value().to_string();
+                                    try_update(&weak, cx, "vars", |this, cx| {
+                                        // numbers/bools parse back to their
+                                        // Json type; everything else stays
+                                        // a String.
+                                        let parsed =
+                                            serde_json::from_str(&v).unwrap_or(Json::String(v));
+                                        this.update_state(&path, parsed, cx)
+                                    })
+                                    .ok();
+                                }
+                            });
+                            self.subscriptions.push(sub);
+                            self.inputs.insert(state_key.clone(), s.clone());
+                            s
+                        }
+                    };
+                    div()
+                        .flex()
+                        .flex_row()
+                        .gap_1()
+                        .child(Input::new(&state).with_size(size("small")))
+                }
+                _ => div().flex().flex_col().child(Label::new(display.clone())),
+            };
+            list = list.child(
+                div()
+                    .flex()
+                    .flex_col()
+                    .gap_1()
+                    .child(
+                        div()
+                            .flex()
+                            .flex_row()
+                            .items_center()
+                            .gap_2()
+                            .child(Label::new(SharedString::from(format!("${path}"))))
+                            .child(row_edit),
+                    )
+                    .child(Separator::horizontal()),
+            );
+        }
+
+        // Add-new-var: two Inputs write to `studio.vars_add.{path,value}` on
+        // Change; the "+" button reads them and writes the new path.
+        let add_path_key = format!("vars-add-path-{key}");
+        let add_val_key = format!("vars-add-val-{key}");
+        let add_path_state = self.inputs.get(&add_path_key).cloned().unwrap_or_else(|| {
+            let s = cx.new(|cx| InputState::new(window, cx).placeholder("path (e.g. studio.new)"));
+            let weak = cx.entity().downgrade();
+            let sub = cx.subscribe(&s, move |_this, s, event, cx| {
+                if matches!(event, InputEvent::Change) {
+                    let v = s.read(cx).value().to_string();
+                    try_update(&weak, cx, "vars", |this, cx| {
+                        this.update_state(
+                            &parse_path("studio.vars_add_path").unwrap(),
+                            Json::String(v),
+                            cx,
+                        )
+                    })
+                    .ok();
+                }
+            });
+            self.subscriptions.push(sub);
+            self.inputs.insert(add_path_key.clone(), s.clone());
+            s
+        });
+        let add_val_state = self.inputs.get(&add_val_key).cloned().unwrap_or_else(|| {
+            let s = cx.new(|cx| InputState::new(window, cx).placeholder("value"));
+            let weak = cx.entity().downgrade();
+            let sub = cx.subscribe(&s, move |_this, s, event, cx| {
+                if matches!(event, InputEvent::Change) {
+                    let v = s.read(cx).value().to_string();
+                    try_update(&weak, cx, "vars", |this, cx| {
+                        this.update_state(
+                            &parse_path("studio.vars_add_val").unwrap(),
+                            Json::String(v),
+                            cx,
+                        )
+                    })
+                    .ok();
+                }
+            });
+            self.subscriptions.push(sub);
+            self.inputs.insert(add_val_key.clone(), s.clone());
+            s
+        });
+        let weak = cx.entity().downgrade();
+        let add_btn = Button::new(SharedString::from(format!("vars-add-{key}")))
+            .label("+")
+            .with_variant(ButtonVariant::Primary)
+            .with_size(size("small"))
+            .on_click(move |_, _, cx| {
+                try_update(&weak, cx, "vars", |this, cx| {
+                    let path = get_path(this.state(), &parse_path("studio.vars_add_path").unwrap())
+                        .and_then(|j| j.as_str())
+                        .unwrap_or_default()
+                        .to_owned();
+                    let val = get_path(this.state(), &parse_path("studio.vars_add_val").unwrap())
+                        .and_then(|j| j.as_str())
+                        .unwrap_or_default()
+                        .to_owned();
+                    if !path.is_empty() {
+                        let parsed = serde_json::from_str(&val).unwrap_or(Json::String(val));
+                        this.update_state(&parse_path(&path).unwrap(), parsed, cx);
+                    }
+                })
+                .ok();
+            });
+        list = list.child(
+            div()
+                .flex()
+                .flex_row()
+                .gap_1()
+                .child(Input::new(&add_path_state).with_size(size("small")))
+                .child(Input::new(&add_val_state).with_size(size("small")))
+                .child(add_btn),
+        );
+
+        div()
+            .flex()
+            .flex_col()
+            .gap_2()
+            .child(list)
+            .into_any_element()
+    }
+
     /// `forge.Palette` — a catalog-driven element palette: a dropdown selects
     /// the library (base or any registered `ForgeLibrary`), and a grid of
     /// buttons inserts its elements through the `insert_component` hook.
@@ -1600,6 +1772,7 @@ impl ForgeView {
                     }
                 }
                 (Some("forge"), "Palette") => self.palette(node, key, cx),
+                (Some("forge"), "Vars") => self.vars(node, key, window, cx),
                 _ => placeholder(
                     format!(
                         "`{namespace}.{}` is not provided by this adapter yet",
