@@ -14,6 +14,7 @@ crate-type = ["cdylib", "rlib"]
 default = ["base-gpui-kit"]
 base-gpui-kit = ["dep:gpui-kit", "gpui-forge-runtime/base-gpui-kit"]
 base-iced = ["dep:iced", "gpui-forge-runtime/base-iced"]
+base-bezel = ["dep:bezel", "dep:gpui-web", "gpui-forge-runtime/base-bezel"]
 
 [dependencies]
 gpui-kit = { workspace = true, optional = true }
@@ -22,6 +23,8 @@ wasm-bindgen = "0.2"
 console_error_panic_hook = "0.1"
 forge-spec.workspace = true
 iced = { version = "0.13", optional = true }
+bezel = { version = "0.2.24", optional = true, features = ["platform"] }
+gpui-web = { package = "bezel-gpui-web", version = "0.3.21", optional = true }
 serde_json = "1"
 
 [lints]

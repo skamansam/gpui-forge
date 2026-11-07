@@ -6,6 +6,8 @@
 
 #![recursion_limit = "256"]
 
+#[cfg(feature = "base-bezel")]
+pub mod bezel;
 #[cfg(feature = "base-gpui-kit")]
 mod gpui_kit_impl;
 #[cfg(feature = "base-iced")]

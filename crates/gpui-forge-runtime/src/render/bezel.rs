@@ -474,6 +474,7 @@ impl ForgeView {
             .cursor_pointer();
         if self.pick {
             let pick_path = path.clone();
+            let weak = cx.entity().downgrade();
             overlay = overlay
                 .hover(|s| {
                     s.bg(rgba(0x3b82f659))

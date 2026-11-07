@@ -3559,6 +3559,8 @@ dependencies = [
 name = "forge-web-canvas"
 version = "0.1.0"
 dependencies = [
+ "bezel",
+ "bezel-gpui-web",
  "console_error_panic_hook",
  "forge-spec",
  "gpui-forge-runtime",
