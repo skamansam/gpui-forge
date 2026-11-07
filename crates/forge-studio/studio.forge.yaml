@@ -77,7 +77,7 @@ Dialog#preferences:
     background: $theme.background
     border: 1px solid $theme.border
   children:
-    - Text: "This is a dialog"
+    - Text: "Preferences"
       style:
         size: lg
         weight: semibold
@@ -89,8 +89,11 @@ Dialog#preferences:
               children:
                 - SettingItem: Select theme
                   children:
-                    - Select:
-                      options: ["Light", "Dark", "System"]
+                    - Select#prefs_theme:
+                      options: $studio.all_themes
+                      value: bind $studio.theme
+                      placeholder: pick a theme
+                      on change: apply_theme_name($studio.theme)
 
 # File → New Project… — scaffolds forge.toml + app.forge.yaml like `forge new`
 Dialog#new-project:
@@ -273,18 +276,6 @@ root:
                           style:
                             size: xs
                             color: $theme.muted_foreground
-                - Tab: Preferences
-                  children:
-                    - VStack:
-                      style: {grow: true, padding: 12px, gap: 12px}
-                      children:
-                        - Label: Theme
-                          style: {weight: semibold}
-                        - Select#prefs_theme:
-                          options: $studio.all_themes
-                          value: bind $studio.theme
-                          placeholder: pick a theme
-                          on change: apply_theme_name($studio.theme)
                 - Tab: Themes
                   children:
                     - VStack:
