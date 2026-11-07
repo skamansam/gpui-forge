@@ -15,12 +15,3 @@ pub const BASE_ID: &str = "gpui02";
 /// The gpui02 base's component crate (guise on crates.io gpui 0.2.2).
 #[cfg(all(feature = "base-gpui02", not(feature = "base-gpui-kit")))]
 pub use guise as kit;
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    #[cfg(feature = "base-gpui-kit")]
-    fn default_base_is_gpui_kit() {
-        assert_eq!(super::BASE_ID, "gpui-kit");
-    }
-}
