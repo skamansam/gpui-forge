@@ -1,0 +1,8 @@
+/home/sam/workspace-other/gpui-forge/hosts/adabraka/target/debug/deps/dirs-c547059a75745629.d: /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dirs-4.0.0/src/lib.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dirs-4.0.0/src/lin.rs
+
+/home/sam/workspace-other/gpui-forge/hosts/adabraka/target/debug/deps/libdirs-c547059a75745629.rlib: /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dirs-4.0.0/src/lib.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dirs-4.0.0/src/lin.rs
+
+/home/sam/workspace-other/gpui-forge/hosts/adabraka/target/debug/deps/libdirs-c547059a75745629.rmeta: /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dirs-4.0.0/src/lib.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dirs-4.0.0/src/lin.rs
+
+/home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dirs-4.0.0/src/lib.rs:
+/home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/dirs-4.0.0/src/lin.rs:

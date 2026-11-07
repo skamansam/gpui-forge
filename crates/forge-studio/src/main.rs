@@ -798,7 +798,18 @@ fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<F
     let named = dir
         .as_ref()
         .map(|d| d.join(format!("forge-preview-{base}")));
-    let binary = named.filter(|p| p.exists()).or_else(|| {
+    // Links-conflicted bases host out of a nested workspace — their binary
+    // lands in hosts/<base>/target/<profile>/ rather than ./target (#95).
+    let nested = dir.as_ref().and_then(|d| {
+        let profile = d.file_name()?;
+        let root = d.parent()?.parent()?;
+        let p = root.join(format!(
+            "hosts/{base}/target/{}/forge-preview-{base}",
+            profile.to_string_lossy()
+        ));
+        p.exists().then_some(p)
+    });
+    let binary = named.filter(|p| p.exists()).or(nested).or_else(|| {
         if base == BASE_ID {
             dir.map(|d| d.join("forge-preview"))
                 .or_else(|| Some(std::path::PathBuf::from("forge-preview")))

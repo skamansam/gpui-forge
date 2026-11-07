@@ -1,0 +1,10 @@
+/home/sam/workspace-other/gpui-forge/hosts/adabraka/target/debug/deps/adabraka_http_client-01a1d78ed54082a2.d: /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/adabraka_http_client-0.5.1/src/http_client.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/adabraka_http_client-0.5.1/src/async_body.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/adabraka_http_client-0.5.1/src/github.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/adabraka_http_client-0.5.1/src/github_download.rs
+
+/home/sam/workspace-other/gpui-forge/hosts/adabraka/target/debug/deps/libadabraka_http_client-01a1d78ed54082a2.rlib: /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/adabraka_http_client-0.5.1/src/http_client.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/adabraka_http_client-0.5.1/src/async_body.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/adabraka_http_client-0.5.1/src/github.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/adabraka_http_client-0.5.1/src/github_download.rs
+
+/home/sam/workspace-other/gpui-forge/hosts/adabraka/target/debug/deps/libadabraka_http_client-01a1d78ed54082a2.rmeta: /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/adabraka_http_client-0.5.1/src/http_client.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/adabraka_http_client-0.5.1/src/async_body.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/adabraka_http_client-0.5.1/src/github.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/adabraka_http_client-0.5.1/src/github_download.rs
+
+/home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/adabraka_http_client-0.5.1/src/http_client.rs:
+/home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/adabraka_http_client-0.5.1/src/async_body.rs:
+/home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/adabraka_http_client-0.5.1/src/github.rs:
+/home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/adabraka_http_client-0.5.1/src/github_download.rs:

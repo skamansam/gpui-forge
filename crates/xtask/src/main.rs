@@ -124,9 +124,16 @@ fn main() {
             };
             let mut ok = true;
             for base in &targets {
-                let mut cargo = vec!["build", "-p", "forge-preview"];
+                // Bases with a links-conflicting graph live in nested
+                // workspaces — their host builds via their own manifest (#95).
                 let flags = base_flags(base);
-                cargo.extend(flags.iter().map(String::as_str));
+                let cargo = if base == "adabraka" {
+                    vec!["build", "--manifest-path", "hosts/adabraka/Cargo.toml"]
+                } else {
+                    let mut cargo = vec!["build", "-p", "forge-preview"];
+                    cargo.extend(flags.iter().map(String::as_str));
+                    cargo
+                };
                 println!("==> forge-preview ({base})");
                 ok &= run(&cargo);
             }
