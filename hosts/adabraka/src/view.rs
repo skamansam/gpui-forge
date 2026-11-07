@@ -10,11 +10,11 @@
 //! where their API is stable and gpui primitives elsewhere — `forge.*`
 //! intrinsics and two-way input widgets are stubs until the adapter port.
 
-use crate::render::{get_path, set_path};
+use crate::protocol::paths::{get_path, set_path};
 use forge_spec::catalog::Catalog;
 use forge_spec::{Document, Entries, Node, Path, Segment, Unit, Value};
-use adabraka_gpui::prelude::*;
-use adabraka_gpui::*;
+use gpui::prelude::*;
+use gpui::*;
 use std::collections::HashMap;
 use std::rc::Rc;
 
@@ -27,7 +27,7 @@ pub type HookHandler = Rc<dyn Fn(&[String], &mut ForgeView, &mut Context<ForgeVi
 
 use serde_json::Value as Json;
 
-adabraka_gpui::actions!(gpui_forge_runtime, [CancelPick]);
+gpui::actions!(gpui_forge_runtime, [CancelPick]);
 
 /// A drag payload: `Component` comes from palette items (`insert_component`
 /// handlers), `Node` from existing document nodes (reparent drags).
@@ -697,7 +697,7 @@ impl Render for DragGhost {
 impl Render for ForgeView {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         if !self.theme_ready {
-            adabraka_ui::theme::Theme::dark().init(cx);
+            adabraka_ui::init(cx);
             self.theme_ready = true;
         }
         let mut root = div()

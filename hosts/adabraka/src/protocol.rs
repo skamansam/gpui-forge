@@ -94,3 +94,56 @@ pub fn spawn_reader(tx: mpsc::Sender<HostMsg>) {
         }
     });
 }
+
+/// `a.b[0]` path read/write on serde_json::Value — the same helpers the
+/// in-tree twins import from `render/mod.rs` (cfg'd away without a base).
+pub mod paths {
+    use forge_spec::{Path, PathSegment};
+    use serde_json::Value;
+
+    pub fn get_path<'v>(state: &'v Value, path: &Path) -> Option<&'v Value> {
+        let mut cur = state;
+        for seg in &path.0 {
+            match seg {
+                PathSegment::Field(f) => cur = cur.get(f)?,
+                PathSegment::Index(i) => cur = cur.get(*i)?,
+            }
+        }
+        Some(cur)
+    }
+
+    pub fn set_path(target: &mut Value, path: &Path, value: Value) {
+        let mut cur = target;
+        for (i, seg) in path.0.iter().enumerate() {
+            let last = i == path.0.len() - 1;
+            match seg {
+                PathSegment::Field(f) => {
+                    let entry = cur
+                        .as_object_mut()
+                        .map(|m| m.entry(f.clone()).or_insert(Value::Null));
+                    let Some(node) = entry else { return };
+                    if last {
+                        *node = value;
+                        return;
+                    }
+                    cur = node;
+                }
+                PathSegment::Index(i) => {
+                    let idx = *i;
+                    let arr = cur.as_array_mut().map(|a| {
+                        while a.len() <= idx {
+                            a.push(Value::Null);
+                        }
+                        &mut a[idx]
+                    });
+                    let Some(node) = arr else { return };
+                    if last {
+                        *node = value;
+                        return;
+                    }
+                    cur = node;
+                }
+            }
+        }
+    }
+}

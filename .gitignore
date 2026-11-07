@@ -3,3 +3,4 @@
 target/forge-apps/
 crates/forge-studio/dist/
 hosts/*/target/
+hosts/*/target/

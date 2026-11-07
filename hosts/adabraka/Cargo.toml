@@ -24,3 +24,8 @@ serde_json = "1"
 # own lockfile, so the patch must live here too.
 [patch.crates-io]
 xattr = { path = "../../vendor/xattr" }
+
+# Upstream fix: adabraka-gpui 0.5.1 calls `xcb.setup()` (a trait method on
+# x11rb::connection::Connection) without importing the trait — a linux-only
+# codepath that bit-rotted. Vendored with the import added.
+adabraka-gpui = { path = "vendor/adabraka-gpui" }

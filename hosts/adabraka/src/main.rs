@@ -6,9 +6,9 @@
 //! Same JSON wire protocol as `forge-preview` (protocol.rs is shared
 //! verbatim); Studio spawns this binary for `base: adabraka` documents.
 
-use adabraka_gpui::prelude::*;
-use adabraka_gpui::*;
 use forge_spec::catalog::Catalog;
+use gpui::prelude::*;
+use gpui::*;
 use gpui_forge_runtime::check;
 use serde_json::json;
 use std::sync::mpsc;
