@@ -399,6 +399,17 @@ impl ForgeView {
             )))
             .into();
         }
+        if node.element.namespace.is_some() {
+            // `use:`/`forge` non-Preview elements — ForgeLibrary is GPUI-typed;
+            // iced shows a placeholder rather than silently rendering the
+            // base's equivalent.
+            return iced::widget::container(iced::widget::text(format!(
+                "{}.{} — namespaced elements need a GPUI host",
+                node.element.namespace.as_deref().unwrap_or("?"),
+                node.element.name
+            )))
+            .into();
+        }
         match node.element.name.as_str() {
             "VStack" => {
                 let children = node.children.iter().map(|c| self.render_node(c));

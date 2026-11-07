@@ -413,6 +413,21 @@ impl ForgeView {
             }
             return;
         }
+        if node.element.namespace.is_some() {
+            // `use:`/`forge` non-Preview elements — ForgeLibrary is GPUI-typed
+            // and can't dispatch on a TUI; render an honest placeholder.
+            frame.render_widget(
+                Paragraph::new(format!(
+                    "{}.{} — namespaced elements need a GPUI host",
+                    node.element.namespace.as_deref().unwrap_or("?"),
+                    node.element.name
+                ))
+                .style(Style::default().fg(Color::DarkGray))
+                .block(Block::default().borders(Borders::ALL)),
+                area,
+            );
+            return;
+        }
         match node.element.name.as_str() {
             "VStack" => self.render_children(node, area, frame, Direction::Vertical),
             "HStack" => self.render_children(node, area, frame, Direction::Horizontal),
