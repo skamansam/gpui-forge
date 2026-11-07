@@ -5,7 +5,7 @@
 use gpui_forge_runtime::check;
 use gpui_forge_runtime::render::{ForgeView, Message as ForgeMessage};
 use iced::{Element, Task};
-const B64: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
 use serde_json::json;
 use std::sync::mpsc;
 use std::time::Duration;
@@ -132,35 +132,33 @@ impl Host {
             }
             Message::Quit => return iced::exit(),
             Message::Screenshot(shot) => {
+                // #120 Phase 2 — downsample the rgba to a luminance text
+                // grid; `frame` events share ratatui's wire + renderer
+                // (`preview.frame` → `{$preview.frame}` Text in the card).
                 let bytes = shot.as_ref();
-                let mut b64 = String::with_capacity(bytes.len() / 3 * 4);
-                for c in bytes.chunks(3) {
-                    let mut v = (c[0] as u32) << 16;
-                    if c.len() > 1 {
-                        v |= (c[1] as u32) << 8;
+                let (w, h) = (shot.size.width as usize, shot.size.height as usize);
+                let (tw, th) = (80usize, 24usize);
+                const RAMP: &[u8; 10] = b" .:-=+*#%@";
+                let mut rows = Vec::with_capacity(th);
+                for ty in 0..th {
+                    let mut line = String::with_capacity(tw);
+                    for tx in 0..tw {
+                        let (sx, sy) = (tx * w / tw, ty * h / th);
+                        let i = (sy * w + sx) * 4;
+                        let lum = if i + 2 < bytes.len() {
+                            (bytes[i] as u32 + bytes[i + 1] as u32 + bytes[i + 2] as u32) / 3
+                        } else {
+                            0
+                        };
+                        line.push(RAMP[(lum * 9 / 255) as usize] as char);
                     }
-                    if c.len() > 2 {
-                        v |= c[2] as u32;
-                    }
-                    b64.push(B64[(v >> 18) as usize & 63] as char);
-                    b64.push(B64[(v >> 12) as usize & 63] as char);
-                    b64.push(if c.len() > 1 {
-                        B64[(v >> 6) as usize & 63] as char
-                    } else {
-                        '='
-                    });
-                    b64.push(if c.len() > 2 {
-                        B64[v as usize & 63] as char
-                    } else {
-                        '='
-                    });
+                    rows.push(line);
                 }
                 emit(json!({
-                    "event": "frame_rgba",
+                    "event": "frame",
                     "base": "iced",
-                    "w": shot.size.width,
-                    "h": shot.size.height,
-                    "data": b64,
+                    "cols": tw,
+                    "rows": rows,
                 }));
             }
         }

@@ -1497,7 +1497,7 @@ impl ForgeView {
                         let node = node.clone();
                         let theme = cx.theme();
                         let embedded = self
-                            .prop_text(node, "mode")
+                            .prop_text(&node, "mode")
                             .is_some_and(|m| m == "embedded");
                         div()
                             .id(format!("preview-remote-{key}"))
