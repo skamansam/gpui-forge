@@ -32,15 +32,38 @@ fn main() {
             if n == 0 {
                 break;
             }
-            for &b in &buf[..n] {
+            let mut i = 0;
+            while i < n {
+                let b = buf[i];
                 let key = match b {
                     b'\t' => "Tab".to_owned(),
                     127 | 8 => "Backspace".to_owned(),
                     b'\r' | b'\n' => "Enter".to_owned(),
-                    27 => continue, // escape sequences — skip for now
+                    27 => {
+                        // CSI sequences — arrows (ESC [ A..D) + shift-tab (ESC [ Z).
+                        if i + 2 < n && buf[i + 1] == b'[' {
+                            i += 2;
+                            match buf[i] {
+                                b'A' => "Up",
+                                b'B' => "Down",
+                                b'C' => "Right",
+                                b'D' => "Left",
+                                b'Z' => "BackTab",
+                                _ => continue,
+                            }
+                            .to_owned()
+                        } else {
+                            i += 1;
+                            continue;
+                        }
+                    }
                     32..=126 => (b as char).to_string(),
-                    _ => continue,
+                    _ => {
+                        i += 1;
+                        continue;
+                    }
                 };
+                i += 1;
                 if ktx.send(key).is_err() {
                     return;
                 }

@@ -205,9 +205,19 @@ impl ForgeView {
                 }
                 return;
             }
-            (Some(FocusKind::Select), "Enter") | (Some(FocusKind::Select), " ") => {
-                // The list arm writes `selected` — Enter confirms; arrows
-                // move the cursor (handled below).
+            (Some(FocusKind::Select), "Up") | (Some(FocusKind::Select), "k") => {
+                if let Some((path, _)) = self.focusables.get(self.focused).cloned() {
+                    let cur = self.lookup(&path).and_then(Json::as_u64).unwrap_or(0);
+                    self.write(&path, Json::from(cur.saturating_sub(1)));
+                }
+                return;
+            }
+            (Some(FocusKind::Select), "Down") | (Some(FocusKind::Select), "j") => {
+                if let Some((path, _)) = self.focusables.get(self.focused).cloned() {
+                    let cur = self.lookup(&path).and_then(Json::as_u64).unwrap_or(0);
+                    self.write(&path, Json::from(cur + 1));
+                }
+                return;
             }
             (Some(FocusKind::Input), "Backspace")
             | (Some(FocusKind::Input), "Enter")
@@ -417,6 +427,14 @@ impl ForgeView {
                 );
             }
             "List" | "Select" | "Tabs" => {
+                let binding = Self::binding_of(node, "selected");
+                if let Some(path) = &binding {
+                    self.focusables.push((path.clone(), FocusKind::Select));
+                }
+                let focused = binding
+                    .as_ref()
+                    .map(|p| self.is_focused(p))
+                    .unwrap_or(false);
                 if node.element.name == "Tabs" {
                     let titles: Vec<Line> = node
                         .children
@@ -424,12 +442,17 @@ impl ForgeView {
                         .map(|c| Line::from(self.node_text(c)))
                         .collect();
                     let selected = self.num(node, "selected", 0.0) as usize;
-                    frame.render_widget(
-                        Tabs::new(titles)
-                            .select(selected)
-                            .block(Block::default().borders(Borders::ALL)),
-                        area,
-                    );
+                    let mut tabs = Tabs::new(titles)
+                        .select(selected)
+                        .block(Block::default().borders(Borders::ALL));
+                    if focused {
+                        tabs = tabs.highlight_style(
+                            Style::default()
+                                .fg(Color::Cyan)
+                                .add_modifier(Modifier::BOLD),
+                        );
+                    }
+                    frame.render_widget(tabs, area);
                 } else {
                     let items: Vec<ListItem> = node
                         .children
@@ -441,6 +464,13 @@ impl ForgeView {
                         List::new(items).block(Block::default().borders(Borders::ALL).title(title));
                     if node.element.name == "Select" {
                         list = list.highlight_symbol("> ");
+                    }
+                    if focused {
+                        list = list.highlight_style(
+                            Style::default()
+                                .fg(Color::Cyan)
+                                .add_modifier(Modifier::BOLD),
+                        );
                     }
                     frame.render_widget(list, area);
                 }
