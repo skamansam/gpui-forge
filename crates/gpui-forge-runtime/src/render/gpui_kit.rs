@@ -3268,8 +3268,14 @@ fn container(
             .entry(id.to_string())
             .or_insert_with(ScrollHandle::new)
             .clone();
+        // `.id()` — `Scrollable` defaults `id` to `caller_id()`, so every
+        // `overflow: scroll` element would share one `element_state` slot and
+        // the offsets would clobber each other; a per-element id keeps them
+        // distinct.
+        let scrollbar_id = SharedString::from(format!("{id}-scrollbar"));
         style(element.id(id).track_scroll(&handle), entries, cx)
             .overflow_y_scrollbar()
+            .id(scrollbar_id)
             .children(kids)
             .into_any_element()
     } else {
@@ -3308,6 +3314,7 @@ fn wrap(
         }
         wrapper
             .overflow_y_scrollbar()
+            .id(SharedString::from(format!("{id}-scrollbar")))
             .child(element)
             .into_any_element()
     } else if let Some(tip) = tooltip {
