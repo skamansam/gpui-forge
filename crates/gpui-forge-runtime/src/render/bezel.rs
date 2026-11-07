@@ -121,8 +121,10 @@ pub struct ForgeView {
     dnd: bool,
     /// Shown while there is no document (e.g. inside `forge.Preview`).
     empty_text: Option<String>,
-    /// Subscriptions for stateful widgets — populated when the bezel widget
-    /// port lands (the kit base's `subscriptions` contract).
+    /// Per-key `TextField` entities — the doc re-renders but input state
+    /// persists between paints (the kit base's `inputs` contract).
+    inputs: HashMap<String, Entity<::bezel::ui::input::TextField>>,
+    /// Subscriptions keep the caches' event wiring alive across renders.
     #[allow(dead_code)]
     subscriptions: Vec<Subscription>,
     /// guise requires `Theme::init` before any component paints — done lazily
@@ -147,6 +149,7 @@ impl ForgeView {
             placing: false,
             dnd: false,
             empty_text: None,
+            inputs: HashMap::new(),
             subscriptions: Vec::new(),
             theme_ready: false,
         }
@@ -357,8 +360,7 @@ impl ForgeView {
     }
 
     /// The state path a prop binds to, if it's a `{{...}}` binding — used by
-    /// two-way input widgets (staged for the TextField port).
-    #[allow(dead_code)]
+    /// two-way input widgets.
     fn binding_of(node: &Node, name: &str) -> Option<Path> {
         node.props
             .iter()
@@ -462,7 +464,6 @@ impl ForgeView {
         // and the drag/drop protocol (`studio.drop_target` → `drop_component` /
         // `move_node`).
         let path = key.to_owned();
-        let weak = cx.entity().downgrade();
         let cancel_weak = cx.entity().downgrade();
         let drop_weak = cx.entity().downgrade();
         let label = node.element.name.clone();
@@ -679,29 +680,29 @@ impl ForgeView {
                 d.into_any_element()
             }
             "Input" => {
-                let label = self.prop_text(node, "label");
-                let placeholder = self.prop_text(node, "placeholder");
-                let mut field = div().flex().flex_col().gap_1();
-                if !label.is_empty() {
-                    field = field.child(div().text_xs().text_color(rgb(MUTED)).child(label));
+                let binding = Self::binding_of(node, "value");
+                let field = self
+                    .inputs
+                    .entry(key.to_owned())
+                    .or_insert_with(|| cx.new(|cx| ::bezel::ui::input::TextField::new(cx)))
+                    .clone();
+                if let Some(path) = binding {
+                    let path_for_sub = path.clone();
+                    let sub = cx.subscribe(&field.clone(), move |view, entity, event, cx| {
+                        if let ::bezel::ui::input::FieldEvent::Changed(_) = event {
+                            let value = entity.read(cx).content().to_string();
+                            view.update_state(&path_for_sub, value.into(), cx);
+                        }
+                    });
+                    self.subscriptions.push(sub);
+                    // Initial content from the binding — first paint seeds the
+                    // widget from state; later writes flow back through the sub.
+                    let text = self.json_text(&path);
+                    if !text.is_empty() {
+                        field.update(cx, |f, cx| f.set_content(text, cx));
+                    }
                 }
-                field
-                    .child(
-                        div()
-                            .px_2()
-                            .py_1()
-                            .rounded_md()
-                            .border_1()
-                            .border_color(rgb(BORDER))
-                            .bg(rgb(BG))
-                            .text_color(rgb(MUTED))
-                            .child(if placeholder.is_empty() {
-                                "input".to_owned()
-                            } else {
-                                placeholder
-                            }),
-                    )
-                    .into_any_element()
+                field.clone().into_any_element()
             }
             _ => placeholder(format!("{} — no bezel renderer", node.element.name)),
         }
