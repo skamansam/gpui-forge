@@ -786,10 +786,34 @@ fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<F
     // `load` for file-backed docs (also seeds the host's base_dir); unsaved
     // documents go over `source` — the editor buffer is the document.
     let file = shared.borrow().file.clone();
-    let binary = std::env::current_exe()
+    // One host binary per base — `forge-preview-gpui02` for gpui02 docs, and
+    // the plain `forge-preview` stays the gpui-kit host (#96).
+    let base = get_path(view.state(), &parse_path("studio.doc_base").unwrap())
+        .and_then(Json::as_str)
+        .unwrap_or(BASE_ID)
+        .to_owned();
+    let dir = std::env::current_exe()
         .ok()
-        .and_then(|e| e.parent().map(|p| p.join("forge-preview")))
-        .unwrap_or_else(|| "forge-preview".into());
+        .and_then(|e| e.parent().map(|p| p.to_path_buf()));
+    let named = dir
+        .as_ref()
+        .map(|d| d.join(format!("forge-preview-{base}")));
+    let binary = named.filter(|p| p.exists()).or_else(|| {
+        if base == BASE_ID {
+            dir.map(|d| d.join("forge-preview"))
+                .or_else(|| Some(std::path::PathBuf::from("forge-preview")))
+        } else {
+            None
+        }
+    });
+    let Some(binary) = binary else {
+        status(
+            view,
+            &format!("no preview host for base `{base}` — build `forge-preview-{base}`"),
+            cx,
+        );
+        return;
+    };
     let spawned = std::process::Command::new(&binary)
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())

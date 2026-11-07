@@ -2560,8 +2560,10 @@ dependencies = [
 name = "forge-preview"
 version = "0.1.0"
 dependencies = [
+ "gpui",
  "gpui-forge-runtime",
  "gpui-kit",
+ "guise-ui",
  "serde",
  "serde_json",
 ]
