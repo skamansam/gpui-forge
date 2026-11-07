@@ -195,6 +195,10 @@ pub struct ForgeView {
     /// `forge.Preview` bounds cells — `id` → the card's window-space rect,
     /// populated by `BoundsTracker` each paint (Studio's `frame_rect`).
     preview_bounds: HashMap<String, std::rc::Rc<std::cell::RefCell<Option<Bounds<Pixels>>>>>,
+    /// Persistent `ScrollHandle`s keyed by scrollable element id — element-state
+    /// GC drops scroll offsets on every `cx.notify` re-render; an explicit
+    /// `track_scroll` handle keeps them alive.
+    scroll_handles: HashMap<String, ScrollHandle>,
     pub libraries: Vec<Box<dyn ForgeLibrary>>,
     hooks: HashMap<String, HookHandler>,
     on_hook: Option<HookSink>,
@@ -281,6 +285,7 @@ impl ForgeView {
             selects: HashMap::new(),
             tabs: HashMap::new(),
             preview_bounds: HashMap::new(),
+            scroll_handles: HashMap::new(),
             previews: HashMap::new(),
             libraries: Vec::new(),
             hooks: HashMap::new(),
@@ -1635,6 +1640,7 @@ impl ForgeView {
                 &node.style,
                 &format!("forge-{key}"),
                 self.prop_text(node, "tooltip"),
+                &mut self.scroll_handles,
                 cx,
             );
         }
@@ -1652,19 +1658,33 @@ impl ForgeView {
             "Box" => {
                 let kids = children(self, window, cx);
                 styled = true;
-                container(div(), &node.style, id, kids, cx)
+                container(div(), &node.style, id, kids, &mut self.scroll_handles, cx)
             }
             "VStack" => {
                 let kids = children(self, window, cx);
                 styled = true;
-                container(v_flex(), &node.style, id, kids, cx)
+                container(
+                    v_flex(),
+                    &node.style,
+                    id,
+                    kids,
+                    &mut self.scroll_handles,
+                    cx,
+                )
             }
             // `h_flex()` centers children on the cross axis; a Forge `HStack` is a plain
             // flex row, so children stretch (use `align: center` to center them).
             "HStack" => {
                 let kids = children(self, window, cx);
                 styled = true;
-                container(div().flex().flex_row(), &node.style, id, kids, cx)
+                container(
+                    div().flex().flex_row(),
+                    &node.style,
+                    id,
+                    kids,
+                    &mut self.scroll_handles,
+                    cx,
+                )
             }
             "Text" => {
                 let text = self.prop_text(node, "text").unwrap_or_default();
@@ -3028,6 +3048,7 @@ impl ForgeView {
                 &node.style,
                 &format!("forge-{key}"),
                 self.prop_text(node, "tooltip"),
+                &mut self.scroll_handles,
                 cx,
             )
         };
@@ -3239,10 +3260,15 @@ fn container(
     entries: &Entries,
     id: SharedString,
     kids: Vec<AnyElement>,
+    handles: &mut HashMap<String, ScrollHandle>,
     cx: &App,
 ) -> AnyElement {
     if scrollable(entries) {
-        style(element.id(id), entries, cx)
+        let handle = handles
+            .entry(id.to_string())
+            .or_insert_with(ScrollHandle::new)
+            .clone();
+        style(element.id(id).track_scroll(&handle), entries, cx)
             .overflow_y_scrollbar()
             .children(kids)
             .into_any_element()
@@ -3260,13 +3286,20 @@ fn wrap(
     entries: &Entries,
     id: &str,
     tooltip: Option<String>,
+    handles: &mut HashMap<String, ScrollHandle>,
     cx: &App,
 ) -> AnyElement {
     if entries.is_empty() && tooltip.is_none() {
         element
     } else if scrollable(entries) {
+        let handle = handles
+            .entry(format!("{id}-scroll"))
+            .or_insert_with(ScrollHandle::new)
+            .clone();
         let mut wrapper = style(
-            div().id(SharedString::from(format!("{id}-scroll"))),
+            div()
+                .id(SharedString::from(format!("{id}-scroll")))
+                .track_scroll(&handle),
             entries,
             cx,
         );
