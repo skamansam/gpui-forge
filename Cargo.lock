@@ -3563,6 +3563,7 @@ dependencies = [
  "forge-spec",
  "gpui-forge-runtime",
  "gpui-kit",
+ "iced",
  "serde_json",
  "wasm-bindgen",
 ]

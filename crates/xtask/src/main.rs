@@ -110,6 +110,21 @@ fn main() {
             cargo.extend(args[1..].iter().map(String::as_str));
             std::process::exit(!run(&cargo) as i32);
         }
+        Some("canvas") => {
+            let base = args.get(1).cloned().unwrap_or_else(|| "gpui-kit".into());
+            let flags = base_flags(&base);
+            let mut cmd = vec![
+                "build",
+                "-p",
+                "forge-web-canvas",
+                "--release",
+                "--target",
+                "wasm32-unknown-unknown",
+            ];
+            cmd.extend(flags.iter().map(String::as_str));
+            println!("==> canvas-{base}.wasm (needs wasm32 target + wasm-bindgen-cli)");
+            std::process::exit(!run(&cmd) as i32);
+        }
         Some("bases") => {
             for b in bases() {
                 println!("{b}");
