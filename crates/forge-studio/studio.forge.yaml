@@ -278,34 +278,65 @@ root:
                             color: $theme.muted_foreground
                 - Tab: Themes
                   children:
-                    - VStack:
-                      style: {grow: true, padding: 12px, gap: 12px}
+                    - HStack:
+                      style: {grow: true, gap: 16px, padding: 12px}
                       children:
-                        - HStack:
-                          style: {justify: end}
+                        - VStack:
+                          style: {grow: true, gap: 12px}
                           children:
-                            - Button:
-                              icon: rotate-ccw
-                              variant: Ghost
-                              size: Small
-                              tooltip: Reset to the default theme
-                              on click: reset_theme()
-                        - Label: Theme
-                          style: {weight: semibold}
-                        - Select#editor_theme:
-                          options: $studio.all_themes
-                          value: bind $studio.theme
-                          placeholder: pick a theme
-                          on change: apply_theme_name($studio.theme)
-                        - Editor#theme_json:
-                          language: json
-                          value: bind $studio.theme_json
-                        - HStack:
-                          style: {justify: end}
+                            - HStack:
+                              style: {justify: end}
+                              children:
+                                - Button:
+                                  icon: rotate-ccw
+                                  variant: Ghost
+                                  size: Small
+                                  tooltip: Reset to the default theme
+                                  on click: reset_theme()
+                            - Label: Theme
+                              style: {weight: semibold}
+                            - Select#editor_theme:
+                              options: $studio.all_themes
+                              value: bind $studio.theme
+                              placeholder: pick a theme
+                              on change: apply_theme_name($studio.theme)
+                            - Editor#theme_json:
+                              language: json
+                              value: bind $studio.theme_json
+                            - HStack:
+                              style: {justify: end}
+                              children:
+                                - Button: Apply
+                                  variant: Primary
+                                  on click: apply_theme_json()
+                        - VStack:
+                          style: {width: 320px, overflow: scroll, gap: 12px}
                           children:
-                            - Button: Apply
-                              variant: Primary
-                              on click: apply_theme_json()
+                            - Text: Showcase
+                              style: {weight: semibold}
+                            - Button: "Primary"
+                            - Button: "Secondary"
+                              variant: Secondary
+                            - Button: "Danger"
+                              variant: Danger
+                            - Input:
+                              placeholder: input…
+                            - Textarea:
+                              placeholder: textarea…
+                            - Checkbox:
+                              label: a checkbox
+                            - Switch:
+                              label: a switch
+                            - Slider:
+                              value: bind $showcase.slider
+                            - Progress:
+                              value: 0.6
+                            - Badge:
+                              label: a badge
+                            - Alert:
+                              title: an alert
+                            - Tag:
+                              label: a tag
         - VStack#inspector:
           style:
             width: 280px
