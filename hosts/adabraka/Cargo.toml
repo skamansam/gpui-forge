@@ -18,6 +18,8 @@ adabraka-gpui = "0.5"
 adabraka-ui = "=0.3.9"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+x11rb = "0.14.0"
+raw-window-handle = "0.6.2"
 
 # Same fix as the root workspace — xattr 0.2.3 reads libc::ENOATTR which glibc
 # lacks; the vendored 0.2.4 maps it to ENODATA on Linux. This workspace has its

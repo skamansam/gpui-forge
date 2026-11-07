@@ -126,7 +126,7 @@ fn main() {
                                             }
                                         });
                                     }
-                                    HostMsg::FrameRect { x: _, y: _, w, h } => {
+                                    HostMsg::FrameRect { x, y, w, h } => {
                                         cx.defer(move |cx| {
                                             for handle in cx.windows() {
                                                 let _ = handle.update(
@@ -136,6 +136,8 @@ fn main() {
                                                             gpui::px(w as f32),
                                                             gpui::px(h as f32),
                                                         ));
+                                                        #[cfg(target_os = "linux")]
+                                                        x11_move(window, x, y);
                                                     },
                                                 );
                                             }
@@ -157,4 +159,23 @@ fn main() {
         )
         .expect("failed to open preview window");
     });
+}
+
+/// #120 — the X11 position escape (PlatformWindow only has `resize`).
+#[cfg(target_os = "linux")]
+fn x11_move(window: &mut gpui::Window, x: f64, y: f64) {
+    use raw_window_handle::{HasWindowHandle, RawWindowHandle};
+    use x11rb::connection::Connection;
+    use x11rb::protocol::xproto::{ConfigureWindowAux, ConnectionExt};
+    let Ok(handle) = window.window_handle() else { return };
+    let Some(xid) = (match handle.as_raw() {
+        RawWindowHandle::Xcb(h) => Some(h.window.get()),
+        RawWindowHandle::Xlib(h) => Some(h.window as u32),
+        _ => None,
+    }) else { return };
+    if let Ok((conn, _)) = x11rb::connect(None) {
+        let aux = ConfigureWindowAux::new().x(x as i32).y(y as i32);
+        let _ = conn.configure_window(xid, &aux);
+        let _ = conn.flush();
+    }
 }
