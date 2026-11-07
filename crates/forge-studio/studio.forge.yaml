@@ -187,6 +187,7 @@ root:
                 min-height: 0
                 basis: 100%
                 border: 1px
+              variant: pill
               selected: bind $studio.tab
               children:
                 - Tab: Welcome
@@ -270,6 +271,7 @@ root:
                 - Tab: Source
                   children:
                     - Editor#source:
+                      grow: true
                       language: yaml
                       highlighting:
                         languages: [yaml]

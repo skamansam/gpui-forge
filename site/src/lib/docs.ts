@@ -40,7 +40,8 @@ function order(slug: string) {
 		'document-model',
 		'style-layout',
 		'catalog-manifest',
-		'adapters'
+		'adapters',
+		'state-inspector'
 	].indexOf(slug);
 	return i < 0 ? 99 : i;
 }
