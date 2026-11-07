@@ -139,6 +139,32 @@ fn main() {
             view.on_key(&key);
         }
         let _ = term.draw(|f| view.render(f));
+        // #120 Phase 2 — stream the frame as a cell grid for embedded
+        // canvases: `TestBackend` captures the same render the tty got.
+        if let Ok(size) = term.size() {
+            let mut test =
+                ratatui::Terminal::new(ratatui::backend::TestBackend::new(size.width, size.height))
+                    .expect("test backend");
+            let _ = test.draw(|f| view.render(f));
+            let buf = test.backend().buffer();
+            let (w, h) = (buf.area.width, buf.area.height);
+            let mut rows_s = Vec::with_capacity(h as usize);
+            for y in 0..h {
+                let mut line = String::with_capacity(w as usize);
+                for x in 0..w {
+                    if let Some(cell) = buf.cell((x, y)) {
+                        line.push_str(cell.symbol());
+                    }
+                }
+                rows_s.push(line);
+            }
+            emit(json!({
+                "event": "frame",
+                "base": "ratatui",
+                "cols": w,
+                "rows": rows_s,
+            }));
+        }
         std::thread::sleep(std::time::Duration::from_millis(50));
     }
 

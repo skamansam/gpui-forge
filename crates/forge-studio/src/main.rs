@@ -60,6 +60,12 @@ enum HostEvent {
     Call(String),
     /// The host's whole view state after a write — the `on_state` sink.
     State(Json),
+    /// #120 Phase 2 — a TUI frame buffer (cols + one line per row) from
+    /// `TestBackend` — rendered as a monospace cell grid in the card.
+    Frame {
+        cols: u32,
+        rows: Vec<String>,
+    },
     /// stdout reached EOF — the host exited (or was killed for a restart).
     Closed {
         generation: u64,
@@ -873,6 +879,17 @@ fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<F
                         HostEvent::Call(v["call"].as_str().unwrap_or_default().to_owned())
                     }
                     Some("state") => HostEvent::State(v["state"].clone()),
+                    Some("frame") => HostEvent::Frame {
+                        cols: v["cols"].as_u64().unwrap_or(0) as u32,
+                        rows: v["rows"]
+                            .as_array()
+                            .map(|a| {
+                                a.iter()
+                                    .filter_map(|r| r.as_str().map(str::to_owned))
+                                    .collect()
+                            })
+                            .unwrap_or_default(),
+                    },
                     _ => continue,
                 };
                 if tx.send(event).is_err() {
@@ -1011,6 +1028,15 @@ fn host_event(
                 cx,
             );
             mirror_document_state(view, &state, cx);
+        }
+        HostEvent::Frame { rows, .. } => {
+            // #120 Phase 2 — the TUI's frame grid as `preview.frame`, a
+            // `\n`-joined text the card renders monospace.
+            view.update_state(
+                &parse_path("preview.frame").unwrap(),
+                Json::String(rows.join("\n")),
+                cx,
+            );
         }
         HostEvent::Closed { generation } => {
             let mut guard = HOST.lock().unwrap();

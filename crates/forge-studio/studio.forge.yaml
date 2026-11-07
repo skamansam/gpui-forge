@@ -257,12 +257,21 @@ root:
                         border: 1px
                 - Tab: Preview
                   children:
-                    - forge.Preview#canvas:
-                      remote: "{$studio.host}"
-                      on click: raise_host()
-                      style: 
-                        grow: true
-                        border: 1px
+                    - VStack:
+                      style: {grow: true}
+                      children:
+                        - forge.Preview#canvas:
+                          remote: "{$studio.host}"
+                          on click: raise_host()
+                          style: 
+                            grow: true
+                            border: 1px
+                        # #120 Phase 2 — the TUI's streamed frame grid
+                        # (`preview.frame` from a ratatui host's TestBackend).
+                        - Text: "{$preview.frame}"
+                          style:
+                            size: xs
+                            color: $theme.muted_foreground
                 - Tab: Preferences
                   children:
                     - VStack:
