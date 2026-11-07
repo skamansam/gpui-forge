@@ -30,6 +30,27 @@ fn bases() -> Vec<String> {
 
 /// Feature flags selecting one base: gpui-kit is the default build, every
 /// other base is `--no-default-features --features base-<id>`.
+/// The `cargo clippy` argv for `check-base` — adabraka routes through its
+/// nested-workspace manifest instead of the root's `compile_error` base guard.
+fn check_base_cmd(base: &str) -> Vec<String> {
+    if base == "adabraka" {
+        // The nested host is a scaffold — verify it compiles, don't gate
+        // warnings on staged widget helpers.
+        return vec![
+            "check".into(),
+            "--manifest-path".into(),
+            "hosts/adabraka/Cargo.toml".into(),
+            "--all-targets".into(),
+        ];
+    }
+    let mut cargo = vec!["clippy".into(), "-p".into(), "gpui-forge-runtime".into()];
+    for f in base_flags(base) {
+        cargo.push(f);
+    }
+    cargo.extend(["--".into(), "-D".into(), "warnings".into()]);
+    cargo
+}
+
 fn base_flags(base: &str) -> Vec<String> {
     if base == "gpui-kit" {
         Vec::new()
@@ -185,21 +206,17 @@ fn main() {
         }
         Some("check-base") => {
             let Some(base) = args.get(1) else { usage() };
-            let mut cargo = vec!["clippy", "-p", "gpui-forge-runtime"];
-            let flags = base_flags(base);
-            cargo.extend(flags.iter().map(String::as_str));
-            cargo.extend(["--", "-D", "warnings"]);
-            std::process::exit(!run(&cargo) as i32);
+            let cargo = check_base_cmd(&base);
+            let argv: Vec<&str> = cargo.iter().map(String::as_str).collect();
+            std::process::exit(!run(&argv) as i32);
         }
         Some("check-bases") => {
             let mut ok = true;
             for base in bases() {
                 println!("==> {base}");
-                let mut cargo = vec!["clippy", "-p", "gpui-forge-runtime"];
-                let flags = base_flags(&base);
-                cargo.extend(flags.iter().map(String::as_str));
-                cargo.extend(["--", "-D", "warnings"]);
-                ok &= run(&cargo);
+                let cargo = check_base_cmd(&base);
+                let argv: Vec<&str> = cargo.iter().map(String::as_str).collect();
+                ok &= run(&argv);
             }
             std::process::exit(!ok as i32);
         }
