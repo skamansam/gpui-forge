@@ -1587,12 +1587,13 @@ fn build_cmd(rest: &[String]) -> i32 {
                 .replace(
                     r#"let (doc, diagnostics) = gpui_forge_runtime::check::check(
                 SRC, gpui_forge_runtime::base::BASE_ID, &catalogs);"#,
-                    r#"let (doc, diagnostics): (
+                    &format!(
+                        "{}\n            doc::set_state(&mut view, cx);",
+                        r#"let (doc, diagnostics): (
                 Option<gpui_forge_runtime::forge_spec::Document>,
                 Vec<gpui_forge_runtime::forge_spec::Diagnostic>,
             ) = (Some(doc::document()), Vec::new());"#
-                        .to_string()
-                        + "\n            doc::set_state(&mut view, cx);",
+                    ),
                 );
             write(&src_dir.join("main.rs"), &main);
         }
