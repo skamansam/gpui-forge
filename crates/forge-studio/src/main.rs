@@ -60,10 +60,9 @@ enum HostEvent {
     Call(String),
     /// The host's whole view state after a write — the `on_state` sink.
     State(Json),
-    /// #120 Phase 2 — a TUI frame buffer (cols + one line per row) from
+    /// #120 Phase 2 — a TUI frame buffer (one line per row) from
     /// `TestBackend` — rendered as a monospace cell grid in the card.
     Frame {
-        cols: u32,
         rows: Vec<String>,
     },
     /// #120 Phase 2 — an rgba screenshot from a pixel-capable host (iced).
@@ -928,7 +927,6 @@ fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<F
                         data: v["data"].as_str().unwrap_or_default().to_owned(),
                     },
                     Some("frame") => HostEvent::Frame {
-                        cols: v["cols"].as_u64().unwrap_or(0) as u32,
                         rows: v["rows"]
                             .as_array()
                             .map(|a| {

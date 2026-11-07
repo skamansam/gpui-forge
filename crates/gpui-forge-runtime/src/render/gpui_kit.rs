@@ -394,8 +394,15 @@ impl ForgeView {
             .unwrap_or(crate::base::BASE_ID)
             .to_owned();
         let mut libs: Vec<(String, String, String)> = Vec::new();
+        let mut seen: std::collections::HashSet<String> = std::collections::HashSet::new();
         for cat in &self.catalogs {
+            // A library's catalog can land in `self.catalogs` twice — the
+            // bundled `check::catalogs()` set plus the `register_library`
+            // copy — so dedupe by library id or the dropdown lists it twice.
             if cat.library == "forge" || !cat.supports_base(&doc_base) {
+                continue;
+            }
+            if !seen.insert(cat.library.clone()) {
                 continue;
             }
             let alias = self
