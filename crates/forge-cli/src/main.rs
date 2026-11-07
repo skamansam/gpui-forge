@@ -187,11 +187,61 @@ fn main() {
 }
 "#;
 
+/// The bezel app's bootstrap: `bezel::gpui` (the Zed f16f96 fork) takes a
+/// caller-provided platform; bezel's appearance global does the theming (#94).
+const APP_MAIN_BEZEL: &str = r#"use gpui_forge_runtime::render::ForgeView;
+use bezel::gpui::prelude::*;
+use bezel::gpui::*;
+
+{LIB_USE}
+
+const SRC: &str = include_str!("../app.forge.yaml");
+
+fn main() {
+    Application::with_platform(bezel::gpui_platform::current_platform(false))
+        .run(|cx| {
+        let catalogs = gpui_forge_runtime::check::catalogs();
+        let (doc, diagnostics) = gpui_forge_runtime::check::check(
+            SRC, "{BASE_ID}", &catalogs);
+        for d in &diagnostics {
+            eprintln!("app.forge.yaml:{}:{}: {}", d.pos.line, d.pos.col, d.message);
+        }
+        let bounds = Bounds::centered(None, size(px(1280.0), px(800.0)), cx);
+        let options = WindowOptions {
+            app_id: Some("{APP_ID}".into()),
+            window_bounds: Some(WindowBounds::Windowed(bounds)),
+            titlebar: Some(TitlebarOptions {
+                title: Some("{TITLE}".into()),
+                appears_transparent: true,
+                traffic_light_position: None,
+            }),
+            ..Default::default()
+        };
+        cx.open_window(options, move |_, cx| {
+            bezel::theme::appearance::init(
+                bezel::theme::appearance::AppearanceMode::Dark, cx);
+            let catalogs = catalogs.clone();
+            let doc = doc.clone();
+            cx.new(move |cx| {
+                let mut view = ForgeView::new(catalogs);
+{LIB_REGISTER}
+                if let Some(doc) = doc {
+                    view.set_document(doc, cx);
+                }
+                view
+            })
+        })
+        .expect("failed to open window");
+    });
+}
+"#;
+
 /// The `main.rs` template for the document's base — one bootstrap per base
 /// family (#100): each links its own GPUI/toolkit stack.
 fn app_main(base_id: &str) -> &'static str {
     match base_id {
         "gpui02" => APP_MAIN_GPUI02,
+        "bezel" => APP_MAIN_BEZEL,
         _ => APP_MAIN,
     }
 }

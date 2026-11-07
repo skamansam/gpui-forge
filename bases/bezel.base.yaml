@@ -8,10 +8,10 @@ description: Bezel components on the bezel-gpui (crabtalk) fork of Zed's GPUI â€
 
 gpui:
   crate: bezel-gpui
-  version: "0.1"
+  version: "0.3.21"
 library:
   crate: bezel
-  version: "0.1"
+  version: "0.2.24"
 toolchain: stable
 platforms: [linux, macos, windows]
 wasm: true
