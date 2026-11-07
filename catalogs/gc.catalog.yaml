@@ -1,0 +1,12 @@
+version: "0.1"
+namespace: gc
+elements:
+  Button:
+    description: gpui-component Button
+    props: {label: string, variant: string}
+  Badge:
+    description: gpui-component Badge
+    props: {label: string}
+  Alert:
+    description: gpui-component Alert
+    props: {title: string}

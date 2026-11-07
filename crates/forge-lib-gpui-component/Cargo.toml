@@ -1,0 +1,14 @@
+[package]
+name = "forge-lib-gpui-component"
+description = "gpui-component adapter for GPUI Forge (gc.* namespaced elements on base-gpui02)."
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+repository.workspace = true
+
+[dependencies]
+gpui-component = "0.8.1"
+gpui-forge-runtime = { path = "../gpui-forge-runtime", default-features = false, features = ["base-gpui02"] }
+
+[lints]
+workspace = true

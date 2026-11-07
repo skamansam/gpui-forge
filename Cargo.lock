@@ -3509,6 +3509,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "forge-lib-gpui-component"
+version = "0.1.0"
+dependencies = [
+ "gpui-component",
+ "gpui-forge-runtime",
+]
+
+[[package]]
 name = "forge-lib-template"
 version = "0.1.0"
 dependencies = [
