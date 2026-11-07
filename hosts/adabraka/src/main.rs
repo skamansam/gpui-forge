@@ -126,6 +126,21 @@ fn main() {
                                             }
                                         });
                                     }
+                                    HostMsg::FrameRect { x: _, y: _, w, h } => {
+                                        cx.defer(move |cx| {
+                                            for handle in cx.windows() {
+                                                let _ = handle.update(
+                                                    cx,
+                                                    |_, window, _| {
+                                                        window.resize(gpui::size(
+                                                            gpui::px(w as f32),
+                                                            gpui::px(h as f32),
+                                                        ));
+                                                    },
+                                                );
+                                            }
+                                        });
+                                    }
                                     HostMsg::Quit => quit = true,
                                 }
                             }

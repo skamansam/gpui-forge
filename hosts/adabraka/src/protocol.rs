@@ -22,6 +22,13 @@ pub enum HostMsg {
         dark: bool,
     },
     Raise,
+    /// #120 Phase 1 — the canvas slot's screen-space bounds.
+    FrameRect {
+        x: f64,
+        y: f64,
+        w: f64,
+        h: f64,
+    },
     Quit,
 }
 
@@ -87,6 +94,14 @@ pub fn spawn_reader(tx: mpsc::Sender<HostMsg>) {
                 }
                 Some("quit") => {
                     let _ = tx.send(HostMsg::Quit);
+                }
+                Some("frame_rect") => {
+                    let _ = tx.send(HostMsg::FrameRect {
+                        x: v["x"].as_f64().unwrap_or(0.0),
+                        y: v["y"].as_f64().unwrap_or(0.0),
+                        w: v["w"].as_f64().unwrap_or(0.0),
+                        h: v["h"].as_f64().unwrap_or(0.0),
+                    });
                     return;
                 }
                 _ => {}
