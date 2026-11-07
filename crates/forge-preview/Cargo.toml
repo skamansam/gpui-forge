@@ -53,6 +53,8 @@ crossterm = { version = "0.28", optional = true }
 iced = { version = "0.13", optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+x11rb = "0.14.0"
+raw-window-handle = "0.6.2"
 
 [lints]
 workspace = true

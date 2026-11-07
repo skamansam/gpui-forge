@@ -1885,7 +1885,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bd63e33452ffdafd39924c4f05a5dd1e94db646c779c6bd59148a3d95fff5ad4"
 dependencies = [
  "thiserror 2.0.21",
- "x11rb",
+ "x11rb 0.13.2",
 ]
 
 [[package]]
@@ -3527,8 +3527,10 @@ dependencies = [
  "guise-ui",
  "iced",
  "ratatui",
+ "raw-window-handle",
  "serde",
  "serde_json",
+ "x11rb 0.14.0",
 ]
 
 [[package]]
@@ -4282,7 +4284,7 @@ dependencies = [
  "windows-numerics 0.2.0",
  "windows-registry 0.5.3",
  "x11-clipboard",
- "x11rb",
+ "x11rb 0.13.2",
  "xkbcommon",
  "zed-font-kit",
  "zed-scap",
@@ -4658,7 +4660,7 @@ dependencies = [
  "wayland-protocols 0.32.13",
  "wayland-protocols-plasma 0.3.12",
  "wayland-protocols-wlr",
- "x11rb",
+ "x11rb 0.13.2",
  "xkbcommon",
  "zed-scap",
  "zed-xim",
@@ -9205,7 +9207,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.4.15",
- "windows-sys 0.52.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
@@ -10023,7 +10025,7 @@ dependencies = [
  "wayland-sys",
  "web-sys",
  "windows-sys 0.61.2",
- "x11rb",
+ "x11rb 0.13.2",
 ]
 
 [[package]]
@@ -13125,7 +13127,7 @@ dependencies = [
  "web-time",
  "windows-sys 0.52.0",
  "x11-dl",
- "x11rb",
+ "x11rb 0.13.2",
  "xkbcommon-dl",
 ]
 
@@ -13263,7 +13265,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "662d74b3d77e396b8e5beb00b9cad6a9eccf40b2ef68cc858784b14c41d535a3"
 dependencies = [
  "libc",
- "x11rb",
+ "x11rb 0.13.2",
 ]
 
 [[package]]
@@ -13289,8 +13291,19 @@ dependencies = [
  "libloading 0.8.9",
  "once_cell",
  "rustix 1.1.5",
- "x11rb-protocol",
+ "x11rb-protocol 0.13.2",
  "xcursor",
+]
+
+[[package]]
+name = "x11rb"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a8885a854a8bfdf87a301e53e41b17c5f8f33639903131338b997b1eb614f44"
+dependencies = [
+ "gethostname",
+ "rustix 1.1.5",
+ "x11rb-protocol 0.14.0",
 ]
 
 [[package]]
@@ -13298,6 +13311,12 @@ name = "x11rb-protocol"
 version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ea6fc2961e4ef194dcbfe56bb845534d0dc8098940c7e5c012a258bfec6701bd"
+
+[[package]]
+name = "x11rb-protocol"
+version = "0.14.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "acf4d1bc32aa46eec18caa634ec3cf4c05bfa151f12b93b510b15190f69a1ca8"
 
 [[package]]
 name = "xattr"
@@ -13750,7 +13769,7 @@ dependencies = [
  "ahash 0.8.12",
  "hashbrown 0.14.5",
  "log",
- "x11rb",
+ "x11rb 0.13.2",
  "xim-ctext",
  "xim-parser",
 ]

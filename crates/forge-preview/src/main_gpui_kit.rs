@@ -168,13 +168,10 @@ fn main() {
                                                 }
                                             });
                                         }
-                                        HostMsg::FrameRect { x: _, y: _, w, h } => {
-                                            // #120 Phase 1 — `PlatformWindow`
-                                            // only exposes `resize` (no
-                                            // `set_position` — compositor
-                                            // constraint); size the host window
-                                            // to the slot. Position needs an
-                                            // X11/platform escape.
+                                        HostMsg::FrameRect { x, y, w, h } => {
+                                            // #120 — the X11 escape for
+                                            // position: `HasWindowHandle`
+                                            // gives the XID, `x11rb` moves it.
                                             cx.defer(move |cx| {
                                                 for handle in cx.windows() {
                                                     let _ = handle.update(
@@ -186,6 +183,8 @@ fn main() {
                                                                     gpui_kit::px(h as f32),
                                                                 ),
                                                             );
+                                                            #[cfg(target_os = "linux")]
+                                                            x11_move(window, x, y);
                                                         },
                                                     );
                                                 }
@@ -207,4 +206,28 @@ fn main() {
             )
             .expect("failed to open preview window");
         });
+}
+
+/// #120 Phase 1 — the X11 position escape: `PlatformWindow` has no
+/// `set_position`, but `HasWindowHandle` gives the XID; `x11rb` moves it.
+#[cfg(target_os = "linux")]
+fn x11_move(window: &mut gpui_kit::Window, x: f64, y: f64) {
+    use raw_window_handle::{HasWindowHandle, RawWindowHandle};
+    use x11rb::connection::Connection;
+    use x11rb::protocol::xproto::{ConfigureWindowAux, ConnectionExt};
+    let Ok(handle) = window.window_handle() else {
+        return;
+    };
+    let Some(xid) = (match handle.as_raw() {
+        RawWindowHandle::Xcb(h) => Some(h.window.get()),
+        RawWindowHandle::Xlib(h) => Some(h.window as u32),
+        _ => None,
+    }) else {
+        return;
+    };
+    if let Ok((conn, _)) = x11rb::connect(None) {
+        let aux = ConfigureWindowAux::new().x(x as i32).y(y as i32);
+        let _ = conn.configure_window(xid, &aux);
+        let _ = conn.flush();
+    }
 }
