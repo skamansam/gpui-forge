@@ -568,7 +568,7 @@ impl ForgeView {
                     }
                     return div().size_full().child(view).into_any_element();
                 }
-                return placeholder(format!("forge.{} — gpui02 stub", node.element.name));
+                return placeholder(format!("forge.{} — bezel stub", node.element.name));
             }
             for lib in &self.libraries {
                 if lib.alias() == ns
