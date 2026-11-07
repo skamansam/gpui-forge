@@ -286,6 +286,7 @@ root:
                         - Text: Every bound `{$path}` var in the document — edit scalars, watch the app react.
                           style: {size: sm, color: $theme.muted_foreground}
                         - forge.Vars:
+                          of: canvas
                 - Tab: Themes
                   children:
                     - HStack:

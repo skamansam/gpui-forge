@@ -388,16 +388,25 @@ impl ForgeView {
         self.on_state = Some(on_state);
     }
 
-    /// `forge.Vars` — a live state inspector: every top-level `state`
-    /// object flattened to dotted paths, editable scalars wired through
-    /// `self.inputs` + `InputEvent::Change`, and an "add" row for new vars.
+    /// `forge.Vars` — a live state inspector for the *edited document's*
+    /// state: `of` names the `forge.Preview` id whose nested ForgeView
+    /// supplies the vars. Scalars edit via subscribed `Input`s, objects/
+    /// arrays via a `Textarea` + `set`, and an "add" row creates new vars —
+    /// all writes go to the *preview* view's state so `{$path}` bindings in
+    /// the preview tab react live.
     fn vars(
         &mut self,
-        _node: &Node,
+        node: &Node,
         key: &str,
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> AnyElement {
+        let of = self
+            .prop_text(node, "of")
+            .unwrap_or_else(|| "canvas".to_owned());
+        let preview = self.preview(&of, cx);
+        let state = preview.read(cx).state().clone();
+
         fn flatten(prefix: &str, json: &Json, out: &mut Vec<(String, Json)>) {
             match json {
                 Json::Object(map) => {
@@ -409,7 +418,7 @@ impl ForgeView {
             }
         }
         let mut rows: Vec<(String, Json)> = Vec::new();
-        flatten("", self.state(), &mut rows);
+        flatten("", &state, &mut rows);
         rows.sort_by(|a, b| a.0.cmp(&b.0));
 
         let mut list = div().flex().flex_col().gap_2();
@@ -417,10 +426,8 @@ impl ForgeView {
             let state_key = format!("vars-{key}-{path}");
             let display = match &value {
                 Json::String(s) => s.clone(),
-                _ => value.to_string(),
+                _ => serde_json::to_string_pretty(&value).unwrap_or_default(),
             };
-            // Scalars: an Input whose Change writes back via update_state —
-            // bound `{$path}` elements re-render to the new value live.
             let row_edit = match &value {
                 Json::String(_) | Json::Number(_) | Json::Bool(_) => {
                     let state = match self.inputs.get(&state_key) {
@@ -430,19 +437,13 @@ impl ForgeView {
                                 InputState::new(window, cx).default_value(display.clone())
                             });
                             let path = parse_path(&path).unwrap();
-                            let weak = cx.entity().downgrade();
+                            let preview = preview.clone();
                             let sub = cx.subscribe(&s, move |_this, s, event, cx| {
                                 if matches!(event, InputEvent::Change) {
                                     let v = s.read(cx).value().to_string();
-                                    try_update(&weak, cx, "vars", |this, cx| {
-                                        // numbers/bools parse back to their
-                                        // Json type; everything else stays
-                                        // a String.
-                                        let parsed =
-                                            serde_json::from_str(&v).unwrap_or(Json::String(v));
-                                        this.update_state(&path, parsed, cx)
-                                    })
-                                    .ok();
+                                    let parsed =
+                                        serde_json::from_str(&v).unwrap_or(Json::String(v));
+                                    preview.update(cx, |v, cx| v.update_state(&path, parsed, cx));
                                 }
                             });
                             self.subscriptions.push(sub);
@@ -458,30 +459,23 @@ impl ForgeView {
                         .child(Input::new(&state).with_size(size("small")).w_full())
                 }
                 _ => {
-                    // objects/arrays: a Textarea with the pretty JSON; its
-                    // Change writes `vars_edit.{path}`, Set parses it back.
+                    let edit_path_str = format!("vars_edit.{}", path.replace('.', "_"));
                     let state = match self.textareas.get(&state_key) {
                         Some(s) => s.clone(),
                         None => {
                             let s = cx.new(|cx| {
                                 TextareaState::new(window, cx)
-                                    .default_value(
-                                        serde_json::to_string_pretty(&value)
-                                            .unwrap_or(display.clone()),
-                                    )
+                                    .default_value(display.clone())
                                     .rows(3)
                             });
-                            let edit_path =
-                                parse_path(&format!("vars_edit.{}", path.replace('.', "_")))
-                                    .unwrap();
-                            let weak = cx.entity().downgrade();
+                            let edit_path = parse_path(&edit_path_str).unwrap();
+                            let preview = preview.clone();
                             let sub = cx.subscribe(&s, move |_this, s, event, cx| {
                                 if matches!(event, InputEvent::Change) {
                                     let v = s.read(cx).value().to_string();
-                                    try_update(&weak, cx, "vars", |this, cx| {
-                                        this.update_state(&edit_path, Json::String(v), cx)
-                                    })
-                                    .ok();
+                                    preview.update(cx, |view, cx| {
+                                        view.update_state(&edit_path, Json::String(v), cx)
+                                    });
                                 }
                             });
                             self.subscriptions.push(sub);
@@ -489,31 +483,32 @@ impl ForgeView {
                             s
                         }
                     };
-                    let weak = cx.entity().downgrade();
+                    let preview = preview.clone();
                     let path_for_set = parse_path(&path).unwrap();
-                    let edit_path =
-                        parse_path(&format!("vars_edit.{}", path.replace('.', "_"))).unwrap();
+                    let edit_path = parse_path(&edit_path_str).unwrap();
                     div()
                         .flex()
                         .flex_col()
+                        .flex_grow(1.0)
                         .gap_1()
-                        .child(Textarea::new(&state))
+                        .child(Textarea::new(&state).w_full())
                         .child(
                             Button::new(SharedString::from(format!("vars-set-{key}-{path}")))
                                 .label("set")
                                 .with_variant(ButtonVariant::Primary)
                                 .with_size(size("small"))
                                 .on_click(move |_, _, cx| {
-                                    try_update(&weak, cx, "vars", |this, cx| {
-                                        let text = get_path(this.state(), &edit_path)
+                                    let preview = preview.clone();
+                                    let path_for_set = path_for_set.clone();
+                                    preview.update(cx, |view, cx| {
+                                        let text = get_path(view.state(), &edit_path)
                                             .and_then(|j| j.as_str())
                                             .unwrap_or_default()
                                             .to_owned();
                                         if let Ok(parsed) = serde_json::from_str(&text) {
-                                            this.update_state(&path_for_set, parsed, cx);
+                                            view.update_state(&path_for_set, parsed, cx);
                                         }
-                                    })
-                                    .ok();
+                                    });
                                 }),
                         )
                 }
@@ -536,71 +531,69 @@ impl ForgeView {
             );
         }
 
-        // Add-new-var: two Inputs write to `studio.vars_add.{path,value}` on
-        // Change; the "+" button reads them and writes the new path.
+        // Add-new-var: Inputs write `vars_add.{path,value}` in the preview's
+        // state; "+" commits the new path.
         let add_path_key = format!("vars-add-path-{key}");
         let add_val_key = format!("vars-add-val-{key}");
+        let preview_clone = preview.clone();
         let add_path_state = self.inputs.get(&add_path_key).cloned().unwrap_or_else(|| {
             let s = cx.new(|cx| InputState::new(window, cx).placeholder("path (e.g. studio.new)"));
-            let weak = cx.entity().downgrade();
+            let preview = preview_clone.clone();
             let sub = cx.subscribe(&s, move |_this, s, event, cx| {
                 if matches!(event, InputEvent::Change) {
                     let v = s.read(cx).value().to_string();
-                    try_update(&weak, cx, "vars", |this, cx| {
-                        this.update_state(
-                            &parse_path("studio.vars_add_path").unwrap(),
+                    preview.update(cx, |view, cx| {
+                        view.update_state(
+                            &parse_path("vars_add.path").unwrap(),
                             Json::String(v),
                             cx,
                         )
-                    })
-                    .ok();
+                    });
                 }
             });
             self.subscriptions.push(sub);
             self.inputs.insert(add_path_key.clone(), s.clone());
             s
         });
+        let preview_clone = preview.clone();
         let add_val_state = self.inputs.get(&add_val_key).cloned().unwrap_or_else(|| {
             let s = cx.new(|cx| InputState::new(window, cx).placeholder("value"));
-            let weak = cx.entity().downgrade();
+            let preview = preview_clone.clone();
             let sub = cx.subscribe(&s, move |_this, s, event, cx| {
                 if matches!(event, InputEvent::Change) {
                     let v = s.read(cx).value().to_string();
-                    try_update(&weak, cx, "vars", |this, cx| {
-                        this.update_state(
-                            &parse_path("studio.vars_add_val").unwrap(),
+                    preview.update(cx, |view, cx| {
+                        view.update_state(
+                            &parse_path("vars_add.value").unwrap(),
                             Json::String(v),
                             cx,
                         )
-                    })
-                    .ok();
+                    });
                 }
             });
             self.subscriptions.push(sub);
             self.inputs.insert(add_val_key.clone(), s.clone());
             s
         });
-        let weak = cx.entity().downgrade();
         let add_btn = Button::new(SharedString::from(format!("vars-add-{key}")))
             .label("+")
             .with_variant(ButtonVariant::Primary)
             .with_size(size("small"))
             .on_click(move |_, _, cx| {
-                try_update(&weak, cx, "vars", |this, cx| {
-                    let path = get_path(this.state(), &parse_path("studio.vars_add_path").unwrap())
+                preview.update(cx, |view, cx| {
+                    let path = get_path(view.state(), &parse_path("vars_add.path").unwrap())
                         .and_then(|j| j.as_str())
                         .unwrap_or_default()
                         .to_owned();
-                    let val = get_path(this.state(), &parse_path("studio.vars_add_val").unwrap())
+                    let val = get_path(view.state(), &parse_path("vars_add.value").unwrap())
                         .and_then(|j| j.as_str())
                         .unwrap_or_default()
                         .to_owned();
                     if !path.is_empty() {
                         let parsed = serde_json::from_str(&val).unwrap_or(Json::String(val));
-                        this.update_state(&parse_path(&path).unwrap(), parsed, cx);
+                        view.update_state(&parse_path(&path).unwrap(), parsed, cx);
                     }
-                })
-                .ok();
+                });
             });
         list = list.child(
             div()
