@@ -496,16 +496,8 @@ impl ForgeView {
             .unwrap_or_default();
         let weak_toggle = cx.entity().downgrade();
         let open_path_c = open_path.clone();
-        let mut grid = Accordion::new(SharedString::from(format!("{key}-groups")))
-            .multiple(true)
-            .bordered(false)
-            .on_toggle_click(move |indices: &[usize], _, cx| {
-                let open_path = open_path_c.clone();
-                try_update(&weak_toggle, cx, "palette", |this, cx| {
-                    this.update_state(&open_path, Json::from(indices.to_vec()), cx)
-                })
-                .ok();
-            });
+        let total_groups = groups.len();
+        let mut grid = div().flex().flex_col().gap_1();
         for (i, (group, items)) in groups.iter().enumerate() {
             let mut row = div().flex().flex_row().flex_wrap().gap_1();
             for (name, tag, icon_name) in items.iter().cloned() {
@@ -550,11 +542,46 @@ impl ForgeView {
             }
             // Untracked (empty open_set) means "everything open" — the default.
             let open = open_set.is_empty() || open_set.contains(&i);
-            let item = gpui_kit::component::accordion::AccordionItem::new()
-                .title(SharedString::from(group.clone()))
-                .open(open)
-                .child(row);
-            grid = grid.item(move |_| item);
+            let weak_h = weak_toggle.clone();
+            let open_path_h = open_path_c.clone();
+            let open_set_h = open_set.clone();
+            let chevron = if open {
+                "chevron-down"
+            } else {
+                "chevron-right"
+            };
+            let header = div()
+                .id(format!("pal-group-{key}-{i}"))
+                .flex()
+                .flex_row()
+                .items_center()
+                .gap_1()
+                .child(icon(chevron).size_4())
+                .child(
+                    div()
+                        .text_sm()
+                        .font_weight(FontWeight::SEMIBOLD)
+                        .child(SharedString::from(group.clone())),
+                )
+                .on_click(move |_, _, cx| {
+                    let open_path = open_path_h.clone();
+                    let mut set = open_set_h.clone();
+                    if set.is_empty() {
+                        set = (0..total_groups).filter(|j| *j != i).collect();
+                    } else if let Some(p) = set.iter().position(|j| *j == i) {
+                        set.remove(p);
+                    } else {
+                        set.push(i);
+                    }
+                    try_update(&weak_h, cx, "palette", |this, cx| {
+                        this.update_state(&open_path, Json::from(set), cx)
+                    })
+                    .ok();
+                });
+            grid = grid.child(header);
+            if open {
+                grid = grid.child(row);
+            }
         }
         div()
             .flex()
