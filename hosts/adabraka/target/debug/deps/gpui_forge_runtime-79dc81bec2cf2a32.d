@@ -1,0 +1,13 @@
+/home/sam/workspace-other/gpui-forge/hosts/adabraka/target/debug/deps/gpui_forge_runtime-79dc81bec2cf2a32.d: /home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/lib.rs /home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/base.rs /home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/check.rs /home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/../../../bases/gpui-kit.base.yaml /home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/../../../bases/gpui02.base.yaml /home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/../../../bases/adabraka.base.yaml /home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/../../../bases/bezel.base.yaml /home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/../../../bases/ratatui.base.yaml /home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/../../../bases/iced.base.yaml
+
+/home/sam/workspace-other/gpui-forge/hosts/adabraka/target/debug/deps/libgpui_forge_runtime-79dc81bec2cf2a32.rmeta: /home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/lib.rs /home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/base.rs /home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/check.rs /home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/../../../bases/gpui-kit.base.yaml /home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/../../../bases/gpui02.base.yaml /home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/../../../bases/adabraka.base.yaml /home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/../../../bases/bezel.base.yaml /home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/../../../bases/ratatui.base.yaml /home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/../../../bases/iced.base.yaml
+
+/home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/lib.rs:
+/home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/base.rs:
+/home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/check.rs:
+/home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/../../../bases/gpui-kit.base.yaml:
+/home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/../../../bases/gpui02.base.yaml:
+/home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/../../../bases/adabraka.base.yaml:
+/home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/../../../bases/bezel.base.yaml:
+/home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/../../../bases/ratatui.base.yaml:
+/home/sam/workspace-other/gpui-forge/crates/gpui-forge-runtime/src/../../../bases/iced.base.yaml:

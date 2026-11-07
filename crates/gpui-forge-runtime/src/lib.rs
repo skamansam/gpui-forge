@@ -11,10 +11,11 @@ const _: () = {
         + cfg!(feature = "base-ratatui") as usize
         + cfg!(feature = "base-iced") as usize;
     assert!(
-        bases == 1,
-        "gpui-forge-runtime: enable exactly one base feature: \
+        bases <= 1,
+        "gpui-forge-runtime: enable at most one base feature: \
          base-gpui-kit, base-bezel, base-adabraka, base-gpui02, base-ratatui or base-iced. \
-         Use `default-features = false` when selecting a non-default base."
+         Use `default-features = false` when selecting a non-default base; \
+         no base is valid for consumers that only need check/base/forge_spec."
     );
 };
 

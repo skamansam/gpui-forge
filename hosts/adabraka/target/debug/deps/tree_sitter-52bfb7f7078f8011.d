@@ -1,0 +1,13 @@
+/home/sam/workspace-other/gpui-forge/hosts/adabraka/target/debug/deps/tree_sitter-52bfb7f7078f8011.d: /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tree-sitter-0.25.10/binding_rust/lib.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tree-sitter-0.25.10/binding_rust/ffi.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tree-sitter-0.25.10/binding_rust/util.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tree-sitter-0.25.10/binding_rust/./README.md /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tree-sitter-0.25.10/binding_rust/./bindings.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tree-sitter-0.25.10/binding_rust/../src/parser.h /home/sam/workspace-other/gpui-forge/hosts/adabraka/target/debug/build/tree-sitter-0bc75d7a4b980ef5/out/stdlib-symbols.txt
+
+/home/sam/workspace-other/gpui-forge/hosts/adabraka/target/debug/deps/libtree_sitter-52bfb7f7078f8011.rmeta: /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tree-sitter-0.25.10/binding_rust/lib.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tree-sitter-0.25.10/binding_rust/ffi.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tree-sitter-0.25.10/binding_rust/util.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tree-sitter-0.25.10/binding_rust/./README.md /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tree-sitter-0.25.10/binding_rust/./bindings.rs /home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tree-sitter-0.25.10/binding_rust/../src/parser.h /home/sam/workspace-other/gpui-forge/hosts/adabraka/target/debug/build/tree-sitter-0bc75d7a4b980ef5/out/stdlib-symbols.txt
+
+/home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tree-sitter-0.25.10/binding_rust/lib.rs:
+/home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tree-sitter-0.25.10/binding_rust/ffi.rs:
+/home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tree-sitter-0.25.10/binding_rust/util.rs:
+/home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tree-sitter-0.25.10/binding_rust/./README.md:
+/home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tree-sitter-0.25.10/binding_rust/./bindings.rs:
+/home/sam/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/tree-sitter-0.25.10/binding_rust/../src/parser.h:
+/home/sam/workspace-other/gpui-forge/hosts/adabraka/target/debug/build/tree-sitter-0bc75d7a4b980ef5/out/stdlib-symbols.txt:
+
+# env-dep:OUT_DIR=/home/sam/workspace-other/gpui-forge/hosts/adabraka/target/debug/build/tree-sitter-0bc75d7a4b980ef5/out
