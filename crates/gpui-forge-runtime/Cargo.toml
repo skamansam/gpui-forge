@@ -13,7 +13,7 @@ base-gpui-kit = ["dep:gpui-kit"]
 base-bezel = ["dep:bezel"]
 base-adabraka = []
 base-gpui02 = ["dep:gpui", "dep:guise-ui"]
-base-ratatui = []
+base-ratatui = ["dep:ratatui"]
 base-iced = []
 
 [dependencies]
@@ -26,6 +26,8 @@ guise-ui = { version = "1.10", optional = true }
 # bezel base (#94): SwiftUI-flavored components on the bezel-gpui fork
 # (0.3.21+zed.f16f96) — re-exported as `bezel::gpui`.
 bezel = { version = "0.2.24", optional = true, features = ["platform"] }
+# ratatui base (#112): terminal UI — the twin draws into `ratatui::Frame`.
+ratatui = { version = "0.29", optional = true }
 serde_json = "1"
 
 

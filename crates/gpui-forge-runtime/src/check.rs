@@ -55,6 +55,23 @@ pub fn catalogs() -> Vec<Catalog> {
     ]
 }
 
+/// The ratatui build's catalogs: its own library plus the Forge intrinsics.
+#[cfg(all(
+    feature = "base-ratatui",
+    not(feature = "base-gpui-kit"),
+    not(feature = "base-gpui02"),
+    not(feature = "base-bezel"),
+    not(feature = "base-adabraka")
+))]
+pub fn catalogs() -> Vec<Catalog> {
+    vec![
+        catalog::from_yaml(include_str!("../../../catalogs/ratatui.catalog.yaml"))
+            .expect("bundled ratatui catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/forge.catalog.yaml"))
+            .expect("bundled forge catalog is valid"),
+    ]
+}
+
 /// Reads and validates `src` for `base`. The document is returned whenever it parses, even with
 /// validation errors, so a canvas can keep showing as much as it can.
 /// The bases shipped with this build — the registry `base:` validates against

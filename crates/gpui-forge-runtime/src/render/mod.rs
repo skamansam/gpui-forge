@@ -27,6 +27,23 @@ mod bezel;
 ))]
 pub use bezel::*;
 
+#[cfg(all(
+    feature = "base-ratatui",
+    not(feature = "base-gpui-kit"),
+    not(feature = "base-gpui02"),
+    not(feature = "base-bezel"),
+    not(feature = "base-adabraka")
+))]
+mod ratatui;
+#[cfg(all(
+    feature = "base-ratatui",
+    not(feature = "base-gpui-kit"),
+    not(feature = "base-gpui02"),
+    not(feature = "base-bezel"),
+    not(feature = "base-adabraka")
+))]
+pub use ratatui::*;
+
 use forge_spec::{Path, PathSegment};
 use serde_json::Value as Json;
 

@@ -18,9 +18,6 @@ const _: () = {
     );
 };
 
-#[cfg(feature = "base-ratatui")]
-compile_error!("gpui-forge-runtime: the ratatui (TUI) base is not implemented yet (#112)");
-
 #[cfg(feature = "base-iced")]
 compile_error!("gpui-forge-runtime: the iced base is not implemented yet (#113)");
 
@@ -34,7 +31,8 @@ compile_error!(
 #[cfg(any(
     feature = "base-gpui-kit",
     feature = "base-gpui02",
-    feature = "base-bezel"
+    feature = "base-bezel",
+    feature = "base-ratatui"
 ))]
 pub mod render;
 
