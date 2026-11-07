@@ -475,11 +475,23 @@ fn reset_theme(
 ) {
     let registry = ThemeRegistry::global(cx);
     let dark = Theme::global(cx).is_dark();
-    let default = if dark {
-        registry.default_dark_theme().clone()
-    } else {
-        registry.default_light_theme().clone()
-    };
+    // #126 — reset to the SELECTED theme (studio.theme), not the mode
+    // default; fall back to the mode default only if the name is missing.
+    let selected = view
+        .state()
+        .get("studio")
+        .and_then(|s| s.get("theme"))
+        .and_then(|j| j.as_str())
+        .map(|s| s.to_owned());
+    let default = selected
+        .and_then(|name| registry.themes().get(name.as_str()).cloned())
+        .unwrap_or_else(|| {
+            if dark {
+                registry.default_dark_theme().clone()
+            } else {
+                registry.default_light_theme().clone()
+            }
+        });
     let name = default.name.to_string();
     Theme::update(cx, |theme| theme.apply_config(&default));
     view.update_state(&parse_path("studio.theme").unwrap(), Json::String(name), cx);
