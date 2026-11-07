@@ -126,7 +126,7 @@ fn main() {
         Some("studio") => {
             std::process::exit(!run(&["run", "-p", "forge-studio"]) as i32);
         }
-        Some("cli") => {
+        Some("cli") | Some("forge") | Some("run") => {
             let mut cargo = vec!["run", "-p", "forge-cli", "--"];
             cargo.extend(args[1..].iter().map(String::as_str));
             std::process::exit(!run(&cargo) as i32);
