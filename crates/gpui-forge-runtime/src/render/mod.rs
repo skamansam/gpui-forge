@@ -44,6 +44,25 @@ mod ratatui;
 ))]
 pub use ratatui::*;
 
+#[cfg(all(
+    feature = "base-iced",
+    not(feature = "base-gpui-kit"),
+    not(feature = "base-gpui02"),
+    not(feature = "base-bezel"),
+    not(feature = "base-adabraka"),
+    not(feature = "base-ratatui")
+))]
+mod iced;
+#[cfg(all(
+    feature = "base-iced",
+    not(feature = "base-gpui-kit"),
+    not(feature = "base-gpui02"),
+    not(feature = "base-bezel"),
+    not(feature = "base-adabraka"),
+    not(feature = "base-ratatui")
+))]
+pub use iced::*;
+
 use forge_spec::{Path, PathSegment};
 use serde_json::Value as Json;
 

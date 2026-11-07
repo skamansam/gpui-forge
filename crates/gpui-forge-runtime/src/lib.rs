@@ -18,9 +18,6 @@ const _: () = {
     );
 };
 
-#[cfg(feature = "base-iced")]
-compile_error!("gpui-forge-runtime: the iced base is not implemented yet (#113)");
-
 pub mod base;
 pub mod check;
 #[cfg(feature = "base-adabraka")]
@@ -32,7 +29,8 @@ compile_error!(
     feature = "base-gpui-kit",
     feature = "base-gpui02",
     feature = "base-bezel",
-    feature = "base-ratatui"
+    feature = "base-ratatui",
+    feature = "base-iced"
 ))]
 pub mod render;
 

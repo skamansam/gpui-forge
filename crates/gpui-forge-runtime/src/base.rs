@@ -53,3 +53,25 @@ pub const BASE_ID: &str = "ratatui";
     not(feature = "base-adabraka")
 ))]
 pub use ratatui as kit;
+
+/// Identifier of the active base, as written in a project's `forge.toml`.
+#[cfg(all(
+    feature = "base-iced",
+    not(feature = "base-gpui-kit"),
+    not(feature = "base-gpui02"),
+    not(feature = "base-bezel"),
+    not(feature = "base-adabraka"),
+    not(feature = "base-ratatui")
+))]
+pub const BASE_ID: &str = "iced";
+
+/// The iced base's toolkit crate — the twin produces `iced::Element`s.
+#[cfg(all(
+    feature = "base-iced",
+    not(feature = "base-gpui-kit"),
+    not(feature = "base-gpui02"),
+    not(feature = "base-bezel"),
+    not(feature = "base-adabraka"),
+    not(feature = "base-ratatui")
+))]
+pub use iced as kit;

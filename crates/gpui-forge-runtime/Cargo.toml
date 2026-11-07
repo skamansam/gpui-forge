@@ -14,7 +14,7 @@ base-bezel = ["dep:bezel"]
 base-adabraka = []
 base-gpui02 = ["dep:gpui", "dep:guise-ui"]
 base-ratatui = ["dep:ratatui"]
-base-iced = []
+base-iced = ["dep:iced"]
 
 [dependencies]
 forge-spec.workspace = true
@@ -28,6 +28,8 @@ guise-ui = { version = "1.10", optional = true }
 bezel = { version = "0.2.24", optional = true, features = ["platform"] }
 # ratatui base (#112): terminal UI — the twin draws into `ratatui::Frame`.
 ratatui = { version = "0.29", optional = true }
+# iced base (#113): Elm-architecture toolkit — view()/update()/Element.
+iced = { version = "0.13", optional = true }
 serde_json = "1"
 
 
