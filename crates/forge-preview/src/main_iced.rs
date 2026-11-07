@@ -5,6 +5,7 @@
 use gpui_forge_runtime::check;
 use gpui_forge_runtime::render::{ForgeView, Message as ForgeMessage};
 use iced::{Element, Task};
+const B64: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 use serde_json::json;
 use std::sync::mpsc;
 use std::time::Duration;
@@ -15,6 +16,7 @@ use protocol::{HostMsg, emit, spawn_reader};
 struct Host {
     view: ForgeView,
     rx: mpsc::Receiver<HostMsg>,
+    ticks: u64,
 }
 
 #[derive(Debug, Clone)]
@@ -22,6 +24,8 @@ enum Message {
     Forge(ForgeMessage),
     Tick,
     Quit,
+    /// #120 Phase 2 — a captured frame from `iced::window::screenshot`.
+    Screenshot(iced::window::Screenshot),
 }
 
 impl Host {
@@ -35,7 +39,7 @@ impl Host {
                 emit(json!({"event":"state","state": state}));
             }),
         );
-        Self { view, rx }
+        Self { view, rx, ticks: 0 }
     }
 
     fn update(&mut self, msg: Message) -> Task<Message> {
@@ -106,12 +110,59 @@ impl Host {
                         HostMsg::Quit => return Task::done(Message::Quit),
                     }
                 }
+                self.ticks += 1;
+                if self.ticks % 20 == 0 {
+                    // #120 Phase 2 — stream real pixels: screenshot →
+                    // frame_rgba (base64) for Studio's embedded card.
+                    return Task::batch([
+                        iced::window::get_latest().then(|id| {
+                            id.map(|id| iced::window::screenshot(id).map(Message::Screenshot))
+                                .unwrap_or(Task::none())
+                        }),
+                        Task::perform(
+                            async { std::thread::sleep(Duration::from_millis(50)) },
+                            |_| Message::Tick,
+                        ),
+                    ]);
+                }
                 return Task::perform(
                     async { std::thread::sleep(Duration::from_millis(50)) },
                     |_| Message::Tick,
                 );
             }
             Message::Quit => return iced::exit(),
+            Message::Screenshot(shot) => {
+                let bytes = shot.as_ref();
+                let mut b64 = String::with_capacity(bytes.len() / 3 * 4);
+                for c in bytes.chunks(3) {
+                    let mut v = (c[0] as u32) << 16;
+                    if c.len() > 1 {
+                        v |= (c[1] as u32) << 8;
+                    }
+                    if c.len() > 2 {
+                        v |= c[2] as u32;
+                    }
+                    b64.push(B64[(v >> 18) as usize & 63] as char);
+                    b64.push(B64[(v >> 12) as usize & 63] as char);
+                    b64.push(if c.len() > 1 {
+                        B64[(v >> 6) as usize & 63] as char
+                    } else {
+                        '='
+                    });
+                    b64.push(if c.len() > 2 {
+                        B64[v as usize & 63] as char
+                    } else {
+                        '='
+                    });
+                }
+                emit(json!({
+                    "event": "frame_rgba",
+                    "base": "iced",
+                    "w": shot.size.width,
+                    "h": shot.size.height,
+                    "data": b64,
+                }));
+            }
         }
         Task::none()
     }

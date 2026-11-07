@@ -66,6 +66,12 @@ enum HostEvent {
         cols: u32,
         rows: Vec<String>,
     },
+    /// #120 Phase 2 — an rgba screenshot from a pixel-capable host (iced).
+    FrameRgba {
+        w: u32,
+        h: u32,
+        data: String,
+    },
     /// stdout reached EOF — the host exited (or was killed for a restart).
     Closed {
         generation: u64,
@@ -879,6 +885,11 @@ fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<F
                         HostEvent::Call(v["call"].as_str().unwrap_or_default().to_owned())
                     }
                     Some("state") => HostEvent::State(v["state"].clone()),
+                    Some("frame_rgba") => HostEvent::FrameRgba {
+                        w: v["w"].as_u64().unwrap_or(0) as u32,
+                        h: v["h"].as_u64().unwrap_or(0) as u32,
+                        data: v["data"].as_str().unwrap_or_default().to_owned(),
+                    },
                     Some("frame") => HostEvent::Frame {
                         cols: v["cols"].as_u64().unwrap_or(0) as u32,
                         rows: v["rows"]
@@ -1028,6 +1039,14 @@ fn host_event(
                 cx,
             );
             mirror_document_state(view, &state, cx);
+        }
+        HostEvent::FrameRgba { w, h, data } => {
+            view.update_state(
+                &parse_path("preview.frame_rgba").unwrap(),
+                Json::String(data),
+                cx,
+            );
+            let _ = (w, h); // dims for the image arm when it lands
         }
         HostEvent::Frame { rows, .. } => {
             // #120 Phase 2 — the TUI's frame grid as `preview.frame`, a
