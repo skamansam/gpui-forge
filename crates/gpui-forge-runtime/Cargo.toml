@@ -26,5 +26,18 @@ guise-ui = { version = "1.10", optional = true }
 serde_json = "1"
 
 
+# `cargo run -p gpui-forge-runtime --example render -- <doc.forge.yaml>`
+[[example]]
+name = "render"
+path = "examples/render.rs"
+required-features = ["base-gpui-kit"]
+
+# `cargo run -p gpui-forge-runtime --no-default-features --features base-gpui02
+#  --example render_gpui02 -- <doc.forge.yaml>`
+[[example]]
+name = "render_gpui02"
+path = "examples/render_gpui02.rs"
+required-features = ["base-gpui02"]
+
 [lints]
 workspace = true
