@@ -76,7 +76,14 @@ elements:
     children: none
 
   Vars:
-    summary: Live state inspector — every state var as an editable row; add
-      new vars; bound `{$path}` elements react to edits.
+    summary: Live state inspector — every state var in the named preview's
+      document as an editable row; add new vars; bound `{$path}` elements
+      react to edits.
     component: forge::Vars
+    props:
+      of:
+        type: string
+        default: canvas
+        summary: "The `forge.Preview` element id whose document state is
+          inspected — `of: canvas`."
     children: none
