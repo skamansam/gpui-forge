@@ -192,7 +192,20 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     all_themes.extend(light_themes.iter().cloned());
     all_themes.push("--- Dark Themes ---".to_string());
     all_themes.extend(dark_themes.iter().cloned());
-    let theme_name = Theme::global(cx).theme_name().to_string();
+    let prefs = load_prefs();
+    let theme_name = prefs
+        .get("theme")
+        .and_then(|j| j.as_str())
+        .map(str::to_owned)
+        .unwrap_or_else(|| Theme::global(cx).theme_name().to_string());
+    let dark = prefs.get("dark").and_then(|j| j.as_bool()).unwrap_or(dark);
+    if let Some(config) = ThemeRegistry::global(cx)
+        .themes()
+        .get(theme_name.as_str())
+        .cloned()
+    {
+        Theme::update(cx, |theme| theme.apply_config(&config));
+    }
     view.set_state(
         json!({
             "studio": {
@@ -460,6 +473,7 @@ fn apply_theme_name(
     // and applies colors — `edit` sees it as already installed and skips the
     // reload that would otherwise re-apply the OLD config.
     Theme::update(cx, |theme| theme.apply_config(&config));
+    save_prefs(view);
     // Show the theme's JSON in the Themes editor.
     if let Ok(json) = serde_json::to_string_pretty(&ThemeSet {
         name: config.name.clone(),
@@ -1250,6 +1264,44 @@ fn load_recents() -> Vec<PathBuf> {
 
 /// Prepends `path` to the recent list, deduping and capping at 8, then
 /// rewrites the store.
+/// #123 — persisted preferences at
+/// `~/.local/share/gpui-forge/prefs.json` — currently `theme` + `dark`.
+fn prefs_file() -> Option<PathBuf> {
+    std::env::var("HOME")
+        .ok()
+        .map(|h| PathBuf::from(h).join(".local/share/gpui-forge/prefs.json"))
+}
+
+fn load_prefs() -> Json {
+    prefs_file()
+        .and_then(|f| std::fs::read_to_string(f).ok())
+        .and_then(|s| serde_json::from_str(&s).ok())
+        .unwrap_or_else(|| json!({}))
+}
+
+fn save_prefs(view: &ForgeView) {
+    let theme = view
+        .state()
+        .get("studio")
+        .and_then(|s| s.get("theme"))
+        .cloned()
+        .unwrap_or(Json::Null);
+    let dark = view
+        .state()
+        .get("studio")
+        .and_then(|s| s.get("dark"))
+        .cloned()
+        .unwrap_or(Json::Null);
+    if let Some(f) = prefs_file() {
+        let _ = std::fs::create_dir_all(f.parent().unwrap());
+        let _ = std::fs::write(
+            f,
+            serde_json::to_string_pretty(&json!({"theme": theme, "dark": dark}))
+                .unwrap_or_default(),
+        );
+    }
+}
+
 fn record_recent(path: &PathBuf) -> Vec<PathBuf> {
     let recents: Vec<PathBuf> = std::iter::once(path.clone())
         .chain(load_recents().into_iter().filter(|p| p != path))

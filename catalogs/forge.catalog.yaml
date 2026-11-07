@@ -22,6 +22,11 @@ elements:
         summary: "Non-empty → the document previews in an out-of-process host;
           the element renders a framed card with this label instead of a
           nested view."
+      mode:
+        type: string
+        summary: "`embedded` → the host window floats over a transparent slot
+          (Studio's `frame_rect` tracking); `remote` (default) → the framed
+          'click to focus' card."
     events:
       click:
         summary: Fired when the remote-preview card is clicked (e.g. to focus
