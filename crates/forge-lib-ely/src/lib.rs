@@ -1,10 +1,13 @@
 //! Adapter for Ely GPUI Components (`use: ely: ely-core` → `ely.*` elements).
 
-use ely_core::buttons::{Button, ButtonVariant, CopyButton, IconButton};
-use ely_core::data_display::{
-    Avatar, Badge, KpiCard, Meter, QrCode, Statistic, TimelineItem, TrendIndicator, UsageBar,
+use ely_core::buttons::{
+    Button, ButtonVariant, CopyButton, IconButton, SegmentedControl, ToggleButton, ToggleItem,
 };
-use ely_core::feedback::{Alert, Banner, InlineMessage, StatusMessage};
+use ely_core::data_display::{
+    Avatar, Badge, KpiCard, Meter, QrCode, Statistic, Tag, TimelineItem, TrendIndicator, UsageBar,
+};
+use ely_core::feedback::{Alert, Banner, Callout, EmptyState, InlineMessage, StatusMessage};
+use ely_core::forms::{Rating, Stepper, Switch};
 use ely_core::layout::{AspectRatio, Container, ZStack};
 use ely_core::motion::{Spinner, SpinnerStyle};
 use ely_core::primitives::{Divider, Icon, IconName, Severity};
@@ -214,6 +217,44 @@ impl ForgeLibrary for Ely {
                 }
                 Some(b.into_any_element())
             }
+            "Callout" => {
+                let mut c = Callout::new(severity_of(node));
+                if let Some(t) = prop_str_opt(node, "title") {
+                    c = c.title(t);
+                }
+                Some(c.into_any_element())
+            }
+            "EmptyState" => Some(
+                EmptyState::new(key.to_string(), icon_of(node), prop_str(node, "title"))
+                    .into_any_element(),
+            ),
+            "Rating" => Some(
+                Rating::new(
+                    key.to_string(),
+                    prop_num(node, "value").unwrap_or(3.0) as u8,
+                )
+                .into_any_element(),
+            ),
+            "SegmentedControl" => Some(
+                SegmentedControl::new(key.to_string(), prop_str(node, "selected"))
+                    .into_any_element(),
+            ),
+            "Stepper" => Some(
+                Stepper::new(key.to_string(), prop_num(node, "value").unwrap_or(0.0))
+                    .into_any_element(),
+            ),
+            "Switch" => {
+                Some(Switch::new(key.to_string(), prop_bool(node, "checked")).into_any_element())
+            }
+            "Tag" => Some(Tag::new(key.to_string(), prop_str(node, "label")).into_any_element()),
+            "ToggleButton" => Some(
+                ToggleButton::new(
+                    key.to_string(),
+                    ToggleItem::new(prop_str(node, "label")).icon(icon_of(node)),
+                    prop_bool(node, "checked"),
+                )
+                .into_any_element(),
+            ),
             _ => None,
         }
     }
