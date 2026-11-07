@@ -186,6 +186,12 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         .filter(|t| t.mode.is_dark())
         .map(|t| t.name.to_string())
         .collect();
+    // #127 — one Select for all themes: separator rows group light/dark.
+    let mut all_themes = Vec::with_capacity(light_themes.len() + dark_themes.len() + 2);
+    all_themes.push("--- Light Themes ---".to_string());
+    all_themes.extend(light_themes.iter().cloned());
+    all_themes.push("--- Dark Themes ---".to_string());
+    all_themes.extend(dark_themes.iter().cloned());
     let theme_name = Theme::global(cx).theme_name().to_string();
     view.set_state(
         json!({
@@ -193,6 +199,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
                 "dark": dark,
                 "light_themes": light_themes,
                 "dark_themes": dark_themes,
+                "all_themes": all_themes,
                 "theme": theme_name,
                 "file": "welcome.forge.yaml",
                 "diagnostics": "",
@@ -437,6 +444,10 @@ fn apply_theme_name(
     let Some(name) = args.first() else {
         return;
     };
+    // #127 — separator rows in the merged all_themes list aren't themes.
+    if name.starts_with("---") {
+        return;
+    }
     let Some(config) = ThemeRegistry::global(cx)
         .themes()
         .get(name.as_str())

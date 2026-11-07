@@ -278,19 +278,12 @@ root:
                     - VStack:
                       style: {grow: true, padding: 12px, gap: 12px}
                       children:
-                        - Label: Light themes
+                        - Label: Theme
                           style: {weight: semibold}
-                        - Select#prefs_light:
-                          options: $studio.light_themes
+                        - Select#prefs_theme:
+                          options: $studio.all_themes
                           value: bind $studio.theme
-                          placeholder: light theme
-                          on change: apply_theme_name($studio.theme)
-                        - Label: Dark themes
-                          style: {weight: semibold}
-                        - Select#prefs_dark:
-                          options: $studio.dark_themes
-                          value: bind $studio.theme
-                          placeholder: dark theme
+                          placeholder: pick a theme
                           on change: apply_theme_name($studio.theme)
                 - Tab: Themes
                   children:
@@ -306,19 +299,12 @@ root:
                               size: Small
                               tooltip: Reset to the default theme
                               on click: reset_theme()
-                        - Label: Light
+                        - Label: Theme
                           style: {weight: semibold}
-                        - Select#editor_light:
-                          options: $studio.light_themes
+                        - Select#editor_theme:
+                          options: $studio.all_themes
                           value: bind $studio.theme
-                          placeholder: light theme
-                          on change: apply_theme_name($studio.theme)
-                        - Label: Dark
-                          style: {weight: semibold}
-                        - Select#editor_dark:
-                          options: $studio.dark_themes
-                          value: bind $studio.theme
-                          placeholder: dark theme
+                          placeholder: pick a theme
                           on change: apply_theme_name($studio.theme)
                         - Editor#theme_json:
                           language: json
