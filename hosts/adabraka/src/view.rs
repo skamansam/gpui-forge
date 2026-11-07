@@ -755,6 +755,84 @@ impl ForgeView {
                 });
                 select.clone().into_any_element()
             }
+            "Card" => {
+                let mut card = adabraka_ui::display::card::Card::new();
+                let title = self.prop_text(node, "title");
+                if !title.is_empty() {
+                    card = card.header(div().child(title).into_any_element());
+                }
+                let text = self.node_text(node);
+                if !text.is_empty() {
+                    card = card.content(div().child(text).into_any_element());
+                }
+                // Children become additional content rows — the catalog's
+                // Card is a container, so child nodes render inside it.
+                for (i, child) in node.children.iter().enumerate() {
+                    let k = format!("{key}/{i}");
+                    card = card.content(self.render_node(child, &k, window, cx));
+                }
+                card.into_any_element()
+            }
+            "Avatar" => {
+                let mut av = adabraka_ui::components::avatar::Avatar::new();
+                let src = self.prop_text(node, "src");
+                let name = self.prop_text(node, "name");
+                let fallback = self.prop_text(node, "fallback");
+                if !src.is_empty() {
+                    av = av.src(src);
+                }
+                if !name.is_empty() {
+                    av = av.name(name);
+                }
+                if !fallback.is_empty() {
+                    av = av.fallback_text(fallback);
+                }
+                av.into_any_element()
+            }
+            "Switch" => {
+                let checked = self.prop_bool(node, "checked", false);
+                let label = self.node_text(node);
+                let mut t = adabraka_ui::components::toggle::Toggle::new(SharedString::from(
+                    key.to_owned(),
+                ))
+                .checked(checked);
+                if !label.is_empty() {
+                    t = t.label(label);
+                }
+                let binding = Self::binding_of(node, "checked");
+                if let Some(path) = binding {
+                    let cur = self.lookup(&path).and_then(Json::as_bool).unwrap_or(false);
+                    let weak = cx.entity().downgrade();
+                    let path_for_t = path.clone();
+                    t = t.on_click(move |_, _, cx| {
+                        let _ = try_update(&weak, cx, "change", |view, cx| {
+                            view.update_state(&path_for_t, Json::Bool(!cur), cx);
+                        });
+                    });
+                }
+                t.into_any_element()
+            }
+            "Dialog" => {
+                // Overlays need trigger+open-state management — a prop-driven
+                // dialog shows its title/body as a styled surface for now.
+                let title = self.prop_text(node, "title");
+                let mut d = div()
+                    .flex()
+                    .flex_col()
+                    .p_4()
+                    .rounded_md()
+                    .border_1()
+                    .border_color(rgb(BORDER))
+                    .bg(rgb(BG));
+                if !title.is_empty() {
+                    d = d.child(div().font_weight(FontWeight::BOLD).child(title));
+                }
+                for (i, child) in node.children.iter().enumerate() {
+                    let k = format!("{key}/{i}");
+                    d = d.child(self.render_node(child, &k, window, cx));
+                }
+                d.into_any_element()
+            }
             _ => placeholder(format!("{} — no adabraka renderer", node.element.name)),
         }
     }
