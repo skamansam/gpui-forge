@@ -20,7 +20,12 @@
                         { type: 'forge:hook', call }  { type: 'forge:state', state }
     -->
     <script type="module">
-      import init, { start, render, set_state, set_theme, refresh } from './pkg/forge_web_canvas.js';
+      // `?base=<id>` picks the wasm bundle — each wasm-capable base builds
+      // `canvas-<base>.wasm` into `pkg/<base>/`; default is gpui-kit (#99).
+      const base = new URLSearchParams(location.search).get('base') || 'gpui-kit';
+      const glue = await import(`./pkg/${base}/forge_web_canvas.js`);
+      const { start, render, set_state, set_theme, refresh } = glue;
+      const init = glue.default;
 
       const params = new URLSearchParams(location.search);
       const dark = params.get('theme') !== 'light';

@@ -15,6 +15,7 @@
 		yaml,
 		bindings = undefined,
 		height = '360px',
+		base = 'gpui-kit',
 		ondiagnostics = undefined,
 		onhook = undefined,
 		onstate = undefined
@@ -62,7 +63,7 @@
 </script>
 
 <div class="canvas" style:height>
-	<iframe bind:this={frame} src={asset('canvas/index.html')} title="gpui-kit canvas"></iframe>
+	<iframe bind:this={frame} src={asset(`canvas/index.html?base=${base}`)} title="{base} canvas"></iframe>
 	{#if !ready}<div class="loading">Loading the gpui-kit canvas…</div>{/if}
 </div>
 
