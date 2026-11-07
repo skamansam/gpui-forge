@@ -168,9 +168,28 @@ fn main() {
                                                 }
                                             });
                                         }
-                                        HostMsg::FrameRect { .. } => {
-                                            // TODO(#120): position the window
-                                            // over the canvas slot
+                                        HostMsg::FrameRect { x: _, y: _, w, h } => {
+                                            // #120 Phase 1 — `PlatformWindow`
+                                            // only exposes `resize` (no
+                                            // `set_position` — compositor
+                                            // constraint); size the host window
+                                            // to the slot. Position needs an
+                                            // X11/platform escape.
+                                            cx.defer(move |cx| {
+                                                for handle in cx.windows() {
+                                                    let _ = handle.update(
+                                                        cx,
+                                                        |_, window, _| {
+                                                            window.resize(
+                                                                gpui_kit::size(
+                                                                    gpui_kit::px(w as f32),
+                                                                    gpui_kit::px(h as f32),
+                                                                ),
+                                                            );
+                                                        },
+                                                    );
+                                                }
+                                            });
                                         }
                                         HostMsg::Quit => quit = true,
                                     }

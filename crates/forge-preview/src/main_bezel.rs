@@ -114,14 +114,25 @@ fn main() {
                                             }
                                         });
                                     }
-                                    HostMsg::FrameRect { .. } => {
-                                        // TODO(#120): position the window
-                                        // over the canvas slot
+                                    HostMsg::FrameRect { x: _, y: _, w, h } => {
+                                        // #120 Phase 1 — PlatformWindow only
+                                        // exposes `resize`; size the host
+                                        // window to the canvas slot.
+                                        cx.defer(move |cx| {
+                                            for handle in cx.windows() {
+                                                let _ = handle.update(
+                                                    cx,
+                                                    |_, window, _| {
+                                                        window.resize(::bezel::gpui::size(
+                                                            ::bezel::gpui::px(w as f32),
+                                                            ::bezel::gpui::px(h as f32),
+                                                        ));
+                                                    },
+                                                );
+                                            }
+                                        });
                                     }
-                                    HostMsg::FrameRect { .. } => {
-                // TODO(#120): position the window over the canvas slot
-            }
-            HostMsg::Quit => quit = true,
+                                    HostMsg::Quit => quit = true,
                                 }
                             }
                         });
