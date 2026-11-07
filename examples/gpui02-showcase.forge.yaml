@@ -1,4 +1,7 @@
 forge: "0.1"
+state:
+  sel: string
+
 base: gpui02
 root:
   VStack:

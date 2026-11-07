@@ -1,5 +1,27 @@
 # The Forge Studio shell, described in Forge YAML and rendered by gpui-forge-runtime.
 forge: "0.1"
+state:
+  studio.theme: string
+  studio.dark: bool
+  studio.light_themes: list
+  studio.dark_themes: list
+  studio.all_themes: list
+  studio.widget_set: string
+  studio.diagnostics: string
+  studio.file: string
+  studio.host: string
+  studio.project: string
+  studio.spec: string
+  editor.source: multiline
+  document.selected: string
+  base: string
+  preview.mode: enum(remote | embedded)
+  preview.frame: string
+  preview.state: string
+  status.message: string
+  vars_add.path: string
+  vars_add.value: string
+
 base: gpui-kit
 use:
   forge: forge

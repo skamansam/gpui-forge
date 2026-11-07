@@ -1,4 +1,8 @@
 forge: "0.1"
+state:
+  sel: string
+  slider: number
+
 base: gpui-kit
 root:
   VStack:
