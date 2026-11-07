@@ -1,20 +1,38 @@
 # Multi-base architecture — design RFC (#71)
 
-Status: infrastructure shipped, adapters pending.
+Status: **shipped** — all six registered bases have render twins, preview
+hosts, `forge build` templates, and `xtask` dispatch; `use:` adapters work
+(`forge-lib-ely`); WASM canvas bundles exist for the three wasm-capable
+bases (#99).
 
 ## Goal
 
-A Forge document renders against a **base component system** — gpui-kit today;
-Bezel, adabraka-ui, vanilla GPUI 0.2, ratatui (TUI) and iced are planned.
+A Forge document renders against a **base component system** — gpui-kit
+(default), gpui02 (vanilla GPUI 0.2.2), Bezel (Zed f16f96), adabraka-ui,
+ratatui (TUI), and iced (Elm-style). Third-party **libraries**
 Third-party **libraries** (gpui-video-player, zorite widgets, Ely components…)
 bolt onto a base through adapter crates with their own element namespaces.
 
 ## What exists
 
 - **Base selection is a compile-time Cargo feature.** `gpui-forge-runtime` has
-  `base-*` features; exactly one must be enabled (compile_error otherwise) and
-  each unimplemented base has a `compile_error!` stub pointing at its ticket.
+  `base-*` features; exactly one must be enabled for render consumers
+  (feature-free is legal for non-render consumers like `check`).
   `base.rs` exposes `BASE_ID` and re-exports the base crate (`kit`).
+- **Four render models.** GPUI bases implement `Render`/`AnyElement`; ratatui
+  draws via `render(&mut Frame)`; iced returns `view()`/`update()`; the WASM
+  canvases use the same `ForgeView` contract through a `cdylib` per base.
+- **Per-base preview hosts** (`forge-preview-<base>`): Studio spawns the host
+  that matches the doc's `base:` and drives it over a shared JSON-lines
+  protocol — the same `HostMsg`/`emit`/`spawn_reader` code serves every base.
+- **Nested workspaces** contain `links` conflicts: `hosts/adabraka/` has its
+  own `Cargo.lock` because adabraka's tree-sitter 0.25 and gpui-kit's 0.26
+  can't coexist in one lockfile — a `[patch]` + vendored crate fixes the
+  upstream bug locally without touching the root graph.
+- **WASM canvas bundles** (#99): `forge-web-canvas` builds
+  `canvas-<base>.wasm` per wasm-capable base — gpui-kit (28MB, nightly),
+  bezel (14MB, nightly, vendored upstream `wasm_thread` fix), iced (5.1MB,
+  stable). The site's `?base=` routes to the right bundle.
 - **Documents declare a base** via `base: gpui-kit` or inherit it from
   `forge.toml`. Validation rejects unknown bases.
 - **Namespaces + imports:** `use:` maps an alias to a library id + version;
@@ -55,9 +73,10 @@ bolt onto a base through adapter crates with their own element namespaces.
 - **Base manifest format + registry** (#91): today only `BASE_ID` exists;
   the manifest is where per-base metadata (elements, theme keys, platform
   constraints) should live.
-- **Adapter SDK** (#81): a template crate + authoring guide; the contract in
-  §2 gets codified into `forge-adapter` traits — a `ForgeLibrary` trait (#74)
-  exposing `catalog()`, `render(element, ctx)`, `hooks()`.
+- **Adapter SDK** (#81): the `ForgeLibrary` trait landed (#74) —
+  `alias()` + `catalog()` + `render()`; `forge-lib-ely` is the reference
+  implementation (all 37 catalog elements), `forge-lib-template` is the
+  authoring template.
 - **License policy** (#82): GPL-marked libraries (zorite) stay opt-in; the
   compiler emits a license report at build time.
 - **Porting tracker** (#83): libraries that fit no existing base get ported
