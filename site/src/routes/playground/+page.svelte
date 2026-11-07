@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	onMount(() => goto('/editor', { replaceState: true }));
 	import Canvas, { type Diagnostic } from '#lib/Canvas.svelte';
 	import YamlEditor from '#lib/YamlEditor.svelte';
 	import Diagnostics from '#lib/Diagnostics.svelte';

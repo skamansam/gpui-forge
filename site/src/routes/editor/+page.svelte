@@ -114,6 +114,18 @@
 		const j = F.toJson(yaml);
 		if (j) downloadText(`doc-${stamp()}.json`, j, 'application/json');
 	}
+	let copied = $state(false);
+	const encode = (s: string) => btoa(String.fromCharCode(...new TextEncoder().encode(s)));
+	function loadExample(i: number) {
+		if (i < 0) return;
+		yaml = examples[i].yaml;
+	}
+	async function share() {
+		history.replaceState(null, '', `#${encode(JSON.stringify({ yaml }))}`);
+		await navigator.clipboard?.writeText(location.href);
+		copied = true;
+		setTimeout(() => (copied = false), 1500);
+	}
 	async function openFile(e: Event) {
 		const file = (e.target as HTMLInputElement).files?.[0];
 		if (!file) return;
@@ -223,9 +235,14 @@
 	<div class="panel col">
 		<div class="panel-title"><span>login.forge.yaml</span>
 			<span class="tools">
+				<select title="load an example" onchange={(e) => loadExample(+e.currentTarget.value)}>
+					<option value="-1">Examples…</option>
+					{#each examples as ex, i (ex.slug)}<option value={i}>{ex.title}</option>{/each}
+				</select>
 				<button onclick={() => fileInput.click()} title="Open .forge.yaml or .json">Open</button>
 				<button onclick={download} title="Download .forge.yaml (Ctrl+S)">Save</button>
 				<button onclick={exportJson} title="Download JSON model">JSON</button>
+				<button onclick={share} title="Copy a share link">{copied ? 'Copied' : 'Share'}</button>
 			</span>
 		</div>
 		<input bind:this={fileInput} type="file" accept=".yaml,.yml,.json,.forge.yaml" hidden onchange={openFile} />
