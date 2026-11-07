@@ -456,7 +456,66 @@ impl ForgeView {
                         .gap_1()
                         .child(Input::new(&state).with_size(size("small")))
                 }
-                _ => div().flex().flex_col().child(Label::new(display.clone())),
+                _ => {
+                    // objects/arrays: a Textarea with the pretty JSON; its
+                    // Change writes `vars_edit.{path}`, Set parses it back.
+                    let state = match self.textareas.get(&state_key) {
+                        Some(s) => s.clone(),
+                        None => {
+                            let s = cx.new(|cx| {
+                                TextareaState::new(window, cx)
+                                    .default_value(
+                                        serde_json::to_string_pretty(&value)
+                                            .unwrap_or(display.clone()),
+                                    )
+                                    .rows(3)
+                            });
+                            let edit_path =
+                                parse_path(&format!("vars_edit.{}", path.replace('.', "_")))
+                                    .unwrap();
+                            let weak = cx.entity().downgrade();
+                            let sub = cx.subscribe(&s, move |_this, s, event, cx| {
+                                if matches!(event, InputEvent::Change) {
+                                    let v = s.read(cx).value().to_string();
+                                    try_update(&weak, cx, "vars", |this, cx| {
+                                        this.update_state(&edit_path, Json::String(v), cx)
+                                    })
+                                    .ok();
+                                }
+                            });
+                            self.subscriptions.push(sub);
+                            self.textareas.insert(state_key.clone(), s.clone());
+                            s
+                        }
+                    };
+                    let weak = cx.entity().downgrade();
+                    let path_for_set = parse_path(&path).unwrap();
+                    let edit_path =
+                        parse_path(&format!("vars_edit.{}", path.replace('.', "_"))).unwrap();
+                    div()
+                        .flex()
+                        .flex_col()
+                        .gap_1()
+                        .child(Textarea::new(&state))
+                        .child(
+                            Button::new(SharedString::from(format!("vars-set-{key}-{path}")))
+                                .label("set")
+                                .with_variant(ButtonVariant::Primary)
+                                .with_size(size("small"))
+                                .on_click(move |_, _, cx| {
+                                    try_update(&weak, cx, "vars", |this, cx| {
+                                        let text = get_path(this.state(), &edit_path)
+                                            .and_then(|j| j.as_str())
+                                            .unwrap_or_default()
+                                            .to_owned();
+                                        if let Ok(parsed) = serde_json::from_str(&text) {
+                                            this.update_state(&path_for_set, parsed, cx);
+                                        }
+                                    })
+                                    .ok();
+                                }),
+                        )
+                }
             };
             list = list.child(
                 div()
