@@ -1496,6 +1496,9 @@ impl ForgeView {
                         let weak = cx.entity().downgrade();
                         let node = node.clone();
                         let theme = cx.theme();
+                        let embedded = self
+                            .prop_text(node, "mode")
+                            .is_some_and(|m| m == "embedded");
                         div()
                             .id(format!("preview-remote-{key}"))
                             .size_full()
@@ -1509,7 +1512,17 @@ impl ForgeView {
                                 })
                                 .ok();
                             })
-                            .child(
+                            .child(if embedded {
+                                // #120 — `mode: embedded` — the host window
+                                // floats over this slot via `frame_rect`; the
+                                // content area is transparent so the foreign
+                                // pixels show through, chrome stays for context.
+                                div()
+                                    .size_full()
+                                    .border_1()
+                                    .border_color(theme.border)
+                                    .into_any_element()
+                            } else {
                                 div()
                                     .flex()
                                     .flex_col()
@@ -1524,8 +1537,9 @@ impl ForgeView {
                                             .text_xs()
                                             .text_color(theme.muted_foreground)
                                             .child("rendered by the preview host — click to focus"),
-                                    ),
-                            )
+                                    )
+                                    .into_any_element()
+                            })
                             .into_any_element()
                     } else {
                         let empty_text = self.prop_text(node, "placeholder");
