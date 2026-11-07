@@ -31,9 +31,10 @@ impl ForgeLibrary for GpuiComponent {
         _cx: &mut Context<ForgeView>,
     ) -> Option<AnyElement> {
         match node.element.name.as_str() {
-            // #120 — `gc.*` arms are honest placeholders for now — the
-            // gpui-component widget API needs per-element mapping; the
-            // ForgeLibrary contract itself compiles on gpui02's types.
+            // `gc.*` arms are honest placeholders — `gpui-component`'s
+            // widgets produce `gpui::AnyElement`, not gpui-pre's; real
+            // widget arms need the adapter's gpui types unified with
+            // gpui-component's (a deeper dep-resolution piece).
             name => Some(
                 div()
                     .text_sm()
