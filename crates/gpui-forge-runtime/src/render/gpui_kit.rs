@@ -406,6 +406,19 @@ impl ForgeView {
             .unwrap_or_else(|| "canvas".to_owned());
         let preview = self.preview(&of, cx);
         let state = preview.read(cx).state().clone();
+        // `state:` declarations on the doc — `path -> type` — pick the editor
+        // widget per type; undeclared vars fall back to the Json type.
+        let doc_state: Vec<(String, String)> = preview
+            .read(cx)
+            .document()
+            .map(|d| d.state.clone())
+            .unwrap_or_default();
+        let var_type = |path: &str| {
+            doc_state
+                .iter()
+                .find(|(p, _)| p == path)
+                .map(|(_, t)| t.as_str())
+        };
 
         fn flatten(prefix: &str, json: &Json, out: &mut Vec<(String, Json)>) {
             match json {
@@ -428,89 +441,159 @@ impl ForgeView {
                 Json::String(s) => s.clone(),
                 _ => serde_json::to_string_pretty(&value).unwrap_or_default(),
             };
-            let row_edit = match &value {
-                Json::String(_) | Json::Number(_) | Json::Bool(_) => {
-                    let state = match self.inputs.get(&state_key) {
-                        Some(s) => s.clone(),
-                        None => {
-                            let s = cx.new(|cx| {
-                                InputState::new(window, cx).default_value(display.clone())
-                            });
-                            let path = parse_path(&path).unwrap();
-                            let preview = preview.clone();
-                            let sub = cx.subscribe(&s, move |_this, s, event, cx| {
-                                if matches!(event, InputEvent::Change) {
-                                    let v = s.read(cx).value().to_string();
-                                    let parsed =
-                                        serde_json::from_str(&v).unwrap_or(Json::String(v));
-                                    preview.update(cx, |v, cx| v.update_state(&path, parsed, cx));
-                                }
-                            });
-                            self.subscriptions.push(sub);
-                            self.inputs.insert(state_key.clone(), s.clone());
-                            s
-                        }
-                    };
-                    div()
-                        .flex()
-                        .flex_row()
-                        .flex_grow(1.0)
-                        .gap_1()
-                        .child(Input::new(&state).with_size(size("small")).w_full())
+            // `state:` types dispatch the editor: bool → Checkbox, number →
+            // Slider, enum → Select, color → Input (hex), slider → Slider —
+            // undeclared falls back to the Json type below.
+            let typed_edit: Option<AnyElement> = match var_type(&path) {
+                Some("bool") => Some(
+                    Checkbox::new(SharedString::from(format!("vars-bool-{key}-{path}")))
+                        .checked(value.as_bool().unwrap_or(false))
+                        .into_any_element(),
+                ),
+                Some("number") | Some("slider") => {
+                    let s = self.sliders.get(&state_key).cloned().unwrap_or_else(|| {
+                        let s = cx.new(|cx| {
+                            SliderState::new()
+                                .default_value(value.as_f64().unwrap_or_default() as f32)
+                        });
+                        self.sliders.insert(state_key.clone(), s.clone());
+                        s
+                    });
+                    Some(Slider::new(&s).w_full().into_any_element())
                 }
-                _ => {
-                    let edit_path_str = format!("vars_edit.{}", path.replace('.', "_"));
-                    let state = match self.textareas.get(&state_key) {
-                        Some(s) => s.clone(),
-                        None => {
-                            let s = cx.new(|cx| {
-                                TextareaState::new(window, cx)
-                                    .default_value(display.clone())
-                                    .rows(3)
-                            });
-                            let edit_path = parse_path(&edit_path_str).unwrap();
-                            let preview = preview.clone();
-                            let sub = cx.subscribe(&s, move |_this, s, event, cx| {
-                                if matches!(event, InputEvent::Change) {
-                                    let v = s.read(cx).value().to_string();
-                                    preview.update(cx, |view, cx| {
-                                        view.update_state(&edit_path, Json::String(v), cx)
-                                    });
-                                }
-                            });
-                            self.subscriptions.push(sub);
-                            self.textareas.insert(state_key.clone(), s.clone());
-                            s
-                        }
-                    };
-                    let preview = preview.clone();
-                    let path_for_set = parse_path(&path).unwrap();
-                    let edit_path = parse_path(&edit_path_str).unwrap();
-                    div()
-                        .flex()
-                        .flex_col()
-                        .flex_grow(1.0)
-                        .gap_1()
-                        .child(Textarea::new(&state).w_full())
-                        .child(
-                            Button::new(SharedString::from(format!("vars-set-{key}-{path}")))
-                                .label("set")
-                                .with_variant(ButtonVariant::Primary)
-                                .with_size(size("small"))
-                                .on_click(move |_, _, cx| {
-                                    let preview = preview.clone();
-                                    let path_for_set = path_for_set.clone();
-                                    preview.update(cx, |view, cx| {
-                                        let text = get_path(view.state(), &edit_path)
-                                            .and_then(|j| j.as_str())
-                                            .unwrap_or_default()
-                                            .to_owned();
-                                        if let Ok(parsed) = serde_json::from_str(&text) {
-                                            view.update_state(&path_for_set, parsed, cx);
-                                        }
-                                    });
-                                }),
-                        )
+                Some(t) if t.starts_with("enum") || t == "select" => {
+                    // `enum(a | b | c)` — variants parsed from the type string.
+                    let options: Vec<SharedString> = t
+                        .strip_prefix("enum")
+                        .and_then(|s| s.strip_prefix('('))
+                        .and_then(|s| s.strip_suffix(')'))
+                        .map(|s| {
+                            s.split('|')
+                                .map(|v| SharedString::from(v.trim().to_owned()))
+                                .collect()
+                        })
+                        .unwrap_or_else(|| {
+                            value
+                                .as_array()
+                                .map(|a| {
+                                    a.iter()
+                                        .filter_map(|v| {
+                                            v.as_str().map(|s| SharedString::from(s.to_owned()))
+                                        })
+                                        .collect()
+                                })
+                                .unwrap_or_default()
+                        });
+                    let selected = value
+                        .as_str()
+                        .and_then(|s| options.iter().position(|o| o == s))
+                        .map(IndexPath::new);
+                    let s = self.selects.get(&state_key).cloned().unwrap_or_else(|| {
+                        let s = cx.new(|cx| SelectState::new(options, selected, window, cx));
+                        self.selects.insert(state_key.clone(), s.clone());
+                        s
+                    });
+                    Some(Select::new(&s).w_full().into_any_element())
+                }
+                Some("color") => {
+                    let s = self.inputs.get(&state_key).cloned().unwrap_or_else(|| {
+                        let s =
+                            cx.new(|cx| InputState::new(window, cx).default_value(display.clone()));
+                        self.inputs.insert(state_key.clone(), s.clone());
+                        s
+                    });
+                    Some(Input::new(&s).w_full().into_any_element())
+                }
+                _ => None,
+            };
+            let row_edit = if let Some(t) = typed_edit {
+                div().flex().flex_row().flex_grow(1.0).child(t)
+            } else {
+                match &value {
+                    Json::String(_) | Json::Number(_) | Json::Bool(_) => {
+                        let state = match self.inputs.get(&state_key) {
+                            Some(s) => s.clone(),
+                            None => {
+                                let s = cx.new(|cx| {
+                                    InputState::new(window, cx).default_value(display.clone())
+                                });
+                                let path = parse_path(&path).unwrap();
+                                let preview = preview.clone();
+                                let sub = cx.subscribe(&s, move |_this, s, event, cx| {
+                                    if matches!(event, InputEvent::Change) {
+                                        let v = s.read(cx).value().to_string();
+                                        let parsed =
+                                            serde_json::from_str(&v).unwrap_or(Json::String(v));
+                                        preview
+                                            .update(cx, |v, cx| v.update_state(&path, parsed, cx));
+                                    }
+                                });
+                                self.subscriptions.push(sub);
+                                self.inputs.insert(state_key.clone(), s.clone());
+                                s
+                            }
+                        };
+                        div()
+                            .flex()
+                            .flex_row()
+                            .flex_grow(1.0)
+                            .gap_1()
+                            .child(Input::new(&state).with_size(size("small")).w_full())
+                    }
+                    _ => {
+                        let edit_path_str = format!("vars_edit.{}", path.replace('.', "_"));
+                        let state = match self.textareas.get(&state_key) {
+                            Some(s) => s.clone(),
+                            None => {
+                                let s = cx.new(|cx| {
+                                    TextareaState::new(window, cx)
+                                        .default_value(display.clone())
+                                        .rows(3)
+                                });
+                                let edit_path = parse_path(&edit_path_str).unwrap();
+                                let preview = preview.clone();
+                                let sub = cx.subscribe(&s, move |_this, s, event, cx| {
+                                    if matches!(event, InputEvent::Change) {
+                                        let v = s.read(cx).value().to_string();
+                                        preview.update(cx, |view, cx| {
+                                            view.update_state(&edit_path, Json::String(v), cx)
+                                        });
+                                    }
+                                });
+                                self.subscriptions.push(sub);
+                                self.textareas.insert(state_key.clone(), s.clone());
+                                s
+                            }
+                        };
+                        let preview = preview.clone();
+                        let path_for_set = parse_path(&path).unwrap();
+                        let edit_path = parse_path(&edit_path_str).unwrap();
+                        div()
+                            .flex()
+                            .flex_col()
+                            .flex_grow(1.0)
+                            .gap_1()
+                            .child(Textarea::new(&state).w_full())
+                            .child(
+                                Button::new(SharedString::from(format!("vars-set-{key}-{path}")))
+                                    .label("set")
+                                    .with_variant(ButtonVariant::Primary)
+                                    .with_size(size("small"))
+                                    .on_click(move |_, _, cx| {
+                                        let preview = preview.clone();
+                                        let path_for_set = path_for_set.clone();
+                                        preview.update(cx, |view, cx| {
+                                            let text = get_path(view.state(), &edit_path)
+                                                .and_then(|j| j.as_str())
+                                                .unwrap_or_default()
+                                                .to_owned();
+                                            if let Ok(parsed) = serde_json::from_str(&text) {
+                                                view.update_state(&path_for_set, parsed, cx);
+                                            }
+                                        });
+                                    }),
+                            )
+                    }
                 }
             };
             list = list.child(

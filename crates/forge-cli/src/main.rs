@@ -1231,6 +1231,12 @@ fn codegen_doc(doc: &gpui_forge_runtime::forge_spec::Document) -> String {
         .map(|(k, v)| format!("({k:?}.into(), {v:?}.into())"))
         .collect::<Vec<_>>()
         .join(", ");
+    let state = doc
+        .state
+        .iter()
+        .map(|(k, v)| format!("({k:?}.into(), {v:?}.into())"))
+        .collect::<Vec<_>>()
+        .join(", ");
     // Collect every state path the document references — `Token`/`Binding`/
     // `Interpolated` props + `update_state`/`set_path` handler args — so the
     // generated app's `view.set_state` boilerplate lists the vars it needs.
@@ -1316,6 +1322,7 @@ pub fn document() -> Document {{
         base: {base},
         imports: vec![{imports}],
         meta: vec![{meta}],
+        state: vec![{state}],
         dialogs: vec![{dialogs}],
         root: {},
         raw: None,

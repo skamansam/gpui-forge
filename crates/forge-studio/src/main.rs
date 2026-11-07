@@ -384,6 +384,7 @@ fn open_dialog(
                 base: None,
                 imports: vec![],
                 meta: vec![],
+                state: vec![],
                 dialogs: vec![],
                 raw: None,
                 root: Node {

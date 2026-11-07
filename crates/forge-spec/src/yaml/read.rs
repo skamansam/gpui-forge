@@ -136,7 +136,8 @@ impl Reader<'_> {
         };
         self.check_duplicates(&entries);
         let (mut schema, mut version, mut base, mut root) = (None, None, None, None);
-        let (mut imports, mut meta, mut dialogs) = (Vec::new(), Vec::new(), Vec::new());
+        let (mut imports, mut meta, mut state, mut dialogs) =
+            (Vec::new(), Vec::new(), Vec::new(), Vec::new());
         let (mut saw_version, mut saw_root) = (false, false);
         for (key, val) in entries {
             match key.text.as_str() {
@@ -161,6 +162,7 @@ impl Reader<'_> {
                 }
                 "use" => imports = self.imports(val),
                 "meta" => meta = self.meta(val),
+                "state" => state = self.meta(val),
                 "root" => {
                     saw_root = true;
                     root = self.node(val);
@@ -198,6 +200,7 @@ impl Reader<'_> {
             base,
             imports,
             meta,
+            state,
             dialogs,
             root: root?,
             raw: None,

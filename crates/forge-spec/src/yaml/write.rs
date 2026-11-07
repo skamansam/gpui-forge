@@ -55,6 +55,12 @@ pub fn to_string(doc: &Document, options: &WriteOptions) -> String {
             );
         }
     }
+    if !doc.state.is_empty() {
+        line(&mut out, 0, "state:");
+        for (key, text) in &doc.state {
+            line(&mut out, 1, &format!("{key}: {text}"));
+        }
+    }
     if !doc.meta.is_empty() {
         line(&mut out, 0, "meta:");
         for (key, text) in &doc.meta {

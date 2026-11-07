@@ -14,6 +14,10 @@ pub struct Document {
     pub base: Option<String>,
     pub imports: Vec<Import>,
     pub meta: Vec<(String, String)>,
+    /// Top-level `state:` — declared state vars: `path -> type` (e.g.
+    /// `studio.theme: string`). `forge.Vars` uses the type to pick the
+    /// editor widget; `forge check` validates bindings to undeclared paths.
+    pub state: Vec<(String, String)>,
     /// Top-level `Dialog#name:` declarations, opened by `open_dialog(name)`.
     pub dialogs: Vec<Node>,
     pub root: Node,
