@@ -436,6 +436,19 @@ impl ForgeView {
     ) -> AnyElement {
         if let Some(ns) = node.element.namespace.as_deref() {
             if ns == "forge" {
+                // `forge.Preview` hosts a nested document — `set_preview_document`
+                // fills `previews`; the other intrinsics stay stubs until the
+                // Studio-parity port lands.
+                if node.element.name == "Preview" {
+                    let id = self.prop_text(node, "id");
+                    let id = if id.is_empty() { "preview" } else { &id };
+                    let empty = self.prop_text(node, "placeholder");
+                    let view = self.preview(id, cx);
+                    if !empty.is_empty() {
+                        view.update(cx, |v, _| v.set_empty_text(Some(empty)));
+                    }
+                    return div().size_full().child(view).into_any_element();
+                }
                 return placeholder(format!("forge.{} — gpui02 stub", node.element.name));
             }
             for lib in &self.libraries {
