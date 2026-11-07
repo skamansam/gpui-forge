@@ -33,4 +33,5 @@ strip = true
 # vendored 0.2.4 maps it to ENODATA (the Linux equivalent) and keeps ENOATTR on
 # macOS/BSD. Pulled by zed-async-tar → gpui_http_client → gpui 0.2.2 (gpui02).
 [patch.crates-io]
+bezel-gpui-web = { path = "vendor/bezel-gpui-web" }
 xattr = { path = "vendor/xattr" }

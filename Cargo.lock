@@ -1070,8 +1070,6 @@ dependencies = [
 [[package]]
 name = "bezel-gpui-web"
 version = "0.3.21+zed.f16f96"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d890a09cc1b567f07db5162de4ed84eff5ca3e64353bac004d8be6a75568f32f"
 dependencies = [
  "anyhow",
  "async-channel 2.5.0",
@@ -1092,6 +1090,7 @@ dependencies = [
  "uuid",
  "wasm-bindgen",
  "wasm-bindgen-futures",
+ "wasm_thread",
  "web-sys",
  "web-time",
 ]
