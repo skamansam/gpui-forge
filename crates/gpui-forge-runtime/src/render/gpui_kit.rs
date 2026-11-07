@@ -192,6 +192,9 @@ pub struct ForgeView {
     selects: HashMap<String, Entity<SelectState<Options>>>,
     tabs: HashMap<String, usize>,
     previews: HashMap<String, Entity<ForgeView>>,
+    /// `forge.Preview` bounds cells — `id` → the card's window-space rect,
+    /// populated by `BoundsTracker` each paint (Studio's `frame_rect`).
+    preview_bounds: HashMap<String, std::rc::Rc<std::cell::RefCell<Option<Bounds<Pixels>>>>>,
     pub libraries: Vec<Box<dyn ForgeLibrary>>,
     hooks: HashMap<String, HookHandler>,
     on_hook: Option<HookSink>,
@@ -277,6 +280,7 @@ impl ForgeView {
             trees: HashMap::new(),
             selects: HashMap::new(),
             tabs: HashMap::new(),
+            preview_bounds: HashMap::new(),
             previews: HashMap::new(),
             libraries: Vec::new(),
             hooks: HashMap::new(),
@@ -348,6 +352,15 @@ impl ForgeView {
     /// view (state, previews) freely; unregistered names are reported to the hook sink.
     pub fn set_hook(&mut self, name: impl Into<String>, handler: HookHandler) {
         self.hooks.insert(name.into(), handler);
+    }
+
+    /// The `forge.Preview` card's window-space bounds for `id` — populated
+    /// by `BoundsTracker` on paint; `None` before the first frame.
+    pub fn preview_bounds(
+        &self,
+        id: &str,
+    ) -> Option<std::rc::Rc<std::cell::RefCell<Option<Bounds<Pixels>>>>> {
+        self.preview_bounds.get(id).cloned()
     }
 
     /// The `forge.Preview` host for `id`, creating the nested view on first use.
@@ -3552,5 +3565,74 @@ fn edges(value: &Value) -> Option<[DefiniteLength; 4]> {
             }
         }
         other => length(other).map(|l| [l; 4]),
+    }
+}
+
+/// #120 Phase 1 — wraps a child and records its window-space bounds into a
+/// shared cell each paint. Studio reads the cell to send `frame_rect` to the
+/// remote preview host (fake-embed position tracking).
+pub struct BoundsTracker {
+    child: AnyElement,
+    cell: std::rc::Rc<std::cell::RefCell<Option<Bounds<Pixels>>>>,
+}
+
+impl BoundsTracker {
+    pub fn new(
+        child: AnyElement,
+        cell: std::rc::Rc<std::cell::RefCell<Option<Bounds<Pixels>>>>,
+    ) -> Self {
+        Self { child, cell }
+    }
+}
+
+impl Element for BoundsTracker {
+    type RequestLayoutState = ();
+    type PrepaintState = ();
+
+    fn id(&self) -> Option<ElementId> {
+        None
+    }
+    fn source_location(&self) -> Option<&'static core::panic::Location<'static>> {
+        None
+    }
+    fn request_layout(
+        &mut self,
+        _id: Option<&GlobalElementId>,
+        _inspector_id: Option<&InspectorElementId>,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> (LayoutId, Self::RequestLayoutState) {
+        (self.child.request_layout(window, cx), ())
+    }
+    fn prepaint(
+        &mut self,
+        _id: Option<&GlobalElementId>,
+        _inspector_id: Option<&InspectorElementId>,
+        bounds: Bounds<Pixels>,
+        _request_layout: &mut Self::RequestLayoutState,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> Self::PrepaintState {
+        *self.cell.borrow_mut() = Some(bounds);
+        self.child.prepaint(window, cx);
+    }
+    fn paint(
+        &mut self,
+        _id: Option<&GlobalElementId>,
+        _inspector_id: Option<&InspectorElementId>,
+        _bounds: Bounds<Pixels>,
+        _request_layout: &mut Self::RequestLayoutState,
+        _prepaint: &mut Self::PrepaintState,
+        window: &mut Window,
+        cx: &mut App,
+    ) {
+        self.child.paint(window, cx)
+    }
+}
+
+impl IntoElement for BoundsTracker {
+    type Element = Self;
+    fn into_element(self) -> Self::Element {
+        self
     }
 }

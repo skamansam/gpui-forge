@@ -916,6 +916,35 @@ fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<F
                     break;
                 }
             }
+            // #120 Phase 1 — poll the canvas slot's bounds + send frame_rect
+            // so the host can float its window over the Studio card
+            // (fake-embed position tracking).
+            if let Ok(bounds) = view.update(cx, |view, cx| {
+                view.preview_bounds("canvas")
+                    .and_then(|cell| *cell.borrow())
+                    .map(|b| {
+                        let wb = cx
+                            .windows()
+                            .first()
+                            .and_then(|h| h.update(cx, |_, w, _| w.window_bounds()).ok());
+                        wb.map(|wb| (wb, b))
+                    })
+                    .flatten()
+            }) {
+                if let Some((wb, b)) = bounds {
+                    // window space → screen space: add the window's origin
+                    if let WindowBounds::Windowed(wb) = wb {
+                        let rect = json!({
+                            "cmd": "frame_rect",
+                            "x": f64::from(wb.origin.x) + f64::from(b.origin.x),
+                            "y": f64::from(wb.origin.y) + f64::from(b.origin.y),
+                            "w": f64::from(b.size.width),
+                            "h": f64::from(b.size.height),
+                        });
+                        host_send(&rect);
+                    }
+                }
+            }
             if events.is_empty() {
                 continue;
             }
