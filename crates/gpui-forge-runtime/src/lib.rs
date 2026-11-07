@@ -18,9 +18,6 @@ const _: () = {
     );
 };
 
-#[cfg(feature = "base-bezel")]
-compile_error!("gpui-forge-runtime: the Bezel base is not implemented yet (#94)");
-
 #[cfg(feature = "base-ratatui")]
 compile_error!("gpui-forge-runtime: the ratatui (TUI) base is not implemented yet (#112)");
 
@@ -30,9 +27,15 @@ compile_error!("gpui-forge-runtime: the iced base is not implemented yet (#113)"
 pub mod base;
 pub mod check;
 #[cfg(feature = "base-adabraka")]
-compile_error!("gpui-forge-runtime: the adabraka-ui base needs its own workspace — adabraka-ui's tree-sitter 0.25 hard-dep conflicts with gpui-kit's 0.26 via links (#95)");
+compile_error!(
+    "gpui-forge-runtime: the adabraka-ui base needs its own workspace — adabraka-ui's tree-sitter 0.25 hard-dep conflicts with gpui-kit's 0.26 via links (#95)"
+);
 
-#[cfg(any(feature = "base-gpui-kit", feature = "base-gpui02"))]
+#[cfg(any(
+    feature = "base-gpui-kit",
+    feature = "base-gpui02",
+    feature = "base-bezel"
+))]
 pub mod render;
 
 pub use forge_spec;

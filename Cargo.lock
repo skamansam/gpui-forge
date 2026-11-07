@@ -724,6 +724,274 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ac07cdecf99051d9a5238b80f35af32cdeba5b336e55d957b318b50137e18da5"
 
 [[package]]
+name = "bezel"
+version = "0.2.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "51c97b40bde33d4b41330e4b33cab6266c4634ec037824ebbb48e93595df00ee"
+dependencies = [
+ "bezel-agent",
+ "bezel-gpui",
+ "bezel-icons",
+ "bezel-motion",
+ "bezel-theme",
+ "bezel-ui",
+]
+
+[[package]]
+name = "bezel-agent"
+version = "0.2.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f831ae4055df0a979a38b407a8951aaa230a149a58396dac4459a0d98f7d7317"
+dependencies = [
+ "bezel-gpui",
+ "bezel-theme",
+ "web-time",
+]
+
+[[package]]
+name = "bezel-gpui"
+version = "0.3.21+zed.f16f96"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cd079fd84f9960ad2f9e22e1f420100630ec6f778bda662aedc722604bc643ef"
+dependencies = [
+ "accesskit",
+ "anyhow",
+ "async-channel 2.5.0",
+ "async-task",
+ "backtrace",
+ "bezel-gpui-macros",
+ "bezel-gpui-shared-string",
+ "bezel-gpui-util",
+ "bezel-zed-collections",
+ "bezel-zed-http-client",
+ "bezel-zed-refineable",
+ "bezel-zed-scheduler",
+ "bezel-zed-sum-tree",
+ "bitflags 2.13.2",
+ "chrono",
+ "ctor 1.0.13",
+ "derive_more 2.1.1",
+ "embed-resource",
+ "etagere",
+ "futures",
+ "getrandom 0.3.4",
+ "heapless",
+ "image",
+ "inventory",
+ "itertools 0.14.0",
+ "libc",
+ "log",
+ "lyon",
+ "num_cpus",
+ "objc2-core-foundation",
+ "objc2-core-video",
+ "parking",
+ "parking_lot",
+ "pin-project",
+ "pollster 0.4.0",
+ "profiling",
+ "rand 0.9.5",
+ "raw-window-handle",
+ "regex",
+ "resvg 0.46.0",
+ "schemars",
+ "seahash",
+ "serde",
+ "serde_json",
+ "slotmap",
+ "smallvec",
+ "spin 0.10.1",
+ "strum 0.28.0",
+ "taffy 0.13.0",
+ "thiserror 2.0.21",
+ "ttf-parser 0.25.1",
+ "url",
+ "usvg 0.46.0",
+ "uuid",
+ "waker-fn",
+ "windows 0.62.2",
+ "zed-scap",
+]
+
+[[package]]
+name = "bezel-gpui-macros"
+version = "0.3.21+zed.f16f96"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "06cfdfd4936adc52c224c7c61887fb795bd5c44be3c8cfd100fa436cb73be03b"
+dependencies = [
+ "heck 0.5.0",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "bezel-gpui-shared-string"
+version = "0.3.21+zed.f16f96"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3740ef01258b634053d2c62deca98aea24f4c86b1cdbfa9d59e9465e6e6ef324"
+dependencies = [
+ "schemars",
+ "serde",
+ "smol_str 0.3.7",
+]
+
+[[package]]
+name = "bezel-gpui-util"
+version = "0.3.21+zed.f16f96"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8ad4053416431478f7b4dd3d2024be1bc9cb20fc7862fbed21a86a7ff30b4cc5"
+dependencies = [
+ "anyhow",
+ "log",
+ "which 8.0.6",
+]
+
+[[package]]
+name = "bezel-icons"
+version = "0.2.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "943540296ac2736e1c2ff2116acbb3aae9a81bed6a79b82c769584a30de7312e"
+dependencies = [
+ "bezel-gpui",
+]
+
+[[package]]
+name = "bezel-motion"
+version = "0.2.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "28b1a2e1c40f475fd2647fe8aaabc81f22ef9b7b6fb083b1c25c356ccb80568e"
+dependencies = [
+ "bezel-gpui",
+ "web-time",
+]
+
+[[package]]
+name = "bezel-theme"
+version = "0.2.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cba80f6c3d28a50475875570829b9ce0641474b309df1ca347fee9c27c91f57e"
+dependencies = [
+ "bezel-gpui",
+ "objc",
+ "serde",
+ "toml 0.8.23",
+ "tracing",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "bezel-ui"
+version = "0.2.24"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "72c1b9bbd9dff459891f2d5dd4d0f1a135ee8b740bdea270745009d4f88afc5c"
+dependencies = [
+ "bezel-gpui",
+ "bezel-icons",
+ "bezel-motion",
+ "bezel-theme",
+ "libc",
+ "unicode-segmentation",
+ "usvg 0.46.0",
+ "web-time",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "bezel-zed-collections"
+version = "0.3.21+zed.f16f96"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cb0b6fa8bb9ec3ce23d8d56c0e0f9e9270cb3b7adfbb74174f636443d08a9fa4"
+dependencies = [
+ "bezel-gpui-util",
+ "indexmap",
+ "rustc-hash 2.1.3",
+]
+
+[[package]]
+name = "bezel-zed-derive-refineable"
+version = "0.3.21+zed.f16f96"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bb6a0bb7919626c06381f3c4e1411374690c368e5bb1fa9b819774587e4d56e2"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
+name = "bezel-zed-http-client"
+version = "0.3.21+zed.f16f96"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5d960418067aeab3b2b941b295739c222b908fa62d533b2184e4cd8bf665e5f8"
+dependencies = [
+ "anyhow",
+ "bytes",
+ "futures",
+ "http",
+ "http-body",
+ "log",
+ "parking_lot",
+ "serde",
+ "serde_json",
+ "serde_urlencoded",
+ "url",
+]
+
+[[package]]
+name = "bezel-zed-refineable"
+version = "0.3.21+zed.f16f96"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "be4e9c6ba372326ca6bae15257f3f113f239da239000281cf1b632829503c8c2"
+dependencies = [
+ "bezel-zed-derive-refineable",
+]
+
+[[package]]
+name = "bezel-zed-scheduler"
+version = "0.3.21+zed.f16f96"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e2632ef0796b0a91ea3476bcffbda7bed201d671cc2a8907cd2dfd50ec1eee02"
+dependencies = [
+ "async-task",
+ "backtrace",
+ "chrono",
+ "flume 0.12.0",
+ "futures",
+ "parking_lot",
+ "rand 0.9.5",
+ "web-time",
+]
+
+[[package]]
+name = "bezel-zed-sum-tree"
+version = "0.3.21+zed.f16f96"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5a2e137d72434ebf5c47fdfc574d8d2002089092004bf2edffaea01ebeb78155"
+dependencies = [
+ "bezel-zed-ztracing",
+ "heapless",
+ "rayon",
+ "tracing",
+]
+
+[[package]]
+name = "bezel-zed-ztracing"
+version = "0.3.21+zed.f16f96"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f1ce587b32ff9133be552712f3814cf6766f112b659b89517f4aa1bc97116be4"
+dependencies = [
+ "bezel-zed-ztracing-macro",
+ "tracing",
+]
+
+[[package]]
+name = "bezel-zed-ztracing-macro"
+version = "0.3.21+zed.f16f96"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4682a5f0bfd485af35629c267ec64bad368977c53b9f34d4ae69417a780d046f"
+
+[[package]]
 name = "bindgen"
 version = "0.71.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3344,6 +3612,7 @@ dependencies = [
 name = "gpui-forge-runtime"
 version = "0.1.0"
 dependencies = [
+ "bezel",
  "forge-spec",
  "gpui",
  "gpui-kit",
@@ -8639,6 +8908,18 @@ dependencies = [
  "grid",
  "serde",
  "slotmap",
+]
+
+[[package]]
+name = "taffy"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c034e05f6ee85a12daa63863c2245797715075c70649947aa0da54f3f2ab1d0f"
+dependencies = [
+ "arrayvec",
+ "serde",
+ "slotmap",
+ "smallvec",
 ]
 
 [[package]]

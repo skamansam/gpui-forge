@@ -12,6 +12,21 @@ mod gpui02;
 #[cfg(all(feature = "base-gpui02", not(feature = "base-gpui-kit")))]
 pub use gpui02::*;
 
+#[cfg(all(
+    feature = "base-bezel",
+    not(feature = "base-gpui-kit"),
+    not(feature = "base-gpui02"),
+    not(feature = "base-adabraka")
+))]
+mod bezel;
+#[cfg(all(
+    feature = "base-bezel",
+    not(feature = "base-gpui-kit"),
+    not(feature = "base-gpui02"),
+    not(feature = "base-adabraka")
+))]
+pub use bezel::*;
+
 use forge_spec::{Path, PathSegment};
 use serde_json::Value as Json;
 

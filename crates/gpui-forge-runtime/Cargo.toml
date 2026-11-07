@@ -10,7 +10,7 @@ repository.workspace = true
 default = ["base-gpui-kit"]
 # Exactly one base must be enabled: each base links its own UI toolkit build.
 base-gpui-kit = ["dep:gpui-kit"]
-base-bezel = []
+base-bezel = ["dep:bezel"]
 base-adabraka = []
 base-gpui02 = ["dep:gpui", "dep:guise-ui"]
 base-ratatui = []
@@ -23,6 +23,9 @@ gpui-kit = { workspace = true, optional = true }
 # graph; only one `base-*` may be enabled per build.
 gpui = { version = "=0.2.2", optional = true }
 guise-ui = { version = "1.10", optional = true }
+# bezel base (#94): SwiftUI-flavored components on the bezel-gpui fork
+# (0.3.21+zed.f16f96) — re-exported as `bezel::gpui`.
+bezel = { version = "0.2.24", optional = true }
 serde_json = "1"
 
 
