@@ -1231,6 +1231,81 @@ fn codegen_doc(doc: &gpui_forge_runtime::forge_spec::Document) -> String {
         .map(|(k, v)| format!("({k:?}.into(), {v:?}.into())"))
         .collect::<Vec<_>>()
         .join(", ");
+    // Collect every state path the document references — `Token`/`Binding`/
+    // `Interpolated` props + `update_state`/`set_path` handler args — so the
+    // generated app's `view.set_state` boilerplate lists the vars it needs.
+    let mut vars: std::collections::BTreeSet<String> = std::collections::BTreeSet::new();
+    fn collect(n: &Node, vars: &mut std::collections::BTreeSet<String>) {
+        let from_value = |v: &Value, vars: &mut std::collections::BTreeSet<String>| match v {
+            Value::Token(p) | Value::Binding { path: p, .. } => {
+                vars.insert(
+                    p.0.iter()
+                        .map(|s| match s {
+                            PathSegment::Field(f) => f.clone(),
+                            PathSegment::Index(i) => i.to_string(),
+                        })
+                        .collect::<Vec<_>>()
+                        .join("."),
+                );
+            }
+            Value::Interpolated(segs) => {
+                for s in segs {
+                    if let Segment::Binding(p) = s {
+                        vars.insert(
+                            p.0.iter()
+                                .map(|s| match s {
+                                    PathSegment::Field(f) => f.clone(),
+                                    PathSegment::Index(i) => i.to_string(),
+                                })
+                                .collect::<Vec<_>>()
+                                .join("."),
+                        );
+                    }
+                }
+            }
+            _ => {}
+        };
+        for (_, v) in n.props.iter().chain(n.style.iter()) {
+            from_value(v, vars);
+        }
+        if let Some(c) = &n.content {
+            from_value(c, vars);
+        }
+        for e in &n.events {
+            for a in &e.handler.args {
+                from_value(a, vars);
+                // `update_state('path')`/`set_path('path')` — the arg is a
+                // `Value::String` of a state path.
+                if matches!(e.handler.name.as_str(), "update_state" | "set_path") {
+                    if let Value::String(p) = a {
+                        vars.insert(p.clone());
+                    }
+                }
+            }
+        }
+        for kid in &n.children {
+            collect(kid, vars);
+        }
+    }
+    collect(&doc.root, &mut vars);
+    for d in &doc.dialogs {
+        collect(d, &mut vars);
+    }
+    let state_vars: Vec<String> = vars.into_iter().collect();
+    let set_state = if state_vars.is_empty() {
+        "// no state vars referenced".to_string()
+    } else {
+        // emit `view.set_state(json!({...}))` — every path initialized to
+        // null; the user fills in the real types/values.
+        format!(
+            "view.set_state(serde_json::json!({{{}}}), cx);",
+            state_vars
+                .iter()
+                .map(|p| format!("{p:?}: null"))
+                .collect::<Vec<_>>()
+                .join(", ")
+        )
+    };
     format!(
         "use forge_spec::*;
 
@@ -1245,6 +1320,13 @@ pub fn document() -> Document {{
         root: {},
         raw: None,
     }}
+}}
+
+/// The state vars the document references — `bind`/`$path`/`{{$path}}`/
+/// `update_state`/`set_path` — so the generated app knows which paths to
+/// initialize before `set_document`.
+pub fn set_state(view: &mut ForgeView, cx: &mut gpui::Context<ForgeView>) {{
+    {set_state}
 }}
 ",
         doc.version,
@@ -1508,7 +1590,9 @@ fn build_cmd(rest: &[String]) -> i32 {
                     r#"let (doc, diagnostics): (
                 Option<gpui_forge_runtime::forge_spec::Document>,
                 Vec<gpui_forge_runtime::forge_spec::Diagnostic>,
-            ) = (Some(doc::document()), Vec::new());"#,
+            ) = (Some(doc::document()), Vec::new());"#
+                        .to_string()
+                        + "\n            doc::set_state(&mut view, cx);",
                 );
             write(&src_dir.join("main.rs"), &main);
         }
