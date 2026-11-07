@@ -1,12 +1,66 @@
-version: "0.1"
-namespace: gc
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for the gpui-component adapter (forge-lib-gpui-component)
+# — `use: gc: gpui-component`.
+catalog: "0.1"
+library: gpui-component
+name: gpui-component
+version: 0.8.1
+license: MIT
+bases:
+  gpui-kit: "^0.8"
+
 elements:
   Button:
-    description: gpui-component Button
-    props: {label: string, variant: string}
+    icon: mouse-pointer-click
+    group: Buttons
+    summary: "gpui-component Button — `use: gc`."
+    component: gpui_component::button::Button
+    content: label
+    children: none
+    props:
+      label: string
   Badge:
-    description: gpui-component Badge
-    props: {label: string}
+    icon: badge
+    group: Display
+    summary: "gpui-component Badge — `use: gc`."
+    component: gpui_component::badge::Badge
+    children: none
+    props:
+      count: number
   Alert:
-    description: gpui-component Alert
-    props: {title: string}
+    icon: circle-alert
+    group: Feedback
+    summary: "gpui-component Alert — `use: gc`."
+    component: gpui_component::alert::Alert
+    children: none
+    props:
+      title: string
+      message: string
+  Spinner:
+    icon: loader
+    group: Display
+    summary: "gpui-component Spinner — `use: gc`."
+    component: gpui_component::spinner::Spinner
+    children: none
+  Progress:
+    icon: loader-2
+    group: Feedback
+    summary: "gpui-component Progress — `use: gc`."
+    component: gpui_component::progress::Progress
+    children: none
+    props:
+      value: number
+  Divider:
+    icon: minus
+    group: Layout
+    summary: "gpui-component Separator — `use: gc`."
+    component: gpui_component::separator::Separator
+    children: none
+  Label:
+    icon: type
+    group: Typography
+    summary: "gpui-component Label — `use: gc`."
+    component: gpui_component::label::Label
+    children: none
+    props:
+      label: string

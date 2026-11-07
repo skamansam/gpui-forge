@@ -1,0 +1,28 @@
+forge: "0.1"
+base: iced
+root:
+  VStack:
+  style: {padding: 16px, gap: 12px}
+  children:
+      - Text: "iced showcase"
+      - Button:
+        label: "a button"
+      - Input:
+        placeholder: "an input…"
+      - Checkbox:
+        label: "a checkbox"
+      - Switch:
+        label: "a switch"
+      - Slider:
+        value: $slider
+      - Progress:
+        value: 0.6
+      - Scrollable:
+        children:
+          - VStack:
+            children:
+              - Text: "scrollable"
+              - Text: "content"
+      - Container:
+        children:
+          - Text: "container"

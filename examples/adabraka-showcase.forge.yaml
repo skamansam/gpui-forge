@@ -1,0 +1,29 @@
+forge: "0.1"
+base: adabraka
+root:
+  VStack:
+  style: {padding: 16px, gap: 12px}
+  children:
+      - Text: "adabraka showcase"
+      - Card:
+        children:
+          - Text: "card content"
+      - Avatar:
+        fallback: "AB"
+      - Button:
+        label: "a button"
+      - Input:
+        placeholder: "an input…"
+      - Checkbox:
+        label: "a checkbox"
+      - Switch:
+        checked: true
+      - Select:
+        options: "one"
+      - Progress:
+        value: 0.6
+      - Badge:
+        text: "a badge"
+      - Alert:
+        title: "an alert"
+        text: "an adabraka alert"

@@ -1,0 +1,18 @@
+forge: "0.1"
+base: bezel
+root:
+  VStack:
+  style: {padding: 16px, gap: 12px}
+  children:
+      - Text: "bezel showcase"
+        style: {size: xl, weight: bold}
+      - Button:
+        label: "a button"
+      - Input:
+        placeholder: "an input…"
+      - Card:
+        children:
+          - Text: "card content"
+          - Text: "more card"
+      - Text:
+        text: "plain text"

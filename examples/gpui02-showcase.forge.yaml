@@ -1,0 +1,35 @@
+forge: "0.1"
+base: gpui02
+root:
+  VStack:
+  style: {padding: 16px, gap: 12px}
+  children:
+      - Title: "gpui02 showcase"
+      - Paper:
+        children:
+          - Text: "paper container"
+      - Button:
+        label: "a button"
+      - TextInput:
+        placeholder: "text input…"
+      - Checkbox:
+        label: "a checkbox"
+      - Switch:
+        label: "a switch"
+      - Select:
+        options: "one"
+        value: $sel
+      - Progress:
+        value: 0.6
+      - Badge:
+        text: "a badge"
+      - Alert:
+        title: "an alert"
+        text: "a guise alert"
+      - Card:
+        children:
+          - Text: "card"
+      - Divider:
+      - Center:
+        children:
+          - Text: "centered"

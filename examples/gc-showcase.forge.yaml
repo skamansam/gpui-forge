@@ -1,0 +1,23 @@
+forge: "0.1"
+base: gpui-kit
+use:
+  gc: gpui-component
+root:
+  VStack:
+  style: {padding: 16px, gap: 12px}
+  children:
+      - Text: "gc.* showcase (gpui-component)"
+        style: {size: xl, weight: bold}
+      - gc.Button:
+        label: "gc button"
+      - gc.Badge:
+        count: 4
+      - gc.Alert:
+        title: "gc alert"
+        message: "a gpui-component alert"
+      - gc.Spinner:
+      - gc.Progress:
+        value: 0.6
+      - gc.Divider:
+      - gc.Label:
+        label: "gc label"

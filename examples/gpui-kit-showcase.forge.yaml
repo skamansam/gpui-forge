@@ -1,0 +1,36 @@
+forge: "0.1"
+base: gpui-kit
+root:
+  VStack:
+  style: {padding: 16px, gap: 12px}
+  children:
+      - Text: "gpui-kit showcase"
+        style: {size: xl, weight: bold}
+      - Button: "Primary"
+      - Button: "Secondary"
+        variant: Secondary
+      - Input:
+        placeholder: "an input…"
+      - Checkbox:
+        label: "a checkbox"
+      - Switch:
+        label: "a switch"
+      - Slider:
+        value: bind $slider
+      - Progress:
+        value: 0.6
+      - Badge:
+        count: 4
+      - Alert:
+        title: "an alert"
+        message: "a gpui-kit alert"
+      - GroupBox: a group box
+        children:
+          - Text: "group content"
+      - Select:
+        options: ["one", "two", "three"]
+        value: bind $sel
+      - Tabs:
+        children:
+          - Tab: First
+          - Tab: Second

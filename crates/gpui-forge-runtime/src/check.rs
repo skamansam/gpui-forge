@@ -15,6 +15,8 @@ pub fn catalogs() -> Vec<Catalog> {
             .expect("bundled forge catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/ely.catalog.yaml"))
             .expect("bundled ely catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/gc.catalog.yaml"))
+            .expect("bundled gc catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/gpui02.catalog.yaml"))
             .expect("bundled gpui02 catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/adabraka.catalog.yaml"))

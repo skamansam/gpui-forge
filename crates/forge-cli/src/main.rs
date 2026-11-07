@@ -1371,6 +1371,14 @@ fn build_cmd(rest: &[String]) -> i32 {
                     lib_uses.push("use forge_lib_ely::Ely;".to_string());
                     lib_register.push("    view.register_library(Ely);".to_string());
                 }
+                "gpui-component" => {
+                    lib_deps.push(format!(
+                        "forge-lib-gpui-component = {{ path = \"{}\" }}",
+                        root.join("crates/forge-lib-gpui-component").display()
+                    ));
+                    lib_uses.push("use forge_lib_gpui_component::GpuiComponent;".to_string());
+                    lib_register.push("    view.register_library(GpuiComponent);".to_string());
+                }
                 "template-lib" => {
                     lib_deps.push(format!(
                         "forge-lib-template = {{ path = \"{}\" }}",

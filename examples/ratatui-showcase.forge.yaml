@@ -1,0 +1,17 @@
+forge: "0.1"
+base: ratatui
+root:
+  VStack:
+  style: {gap: 1}
+  children:
+      - Block:
+        title: "ratatui showcase"
+        children:
+          - Text: "a bordered block"
+      - List:
+        items: "first\nsecond\nthird"
+      - Gauge:
+        value: 0.6
+      - Tabs:
+      - Input:
+        placeholder: "editable input…"
