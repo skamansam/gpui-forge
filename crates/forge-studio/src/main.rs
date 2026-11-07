@@ -501,15 +501,14 @@ fn reset_theme(
 ) {
     let registry = ThemeRegistry::global(cx);
     let dark = Theme::global(cx).is_dark();
-    // #126 — reset to the SELECTED theme (studio.theme), not the mode
-    // default; fall back to the mode default only if the name is missing.
-    let selected = view
-        .state()
-        .get("studio")
-        .and_then(|s| s.get("theme"))
+    // #123+#126 — reset loads the theme STORED in
+    // `~/.gpui-forge/settings.toml` (the per-user prefs), not whatever's
+    // selected in-session; falls back to the mode default.
+    let stored = load_prefs()
+        .get("theme")
         .and_then(|j| j.as_str())
         .map(|s| s.to_owned());
-    let default = selected
+    let default = stored
         .and_then(|name| registry.themes().get(name.as_str()).cloned())
         .unwrap_or_else(|| {
             if dark {
@@ -1265,19 +1264,33 @@ fn load_recents() -> Vec<PathBuf> {
 
 /// Prepends `path` to the recent list, deduping and capping at 8, then
 /// rewrites the store.
-/// #123 — persisted preferences at
-/// `~/.local/share/gpui-forge/prefs.json` — currently `theme` + `dark`.
+/// #123 — persisted preferences at `~/.gpui-forge/settings.toml` —
+/// `theme` + `dark` per user, in TOML like a real settings file.
 fn prefs_file() -> Option<PathBuf> {
     std::env::var("HOME")
         .ok()
-        .map(|h| PathBuf::from(h).join(".local/share/gpui-forge/prefs.json"))
+        .map(|h| PathBuf::from(h).join(".gpui-forge/settings.toml"))
 }
 
 fn load_prefs() -> Json {
-    prefs_file()
+    let s = prefs_file()
         .and_then(|f| std::fs::read_to_string(f).ok())
-        .and_then(|s| serde_json::from_str(&s).ok())
-        .unwrap_or_else(|| json!({}))
+        .unwrap_or_default();
+    // tiny TOML-ish parse: `key = value` lines; strings quoted, bool bare.
+    let mut m = serde_json::Map::new();
+    for line in s.lines() {
+        let line = line.trim();
+        let Some((k, v)) = line.split_once('=') else {
+            continue;
+        };
+        let (k, v) = (k.trim(), v.trim());
+        if v == "true" || v == "false" {
+            m.insert(k.to_owned(), Json::Bool(v == "true"));
+        } else {
+            m.insert(k.to_owned(), Json::String(v.trim_matches('"').to_owned()));
+        }
+    }
+    Json::Object(m)
 }
 
 fn save_prefs(view: &ForgeView) {
@@ -1285,21 +1298,18 @@ fn save_prefs(view: &ForgeView) {
         .state()
         .get("studio")
         .and_then(|s| s.get("theme"))
-        .cloned()
-        .unwrap_or(Json::Null);
+        .and_then(|j| j.as_str())
+        .unwrap_or_default()
+        .to_owned();
     let dark = view
         .state()
         .get("studio")
         .and_then(|s| s.get("dark"))
-        .cloned()
-        .unwrap_or(Json::Null);
+        .and_then(|j| j.as_bool())
+        .unwrap_or(false);
     if let Some(f) = prefs_file() {
         let _ = std::fs::create_dir_all(f.parent().unwrap());
-        let _ = std::fs::write(
-            f,
-            serde_json::to_string_pretty(&json!({"theme": theme, "dark": dark}))
-                .unwrap_or_default(),
-        );
+        let _ = std::fs::write(f, format!("theme = \"{theme}\"\ndark = {dark}\n"));
     }
 }
 

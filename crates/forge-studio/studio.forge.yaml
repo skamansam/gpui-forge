@@ -332,9 +332,10 @@ root:
                             - Progress:
                               value: 0.6
                             - Badge:
-                              label: a badge
+                              count: 4
                             - Alert:
                               title: an alert
+                              message: "a gpui-kit alert"
                             - Tag:
                               label: a tag
         - VStack#inspector:
