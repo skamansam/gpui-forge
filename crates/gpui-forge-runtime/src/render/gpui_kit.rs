@@ -453,8 +453,9 @@ impl ForgeView {
                     div()
                         .flex()
                         .flex_row()
+                        .flex_grow(1.0)
                         .gap_1()
-                        .child(Input::new(&state).with_size(size("small")))
+                        .child(Input::new(&state).with_size(size("small")).w_full())
                 }
                 _ => {
                     // objects/arrays: a Textarea with the pretty JSON; its
