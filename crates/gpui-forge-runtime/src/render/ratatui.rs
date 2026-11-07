@@ -52,7 +52,7 @@ pub struct ForgeView {
     base_dir: Option<std::path::PathBuf>,
     /// Focusable inputs — `(node key, binding path)` rebuilt each render;
     /// `Tab`/`Shift-Tab` cycles, typed keys write the focused binding.
-    focusables: Vec<Path>,
+    focusables: Vec<(Path, FocusKind)>,
     focused: usize,
     /// Flags staged for protocol parity — a TUI has no element picker, but the
     /// commands are acknowledged so hosts don't special-case the base.
@@ -193,8 +193,28 @@ impl ForgeView {
 
     /// Terminal keys — the host reads the tty and forwards them (#112).
     /// `Tab`/`Shift-Tab` cycles focusable inputs; printable keys write into
-    /// the focused input's binding; `Enter` fires `on submit:` on the node.
+    /// the focused input's binding; `Enter`/`Space` fires toggle/select.
     pub fn on_key(&mut self, key: &str) {
+        let kind = self.focusables.get(self.focused).map(|(_, k)| *k);
+        match (kind, key) {
+            (_, "Tab") | (_, "BackTab") => {}
+            (Some(FocusKind::Bool), "Enter") | (Some(FocusKind::Bool), " ") => {
+                if let Some((path, _)) = self.focusables.get(self.focused).cloned() {
+                    let cur = self.lookup(&path).and_then(Json::as_bool).unwrap_or(false);
+                    self.write(&path, Json::Bool(!cur));
+                }
+                return;
+            }
+            (Some(FocusKind::Select), "Enter") | (Some(FocusKind::Select), " ") => {
+                // The list arm writes `selected` — Enter confirms; arrows
+                // move the cursor (handled below).
+            }
+            (Some(FocusKind::Input), "Backspace")
+            | (Some(FocusKind::Input), "Enter")
+            | (Some(FocusKind::Input), _)
+            | (None, _) => {}
+            (_, _) => {}
+        }
         match key {
             "Tab" => {
                 if !self.focusables.is_empty() {
@@ -212,14 +232,14 @@ impl ForgeView {
                 // identifies it; events live on the node itself.
             }
             "Backspace" => {
-                if let Some(path) = self.focusables.get(self.focused).cloned() {
+                if let Some((path, _)) = self.focusables.get(self.focused).cloned() {
                     let mut cur = self.json_text(&path);
                     cur.pop();
                     self.write(&path, Json::String(cur));
                 }
             }
             c if c.chars().count() == 1 => {
-                if let Some(path) = self.focusables.get(self.focused).cloned() {
+                if let Some((path, _)) = self.focusables.get(self.focused).cloned() {
                     let mut cur = self.json_text(&path);
                     cur.push_str(c);
                     self.write(&path, Json::String(cur));
@@ -233,7 +253,7 @@ impl ForgeView {
     fn is_focused(&self, path: &Path) -> bool {
         self.focusables
             .get(self.focused)
-            .map(|p| p == path)
+            .map(|(p, _)| p == path)
             .unwrap_or(false)
     }
 
@@ -452,7 +472,7 @@ impl ForgeView {
                 let empty = value.is_empty();
                 let text = if empty { placeholder } else { value };
                 if let Some(path) = &binding {
-                    self.focusables.push(path.clone());
+                    self.focusables.push((path.clone(), FocusKind::Input));
                 }
                 let focused = binding
                     .as_ref()
@@ -482,6 +502,14 @@ impl ForgeView {
                 );
             }
             "Checkbox" | "Switch" => {
+                let binding = Self::binding_of(node, "checked");
+                if let Some(path) = &binding {
+                    self.focusables.push((path.clone(), FocusKind::Bool));
+                }
+                let focused = binding
+                    .as_ref()
+                    .map(|p| self.is_focused(p))
+                    .unwrap_or(false);
                 let checked = match node.props.iter().find(|(k, _)| k == "checked") {
                     Some((_, Value::Bool(b))) => *b,
                     Some((_, Value::Binding { path, .. })) => {
@@ -490,10 +518,16 @@ impl ForgeView {
                     _ => false,
                 };
                 let label = self.node_text(node);
-                frame.render_widget(
-                    Paragraph::new(format!("{} {label}", if checked { "[x]" } else { "[ ]" })),
-                    area,
-                );
+                let mut p =
+                    Paragraph::new(format!("{} {label}", if checked { "[x]" } else { "[ ]" }));
+                if focused {
+                    p = p.style(
+                        Style::default()
+                            .fg(Color::Cyan)
+                            .add_modifier(Modifier::BOLD),
+                    );
+                }
+                frame.render_widget(p, area);
             }
             "Table" => {
                 let title = self.prop_text(node, "title");
@@ -527,4 +561,13 @@ impl ForgeView {
             self.render_node(child, *chunk, frame);
         }
     }
+}
+
+/// The interactivity a focused element accepts — Input = text editing,
+/// Bool = toggle (Checkbox/Switch), Select = arrow navigation (List/Tabs).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FocusKind {
+    Input,
+    Bool,
+    Select,
 }
