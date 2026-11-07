@@ -114,7 +114,14 @@ fn main() {
                                             }
                                         });
                                     }
-                                    HostMsg::Quit => quit = true,
+                                    HostMsg::FrameRect { .. } => {
+                                        // TODO(#120): position the window
+                                        // over the canvas slot
+                                    }
+                                    HostMsg::FrameRect { .. } => {
+                // TODO(#120): position the window over the canvas slot
+            }
+            HostMsg::Quit => quit = true,
                                 }
                             }
                         });

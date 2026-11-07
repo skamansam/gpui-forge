@@ -127,6 +127,9 @@ fn main() {
                 HostMsg::Raise => {
                     // The host's terminal is already focused — nothing to raise.
                 }
+                HostMsg::FrameRect { .. } => {
+                    // TODO(#120): position the window over the canvas slot
+                }
                 HostMsg::Quit => quit = true,
             }
         }
