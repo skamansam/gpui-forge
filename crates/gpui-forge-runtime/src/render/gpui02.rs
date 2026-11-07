@@ -616,32 +616,49 @@ impl ForgeView {
             "Checkbox" | "Switch" => {
                 let checked = self.prop_bool(node, "checked", false);
                 let label = self.node_text(node);
-                let glyph = match (node.element.name.as_str(), checked) {
-                    ("Switch", true) => "◉ ",
-                    ("Switch", false) => "◯ ",
-                    (_, true) => "☑ ",
-                    _ => "☐ ",
-                };
                 let weak = cx.entity().downgrade();
                 let calls = self.events_for(node, "change");
-                let mut row = div()
-                    .id(SharedString::from(key.to_owned()))
-                    .flex()
-                    .flex_row()
-                    .items_center()
-                    .gap_2()
-                    .child(format!("{glyph}{label}"));
-                if !calls.is_empty() {
-                    row = row.on_click(move |_, _, cx| {
-                        for (name, args) in &calls {
-                            try_update(&weak, cx, "change", |view, cx| {
-                                view.fire_call(name, args.clone(), cx)
-                            })
-                            .ok();
-                        }
+                // Two-way: `checked: {{path}}` writes the toggle back to state.
+                let binding = node
+                    .props
+                    .iter()
+                    .find(|(k, _)| k == "checked")
+                    .and_then(|(_, v)| match v {
+                        Value::Binding { path, .. } => Some(path.clone()),
+                        _ => None,
                     });
+                let has_handler = !calls.is_empty() || binding.is_some();
+                let on_change = move |_: &ClickEvent, _: &mut Window, cx: &mut App| {
+                    for (name, args) in &calls {
+                        try_update(&weak, cx, "change", |view, cx| {
+                            view.fire_call(name, args.clone(), cx)
+                        })
+                        .ok();
+                    }
+                    if let Some(path) = &binding {
+                        try_update(&weak, cx, "change", |view, cx| {
+                            view.write(path, Json::Bool(!checked), cx)
+                        })
+                        .ok();
+                    }
+                };
+                if node.element.name == "Checkbox" {
+                    let mut c = guise::input::Checkbox::new(SharedString::from(key.to_owned()))
+                        .checked(checked)
+                        .label(label);
+                    if has_handler {
+                        c = c.on_change(on_change);
+                    }
+                    c.into_any_element()
+                } else {
+                    let mut s = guise::input::Switch::new(SharedString::from(key.to_owned()))
+                        .checked(checked)
+                        .label(label);
+                    if has_handler {
+                        s = s.on_change(on_change);
+                    }
+                    s.into_any_element()
                 }
-                row.into_any_element()
             }
             "Progress" => {
                 let value = self.num(node, "value", 0.0).clamp(0.0, 100.0);
