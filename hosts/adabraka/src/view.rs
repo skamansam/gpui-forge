@@ -125,6 +125,8 @@ pub struct ForgeView {
     empty_text: Option<String>,
     /// Per-key stateful input entities — a doc's nodes re-render but the
     /// widget state persists between paints (same contract as the kit base).
+    inputs: HashMap<String, Entity<adabraka_ui::components::input::InputState>>,
+    selects: HashMap<String, Entity<adabraka_ui::components::select::Select<String>>>,
     subscriptions: Vec<Subscription>,
     /// guise requires `Theme::init` before any component paints — done lazily
     /// on first render, the first place a `&mut App` exists.
@@ -148,6 +150,8 @@ impl ForgeView {
             placing: false,
             dnd: false,
             empty_text: None,
+            inputs: HashMap::new(),
+            selects: HashMap::new(),
             subscriptions: Vec::new(),
             theme_ready: false,
         }
