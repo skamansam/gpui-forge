@@ -140,6 +140,62 @@ fn main() {
 }
 "#;
 
+/// The gpui02 app's bootstrap: crates.io `gpui` + guise, `Theme::init` for the
+/// guise global the components panic without (#96).
+const APP_MAIN_GPUI02: &str = r#"use gpui_forge_runtime::render::ForgeView;
+use gpui::prelude::*;
+use gpui::*;
+
+{LIB_USE}
+
+const SRC: &str = include_str!("../app.forge.yaml");
+
+fn main() {
+    Application::new().run(|cx| {
+        let catalogs = gpui_forge_runtime::check::catalogs();
+        let (doc, diagnostics) = gpui_forge_runtime::check::check(
+            SRC, "{BASE_ID}", &catalogs);
+        for d in &diagnostics {
+            eprintln!("app.forge.yaml:{}:{}: {}", d.pos.line, d.pos.col, d.message);
+        }
+        let bounds = Bounds::centered(None, size(px(1280.0), px(800.0)), cx);
+        let options = WindowOptions {
+            app_id: Some("{APP_ID}".into()),
+            window_bounds: Some(WindowBounds::Windowed(bounds)),
+            titlebar: Some(TitlebarOptions {
+                title: Some("{TITLE}".into()),
+                appears_transparent: true,
+                traffic_light_position: None,
+            }),
+            ..Default::default()
+        };
+        cx.open_window(options, move |_, cx| {
+            guise::theme::Theme::dark().init(cx);
+            let catalogs = catalogs.clone();
+            let doc = doc.clone();
+            cx.new(move |cx| {
+                let mut view = ForgeView::new(catalogs);
+{LIB_REGISTER}
+                if let Some(doc) = doc {
+                    view.set_document(doc, cx);
+                }
+                view
+            })
+        })
+        .expect("failed to open window");
+    });
+}
+"#;
+
+/// The `main.rs` template for the document's base — one bootstrap per base
+/// family (#100): each links its own GPUI/toolkit stack.
+fn app_main(base_id: &str) -> &'static str {
+    match base_id {
+        "gpui02" => APP_MAIN_GPUI02,
+        _ => APP_MAIN,
+    }
+}
+
 const APP_TOML: &str = r#"[package]
 name = "{NAME}"
 version = "0.1.0"
@@ -149,8 +205,9 @@ edition = "2024"
 {LIBS}
 {LIB_DEPS}
 forge-spec = { path = "{ROOT}/crates/forge-spec" }
-gpui-forge-runtime = { path = "{ROOT}/crates/gpui-forge-runtime", features = ["{BASE_FEATURE}"] }
+gpui-forge-runtime = { path = "{ROOT}/crates/gpui-forge-runtime", features = ["{BASE_FEATURE}"], default-features = false }
 {BASE_LIB_DEP}
+{BASE_GPUI_DEP}
 serde_json = "1"
 
 # A generated app sits inside the gpui-forge checkout but is its own workspace.
@@ -1170,6 +1227,15 @@ fn build_cmd(rest: &[String]) -> i32 {
     };
     if let Some(doc) = &built_doc {
         for import in &doc.imports {
+            // Only adapter libraries the base manifest marks compatible link
+            // into a foreign-base app (#100).
+            if !base.libraries.iter().any(|l| l == &import.library) {
+                eprintln!(
+                    "forge: `{}` is not compatible with base `{}` — skipped",
+                    import.library, base.id
+                );
+                continue;
+            }
             match import.library.as_str() {
                 "ely-core" => {
                     lib_deps.push(format!(
@@ -1208,6 +1274,10 @@ fn build_cmd(rest: &[String]) -> i32 {
             .replace(
                 "{BASE_LIB_DEP}",
                 &format!("{} = \"{}\"", base.library_crate, base.library_version),
+            )
+            .replace(
+                "{BASE_GPUI_DEP}",
+                &format!("{} = \"={}\"", base.gpui_crate, base.gpui_version),
             ),
     );
     if !base.toolchain.is_empty() {
@@ -1218,7 +1288,7 @@ fn build_cmd(rest: &[String]) -> i32 {
     }
     write(
         &src_dir.join("main.rs"),
-        &APP_MAIN
+        &app_main(&base.id)
             .replace("{APP_ID}", &app_id)
             .replace("{BASE_ID}", &doc_base)
             .replace("{TITLE}", &title)
@@ -1242,31 +1312,37 @@ fn build_cmd(rest: &[String]) -> i32 {
         &std::fs::read_to_string(&path).unwrap_or_default(),
     );
     // Bundle every shipped theme — assets live in the binary, not on disk.
-    let themes_in = root.join("themes");
-    let themes_out = dir.join("themes");
-    let _ = std::fs::create_dir_all(&themes_out);
-    let mut theme_list = Vec::new();
-    if let Ok(entries) = std::fs::read_dir(&themes_in) {
-        for e in entries.flatten() {
-            let name = e.file_name().to_string_lossy().into_owned();
-            if name.ends_with(".json") && std::fs::copy(e.path(), themes_out.join(&name)).is_ok() {
-                theme_list.push(name);
+    // Only gpui-kit apps read the theme registry; other bases theme their own
+    // way (#96).
+    if base.theme == "gpui-kit" {
+        let themes_in = root.join("themes");
+        let themes_out = dir.join("themes");
+        let _ = std::fs::create_dir_all(&themes_out);
+        let mut theme_list = Vec::new();
+        if let Ok(entries) = std::fs::read_dir(&themes_in) {
+            for e in entries.flatten() {
+                let name = e.file_name().to_string_lossy().into_owned();
+                if name.ends_with(".json")
+                    && std::fs::copy(e.path(), themes_out.join(&name)).is_ok()
+                {
+                    theme_list.push(name);
+                }
             }
         }
+        let themes_rs = format!(
+            "pub const THEMES: &[(&str, &str)] = &[\n{}\n];\n",
+            theme_list
+                .iter()
+                .map(|n| format!(
+                    "    ({:?}, include_str!(\"../themes/{}\")),",
+                    n.trim_end_matches(".json"),
+                    n
+                ))
+                .collect::<Vec<_>>()
+                .join("\n")
+        );
+        write(&src_dir.join("themes.rs"), &themes_rs);
     }
-    let themes_rs = format!(
-        "pub const THEMES: &[(&str, &str)] = &[\n{}\n];\n",
-        theme_list
-            .iter()
-            .map(|n| format!(
-                "    ({:?}, include_str!(\"../themes/{}\")),",
-                n.trim_end_matches(".json"),
-                n
-            ))
-            .collect::<Vec<_>>()
-            .join("\n")
-    );
-    write(&src_dir.join("themes.rs"), &themes_rs);
     if rest.iter().any(|a| a == "--codegen") {
         let src = std::fs::read_to_string(&path).unwrap_or_default();
         if let Ok((doc, _)) = gpui_forge_runtime::forge_spec::yaml::from_str_with_source_map(&src) {
