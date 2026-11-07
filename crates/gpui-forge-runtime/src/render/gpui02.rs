@@ -122,6 +122,11 @@ pub struct ForgeView {
     dnd: bool,
     /// Shown while there is no document (e.g. inside `forge.Preview`).
     empty_text: Option<String>,
+    /// Per-key stateful input entities — a doc's nodes re-render but the
+    /// widget state persists between paints (same contract as the kit base).
+    inputs: HashMap<String, Entity<guise::input::TextInput>>,
+    selects: HashMap<String, Entity<guise::input::Select>>,
+    subscriptions: Vec<Subscription>,
     /// guise requires `Theme::init` before any component paints — done lazily
     /// on first render, the first place a `&mut App` exists.
     theme_ready: bool,
@@ -144,6 +149,9 @@ impl ForgeView {
             placing: false,
             dnd: false,
             empty_text: None,
+            inputs: HashMap::new(),
+            selects: HashMap::new(),
+            subscriptions: Vec::new(),
             theme_ready: false,
         }
     }
@@ -350,6 +358,18 @@ impl ForgeView {
             .find(|(k, _)| k == name)
             .map(|(_, v)| self.text_of(v))
             .unwrap_or_default()
+    }
+
+    /// The state path a prop binds to, if it's a `{{...}}` binding — used by
+    /// two-way input widgets.
+    fn binding_of(node: &Node, name: &str) -> Option<Path> {
+        node.props
+            .iter()
+            .find(|(k, _)| k == name)
+            .and_then(|(_, v)| match v {
+                Value::Binding { path, .. } => Some(path.clone()),
+                _ => None,
+            })
     }
 
     fn prop_bool(&self, node: &Node, name: &str, fallback: bool) -> bool {
@@ -596,35 +616,90 @@ impl ForgeView {
                 }
                 btn.into_any_element()
             }
-            "TextInput" | "Input" | "Select" => {
-                let placeholder =
-                    if node.element.name == "TextInput" || node.element.name == "Input" {
-                        self.prop_text(node, "placeholder")
-                    } else {
-                        self.prop_text(node, "value")
-                    };
-                let label = self.prop_text(node, "label");
-                let mut field = div().flex().flex_col().gap_1();
-                if !label.is_empty() {
-                    field = field.child(div().text_xs().text_color(rgb(MUTED)).child(label));
+            "TextInput" | "Input" => {
+                if !self.inputs.contains_key(key) {
+                    let value = self.prop_text(node, "value");
+                    let placeholder = self.prop_text(node, "placeholder");
+                    let label = self.prop_text(node, "label");
+                    let description = self.prop_text(node, "description");
+                    let error = self.prop_text(node, "error");
+                    let entity = cx.new(|cx| {
+                        let mut input = guise::input::TextInput::new(cx)
+                            .value(&value)
+                            .placeholder(placeholder)
+                            .label(label);
+                        if !description.is_empty() {
+                            input = input.description(description);
+                        }
+                        if !error.is_empty() {
+                            input = input.error(error);
+                        }
+                        input
+                    });
+                    let calls = self.events_for(node, "change");
+                    let binding = Self::binding_of(node, "value");
+                    self.subscriptions.push(cx.subscribe(
+                        &entity,
+                        move |view, _input, event: &guise::input::TextInputEvent, cx| {
+                            let text = match event {
+                                guise::input::TextInputEvent::Change(t) => t.clone(),
+                                _ => return,
+                            };
+                            for (name, args) in &calls {
+                                view.fire_call(name, args.clone(), cx);
+                            }
+                            if let Some(path) = &binding {
+                                view.write(path, Json::String(text.clone()), cx);
+                            }
+                        },
+                    ));
+                    self.inputs.insert(key.to_owned(), entity);
                 }
-                field
-                    .child(
-                        div()
-                            .px_2()
-                            .py_1()
-                            .rounded_md()
-                            .border_1()
-                            .border_color(rgb(BORDER))
-                            .bg(rgb(BG))
-                            .text_color(rgb(if placeholder.is_empty() { MUTED } else { FG }))
-                            .child(if placeholder.is_empty() {
-                                "input".to_owned()
-                            } else {
-                                placeholder
-                            }),
-                    )
-                    .into_any_element()
+                let entity = self.inputs.get(key).unwrap().clone();
+                div().child(entity).into_any_element()
+            }
+            "Select" => {
+                if !self.selects.contains_key(key) {
+                    let options: Vec<String> = self
+                        .prop_text(node, "options")
+                        .split(',')
+                        .map(|s| s.trim().to_owned())
+                        .filter(|s| !s.is_empty())
+                        .collect();
+                    let label = self.prop_text(node, "label");
+                    let selected = options
+                        .iter()
+                        .position(|o| *o == self.prop_text(node, "value"))
+                        .unwrap_or(0);
+                    let shared: Vec<SharedString> = options
+                        .iter()
+                        .map(|o| SharedString::from(o.clone()))
+                        .collect();
+                    let entity = cx.new(|cx| {
+                        let mut s = guise::input::Select::new(cx).data(shared.clone());
+                        if !label.is_empty() {
+                            s = s.label(label);
+                        }
+                        s.selected(selected)
+                    });
+                    let calls = self.events_for(node, "change");
+                    let binding = Self::binding_of(node, "value");
+                    self.subscriptions.push(cx.subscribe(
+                        &entity,
+                        move |view, _select, event: &guise::input::SelectEvent, cx| {
+                            let value = options.get(event.0).cloned().unwrap_or_default();
+                            for (name, args) in &calls {
+                                view.fire_call(name, args.clone(), cx);
+                            }
+                            if let Some(path) = &binding {
+                                view.write(path, Json::String(value.clone()), cx);
+                            }
+                        },
+                    ));
+                    self.selects.insert(key.to_owned(), entity);
+                }
+                let entity = self.selects.get(key).unwrap().clone();
+                div().child(entity).into_any_element()
             }
             "Checkbox" | "Switch" => {
                 let checked = self.prop_bool(node, "checked", false);
