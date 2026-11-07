@@ -967,6 +967,7 @@ fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<F
     host_send(&json!({"cmd":"dnd","on":true}));
     host_send_theme(view);
     cx.spawn(async move |view, cx| {
+        let mut last_rect: Option<String> = None;
         loop {
             cx.background_executor()
                 .timer(std::time::Duration::from_millis(50))
@@ -1004,7 +1005,13 @@ fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<F
                             "w": f64::from(b.size.width),
                             "h": f64::from(b.size.height),
                         });
-                        host_send(&rect);
+                        // Send only on change — unconditional sends at 20Hz are
+                        // pure noise for an idle canvas.
+                        let key = rect.to_string();
+                        if last_rect.as_deref() != Some(key.as_str()) {
+                            last_rect = Some(key);
+                            host_send(&rect);
+                        }
                     }
                 }
             }
