@@ -29,7 +29,7 @@ What ships today:
   inspector, undo/redo, localStorage persistence, JSON/.forge
   import-export, and schema-generated TypeScript types.
 
-Still on the roadmap: per-base adapters, the `#[forge_hook]` bridge,
+Landed: six registered bases (gpui-kit, gpui02, bezel, adabraka, ratatui, iced) with per-base render twins, `forge-preview-<base>` hosts, and `forge build` app templates — plus `use:` library adapters like `forge-lib-ely`. Still on the roadmap: the `#[forge_hook]` bridge,
 and Studio packaging.
 
 ## 🚀 The Vision
@@ -87,12 +87,13 @@ A Rust app links exactly one `gpui`, so components built on different GPUI versi
 *   Changing base later is a migration (`forge migrate --base`).
 *   Libraries pinned to raw Zed git revisions fit no base and are tracked for porting ([#83](https://github.com/skamansam/gpui-forge/issues/83)).
 
-### Non-GPUI bases (planned)
+### Non-GPUI bases (landed)
 
 Bases are not limited to GPUI builds. The document model, Forge YAML loader, catalogs and
 validation are toolkit-agnostic, so the same files drive other UI frameworks. What each
 non-GPUI base needs is a catalog, a runtime adapter, its own style profile (the style &
-layout keys map to GPUI `Styled` methods) and a preview host (`forge-preview-<base>`,
+layout keys map to the toolkit's equivalents) and a preview host (`forge-preview-<base>`,
+the JSON protocol is shared — ratatui draws into `/dev/tty`, iced runs `iced::application`),
 [#97](https://github.com/skamansam/gpui-forge/issues/97)).
 
 | Base | Kind | Event model | Web/WASM | Tracking |
