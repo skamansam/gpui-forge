@@ -472,25 +472,93 @@ impl ForgeView {
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let el = self.render_node_inner(node, key, window, cx);
-        if !self.pick {
+        if !self.pick && !self.dnd {
             return el;
         }
+        // Same contract as the kit base: a transparent overlay carries pick
+        // clicks (select, or place → `studio.drop_target` + `place_component`)
+        // and the drag/drop protocol (`studio.drop_target` → `drop_component` /
+        // `move_node`).
         let path = key.to_owned();
         let weak = cx.entity().downgrade();
-        div()
+        let cancel_weak = cx.entity().downgrade();
+        let drop_weak = cx.entity().downgrade();
+        let label = node.element.name.clone();
+        let mut overlay = div()
             .id(SharedString::from(format!("pick-{key}")))
-            .child(el)
-            .on_click(move |_, _, cx| {
-                try_update(&weak, cx, "pick", |view, cx| {
-                    view.update_state(
-                        &forge_spec::value::parse_path("document.selected").unwrap(),
-                        Json::String(path.clone()),
-                        cx,
-                    )
+            .absolute()
+            .inset_0()
+            .cursor_pointer();
+        if self.pick {
+            let pick_path = path.clone();
+            overlay = overlay
+                .hover(|s| {
+                    s.bg(rgba(0x3b82f659))
+                        .border_2()
+                        .border_color(rgba(0x3b82f6ff))
                 })
-                .ok();
-            })
-            .into_any_element()
+                .on_click(move |_, _, cx| {
+                    try_update(&weak, cx, "pick", |p, cx| {
+                        p.pick = false;
+                        if p.placing {
+                            p.placing = false;
+                            p.write(
+                                &forge_spec::value::parse_path("studio.drop_target").unwrap(),
+                                Json::String(pick_path.clone()),
+                                cx,
+                            );
+                            p.fire_call("place_component", vec![pick_path.clone()], cx);
+                        } else {
+                            p.write(
+                                &forge_spec::value::parse_path("document.selected").unwrap(),
+                                Json::String(pick_path.clone()),
+                                cx,
+                            );
+                        }
+                        cx.notify();
+                    })
+                    .ok();
+                })
+                .on_mouse_down(MouseButton::Right, move |_, _, cx| {
+                    try_update(&cancel_weak, cx, "cancel-place", |p, cx| {
+                        p.pick = false;
+                        p.placing = false;
+                        p.fire_call("cancel_place", vec![], cx);
+                        cx.notify();
+                    })
+                    .ok();
+                });
+        }
+        if self.dnd {
+            let drag_id = path.clone();
+            let drop_id = path.clone();
+            overlay = overlay
+                .on_drag(ForgeDrag::Node(drag_id), move |_, _, _, cx| {
+                    cx.new(|_| DragGhost(SharedString::from(label.clone())))
+                })
+                .on_drop::<ForgeDrag>(move |drag, _, cx| {
+                    try_update(&drop_weak, cx, "drop", |p, cx| {
+                        p.write(
+                            &forge_spec::value::parse_path("studio.drop_target").unwrap(),
+                            Json::String(drop_id.clone()),
+                            cx,
+                        );
+                        match drag {
+                            ForgeDrag::Component(tag) => p.fire_call(
+                                "drop_component",
+                                vec![tag.clone(), drop_id.clone()],
+                                cx,
+                            ),
+                            ForgeDrag::Node(src) => {
+                                p.fire_call("move_node", vec![src.clone(), drop_id.clone()], cx)
+                            }
+                        }
+                        cx.notify();
+                    })
+                    .ok();
+                });
+        }
+        div().relative().child(el).child(overlay).into_any_element()
     }
 
     /// Renders a document node — dispatch on `(namespace, element)`.
@@ -833,6 +901,23 @@ fn placeholder(message: String) -> AnyElement {
         .text_color(rgb(MUTED))
         .child(message)
         .into_any_element()
+}
+
+/// The floating chip rendered while dragging — mirrors the kit base's ghost.
+struct DragGhost(SharedString);
+
+impl Render for DragGhost {
+    fn render(&mut self, _window: &mut Window, _cx: &mut Context<Self>) -> impl IntoElement {
+        div()
+            .px_2()
+            .py_1()
+            .rounded_md()
+            .bg(rgb(BG))
+            .border_1()
+            .border_color(rgb(BORDER))
+            .text_xs()
+            .child(self.0.clone())
+    }
 }
 
 impl Render for ForgeView {
