@@ -12,13 +12,17 @@ default = ["base-gpui-kit"]
 base-gpui-kit = ["dep:gpui-kit"]
 base-bezel = []
 base-adabraka = []
-base-gpui02 = []
+base-gpui02 = ["dep:gpui", "dep:guise-ui"]
 base-ratatui = []
 base-iced = []
 
 [dependencies]
 forge-spec.workspace = true
 gpui-kit = { workspace = true, optional = true }
+# gpui02 base (#96): crates.io gpui 0.2.2 + guise — a second, unrelated GPUI
+# graph; only one `base-*` may be enabled per build.
+gpui = { version = "=0.2.2", optional = true }
+guise-ui = { version = "1.10", optional = true }
 serde_json = "1"
 
 

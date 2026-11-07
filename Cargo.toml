@@ -28,3 +28,9 @@ all = { level = "warn", priority = -1 }
 inherits = "release"
 opt-level = "s"
 strip = true
+
+# xattr 0.2.3 reads libc::ENOATTR on Linux, where glibc has no such errno — the
+# vendored 0.2.4 maps it to ENODATA (the Linux equivalent) and keeps ENOATTR on
+# macOS/BSD. Pulled by zed-async-tar → gpui_http_client → gpui 0.2.2 (gpui02).
+[patch.crates-io]
+xattr = { path = "vendor/xattr" }

@@ -24,9 +24,6 @@ compile_error!("gpui-forge-runtime: the Bezel base is not implemented yet (#94)"
 #[cfg(feature = "base-adabraka")]
 compile_error!("gpui-forge-runtime: the adabraka-ui base is not implemented yet (#95)");
 
-#[cfg(feature = "base-gpui02")]
-compile_error!("gpui-forge-runtime: the Vanilla GPUI 0.2 base is not implemented yet (#96)");
-
 #[cfg(feature = "base-ratatui")]
 compile_error!("gpui-forge-runtime: the ratatui (TUI) base is not implemented yet (#112)");
 
@@ -35,7 +32,7 @@ compile_error!("gpui-forge-runtime: the iced base is not implemented yet (#113)"
 
 pub mod base;
 pub mod check;
-#[cfg(feature = "base-gpui-kit")]
+#[cfg(any(feature = "base-gpui-kit", feature = "base-gpui02"))]
 pub mod render;
 
 pub use forge_spec;

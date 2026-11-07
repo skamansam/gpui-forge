@@ -28,6 +28,17 @@ pub fn catalogs() -> Vec<Catalog> {
     ]
 }
 
+/// The gpui02 build's catalogs: its own library plus the Forge intrinsics.
+#[cfg(all(feature = "base-gpui02", not(feature = "base-gpui-kit")))]
+pub fn catalogs() -> Vec<Catalog> {
+    vec![
+        catalog::from_yaml(include_str!("../../../catalogs/gpui02.catalog.yaml"))
+            .expect("bundled gpui02 catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/forge.catalog.yaml"))
+            .expect("bundled forge catalog is valid"),
+    ]
+}
+
 /// Reads and validates `src` for `base`. The document is returned whenever it parses, even with
 /// validation errors, so a canvas can keep showing as much as it can.
 /// The bases shipped with this build — the registry `base:` validates against

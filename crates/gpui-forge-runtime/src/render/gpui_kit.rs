@@ -7,6 +7,7 @@
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
+use crate::render::{get_path, set_path};
 use forge_spec::catalog::{Catalog, Children, PropType};
 use forge_spec::value::parse_path;
 use forge_spec::{
@@ -216,17 +217,6 @@ pub struct ForgeView {
 }
 
 /// Walks `json` down a spec `Path` — the read side of `set_path`.
-pub fn get_path<'a>(json: &'a Json, path: &Path) -> Option<&'a Json> {
-    let mut current = json;
-    for segment in &path.0 {
-        current = match segment {
-            PathSegment::Field(field) => current.get(field.as_str())?,
-            PathSegment::Index(index) => current.get(index)?,
-        };
-    }
-    Some(current)
-}
-
 /// A `ListDelegate` that renders `List` children on demand — `render_item` is called
 /// several times per row per paint (measure then paint), so rows are rebuilt per call
 /// through the owning view rather than handed out once.
@@ -3563,34 +3553,4 @@ fn edges(value: &Value) -> Option<[DefiniteLength; 4]> {
         }
         other => length(other).map(|l| [l; 4]),
     }
-}
-
-/// Writes `value` at `path`, creating objects and arrays along the way.
-pub fn set_path(state: &mut Json, path: &Path, value: Json) {
-    let mut target = state;
-    for segment in &path.0 {
-        target = match segment {
-            PathSegment::Field(name) => {
-                if !target.is_object() {
-                    *target = Json::Object(Default::default());
-                }
-                target
-                    .as_object_mut()
-                    .expect("just made an object")
-                    .entry(name.clone())
-                    .or_insert(Json::Null)
-            }
-            PathSegment::Index(i) => {
-                if !target.is_array() {
-                    *target = Json::Array(Vec::new());
-                }
-                let items = target.as_array_mut().expect("just made an array");
-                if items.len() <= *i {
-                    items.resize(*i + 1, Json::Null);
-                }
-                &mut items[*i]
-            }
-        };
-    }
-    *target = value;
 }
