@@ -238,10 +238,86 @@ fn main() {
 
 /// The `main.rs` template for the document's base — one bootstrap per base
 /// family (#100): each links its own GPUI/toolkit stack.
+/// The ratatui app's bootstrap: no window — a crossterm event loop draws the
+/// document into `ratatui::Frame`s on the alternate screen (#112).
+const APP_MAIN_RATATUI: &str = r#"use ratatui::crossterm::{execute, terminal};
+use gpui_forge_runtime::render::ForgeView;
+use ratatui::Terminal;
+use ratatui::backend::CrosstermBackend;
+use std::io::stdout;
+
+const SRC: &str = include_str!("../app.forge.yaml");
+
+fn main() {
+    let catalogs = gpui_forge_runtime::check::catalogs();
+    let (doc, diagnostics) = gpui_forge_runtime::check::check(
+        SRC, "{BASE_ID}", &catalogs);
+    for d in &diagnostics {
+        eprintln!("app.forge.yaml:{}:{}: {}", d.pos.line, d.pos.col, d.message);
+    }
+    let mut view = ForgeView::new(catalogs);
+    if let Some(doc) = doc {
+        view.set_document(doc);
+    }
+    let _ = terminal::enable_raw_mode();
+    let mut out = stdout();
+    let _ = execute!(out, terminal::EnterAlternateScreen);
+    let mut term = Terminal::new(CrosstermBackend::new(out)).expect("terminal");
+    loop {
+        let _ = term.draw(|f| view.render(f));
+        std::thread::sleep(std::time::Duration::from_millis(50));
+    }
+}
+"#;
+
+/// The iced app's bootstrap: `iced::application` with the view's Elm split —
+/// `update` routes `Message`s into the twin, `view` produces its tree (#113).
+const APP_MAIN_ICED: &str = r#"use gpui_forge_runtime::render::{ForgeView, Message};
+use iced::{Element, Task};
+
+const SRC: &str = include_str!("../app.forge.yaml");
+
+struct App {
+    view: ForgeView,
+}
+
+impl App {
+    fn new() -> (Self, Task<Message>) {
+        let catalogs = gpui_forge_runtime::check::catalogs();
+        let (doc, diagnostics) = gpui_forge_runtime::check::check(
+            SRC, "{BASE_ID}", &catalogs);
+        for d in &diagnostics {
+            eprintln!("app.forge.yaml:{}:{}: {}", d.pos.line, d.pos.col, d.message);
+        }
+        let mut view = ForgeView::new(catalogs);
+        if let Some(doc) = doc {
+            view.set_document(doc);
+        }
+        (Self { view }, Task::none())
+    }
+
+    fn update(&mut self, msg: Message) -> Task<Message> {
+        self.view.update(msg);
+        Task::none()
+    }
+
+    fn view(&self) -> Element<'_, Message> {
+        self.view.view()
+    }
+}
+
+fn main() -> iced::Result {
+    iced::application("{TITLE}", App::update, App::view)
+        .run_with(App::new)
+}
+"#;
+
 fn app_main(base_id: &str) -> &'static str {
     match base_id {
         "gpui02" => APP_MAIN_GPUI02,
         "bezel" => APP_MAIN_BEZEL,
+        "ratatui" => APP_MAIN_RATATUI,
+        "iced" => APP_MAIN_ICED,
         _ => APP_MAIN,
     }
 }
@@ -1327,7 +1403,13 @@ fn build_cmd(rest: &[String]) -> i32 {
             )
             .replace(
                 "{BASE_GPUI_DEP}",
-                &format!("{} = \"={}\"", base.gpui_crate, base.gpui_version),
+                // Non-GPUI bases declare the toolkit once (`library` == `gpui`
+                // stack) — a second line would be a duplicate key.
+                &if base.gpui_crate == base.library_crate {
+                    String::new()
+                } else {
+                    format!("{} = \"={}\"", base.gpui_crate, base.gpui_version)
+                },
             ),
     );
     if !base.toolchain.is_empty() {
