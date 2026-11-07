@@ -94,11 +94,9 @@ pub trait ForgeLibrary {
 // A fixed dark palette — guise's Theme installs a global, but primitive divs
 // need literal colors; these match the zinc/blue scheme Studio uses.
 const BG: u32 = 0x18181b;
-const PANEL: u32 = 0x27272a;
 const BORDER: u32 = 0x3f3f46;
 const FG: u32 = 0xf4f4f5;
 const MUTED: u32 = 0xa1a1aa;
-const ACCENT: u32 = 0x3b82f6;
 
 pub struct ForgeView {
     doc: Option<Document>,
@@ -393,6 +391,24 @@ impl ForgeView {
         }
     }
 
+    /// A `variant:` prop as a guise `Variant` — shared across Button, Badge,
+    /// and Alert.
+    fn variant_of(node: &Node, name: &str) -> Option<GuiseVariant> {
+        match &node.props.iter().find(|(k, _)| k == name)?.1 {
+            Value::String(s) => match s.as_str() {
+                "Light" => Some(GuiseVariant::Light),
+                "Outline" => Some(GuiseVariant::Outline),
+                "Subtle" => Some(GuiseVariant::Subtle),
+                "Transparent" => Some(GuiseVariant::Transparent),
+                "White" => Some(GuiseVariant::White),
+                "Default" => Some(GuiseVariant::Default),
+                "Filled" => Some(GuiseVariant::Filled),
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+
     /// `on <event>` bindings for a node — `(handler, args)` per binding of
     /// `event`.
     fn events_for(&self, node: &Node, event: &str) -> Vec<(String, Vec<String>)> {
@@ -542,20 +558,14 @@ impl ForgeView {
                 row.into_any_element()
             }
             "Paper" | "Card" => {
-                let mut d = div()
-                    .flex()
-                    .flex_col()
-                    .p_4()
-                    .rounded_md()
-                    .border_1()
-                    .border_color(rgb(BORDER))
-                    .bg(rgb(PANEL));
-                d = Self::apply_style(d, &node.style);
+                let mut paper = guise::Paper::new()
+                    .with_border(true)
+                    .shadow(guise::prelude::Size::Xs);
                 for (i, child) in node.children.iter().enumerate() {
                     let k = format!("{key}/{i}");
-                    d = d.child(self.render_node(child, &k, window, cx));
+                    paper.extend([self.render_node(child, &k, window, cx)]);
                 }
-                d.into_any_element()
+                paper.into_any_element()
             }
             "Title" => {
                 let order: u8 = match self.prop_text(node, "order").as_str() {
@@ -575,16 +585,11 @@ impl ForgeView {
                 d.into_any_element()
             }
             "Badge" => {
-                let mut d = div()
-                    .px_2()
-                    .rounded_full()
-                    .bg(rgb(PANEL))
-                    .border_1()
-                    .border_color(rgb(BORDER))
-                    .text_xs()
-                    .child(self.node_text(node));
-                d = Self::apply_style(d, &node.style);
-                d.into_any_element()
+                let mut badge = guise::Badge::new(self.node_text(node));
+                if let Some(variant) = Self::variant_of(node, "variant") {
+                    badge = badge.variant(variant);
+                }
+                badge.into_any_element()
             }
             "Button" => {
                 let label = self.node_text(node);
@@ -749,42 +754,20 @@ impl ForgeView {
                 }
             }
             "Progress" => {
-                let value = self.num(node, "value", 0.0).clamp(0.0, 100.0);
-                div()
-                    .w_full()
-                    .h(px(6.0))
-                    .rounded_full()
-                    .bg(rgb(PANEL))
-                    .child(
-                        div()
-                            .h_full()
-                            .w(gpui::relative((value / 100.0) as f32))
-                            .rounded_full()
-                            .bg(rgb(ACCENT)),
-                    )
-                    .into_any_element()
+                let value = self.num(node, "value", 0.0).clamp(0.0, 100.0) as f32;
+                guise::feedback::Progress::new(value).into_any_element()
             }
             "Alert" => {
                 let title = self.prop_text(node, "title");
                 let text = self.node_text(node);
-                let mut d = div()
-                    .flex()
-                    .flex_col()
-                    .gap_1()
-                    .p_3()
-                    .rounded_md()
-                    .border_1()
-                    .border_color(rgb(BORDER))
-                    .bg(rgb(PANEL));
+                let mut alert = guise::feedback::Alert::new(text);
                 if !title.is_empty() {
-                    d = d.child(
-                        div()
-                            .text_sm()
-                            .font_weight(FontWeight::SEMIBOLD)
-                            .child(title),
-                    );
+                    alert = alert.title(title);
                 }
-                d.child(div().text_sm().child(text)).into_any_element()
+                if let Some(variant) = Self::variant_of(node, "variant") {
+                    alert = alert.variant(variant);
+                }
+                alert.into_any_element()
             }
             _ => placeholder(format!("{} — no gpui02 renderer", node.element.name)),
         }
