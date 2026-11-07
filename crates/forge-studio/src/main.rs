@@ -1010,6 +1010,18 @@ fn host_event(
                 cx,
             );
             status(view, &format!("preview host ready ({base})"), cx);
+            // #120 — `FORGE_EMBED` / `?mode=embedded` marks the canvas
+            // card embedded: the host floats over it via frame_rect.
+            let mode = if std::env::var_os("FORGE_EMBED").is_some() {
+                "embedded"
+            } else {
+                "remote"
+            };
+            view.update_state(
+                &parse_path("preview.mode").unwrap(),
+                Json::String(mode.to_owned()),
+                cx,
+            );
         }
         HostEvent::Diagnostics(items) => {
             // The host checks with ITS base's catalogs — for a foreign-base

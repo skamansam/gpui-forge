@@ -262,6 +262,7 @@ root:
                       children:
                         - forge.Preview#canvas:
                           remote: "{$studio.host}"
+                          mode: "{$preview.mode}"
                           on click: raise_host()
                           style: 
                             grow: true
