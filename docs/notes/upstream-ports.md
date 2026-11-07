@@ -16,12 +16,27 @@ crates on `gpui 0.2` go through the Vanilla GPUI 0.2 base (#96); crates on
 | rhythm-gpui | gpui 0.2 | via Vanilla GPUI 0.2 base (#87) | waits on #96 |
 | gpui-symbols | gpui 0.2 | via Vanilla GPUI 0.2 base (#88) | waits on #96 |
 | Base GPUI | Zed git | port to gpui-pre (#85) | needs port |
-| Bezel | Zed git | base def + adapter (#94) | needs port |
-| adabraka-ui | gpui 0.2 | base def + adapter (#95) | waits on #96 |
-| ratatui | — | own base, not a GPUI lib (#112) | separate |
-| iced | — | own base, not a GPUI lib (#113) | separate |
+| Bezel | Zed git | landed — twin + host + `forge build` (#94) | shipped |
+| adabraka-ui | adabraka-gpui 0.5 | landed — nested workspace + vendored fix (#95) | shipped |
+| ratatui | — | landed — own base + TUI host (#112) | shipped |
+| iced | — | landed — own base + Elm host (#113) | shipped |
 
 **Porting means** a fork or upstream PR moving the crate's `gpui` dep to
 `gpui-pre 0.3.10` (the gpui-kit base pin) or confirming it on `gpui 0.2`
 (for the Vanilla base). A landed port then follows the adapter checklist
 in `docs/guide/adapters.md`.
+
+## Vendored upstream bugs
+
+Two bases hit published-crate bugs that Forge patches locally via
+`[patch.crates-io]` + `vendor/`:
+
+- **`adabraka-gpui 0.5.1`** — `xcb.setup()` in `platform/linux/global_hotkey.rs`
+  fails without `use x11rb::connection::Connection as _;` — vendored at
+  `hosts/adabraka/vendor/adabraka-gpui` (#95).
+- **`bezel-gpui-web 0.3.21`** — references `wasm_thread::Builder`/`JoinHandle`
+  in `src/dispatcher.rs` without declaring the dep — vendored at
+  `vendor/bezel-gpui-web` with `wasm_thread = "0.3"` added (#99).
+
+Both upstream repos aren't publicly reachable via `gh` — the fixes should be
+upstreamed when the repos resolve.
