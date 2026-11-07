@@ -646,7 +646,116 @@ impl ForgeView {
                 d = Self::apply_style(d, &node.style);
                 d.into_any_element()
             }
-            _ => placeholder(format!("{} — no gpui02 renderer", node.element.name)),
+            "Button" => {
+                let label = self.node_text(node);
+                let mut btn = adabraka_ui::components::button::Button::new(
+                    SharedString::from(key.to_owned()),
+                    label,
+                );
+                if self.prop_bool(node, "disabled", false) {
+                    btn = btn.disabled(true);
+                }
+                let weak = cx.entity().downgrade();
+                for (name, args) in self.events_for(node, "click") {
+                    let weak = weak.clone();
+                    btn = btn.on_click(move |_, _, cx| {
+                        try_update(&weak, cx, "click", |view, cx| {
+                            view.fire_call(&name, args.clone(), cx)
+                        })
+                        .ok();
+                    });
+                }
+                btn.into_any_element()
+            }
+            "Checkbox" => {
+                let checked = self.prop_bool(node, "checked", false);
+                let label = self.node_text(node);
+                let mut cb = adabraka_ui::components::checkbox::Checkbox::new(SharedString::from(
+                    key.to_owned(),
+                ))
+                .checked(checked);
+                if !label.is_empty() {
+                    cb = cb.label(label);
+                }
+                let binding = Self::binding_of(node, "checked");
+                if let Some(path) = binding {
+                    let cur = self.lookup(&path).and_then(Json::as_bool).unwrap_or(false);
+                    let weak = cx.entity().downgrade();
+                    let path_for_cb = path.clone();
+                    cb = cb.on_click(move |_, _, cx| {
+                        let _ = try_update(&weak, cx, "change", |view, cx| {
+                            view.update_state(&path_for_cb, Json::Bool(!cur), cx);
+                        });
+                    });
+                }
+                cb.into_any_element()
+            }
+            "Alert" => {
+                let variant = match self.prop_text(node, "variant").as_str() {
+                    "Success" => adabraka_ui::components::alert::AlertVariant::Success,
+                    "Warning" => adabraka_ui::components::alert::AlertVariant::Warning,
+                    "Danger" | "Error" => adabraka_ui::components::alert::AlertVariant::Error,
+                    _ => adabraka_ui::components::alert::AlertVariant::Info,
+                };
+                let mut alert = adabraka_ui::components::alert::Alert::new().variant(variant);
+                let title = self.prop_text(node, "title");
+                let desc = self.node_text(node);
+                if !title.is_empty() {
+                    alert = alert.title(title);
+                }
+                if !desc.is_empty() {
+                    alert = alert.description(desc);
+                }
+                alert.into_any_element()
+            }
+            "Badge" => {
+                adabraka_ui::display::badge::Badge::new(self.node_text(node)).into_any_element()
+            }
+            "Progress" => {
+                let value = self.num(node, "value", 0.0) as f32;
+                adabraka_ui::components::progress::ProgressBar::new(value).into_any_element()
+            }
+            "Input" | "TextInput" => {
+                let binding = Self::binding_of(node, "value");
+                let state = self
+                    .inputs
+                    .entry(key.to_owned())
+                    .or_insert_with(|| {
+                        cx.new(|cx| adabraka_ui::components::input::InputState::new(cx))
+                    })
+                    .clone();
+                if let Some(path) = binding {
+                    let text = self.json_text(&path);
+                    if !text.is_empty() {
+                        state.update(cx, |s, cx| s.set_value(text, window, cx));
+                    }
+                }
+                adabraka_ui::components::input::Input::new(&state).into_any_element()
+            }
+            "Select" => {
+                let binding = Self::binding_of(node, "value");
+                let select = self
+                    .selects
+                    .entry(key.to_owned())
+                    .or_insert_with(|| {
+                        cx.new(|cx| adabraka_ui::components::select::Select::<String>::new(cx))
+                    })
+                    .clone();
+                let options: Vec<adabraka_ui::components::select::SelectOption<String>> = node
+                    .children
+                    .iter()
+                    .map(|c| {
+                        let label = self.node_text(c);
+                        adabraka_ui::components::select::SelectOption::new(label.clone(), label)
+                    })
+                    .collect();
+                select.update(cx, |s, cx| {
+                    *s =
+                        adabraka_ui::components::select::Select::<String>::new(cx).options(options);
+                });
+                select.clone().into_any_element()
+            }
+            _ => placeholder(format!("{} — no adabraka renderer", node.element.name)),
         }
     }
 
