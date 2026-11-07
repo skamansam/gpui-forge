@@ -685,7 +685,7 @@ impl ForgeView {
                 let field = self
                     .inputs
                     .entry(key.to_owned())
-                    .or_insert_with(|| cx.new(|cx| ::bezel::ui::input::TextField::new(cx)))
+                    .or_insert_with(|| cx.new(::bezel::ui::input::TextField::new))
                     .clone();
                 if let Some(path) = binding {
                     let path_for_sub = path.clone();

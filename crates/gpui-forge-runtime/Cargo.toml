@@ -46,5 +46,12 @@ name = "render_gpui02"
 path = "examples/render_gpui02.rs"
 required-features = ["base-gpui02"]
 
+# The integration test exercises `ForgeView` inside a live App — only
+# meaningful under the kit base.
+[[test]]
+name = "render"
+path = "tests/render.rs"
+required-features = ["base-gpui-kit"]
+
 [lints]
 workspace = true
