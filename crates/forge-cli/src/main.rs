@@ -363,6 +363,14 @@ fn main() {
         "fmt" => fmt_cmd(&rest),
         "build" => build_cmd(&rest),
         "preview" => preview_cmd(&rest),
+        "studio" | "run" => {
+            // `forge studio` — launch Forge Studio (the editor app).
+            let status = Command::new("cargo")
+                .args(["run", "-p", "forge-studio"])
+                .args(&rest)
+                .status();
+            status.ok().and_then(|s| s.code()).unwrap_or(1)
+        }
         _ => {
             usage();
             2
@@ -373,6 +381,7 @@ fn main() {
 
 fn usage() {
     eprintln!("usage:");
+    eprintln!("  forge studio                          launch Forge Studio");
     eprintln!("  forge new <name>                      scaffold a project (forge.toml + doc)");
     eprintln!("  forge check <doc.forge.yaml>            parse + validate");
     eprintln!("  forge build <doc.forge.yaml> [opts]     compile a native app");
