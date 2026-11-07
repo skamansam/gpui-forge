@@ -19,6 +19,35 @@ fn main() {
     let (tx, rx) = mpsc::channel::<HostMsg>();
     spawn_reader(tx);
 
+    // Key channel — /dev/tty raw bytes → keys. stdin is the protocol, so the
+    // terminal input side reads the controlling terminal directly (#112).
+    let (ktx, krx) = mpsc::channel::<String>();
+    std::thread::spawn(move || {
+        use std::io::Read;
+        let Ok(mut tty) = std::fs::File::open("/dev/tty") else {
+            return;
+        };
+        let mut buf = [0u8; 8];
+        while let Ok(n) = tty.read(&mut buf) {
+            if n == 0 {
+                break;
+            }
+            for &b in &buf[..n] {
+                let key = match b {
+                    b'\t' => "Tab".to_owned(),
+                    127 | 8 => "Backspace".to_owned(),
+                    b'\r' | b'\n' => "Enter".to_owned(),
+                    27 => continue, // escape sequences — skip for now
+                    32..=126 => (b as char).to_string(),
+                    _ => continue,
+                };
+                if ktx.send(key).is_err() {
+                    return;
+                }
+            }
+        }
+    });
+
     // The TUI draws on the controlling terminal — stdout stays protocol-clean.
     let mut out = std::fs::OpenOptions::new()
         .write(true)
@@ -77,6 +106,11 @@ fn main() {
                 }
                 HostMsg::Quit => quit = true,
             }
+        }
+        while let Ok(key) = krx.try_recv() {
+            // Shift-Tab arrives as CSI Z (27 91 90) — handled as escape for now;
+            // plain Tab already cycles forward.
+            view.on_key(&key);
         }
         let _ = term.draw(|f| view.render(f));
         std::thread::sleep(std::time::Duration::from_millis(50));

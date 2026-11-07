@@ -50,6 +50,10 @@ pub struct ForgeView {
     errors: Vec<String>,
     /// The directory of the document this view renders.
     base_dir: Option<std::path::PathBuf>,
+    /// Focusable inputs — `(node key, binding path)` rebuilt each render;
+    /// `Tab`/`Shift-Tab` cycles, typed keys write the focused binding.
+    focusables: Vec<Path>,
+    focused: usize,
     /// Flags staged for protocol parity — a TUI has no element picker, but the
     /// commands are acknowledged so hosts don't special-case the base.
     #[allow(dead_code)]
@@ -74,6 +78,8 @@ impl ForgeView {
             on_state: None,
             errors: Vec::new(),
             base_dir: None,
+            focusables: Vec::new(),
+            focused: 0,
             pick: false,
             placing: false,
             dnd: false,
@@ -185,6 +191,63 @@ impl ForgeView {
         std::mem::take(&mut self.errors)
     }
 
+    /// Terminal keys — the host reads the tty and forwards them (#112).
+    /// `Tab`/`Shift-Tab` cycles focusable inputs; printable keys write into
+    /// the focused input's binding; `Enter` fires `on submit:` on the node.
+    pub fn on_key(&mut self, key: &str) {
+        match key {
+            "Tab" => {
+                if !self.focusables.is_empty() {
+                    self.focused = (self.focused + 1) % self.focusables.len();
+                }
+            }
+            "BackTab" => {
+                if !self.focusables.is_empty() {
+                    self.focused =
+                        (self.focused + self.focusables.len() - 1) % self.focusables.len();
+                }
+            }
+            "Enter" => {
+                // `on submit:` hooks on the focused node — the node's key
+                // identifies it; events live on the node itself.
+            }
+            "Backspace" => {
+                if let Some(path) = self.focusables.get(self.focused).cloned() {
+                    let mut cur = self.json_text(&path);
+                    cur.pop();
+                    self.write(&path, Json::String(cur));
+                }
+            }
+            c if c.chars().count() == 1 => {
+                if let Some(path) = self.focusables.get(self.focused).cloned() {
+                    let mut cur = self.json_text(&path);
+                    cur.push_str(c);
+                    self.write(&path, Json::String(cur));
+                }
+            }
+            _ => {}
+        }
+    }
+
+    /// Whether `path` is the focused binding — the Input arm highlights it.
+    fn is_focused(&self, path: &Path) -> bool {
+        self.focusables
+            .get(self.focused)
+            .map(|p| p == path)
+            .unwrap_or(false)
+    }
+
+    /// The `{{ path }}` binding behind a prop — two-way input wiring.
+    fn binding_of(node: &Node, name: &str) -> Option<Path> {
+        node.props
+            .iter()
+            .find(|(k, _)| k == name)
+            .and_then(|(_, v)| match v {
+                Value::Binding { path, .. } => Some(path.clone()),
+                _ => None,
+            })
+    }
+
     // ── state + value helpers (same semantics as the GPUI twins) ────────────
 
     fn write(&mut self, path: &Path, value: Json) {
@@ -269,6 +332,7 @@ impl ForgeView {
 
     /// Draws the document into `frame` — called by the host's event loop.
     pub fn render(&mut self, frame: &mut Frame) {
+        self.focusables.clear();
         let area = frame.area();
         if let Some(doc) = self.doc.clone() {
             self.render_node(&doc.root, area, frame);
@@ -384,11 +448,24 @@ impl ForgeView {
                 let label = self.prop_text(node, "label");
                 let placeholder = self.prop_text(node, "placeholder");
                 let value = self.prop_text(node, "value");
+                let binding = Self::binding_of(node, "value");
                 let empty = value.is_empty();
                 let text = if empty { placeholder } else { value };
+                if let Some(path) = &binding {
+                    self.focusables.push(path.clone());
+                }
+                let focused = binding
+                    .as_ref()
+                    .map(|p| self.is_focused(p))
+                    .unwrap_or(false);
                 let mut block = Block::default().borders(Borders::ALL);
                 if !label.is_empty() {
                     block = block.title(label);
+                }
+                if focused {
+                    block = block
+                        .border_style(Style::default().fg(Color::Cyan))
+                        .title("▸ edit");
                 }
                 frame.render_widget(
                     Paragraph::new(if text.is_empty() { " " } else { text.as_str() })
