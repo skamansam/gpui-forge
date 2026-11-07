@@ -94,6 +94,7 @@ pub trait ForgeLibrary {
 // A fixed dark palette — guise's Theme installs a global, but primitive divs
 // need literal colors; these match the zinc/blue scheme Studio uses.
 const BG: u32 = 0x18181b;
+const PANEL: u32 = 0x27272a;
 const BORDER: u32 = 0x3f3f46;
 const FG: u32 = 0xf4f4f5;
 const MUTED: u32 = 0xa1a1aa;
@@ -356,7 +357,7 @@ impl ForgeView {
     }
 
     /// The state path a prop binds to, if it's a `{{...}}` binding — used by
-    /// two-way input widgets (staged for the bezel widget port).
+    /// two-way input widgets (staged for the TextField port).
     #[allow(dead_code)]
     fn binding_of(node: &Node, name: &str) -> Option<Path> {
         node.props
@@ -368,7 +369,6 @@ impl ForgeView {
             })
     }
 
-    #[allow(dead_code)]
     fn prop_bool(&self, node: &Node, name: &str, fallback: bool) -> bool {
         match node.props.iter().find(|(k, _)| k == name).map(|(_, v)| v) {
             Some(Value::Bool(b)) => *b,
@@ -393,7 +393,6 @@ impl ForgeView {
 
     /// `on <event>` bindings for a node — `(handler, args)` per binding of
     /// `event`.
-    #[allow(dead_code)]
     fn events_for(&self, node: &Node, event: &str) -> Vec<(String, Vec<String>)> {
         node.events
             .iter()
@@ -644,7 +643,67 @@ impl ForgeView {
                 d = Self::apply_style(d, &node.style);
                 d.into_any_element()
             }
-            _ => placeholder(format!("{} — no gpui02 renderer", node.element.name)),
+            "Button" => {
+                let label = self.node_text(node);
+                let mut btn =
+                    ::bezel::ui::widgets::Button::new(SharedString::from(key.to_owned()), label);
+                if self.prop_bool(node, "disabled", false) {
+                    btn = btn.enabled(false);
+                }
+                let weak = cx.entity().downgrade();
+                for (name, args) in self.events_for(node, "click") {
+                    let weak = weak.clone();
+                    btn = btn.on_press(move |_, _, cx| {
+                        try_update(&weak, cx, "click", |view, cx| {
+                            view.fire_call(&name, args.clone(), cx)
+                        })
+                        .ok();
+                    });
+                }
+                btn.into_any_element()
+            }
+            "Card" => {
+                let mut d = div()
+                    .flex()
+                    .flex_col()
+                    .p_4()
+                    .rounded_md()
+                    .border_1()
+                    .border_color(rgb(BORDER))
+                    .bg(rgb(PANEL));
+                d = Self::apply_style(d, &node.style);
+                for (i, child) in node.children.iter().enumerate() {
+                    let k = format!("{key}/{i}");
+                    d = d.child(self.render_node(child, &k, window, cx));
+                }
+                d.into_any_element()
+            }
+            "Input" => {
+                let label = self.prop_text(node, "label");
+                let placeholder = self.prop_text(node, "placeholder");
+                let mut field = div().flex().flex_col().gap_1();
+                if !label.is_empty() {
+                    field = field.child(div().text_xs().text_color(rgb(MUTED)).child(label));
+                }
+                field
+                    .child(
+                        div()
+                            .px_2()
+                            .py_1()
+                            .rounded_md()
+                            .border_1()
+                            .border_color(rgb(BORDER))
+                            .bg(rgb(BG))
+                            .text_color(rgb(MUTED))
+                            .child(if placeholder.is_empty() {
+                                "input".to_owned()
+                            } else {
+                                placeholder
+                            }),
+                    )
+                    .into_any_element()
+            }
+            _ => placeholder(format!("{} — no bezel renderer", node.element.name)),
         }
     }
 
