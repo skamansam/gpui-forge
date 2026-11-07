@@ -462,8 +462,39 @@ impl ForgeView {
 
     // ── rendering ────────────────────────────────────────────────────────────
 
-    /// Renders a document node — dispatch on `(namespace, element)`.
+    /// Renders a document node — the pick-mode wrap lives here so every
+    /// element reports `document.selected` on click, matching the kit base.
     fn render_node(
+        &mut self,
+        node: &Node,
+        key: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        let el = self.render_node_inner(node, key, window, cx);
+        if !self.pick {
+            return el;
+        }
+        let path = key.to_owned();
+        let weak = cx.entity().downgrade();
+        div()
+            .id(SharedString::from(format!("pick-{key}")))
+            .child(el)
+            .on_click(move |_, _, cx| {
+                try_update(&weak, cx, "pick", |view, cx| {
+                    view.update_state(
+                        &forge_spec::value::parse_path("document.selected").unwrap(),
+                        Json::String(path.clone()),
+                        cx,
+                    )
+                })
+                .ok();
+            })
+            .into_any_element()
+    }
+
+    /// Renders a document node — dispatch on `(namespace, element)`.
+    fn render_node_inner(
         &mut self,
         node: &Node,
         key: &str,
