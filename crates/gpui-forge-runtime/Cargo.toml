@@ -25,7 +25,7 @@ gpui = { version = "=0.2.2", optional = true }
 guise-ui = { version = "1.10", optional = true }
 # bezel base (#94): SwiftUI-flavored components on the bezel-gpui fork
 # (0.3.21+zed.f16f96) — re-exported as `bezel::gpui`.
-bezel = { version = "0.2.24", optional = true }
+bezel = { version = "0.2.24", optional = true, features = ["platform"] }
 serde_json = "1"
 
 
