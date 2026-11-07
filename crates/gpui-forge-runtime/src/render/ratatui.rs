@@ -50,6 +50,10 @@ pub struct ForgeView {
     errors: Vec<String>,
     /// The directory of the document this view renders.
     base_dir: Option<std::path::PathBuf>,
+    /// `forge.Preview` hosts — a nested `ForgeView` per id, rendered into
+    /// the node's area (the TUI's flat model has no `Entity`, so the map
+    /// holds views directly).
+    previews: HashMap<String, ForgeView>,
     /// Focusable inputs — `(node key, binding path)` rebuilt each render;
     /// `Tab`/`Shift-Tab` cycles, typed keys write the focused binding.
     focusables: Vec<(Path, FocusKind)>,
@@ -78,6 +82,7 @@ impl ForgeView {
             on_state: None,
             errors: Vec::new(),
             base_dir: None,
+            previews: HashMap::new(),
             focusables: Vec::new(),
             focused: 0,
             pick: false,
@@ -176,6 +181,20 @@ impl ForgeView {
         } else if let Some(sink) = self.on_hook.clone() {
             sink(&format!("{}({})", name, args.join(", ")), self);
         }
+    }
+
+    /// The `forge.Preview` host for `id`, creating the nested view on first use.
+    pub fn preview(&mut self, id: &str) -> &mut ForgeView {
+        let catalogs = self.catalogs.clone();
+        self.previews
+            .entry(id.to_owned())
+            .or_insert_with(|| ForgeView::new(catalogs))
+    }
+
+    /// Sets the document a `forge.Preview` renders — the host forwards the
+    /// protocol command here.
+    pub fn set_preview_document(&mut self, id: &str, doc: Document) {
+        self.preview(id).set_document(doc);
     }
 
     /// Registers a namespaced-element library (adapter contract).
@@ -377,6 +396,23 @@ impl ForgeView {
     }
 
     fn render_node(&mut self, node: &Node, area: Rect, frame: &mut Frame) {
+        if node.element.namespace.as_deref() == Some("forge") {
+            if node.element.name == "Preview" {
+                let id = self.prop_text(node, "id");
+                let id = if id.is_empty() {
+                    "preview".to_owned()
+                } else {
+                    id
+                };
+                if let Some(view) = self.previews.get_mut(&id) {
+                    let doc = view.doc.clone();
+                    if let Some(doc) = doc {
+                        view.render_node(&doc.root, area, frame);
+                    }
+                }
+            }
+            return;
+        }
         match node.element.name.as_str() {
             "VStack" => self.render_children(node, area, frame, Direction::Vertical),
             "HStack" => self.render_children(node, area, frame, Direction::Horizontal),

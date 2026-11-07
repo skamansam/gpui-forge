@@ -29,6 +29,9 @@ pub enum Message {
     Toggle(String, bool),
     /// `value: {{path}}` slider moves.
     Slide(String, f32),
+    /// `forge.Preview` — routes a nested view's messages to the right
+    /// preview host by id.
+    Preview { id: String, msg: Box<Message> },
     /// A placeholder for events a scaffold arm can't express yet.
     Noop,
 }
@@ -65,12 +68,17 @@ pub struct ForgeView {
     placing: bool,
     #[allow(dead_code)]
     dnd: bool,
+    /// `forge.Preview` hosts — a nested `ForgeView` per id (the Elm model
+    /// has no `Entity`; the map holds views directly and `update` routes
+    /// `Message::Preview` to them).
+    previews: HashMap<String, ForgeView>,
     empty_text: Option<String>,
 }
 
 impl ForgeView {
     pub fn new(catalogs: Vec<Catalog>) -> Self {
         Self {
+            previews: HashMap::new(),
             doc: None,
             catalogs,
             state: Json::Object(Default::default()),
@@ -304,8 +312,28 @@ impl ForgeView {
     // ── Elm render ───────────────────────────────────────────────────────────
 
     /// iced `update` — a widget message routes into hooks or a state write.
+    /// The `forge.Preview` host for `id`, creating the nested view on first use.
+    pub fn preview(&mut self, id: &str) -> &mut ForgeView {
+        let catalogs = self.catalogs.clone();
+        self.previews
+            .entry(id.to_owned())
+            .or_insert_with(|| ForgeView::new(catalogs))
+    }
+
+    /// Sets the document a `forge.Preview` renders.
+    pub fn set_preview_document(&mut self, id: &str, doc: Document) {
+        self.preview(id).set_document(doc);
+    }
+
     pub fn update(&mut self, msg: Message) {
+        if let Message::Preview { id, msg } = msg {
+            if let Some(view) = self.previews.get_mut(&id) {
+                view.update(*msg);
+            }
+            return;
+        }
         match msg {
+            Message::Preview { .. } => unreachable!("routed above"),
             Message::Hooks(calls) => {
                 for (name, args) in calls {
                     self.fire_call(&name, args);
@@ -347,6 +375,30 @@ impl ForgeView {
     }
 
     fn render_node(&self, node: &Node) -> Element<'static, Message> {
+        if node.element.namespace.as_deref() == Some("forge") {
+            if node.element.name == "Preview" {
+                let id = self.prop_text(node, "id");
+                let id = if id.is_empty() {
+                    "preview".to_owned()
+                } else {
+                    id
+                };
+                if let Some(view) = self.previews.get(&id) {
+                    if let Some(doc) = view.doc.as_ref() {
+                        let nested = view.render_node(&doc.root);
+                        return nested.map(move |m| Message::Preview {
+                            id: id.clone(),
+                            msg: Box::new(m),
+                        });
+                    }
+                }
+            }
+            return iced::widget::container(iced::widget::text(format!(
+                "forge.{} — unsupported",
+                node.element.name
+            )))
+            .into();
+        }
         match node.element.name.as_str() {
             "VStack" => {
                 let children = node.children.iter().map(|c| self.render_node(c));
