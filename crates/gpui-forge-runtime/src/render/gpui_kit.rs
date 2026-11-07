@@ -452,7 +452,7 @@ impl ForgeView {
                 ),
                 Some("number") | Some("slider") => {
                     let s = self.sliders.get(&state_key).cloned().unwrap_or_else(|| {
-                        let s = cx.new(|cx| {
+                        let s = cx.new(|_cx| {
                             SliderState::new()
                                 .default_value(value.as_f64().unwrap_or_default() as f32)
                         });
