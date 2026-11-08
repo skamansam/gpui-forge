@@ -118,4 +118,7 @@ constructs the upstream widget:
 ## Reference implementations
 
 - `crates/forge-lib-ely` — Ely Components (`use: ely: ely-core`), 30+ elements
+- `crates/forge-lib-hig` — Apple HIG (`use: hig: gpui-apple-hig`), vendored port
+- `crates/forge-lib-base` — Base GPUI headless components (`use: base: base-gpui`)
+- `crates/forge-lib-flow` — gpui-flow node editor (`use: gflow: gpui-flow`)
 - `docs/design/multi-base.md` — the adapter RFC and multi-base design
