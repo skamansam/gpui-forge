@@ -879,6 +879,181 @@ impl ForgeView {
             .into_any_element()
     }
 
+    /// `forge.Showcase` (#125) — the theme editor's live widget gallery: same
+    /// library dropdown as `forge.Palette` (state `studio.showcase_lib`), but
+    /// each element renders as a real widget under its catalog `group:` in an
+    /// accordion, so the current theme's effect is visible on every widget.
+    fn showcase(
+        &mut self,
+        _node: &Node,
+        key: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        let muted = cx.theme().muted_foreground;
+        let doc_base = get_path(self.state(), &parse_path("studio.doc_base").unwrap())
+            .and_then(|j| j.as_str())
+            .unwrap_or(crate::base::BASE_ID)
+            .to_owned();
+        let mut libs: Vec<(String, String, String)> = Vec::new();
+        let mut seen: HashSet<String> = HashSet::new();
+        for cat in &self.catalogs {
+            if cat.library == "forge" || !cat.supports_base(&doc_base) {
+                continue;
+            }
+            if !seen.insert(cat.library.clone()) {
+                continue;
+            }
+            let alias = self
+                .libraries
+                .iter()
+                .find(|l| l.catalog().is_some_and(|c| c.library == cat.library))
+                .map(|l| l.alias().to_string())
+                .unwrap_or_default();
+            let label = cat.name.clone().unwrap_or_else(|| cat.library.clone());
+            libs.push((label, cat.library.clone(), alias));
+        }
+        let selected = get_path(self.state(), &parse_path("studio.showcase_lib").unwrap())
+            .and_then(|j| j.as_str())
+            .map(str::to_owned)
+            .unwrap_or_else(|| {
+                libs.first()
+                    .map(|(_, id, _)| id.clone())
+                    .unwrap_or_default()
+            });
+        let current_label = libs
+            .iter()
+            .find(|(_, id, _)| id == &selected)
+            .map(|(l, _, _)| l.clone())
+            .unwrap_or_else(|| selected.clone());
+
+        let weak_menu = cx.entity().downgrade();
+        let selector = Button::new(SharedString::from(format!("{key}-lib")))
+            .label(SharedString::from(current_label))
+            .with_variant(ButtonVariant::Secondary)
+            .with_size(size("small"))
+            .dropdown_menu({
+                let libs = libs.clone();
+                move |menu, _, _| {
+                    let mut menu = menu;
+                    for (label, id, _) in &libs {
+                        let weak = weak_menu.clone();
+                        let id = id.clone();
+                        menu = menu.item(PopupMenuItem::new(label.clone()).on_click(
+                            move |_, _, cx| {
+                                try_update(&weak, cx, "showcase", |this, cx| {
+                                    this.update_state(
+                                        &parse_path("studio.showcase_lib").unwrap(),
+                                        Json::String(id.clone()),
+                                        cx,
+                                    )
+                                })
+                                .ok();
+                            },
+                        ));
+                    }
+                    menu
+                }
+            });
+
+        let prefix = libs
+            .iter()
+            .find(|(_, id, _)| id == &selected)
+            .map(|(_, _, p)| p.clone())
+            .unwrap_or_default();
+        let mut groups: Vec<(String, Vec<forge_spec::catalog::ElementDef>)> = Vec::new();
+        if let Some(cat) = self.catalogs.iter().find(|c| c.library == selected) {
+            for def in &cat.elements {
+                let group = def.group.clone().unwrap_or_else(|| "Elements".into());
+                match groups.iter_mut().find(|(g, _)| g == &group) {
+                    Some((_, items)) => items.push(def.clone()),
+                    None => groups.push((group, vec![def.clone()])),
+                }
+            }
+        }
+        let open_path = parse_path("studio.showcase_open").unwrap();
+        let open_set: Vec<usize> = get_path(self.state(), &open_path)
+            .and_then(|j| j.as_array().cloned())
+            .map(|a| {
+                a.iter()
+                    .filter_map(|v| v.as_u64().map(|u| u as usize))
+                    .collect()
+            })
+            .unwrap_or_default();
+        let weak_toggle = cx.entity().downgrade();
+        let open_path_c = open_path.clone();
+        let mut grid = Accordion::new(SharedString::from(format!("{key}-groups")))
+            .multiple(true)
+            .bordered(false)
+            .on_toggle_click(move |indices: &[usize], _, cx| {
+                let open_path = open_path_c.clone();
+                try_update(&weak_toggle, cx, "showcase", |this, cx| {
+                    this.update_state(&open_path, Json::from(indices.to_vec()), cx)
+                })
+                .ok();
+            });
+        for (i, (group, defs)) in groups.iter().enumerate() {
+            let mut col = div().flex().flex_col().gap_3().w_full().pb_2();
+            for def in defs {
+                let name = def.name.clone();
+                // Synthesized node: element name as positional content and
+                // sample values for props, so the widget shows a themed state.
+                let mut props: Entries = Vec::new();
+                for p in &def.props {
+                    if let Some(v) = sample_prop_value(p) {
+                        props.push((p.name.clone(), v));
+                    }
+                }
+                let synth = Node {
+                    element: ElementRef {
+                        namespace: if prefix.is_empty() {
+                            None
+                        } else {
+                            Some(prefix.clone())
+                        },
+                        name: name.clone(),
+                    },
+                    content: def
+                        .content
+                        .as_ref()
+                        .map(|_| Value::String(name.clone())),
+                    props,
+                    ..Default::default()
+                };
+                let widget =
+                    self.render_node(&synth, &format!("{key}-{i}-{name}"), window, cx);
+                col = col.child(
+                    div()
+                        .flex()
+                        .flex_col()
+                        .gap_1()
+                        .w_full()
+                        .child(
+                            div()
+                                .text_xs()
+                                .text_color(muted)
+                                .child(name.clone()),
+                        )
+                        .child(widget),
+                );
+            }
+            let open = open_set.is_empty() || open_set.contains(&i);
+            let item = gpui_kit::component::accordion::AccordionItem::new()
+                .title(SharedString::from(group.clone()))
+                .open(open)
+                .child(col);
+            grid = grid.item(move |_| item);
+        }
+        div()
+            .flex()
+            .flex_col()
+            .gap_2()
+            .w_full()
+            .child(selector)
+            .child(grid)
+            .into_any_element()
+    }
+
     fn fire(&mut self, node: &Node, event: &str, cx: &mut Context<Self>) {
         let Some(binding) = node.events.iter().find(|e| e.event == event) else {
             return;
@@ -1909,6 +2084,7 @@ impl ForgeView {
                     }
                 }
                 (Some("forge"), "Palette") => self.palette(node, key, cx),
+                (Some("forge"), "Showcase") => self.showcase(node, key, window, cx),
                 (Some("forge"), "Vars") => self.vars(node, key, window, cx),
                 _ => placeholder(
                     format!(
@@ -3672,6 +3848,36 @@ fn alert_variant(name: &str) -> AlertVariant {
         "warning" => AlertVariant::Warning,
         "error" | "danger" => AlertVariant::Error,
         _ => AlertVariant::Info,
+    }
+}
+
+/// `forge.Showcase` sample props — a declared `default` wins; otherwise a
+/// plausible value per type so every widget shows a themed state (active
+/// for checked/pressed/selected/open, first enum variant, sample strings).
+fn sample_prop_value(prop: &forge_spec::catalog::PropDef) -> Option<Value> {
+    if let Some(default) = &prop.default {
+        return Some(default.clone());
+    }
+    match &prop.ty {
+        PropType::String => Some(Value::String(match prop.name.as_str() {
+            "placeholder" => "sample…".into(),
+            "src" | "url" => String::new(),
+            _ => "Sample".into(),
+        })),
+        PropType::Number => Some(Value::Number {
+            value: 50.,
+            unit: None,
+        }),
+        PropType::Bool
+            if matches!(
+                prop.name.as_str(),
+                "checked" | "pressed" | "selected" | "open"
+            ) =>
+        {
+            Some(Value::Bool(true))
+        }
+        PropType::Enum(values) => values.first().map(|v| Value::Enum(v.clone())),
+        _ => None,
     }
 }
 

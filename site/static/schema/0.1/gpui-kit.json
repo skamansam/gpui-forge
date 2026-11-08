@@ -13691,6 +13691,48 @@
           "if": {
             "not": {
               "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.Showcase(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.Showcase(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^(<<|[a-z][\\w-]*\\.Showcase(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
                 "pattern": "^(?![a-z][\\w-]*\\.Sidebar(#[\\w-]+| \\.[\\w-]+)?$).*$"
               }
             }
@@ -17052,7 +17094,7 @@
         }
       },
       "propertyNames": {
-        "pattern": "^((DescriptionItem|DescriptionList|SidebarMenuItem|BreadcrumbItem|MessageContent|ProgressCircle|ResizablePanel|AccordionItem|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|SettingsGroup|SidebarFooter|SidebarHeader|DropdownMenu|TableCaption|AvatarGroup|Collapsible|ColorPicker|NumberInput|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|Breadcrumb|DatePicker|Pagination|RadioGroup|Accordion|FormField|Resizable|Separator|StatusBar|TableBody|TableCell|TableHead|TimeField|Calendar|Checkbox|GroupBox|MenuItem|OtpInput|Progress|Settings|Skeleton|TableRow|Textarea|TitleBar|TreeItem|Message|Sidebar|Spinner|Stepper|Toolbar|Avatar|Button|Dialog|Editor|HStack|Rating|Select|Slider|Switch|VStack|Alert|Badge|Empty|Image|Input|Label|Radio|Table|Form|Icon|Link|List|Tabs|Text|Tree|Box|Kbd|Tab|Tag)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(SegmentedControl|DescriptionItem|DescriptionList|SidebarMenuItem|BreadcrumbItem|MessageContent|ProgressCircle|ResizablePanel|TrendIndicator|AccordionItem|InlineMessage|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|SettingsGroup|SidebarFooter|SidebarHeader|StatusMessage|DropdownMenu|TableCaption|TimelineItem|ToggleButton|AspectRatio|AvatarGroup|Collapsible|ColorPicker|NumberInput|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|Breadcrumb|CopyButton|DatePicker|EmptyState|IconButton|Pagination|RadioGroup|Accordion|Container|FormField|Inspector|Paragraph|Resizable|Separator|Statistic|StatusBar|TableBody|TableCell|TableHead|TimeField|Calendar|Checkbox|GroupBox|MenuItem|OtpInput|Overline|Progress|Settings|Skeleton|Subtitle|TableRow|Textarea|TitleBar|TreeItem|UsageBar|Callout|Caption|Divider|Heading|KpiCard|Message|Outline|Palette|Preview|Sidebar|Spinner|Stepper|Toolbar|Avatar|Banner|Button|Canvas|Dialog|Editor|HStack|Player|QrCode|Rating|Select|Slider|Switch|Toggle|VStack|Viewer|ZStack|Alert|Badge|Board|Empty|Image|Input|Label|Meter|Radio|Table|Title|Form|Icon|Link|List|Tabs|Text|Tree|Vars|Box|Kbd|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<)$"
+        "pattern": "^((DescriptionItem|DescriptionList|SidebarMenuItem|BreadcrumbItem|MessageContent|ProgressCircle|ResizablePanel|AccordionItem|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|SettingsGroup|SidebarFooter|SidebarHeader|DropdownMenu|TableCaption|AvatarGroup|Collapsible|ColorPicker|NumberInput|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|Breadcrumb|DatePicker|Pagination|RadioGroup|Accordion|FormField|Resizable|Separator|StatusBar|TableBody|TableCell|TableHead|TimeField|Calendar|Checkbox|GroupBox|MenuItem|OtpInput|Progress|Settings|Skeleton|TableRow|Textarea|TitleBar|TreeItem|Message|Sidebar|Spinner|Stepper|Toolbar|Avatar|Button|Dialog|Editor|HStack|Rating|Select|Slider|Switch|VStack|Alert|Badge|Empty|Image|Input|Label|Radio|Table|Form|Icon|Link|List|Tabs|Text|Tree|Box|Kbd|Tab|Tag)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(SegmentedControl|DescriptionItem|DescriptionList|SidebarMenuItem|BreadcrumbItem|MessageContent|ProgressCircle|ResizablePanel|TrendIndicator|AccordionItem|InlineMessage|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|SettingsGroup|SidebarFooter|SidebarHeader|StatusMessage|DropdownMenu|TableCaption|TimelineItem|ToggleButton|AspectRatio|AvatarGroup|Collapsible|ColorPicker|NumberInput|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|Breadcrumb|CopyButton|DatePicker|EmptyState|IconButton|Pagination|RadioGroup|Accordion|Container|FormField|Inspector|Paragraph|Resizable|Separator|Statistic|StatusBar|TableBody|TableCell|TableHead|TimeField|Calendar|Checkbox|GroupBox|MenuItem|OtpInput|Overline|Progress|Settings|Showcase|Skeleton|Subtitle|TableRow|Textarea|TitleBar|TreeItem|UsageBar|Callout|Caption|Divider|Heading|KpiCard|Message|Outline|Palette|Preview|Sidebar|Spinner|Stepper|Toolbar|Avatar|Banner|Button|Canvas|Dialog|Editor|HStack|Player|QrCode|Rating|Select|Slider|Switch|Toggle|VStack|Viewer|ZStack|Alert|Badge|Board|Empty|Image|Input|Label|Meter|Radio|Table|Title|Form|Icon|Link|List|Tabs|Text|Tree|Vars|Box|Kbd|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<)$"
       },
       "type": "object"
     },

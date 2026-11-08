@@ -75,6 +75,14 @@ elements:
     component: forge::Palette
     children: none
 
+  Showcase:
+    summary: Live widget gallery — a dropdown selects the library (state
+      `studio.showcase_lib`) and every element renders as a real widget
+      under its catalog group in an accordion, so the active theme's effect
+      is visible on each widget (#125).
+    component: forge::Showcase
+    children: none
+
   Vars:
     summary: Live state inspector — every state var in the named preview's
       document as an editable row; add new vars; bound `{$path}` elements

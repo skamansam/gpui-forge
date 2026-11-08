@@ -349,34 +349,11 @@ root:
                                   variant: Primary
                                   on click: apply_theme_json()
                         - VStack:
-                          style: {width: 320px, overflow: scroll, gap: 12px}
+                          style: {width: 360px, overflow: scroll, gap: 12px}
                           children:
                             - Text: Showcase
                               style: {weight: semibold}
-                            - Button: "Primary"
-                            - Button: "Secondary"
-                              variant: Secondary
-                            - Button: "Danger"
-                              variant: Danger
-                            - Input:
-                              placeholder: input…
-                            - Textarea:
-                              placeholder: textarea…
-                            - Checkbox:
-                              label: a checkbox
-                            - Switch:
-                              label: a switch
-                            - Slider:
-                              value: bind $showcase.slider
-                            - Progress:
-                              value: 0.6
-                            - Badge:
-                              count: 4
-                            - Alert:
-                              title: an alert
-                              message: "a gpui-kit alert"
-                            - Tag:
-                              label: a tag
+                            - forge.Showcase:
         - VStack#inspector:
           style:
             width: 280px
