@@ -155,14 +155,17 @@ impl ForgeLibrary for Ely {
                 ))
                 .into_any_element(),
             ),
-            "Meter" => Some(
-                Meter::new(
-                    key.to_string(),
-                    prop_str_opt(node, "label").unwrap_or_default(),
-                    prop_num(node, "value").unwrap_or(0.0) as f32,
+            "Meter" => {
+                // `value` is a share 0..=1; a number past 1 reads as a
+                // percent (68 → 0.68). ely asserts on shares outside 0..=1,
+                // so clamp rather than panic in the showcase.
+                let v = prop_num(node, "value").unwrap_or(0.0) as f32;
+                let share = if v > 1.0 { v / 100.0 } else { v }.clamp(0.0, 1.0);
+                Some(
+                    Meter::new(key.to_string(), prop_str_opt(node, "label").unwrap_or_default(), share)
+                        .into_any_element(),
                 )
-                .into_any_element(),
-            ),
+            }
             "UsageBar" => {
                 Some(UsageBar::new(prop_num(node, "total").unwrap_or(100.0)).into_any_element())
             }
@@ -228,13 +231,15 @@ impl ForgeLibrary for Ely {
                 EmptyState::new(key.to_string(), icon_of(node), prop_str(node, "title"))
                     .into_any_element(),
             ),
-            "Rating" => Some(
-                Rating::new(
-                    key.to_string(),
-                    prop_num(node, "value").unwrap_or(3.0) as u8,
+            "Rating" => {
+                let max = prop_num(node, "max").unwrap_or(5.0).max(1.0) as u8;
+                let value = (prop_num(node, "value").unwrap_or(3.0) as u8).min(max);
+                Some(
+                    Rating::new(key.to_string(), value)
+                        .max(max)
+                        .into_any_element(),
                 )
-                .into_any_element(),
-            ),
+            }
             "SegmentedControl" => Some(
                 SegmentedControl::new(key.to_string(), prop_str(node, "selected"))
                     .into_any_element(),

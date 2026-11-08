@@ -13,9 +13,13 @@ state:
   studio.host: string
   studio.project: string
   studio.spec: string
+  studio.tab: number
+  studio.theme_json: multiline
   editor.source: multiline
   document.selected: string
   base: string
+  bases: list
+  name: string
   preview.mode: enum(remote | embedded)
   preview.frame: string
   preview.state: string
@@ -82,7 +86,7 @@ titleBar: &titleBar
         - DropdownMenu#file-menu:
           <<: *appMenu
         - Image#logo:
-          src: ../../gpui_forge_icon_medallion.svg
+          src: ../../gpui_forge_icon_small.svg
           size: 18px
         - Label: Forge Studio
           style:
@@ -148,23 +152,21 @@ Dialog#new-project:
           variant: Primary
           on click: create_project()
 
+
+
 root:
   VStack#studio:
   style:
     width: full
     height: full
   children:
-    # ── title bar (drag region + window controls) ────────────────────────
     - TitleBar:
       <<: *titleBar
-    # - Separator:
-    # ── body ─────────────────────────────────────────────────────────────
     - HStack#body:
       style:
         grow: true
         min-height: 0
       children:
-        # palette: a live gallery of what the adapter renders
         # palette: a tool grid — click an icon to insert the element
         - VStack#palette:
           style:
@@ -283,7 +285,7 @@ root:
                         show-selection: true
                       value: bind $editor.source
                       on change: source_changed()
-                      style: 
+                      style:
                         grow: true
                         border: 1px
                 - Tab: Preview
@@ -295,7 +297,7 @@ root:
                           remote: "{$studio.host}"
                           mode: "{$preview.mode}"
                           on click: raise_host()
-                          style: 
+                          style:
                             grow: true
                             border: 1px
                         # #120 Phase 2 — the TUI's streamed frame grid
