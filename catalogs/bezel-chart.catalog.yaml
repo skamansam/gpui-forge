@@ -1,0 +1,36 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for bezel-chart — `use: chart: bezel-chart` on the bezel
+# base (#94 ecosystem catalog).
+catalog: "0.1"
+library: bezel-chart
+name: bezel-chart
+version: 0.2.24
+license: MIT
+bases:
+  bezel: "*"
+
+elements:
+  Chart:
+    icon: chart-line
+    group: Data
+    summary: Vega-Lite-subset chart over columnar data — marks + encodings.
+    component: bezel_chart::ChartView
+    children: none
+    props:
+      mark:
+        type: enum
+        values: [bar, line, area, point]
+        summary: The mark kind drawn per datum.
+      data:
+        type: string
+        summary: Rows as JSON — an array of objects keyed by field.
+      x:
+        type: string
+        summary: Field encoded on the x axis.
+      y:
+        type: string
+        summary: Field encoded on the y axis.
+      color:
+        type: string
+        summary: Field encoding color, or a fixed hex color.
+      title: string

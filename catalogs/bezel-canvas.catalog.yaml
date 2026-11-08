@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for bezel-canvas — `use: canvas: bezel-canvas` on the bezel
+# base (#94 ecosystem catalog). Infinite canvas over JSON Canvas.
+catalog: "0.1"
+library: bezel-canvas
+name: bezel-canvas
+version: 0.2.24
+license: MIT
+bases:
+  bezel: "*"
+
+elements:
+  Canvas:
+    icon: pen-tool
+    group: Media
+    summary: Pannable infinite canvas — nodes and edges in, a mindmap out.
+    component: bezel_canvas::CanvasEditor
+    children: none
+    props:
+      scene:
+        type: string
+        summary: JSON Canvas document (nodes + edges) to load.
+      read_only: bool
+      minimap: bool

@@ -15,7 +15,7 @@ elements:
     group: Display
     summary: Rendered LaTeX formula, rasterized to an image.
     component: ratex_gpui::render::render_latex
-    content: tex
+    content: src
     children: none
     props:
       src:

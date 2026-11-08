@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for bezel-markdown — `use: md: bezel-markdown` on the bezel
+# base (#94 ecosystem catalog). Block document model — markdown in/out.
+catalog: "0.1"
+library: bezel-markdown
+name: bezel-markdown
+version: 0.2.24
+license: MIT
+bases:
+  bezel: "*"
+
+elements:
+  Markdown:
+    icon: file-text
+    group: Display
+    summary: Rendered markdown — blocks, marks, quotes, fenced code.
+    component: bezel_markdown::Doc
+    content: src
+    children: none
+    props:
+      src:
+        type: string
+        summary: Markdown text — overrides element content when set.

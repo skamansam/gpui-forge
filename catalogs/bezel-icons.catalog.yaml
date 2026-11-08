@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for bezel-icons — `use: icon: bezel-icons` on the bezel
+# base (#94 ecosystem catalog). Lucide glyphs as typed SVG constants.
+catalog: "0.1"
+library: bezel-icons
+name: bezel-icons
+version: 0.2.24
+license: MIT
+bases:
+  bezel: "*"
+
+elements:
+  Icon:
+    icon: smile
+    group: Display
+    summary: A Lucide glyph or app-asset icon.
+    component: bezel_icons::Icon
+    children: none
+    props:
+      name:
+        type: icon
+        required: true
+        summary: Glyph name from the Lucide set, or an asset key.
+      size: number
+      color: color

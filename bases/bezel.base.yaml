@@ -19,4 +19,11 @@ theme: bezel             # environment-based theme bridge lands with the adapter
 catalog: bezel
 license: MIT
 
-libraries: {}            # bezel-chart/editor/canvas/markdown/terminal/icons/motion adapters later
+libraries:               # bezel ecosystem catalogs (#94); render shims land with the adapter crates
+  bezel-chart: {version: "0.2.24", crate: bezel-chart, license: MIT}
+  bezel-editor: {version: "0.2.24", crate: bezel-editor, license: MIT}
+  bezel-canvas: {version: "0.2.24", crate: bezel-canvas, license: MIT}
+  bezel-markdown: {version: "0.2.24", crate: bezel-markdown, license: MIT}
+  bezel-terminal: {version: "0.2.24", crate: bezel-terminal, license: MIT}
+  bezel-icons: {version: "0.2.24", crate: bezel-icons, license: MIT}
+  bezel-motion: {version: "0.2.24", crate: bezel-motion, license: MIT}

@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for bezel-editor — `use: bed: bezel-editor` on the bezel
+# base (#94 ecosystem catalog). Notion-style block editor.
+catalog: "0.1"
+library: bezel-editor
+name: bezel-editor
+version: 0.2.24
+license: MIT
+bases:
+  bezel: "*"
+
+elements:
+  Editor:
+    icon: square-pen
+    group: Input
+    summary: Block editor with slash menu, mentions and undo history.
+    component: bezel_editor::Editor
+    content: markdown
+    children: none
+    props:
+      markdown:
+        type: string
+        summary: Initial document content as markdown.
+      read_only:
+        type: bool
+        summary: View without editing chrome.
+      placeholder:
+        type: string
+        summary: Hint text shown on an empty document.

@@ -1,0 +1,25 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for bezel-motion — `use: motion: bezel-motion` on the
+# bezel base (#94 ecosystem catalog). Named animations on CSS curves.
+catalog: "0.1"
+library: bezel-motion
+name: bezel-motion
+version: 0.2.24
+license: MIT
+bases:
+  bezel: "*"
+
+elements:
+  Fade:
+    icon: wand-2
+    group: Motion
+    summary: Fade in/out wrapper — animates its child on mount/hover.
+    component: bezel_motion::Fade
+    children: any
+    props:
+      duration:
+        type: number
+        summary: Transition length in seconds.
+      hover:
+        type: bool
+        summary: Fade on hover instead of on mount.

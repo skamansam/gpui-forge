@@ -1,0 +1,24 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for bezel-terminal — `use: term: bezel-terminal` on the
+# bezel base (#94 ecosystem catalog). Alacritty-backed terminal emulator.
+catalog: "0.1"
+library: bezel-terminal
+name: bezel-terminal
+version: 0.2.24
+license: MIT
+bases:
+  bezel: "*"
+
+elements:
+  Terminal:
+    icon: terminal
+    group: Media
+    summary: Terminal emulator grid — runs a shell or command on a pty.
+    component: bezel_terminal::TerminalElement
+    children: none
+    props:
+      command:
+        type: string
+        summary: Program to run — defaults to the user's shell.
+      cols: number
+      rows: number
