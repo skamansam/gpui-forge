@@ -1,9 +1,10 @@
 <script lang="ts">
 	import { parse as parseYaml, isMap } from 'yaml';
+	import { onMount } from 'svelte';
 	import Canvas, { type Diagnostic } from '#lib/Canvas.svelte';
 	import YamlEditor from '#lib/YamlEditor.svelte';
 	import Diagnostics from '#lib/Diagnostics.svelte';
-	import { examples } from '#lib/examples.ts';
+	import { examples, showcases } from '#lib/examples.ts';
 	import * as F from '#lib/forge-doc.ts';
 
 	type Prop = { type?: string; values?: string[]; default?: unknown; summary?: string } | string;
@@ -33,6 +34,13 @@
 	let undoStack = $state<string[]>([]);
 	let redoStack = $state<string[]>([]);
 	let fileInput: HTMLInputElement;
+
+	// The playground's state tooling (#130): a JSON editor seeds the canvas's
+	// bindings, and the canvas reports its live state back.
+	let stateText = $state('{}');
+	let bindings = $state<unknown>({});
+	let liveState = $state<unknown>({});
+	let stateError = $state('');
 
 	const STORE = 'forge-editor-doc';
 	if (typeof localStorage !== 'undefined' && localStorage.getItem(STORE)) {
@@ -73,6 +81,49 @@
 
 	const def = $derived(key ? catalog[F.elementName(key)] : undefined);
 	const canHaveChildren = $derived(!!def?.children);
+
+	// The palette as collapsible groups — each element's `group:` field forms an
+	// accordion section per library, like the desktop palette (#130).
+	const paletteGroups = $derived(
+		libs.map((lib) => {
+			const groups: [string, [string, Element][]][] = [];
+			for (const [name, el] of Object.entries(lib.elements)) {
+				const g = (el as { group?: string }).group ?? 'Elements';
+				const found = groups.find(([label]) => label === g);
+				if (found) found[1].push([name, el]);
+				else groups.push([g, [[name, el]]]);
+			}
+			return { ...lib, groups };
+		}),
+	);
+
+	// `state:` decls seed the canvas bindings — `user.name: string` becomes
+	// `{user: {name: ''}}` — so bound widgets work for any document (#130).
+	function seedState(): Record<string, unknown> {
+		const st = doc?.get('state');
+		const out: Record<string, unknown> = {};
+		if (!isMap(st)) return out;
+		for (const it of st.items) {
+			const path = String((it.key as { value?: string })?.value ?? it.key);
+			const ty = String((it.value as { value?: string })?.value ?? it.value ?? '');
+			const leaf = ty.startsWith('enum') ? (ty.match(/\(([^|)]+)/)?.[1] ?? '') :
+				ty === 'bool' ? false : ty === 'number' ? 0 : ty === 'list' ? [] : '';
+			let cur = out;
+			const parts = path.split('.');
+			for (const p of parts.slice(0, -1)) cur = (cur[p] ??= {}) as Record<string, unknown>;
+			cur[parts.at(-1)!] = leaf;
+		}
+		return out;
+	}
+	function seedFromDoc(state?: unknown) {
+		const seeded = state ?? seedState();
+		stateText = JSON.stringify(seeded, null, 2);
+		applyState();
+	}
+	function applyState() {
+		try { bindings = JSON.parse(stateText); liveState = bindings; stateError = ''; }
+		catch (e) { stateError = (e as Error).message; }
+	}
 
 	const propType = (p: Prop) => (typeof p === 'string' ? p : (p.type ?? 'string'));
 	const same = (a: number[], b: number[]) => a.length === b.length && a.every((x, i) => x === b[i]);
@@ -116,16 +167,37 @@
 	}
 	let copied = $state(false);
 	const encode = (s: string) => btoa(String.fromCharCode(...new TextEncoder().encode(s)));
+	const decode = (s: string) => new TextDecoder().decode(Uint8Array.from(atob(s), (c) => c.charCodeAt(0)));
+	// Examples and the widget-set demos share one picker (#130).
+	const entries = [
+		...examples.map((e) => ({ title: e.title, yaml: e.yaml, state: e.state })),
+		...showcases.map((s) => ({ title: `${s.title} (${s.alias})`, yaml: s.yaml, state: undefined as unknown })),
+	];
 	function loadExample(i: number) {
-		if (i < 0) return;
-		yaml = examples[i].yaml;
+		if (i < 0 || !entries[i]) return;
+		yaml = entries[i].yaml;
+		seedFromDoc(entries[i].state);
 	}
 	async function share() {
-		history.replaceState(null, '', `#${encode(JSON.stringify({ yaml }))}`);
+		history.replaceState(null, '', `#${encode(JSON.stringify({ yaml, state: liveState }))}`);
 		await navigator.clipboard?.writeText(location.href);
 		copied = true;
 		setTimeout(() => (copied = false), 1500);
 	}
+	onMount(() => {
+		if (location.hash.length > 1) {
+			try {
+				const shared = JSON.parse(decode(location.hash.slice(1)));
+				if (typeof shared.yaml === 'string') yaml = shared.yaml;
+				if (shared.state !== undefined) {
+					stateText = JSON.stringify(shared.state, null, 2);
+					applyState();
+					return;
+				}
+			} catch { /* keep the default */ }
+		}
+		seedFromDoc();
+	});
 	async function openFile(e: Event) {
 		const file = (e.target as HTMLInputElement).files?.[0];
 		if (!file) return;
@@ -136,6 +208,7 @@
 		} else {
 			yaml = text;
 		}
+		seedFromDoc();
 		(e.target as HTMLInputElement).value = '';
 	}
 
@@ -174,12 +247,17 @@
 		</div>
 		<p class="hint">{canHaveChildren ? `Click to add inside ${key}` : 'Select a container to add children'}</p>
 		<div class="list">
-			{#each libs as lib (lib.id)}
+			{#each paletteGroups as lib (lib.id)}
 				{#if lib.tag}<div class="lib">{lib.id}</div>{/if}
-				{#each Object.entries(lib.elements) as [name, el] (lib.tag + name)}
-					<button class="item" disabled={!canHaveChildren} title={el.summary} draggable="true"
-						ondragstart={(e) => e.dataTransfer?.setData('forge-element', lib.tag + name)}
-						onclick={() => edit((d) => F.addChild(d, selected, lib.tag + name))}>{lib.tag}{name}</button>
+				{#each lib.groups as [group, els] (lib.id + group)}
+					<details open>
+						<summary>{group}</summary>
+						{#each els as [name, el] (lib.tag + name)}
+							<button class="item" disabled={!canHaveChildren} title={el.summary} draggable="true"
+								ondragstart={(e) => e.dataTransfer?.setData('forge-element', lib.tag + name)}
+								onclick={() => edit((d) => F.addChild(d, selected, lib.tag + name))}>{lib.tag}{name}</button>
+						{/each}
+					</details>
 				{/each}
 			{/each}
 		</div>
@@ -229,19 +307,25 @@
 	<div class="panel col">
 		<div class="panel-title"><span>Canvas — {baseId}</span><span>{hooks.at(-1) ? `hook: ${hooks.at(-1)}` : ''}</span></div>
 		{#if baseDef?.wasm}
-			<Canvas {yaml} base={baseId} bindings={examples[0].state} height="calc(100vh - 300px)" ondiagnostics={(d) => (diagnostics = d)} onhook={(c) => (hooks = [...hooks, c])} />
+			<Canvas {yaml} base={baseId} {bindings} height="calc(100vh - 430px)" ondiagnostics={(d) => (diagnostics = d)}
+				onhook={(c) => (hooks = [...hooks.slice(-4), c])} onstate={(s) => (liveState = s)} />
 		{:else}
 			<div class="desktop-only">Desktop preview only — the {baseDef?.name ?? baseId} base has no WASM canvas.</div>
 		{/if}
 		<Diagnostics {diagnostics} />
+		<div class="hooks">
+			{#each hooks as h, i (i)}<div>hook fired: <code>{h}</code></div>{:else}<div class="muted">Click a bound widget — hooks fire here.</div>{/each}
+		</div>
+		<div class="panel-title"><span>live state</span></div>
+		<pre class="live">{JSON.stringify(liveState, null, 2)}</pre>
 	</div>
 
 	<div class="panel col">
-		<div class="panel-title"><span>login.forge.yaml</span>
+		<div class="panel-title"><span>doc.forge.yaml</span>
 			<span class="tools">
 				<select title="load an example" onchange={(e) => loadExample(+e.currentTarget.value)}>
 					<option value="-1">Examples…</option>
-					{#each examples as ex, i (ex.slug)}<option value={i}>{ex.title}</option>{/each}
+					{#each entries as ex, i (i)}<option value={i}>{ex.title}</option>{/each}
 				</select>
 				<button onclick={() => fileInput.click()} title="Open .forge.yaml or .json">Open</button>
 				<button onclick={download} title="Download .forge.yaml (Ctrl+S)">Save</button>
@@ -250,7 +334,10 @@
 			</span>
 		</div>
 		<input bind:this={fileInput} type="file" accept=".yaml,.yml,.json,.forge.yaml" hidden onchange={openFile} />
-		<YamlEditor bind:value={yaml} height="calc(100vh - 160px)" />
+		<YamlEditor bind:value={yaml} height="calc(100vh - 400px)" />
+		<div class="panel-title"><span>view state (JSON)</span><button class="btn small" onclick={applyState}>Apply</button></div>
+		<textarea class="state" bind:value={stateText} spellcheck="false"></textarea>
+		{#if stateError}<div class="err">{stateError}</div>{/if}
 	</div>
 </div>
 
@@ -275,5 +362,13 @@
 	label em { color: var(--muted); font-style: normal; font-size: 11px; }
 	input:not([type='checkbox']), select { background: var(--panel-2); color: var(--fg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 6px; font: 13px var(--mono); min-width: 0; }
 	input[type='checkbox'] { justify-self: start; }
+	details > summary { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; cursor: pointer; padding: 6px 12px 2px; user-select: none; }
+	details[open] > summary { color: var(--fg); }
+	.hooks { padding: 8px 12px; font-size: 13px; max-height: 120px; overflow: auto; border-top: 1px solid var(--border); }
+	.muted { color: var(--muted); }
+	pre.live { margin: 0; border: 0; border-radius: 0; max-height: 140px; overflow: auto; }
+	textarea.state { background: var(--panel); color: var(--fg); border: 0; font: 13px var(--mono); padding: 12px; min-height: 120px; resize: vertical; outline: none; }
+	.err { color: var(--danger); font-size: 13px; padding: 4px 12px; }
+	.btn.small { padding: 4px 10px; font-size: 13px; }
 	@media (max-width: 1200px) { .editor { grid-template-columns: 1fr 1fr; } }
 </style>

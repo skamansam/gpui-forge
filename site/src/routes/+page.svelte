@@ -19,8 +19,7 @@
 		WebAssembly. Everything on this page is the actual gpui-kit renderer.
 	</p>
 	<div class="cta">
-		<a class="btn primary" href={resolve('/playground')}>Open the playground</a>
-		<a class="btn" href={resolve('/editor')}>Try the editor</a>
+		<a class="btn primary" href={resolve('/editor')}>Open the editor</a>
 		<a class="btn" href={resolve('/docs')}>Read the spec</a>
 	</div>
 </section>

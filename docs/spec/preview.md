@@ -7,8 +7,8 @@ The docs site renders Forge documents with the real gpui-kit components, compile
 - **Elements:** every element in the gpui-kit catalog renders. Elements from imported libraries
   (`ely.Badge`) show a placeholder.
 - **Props not applied yet:** `Input.readonly`, `Select.searchable` and `Select.cleanable`.
-- **Bindings:** `$path` reads from the example's sample state; `bind $path` writes back to it, and
-  the playground shows the state as it changes. Hooks (`on click: sign_in()`) are logged instead of
-  running Rust.
+- **Bindings:** `$path` reads from the view state (seeded from the doc's `state:` decls, editable
+  as JSON); `bind $path` writes back to it, and the editor shows the state as it changes. Hooks
+  (`on click: sign_in()`) are logged instead of running Rust.
 - **Styles:** the canvas applies the keys of the [style & layout model](style-layout.md);
   `overflow: scroll` is drawn as `hidden`, and `border` draws a 1px border whatever its width.

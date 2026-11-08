@@ -7,7 +7,6 @@
 	const links = [
 		{ href: resolve('/docs'), label: 'Docs' },
 		{ href: resolve('/examples'), label: 'Examples' },
-		{ href: resolve('/playground'), label: 'Playground' },
 		{ href: resolve('/editor'), label: 'Editor' },
 		{ href: resolve('/releases'), label: 'Releases' }
 	];
