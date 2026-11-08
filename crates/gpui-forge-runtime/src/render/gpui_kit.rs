@@ -1186,6 +1186,72 @@ impl ForgeView {
         }
     }
 
+    /// An `Editor`'s `diagnostics:` prop — squiggle markers as `{line, col,
+    /// end_col?, severity?, message, hint?}` maps (1-based line/col), from a
+    /// bound list (`$studio.markers`, fed by `forge check`) or an inline list.
+    /// No `end_col` underlines to end-of-line (#128).
+    fn markers(&self, value: &Value) -> Vec<gpui_base::input::Diagnostic> {
+        use gpui_base::input::{Diagnostic, DiagnosticSeverity, Position};
+        let items: Vec<Json> = match value {
+            Value::Binding { path, .. } => match self.lookup(path) {
+                Some(Json::Array(items)) => items.clone(),
+                _ => Vec::new(),
+            },
+            Value::List(items) => items
+                .iter()
+                .filter_map(|item| match item {
+                    Value::Map(entries) => Some(Json::Object(
+                        entries
+                            .iter()
+                            .map(|(k, v)| {
+                                let json = match v {
+                                    Value::Bool(b) => Json::Bool(*b),
+                                    Value::Number { value, .. } => Json::from(*value),
+                                    other => Json::String(self.text(other)),
+                                };
+                                (k.clone(), json)
+                            })
+                            .collect(),
+                    )),
+                    _ => None,
+                })
+                .collect(),
+            _ => Vec::new(),
+        };
+        items
+            .iter()
+            .filter_map(|item| {
+                let line = item.get("line")?.as_u64()? as u32;
+                let col = item.get("col").and_then(Json::as_u64).unwrap_or(1) as u32;
+                let start = Position::new(line.saturating_sub(1), col.saturating_sub(1));
+                let end = item
+                    .get("end_col")
+                    .and_then(Json::as_u64)
+                    .map(|e| (e as u32).saturating_sub(1).max(start.character + 1))
+                    .unwrap_or(u32::MAX);
+                let mut message = item
+                    .get("message")
+                    .and_then(Json::as_str)
+                    .unwrap_or_default()
+                    .to_owned();
+                if let Some(hint) = item.get("hint").and_then(Json::as_str) {
+                    message = format!("{message} — {hint}");
+                }
+                let severity = match item.get("severity").and_then(Json::as_str) {
+                    Some("warning") => DiagnosticSeverity::Warning,
+                    Some("info") => DiagnosticSeverity::Info,
+                    Some("hint") => DiagnosticSeverity::Hint,
+                    _ => DiagnosticSeverity::Error,
+                };
+                Some(
+                    Diagnostic::new(start..Position::new(start.line, end), message)
+                        .with_severity(severity)
+                        .with_source("forge check"),
+                )
+            })
+            .collect()
+    }
+
     /// A prop's value: the node's content when the catalog maps it to this prop, then the
     /// written prop, then the catalog default.
     fn prop<'a>(&'a self, node: &'a Node, name: &str) -> Option<&'a Value> {
@@ -2392,6 +2458,18 @@ impl ForgeView {
                         state
                     }
                 };
+                // `diagnostics:` — squiggle markers, usually bound to state fed
+                // by `forge check` (#128). Rebuilt each render; the component
+                // underlines the ranges and shows a hover popover.
+                if let Some(value) = self.prop(node, "diagnostics") {
+                    let markers = self.markers(value);
+                    state.update(cx, |s, _| {
+                        if let Some(set) = s.diagnostics_mut() {
+                            set.clear();
+                            set.extend(markers);
+                        }
+                    });
+                }
                 let editor = Editor::new(&state)
                     .disabled(self.prop_bool(node, "disabled"))
                     .readonly(self.prop_bool(node, "readonly"));

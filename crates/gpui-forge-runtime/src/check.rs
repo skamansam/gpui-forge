@@ -180,8 +180,9 @@ pub fn check(src: &str, base: &str, catalogs: &[Catalog]) -> (Option<Document>, 
     }
 }
 
-/// Diagnostics as a JSON array of `{line, col, message, hint}` for the page.
-pub fn to_json(diagnostics: &[Diagnostic]) -> String {
+/// Diagnostics as a JSON array of `{line, col, message, hint}` — the shape the
+/// web canvas, the preview hosts and Studio's `studio.markers` all share (#128).
+pub fn diagnostics_json(diagnostics: &[Diagnostic]) -> serde_json::Value {
     serde_json::Value::Array(
         diagnostics
             .iter()
@@ -195,5 +196,9 @@ pub fn to_json(diagnostics: &[Diagnostic]) -> String {
             })
             .collect(),
     )
-    .to_string()
+}
+
+/// Diagnostics as a JSON array of `{line, col, message, hint}` for the page.
+pub fn to_json(diagnostics: &[Diagnostic]) -> String {
+    diagnostics_json(diagnostics).to_string()
 }

@@ -7,14 +7,37 @@ and in any YAML-capable editor via the JSON Schema.
 
 Studio runs `forge check` on every edit:
 
-- **Diagnostics panel** — below the editor, `Diagnostics` shows every
-  problem `check::check` finds (unknown elements, missing props,
+- **Squiggles** — the Source editor underlines every problem the checker
+  reports (diagnostics carry a `line:col`; the marker runs to end-of-line)
+  and hovering a squiggle shows the message plus its hint. The markers
+  live in `studio.markers` as `{line, col, message, hint?}` maps, fed to
+  `Editor#source`'s `diagnostics:` prop.
+- **Problems panel** — below the editor, `Problems` lists every
+  diagnostic `check::check` finds (unknown elements, missing props,
   `forge.*` intrinsic errors, base-namespace mismatches). It updates
-  live as you type.
-- **Problem count** — `studio.problems` mirrors the count in the
-  inspector/status area.
+  live as you type. When a document previews in an out-of-process host,
+  the host's own diagnostics (checked against *its* base's catalogs)
+  replace Studio's.
+- **Problem count** — the status bar shows `ok` / `n problems`.
 
 No setup — it's built in.
+
+### The `Editor` `diagnostics:` prop in your own documents
+
+Any Forge document can show squiggles — bind or inline a list of
+`{line, col, end_col?, severity?, message, hint?}` maps (1-based
+line/col, `severity` is `error` (default) | `warning` | `info` | `hint`;
+no `end_col` underlines to end-of-line):
+
+```yaml
+- Editor:
+  language: yaml
+  value: bind $doc.source
+  diagnostics: $doc.markers
+```
+
+`gpui_forge_runtime::check::diagnostics_json` produces this shape from a
+`check` result — it is also what the preview hosts and the web canvas use.
 
 ## In other editors — the JSON Schemas
 

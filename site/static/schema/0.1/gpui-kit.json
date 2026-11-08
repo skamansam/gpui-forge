@@ -973,6 +973,35 @@
                 "maxItems": 0,
                 "type": "array"
               },
+              "diagnostics": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "pattern": "^(\\$|\\{)",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Squiggle markers: a list of `{line, col, end_col?, severity?, message, hint?}` maps (1-based line/col, severity error|warning|info|hint). Usually bound — `$studio.markers` — and fed by `forge check`."
+              },
               "disabled": {
                 "anyOf": [
                   {
@@ -1104,7 +1133,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Editor(#[\\w-]+| \\.[\\w-]+)?|children|disabled|height|highlighting|language|languages|on (change)|placeholder|readonly|show-selection|style|tooltip|value)$"
+              "pattern": "^(<<|Editor(#[\\w-]+| \\.[\\w-]+)?|children|diagnostics|disabled|height|highlighting|language|languages|on (change)|placeholder|readonly|show-selection|style|tooltip|value)$"
             }
           }
         },
@@ -9407,6 +9436,35 @@
                 "maxItems": 0,
                 "type": "array"
               },
+              "diagnostics": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object"
+                        },
+                        {
+                          "pattern": "^(\\$|\\{)",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Squiggle markers: a list of `{line, col, end_col?, severity?, message, hint?}` maps (1-based line/col, severity error|warning|info|hint). Usually bound — `$studio.markers` — and fed by `forge check`."
+              },
               "disabled": {
                 "anyOf": [
                   {
@@ -9538,7 +9596,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Editor(#[\\w-]+| \\.[\\w-]+)?|children|disabled|height|highlighting|language|languages|on (change)|placeholder|readonly|show-selection|style|tooltip|value)$"
+              "pattern": "^(<<|[a-z][\\w-]*\\.Editor(#[\\w-]+| \\.[\\w-]+)?|children|diagnostics|disabled|height|highlighting|language|languages|on (change)|placeholder|readonly|show-selection|style|tooltip|value)$"
             }
           }
         },

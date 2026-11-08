@@ -162,8 +162,12 @@ impl ForgeLibrary for Ely {
                 let v = prop_num(node, "value").unwrap_or(0.0) as f32;
                 let share = if v > 1.0 { v / 100.0 } else { v }.clamp(0.0, 1.0);
                 Some(
-                    Meter::new(key.to_string(), prop_str_opt(node, "label").unwrap_or_default(), share)
-                        .into_any_element(),
+                    Meter::new(
+                        key.to_string(),
+                        prop_str_opt(node, "label").unwrap_or_default(),
+                        share,
+                    )
+                    .into_any_element(),
                 )
             }
             "UsageBar" => {

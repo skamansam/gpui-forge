@@ -4889,6 +4889,7 @@ dependencies = [
  "bezel",
  "forge-spec",
  "gpui",
+ "gpui-base",
  "gpui-kit",
  "guise-ui",
  "iced",

@@ -104,7 +104,7 @@ fn main() {
                     let (doc, diags) =
                         check::check(&src, gpui_forge_runtime::base::BASE_ID, &catalogs);
                     emit(json!({"event":"diagnostics","items":
-                        diags.iter().map(|d| d.message.clone()).collect::<Vec<_>>()}));
+                        check::diagnostics_json(&diags)}));
                     if let Some(doc) = doc {
                         view.set_document(doc);
                     }

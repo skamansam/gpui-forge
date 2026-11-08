@@ -55,7 +55,9 @@ enum HostEvent {
     Ready {
         base: String,
     },
-    Diagnostics(Vec<String>),
+    /// `check` items from the host — `{line, col, message, hint?}` maps (older
+    /// hosts sent bare strings; both are handled).
+    Diagnostics(Vec<Json>),
     /// A hook fired in the host's view, as `name(args)` — the `on_hook` sink.
     Call(String),
     /// The host's whole view state after a write — the `on_state` sink.
@@ -916,16 +918,9 @@ fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<F
                     Some("ready") => HostEvent::Ready {
                         base: v["base"].as_str().unwrap_or_default().to_owned(),
                     },
-                    Some("diagnostics") => HostEvent::Diagnostics(
-                        v["items"]
-                            .as_array()
-                            .map(|a| {
-                                a.iter()
-                                    .filter_map(|i| i.as_str().map(str::to_owned))
-                                    .collect()
-                            })
-                            .unwrap_or_default(),
-                    ),
+                    Some("diagnostics") => {
+                        HostEvent::Diagnostics(v["items"].as_array().cloned().unwrap_or_default())
+                    }
                     Some("call") => {
                         HostEvent::Call(v["call"].as_str().unwrap_or_default().to_owned())
                     }
@@ -1075,13 +1070,31 @@ fn host_event(
             let text = if items.is_empty() {
                 "no problems".to_owned()
             } else {
-                items.join("\n")
+                items
+                    .iter()
+                    .map(|i| {
+                        i.as_str().map(str::to_owned).unwrap_or_else(|| {
+                            let line = i["line"].as_u64().unwrap_or(0);
+                            let col = i["col"].as_u64().unwrap_or(0);
+                            let msg = i["message"].as_str().unwrap_or_default();
+                            match i["hint"].as_str() {
+                                Some(hint) => format!("{line}:{col}: {msg} — {hint}"),
+                                None => format!("{line}:{col}: {msg}"),
+                            }
+                        })
+                    })
+                    .collect::<Vec<_>>()
+                    .join("\n")
             };
+            // Squiggle markers for the source editor — objects only; bare
+            // strings carry no position.
+            let markers = Json::Array(items.iter().filter(|i| i.is_object()).cloned().collect());
             view.update_state(
                 &parse_path("studio.diagnostics").unwrap(),
                 Json::String(text),
                 cx,
             );
+            view.update_state(&parse_path("studio.markers").unwrap(), markers, cx);
         }
         HostEvent::Call(call) => {
             let (name, args) = parse_call(&call);
@@ -1494,6 +1507,11 @@ fn load_source(
     );
     set_path(
         &mut state,
+        &parse_path("studio.markers").unwrap(),
+        markers(&diagnostics),
+    );
+    set_path(
+        &mut state,
         &parse_path("studio.doc_base").unwrap(),
         Json::String(
             doc.as_ref()
@@ -1533,6 +1551,11 @@ fn reload(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView
     view.update_state(
         &parse_path("studio.diagnostics").unwrap(),
         Json::String(problems(&diagnostics)),
+        cx,
+    );
+    view.update_state(
+        &parse_path("studio.markers").unwrap(),
+        markers(&diagnostics),
         cx,
     );
     view.update_state(
@@ -2128,6 +2151,12 @@ fn problem_count(diagnostics: &[Diagnostic]) -> String {
         1 => "1 problem".into(),
         n => format!("{n} problems"),
     }
+}
+
+/// Diagnostics as a `studio.markers` JSON list — `{line, col, message, hint?}`
+/// maps the source `Editor`'s `diagnostics:` prop renders as squiggles (#128).
+fn markers(diagnostics: &[Diagnostic]) -> Json {
+    check::diagnostics_json(diagnostics)
 }
 
 /// `prop_changed(prop)` — an inspector field wrote `document.edits.<prop>`; push the

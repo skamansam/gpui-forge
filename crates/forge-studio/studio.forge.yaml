@@ -15,6 +15,7 @@ state:
   studio.spec: string
   studio.tab: number
   studio.theme_json: multiline
+  studio.markers: list
   editor.source: multiline
   document.selected: string
   base: string
@@ -277,17 +278,27 @@ root:
                                       on click: start_from('blank')
                 - Tab: Source
                   children:
-                    - Editor#source:
-                      language: yaml
-                      highlighting:
-                        languages: [yaml]
-                        default: yaml
-                        show-selection: true
-                      value: bind $editor.source
-                      on change: source_changed()
-                      style:
-                        grow: true
-                        border: 1px
+                    - VStack:
+                      style: {grow: true, gap: 8px}
+                      children:
+                        - Editor#source:
+                          language: yaml
+                          highlighting:
+                            languages: [yaml]
+                            default: yaml
+                            show-selection: true
+                          value: bind $editor.source
+                          diagnostics: $studio.markers
+                          on change: source_changed()
+                          style:
+                            grow: true
+                            border: 1px
+                        - GroupBox: Problems
+                          variant: Outline
+                          children:
+                            - Text: "{$studio.diagnostics}"
+                              style:
+                                size: sm
                 - Tab: Preview
                   children:
                     - VStack:

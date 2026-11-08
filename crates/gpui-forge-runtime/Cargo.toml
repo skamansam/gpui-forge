@@ -9,7 +9,7 @@ repository.workspace = true
 [features]
 default = ["base-gpui-kit"]
 # Exactly one base must be enabled: each base links its own UI toolkit build.
-base-gpui-kit = ["dep:gpui-kit"]
+base-gpui-kit = ["dep:gpui-kit", "dep:gpui-base"]
 base-bezel = ["dep:bezel"]
 base-adabraka = []
 base-gpui02 = ["dep:gpui", "dep:guise-ui"]
@@ -19,6 +19,9 @@ base-iced = ["dep:iced"]
 [dependencies]
 forge-spec.workspace = true
 gpui-kit = { workspace = true, optional = true }
+# Editor squiggles (#128): DiagnosticSet lives in gpui-base, which gpui-kit's
+# gpui-component builds on — pinned to the same release line.
+gpui-base = { version = "=0.8.1", optional = true }
 # gpui02 base (#96): crates.io gpui 0.2.2 + guise — a second, unrelated GPUI
 # graph; only one `base-*` may be enabled per build.
 gpui = { version = "=0.2.2", optional = true }

@@ -218,6 +218,11 @@ elements:
       height:
         type: length
         summary: Fixed height; `100%` fills the parent.
+      diagnostics:
+        type: list<map>
+        summary: 'Squiggle markers: a list of `{line, col, end_col?, severity?,
+          message, hint?}` maps (1-based line/col, severity error|warning|info|hint).
+          Usually bound — `$studio.markers` — and fed by `forge check`.'
       disabled:
         type: bool
         default: false
