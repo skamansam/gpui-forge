@@ -7161,6 +7161,9 @@
                       "boolean",
                       "null"
                     ]
+                  },
+                  {
+                    "type": "null"
                   }
                 ],
                 "description": "Positional content — mapped to the element's primary prop."
@@ -7170,6 +7173,14 @@
               "children": {
                 "maxItems": 0,
                 "type": "array"
+              },
+              "fallback": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               },
               "icon": {
                 "description": "Placeholder icon.",
@@ -7200,13 +7211,25 @@
                 "description": "Fallback initials."
               },
               "src": {
-                "description": "Image path.",
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
-                ]
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Image path."
               },
               "style": {
                 "$ref": "#/definitions/style"
@@ -7222,7 +7245,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Avatar(#[\\w-]+| \\.[\\w-]+)?|children|icon|name|src|style|tooltip)$"
+              "pattern": "^(<<|[a-z][\\w-]*\\.Avatar(#[\\w-]+| \\.[\\w-]+)?|children|fallback|icon|name|src|style|tooltip)$"
             }
           }
         },
@@ -7343,6 +7366,14 @@
                   },
                   {
                     "type": "null"
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
                   }
                 ],
                 "description": "Positional content — mapped to the element's primary prop."
@@ -7431,6 +7462,14 @@
               "style": {
                 "$ref": "#/definitions/style"
               },
+              "text": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "tooltip": {
                 "description": "Universal prop — hover tooltip text.",
                 "type": [
@@ -7442,7 +7481,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Badge(#[\\w-]+| \\.[\\w-]+)?|children|color|count|dot|label|max|style|tooltip)$"
+              "pattern": "^(<<|[a-z][\\w-]*\\.Badge(#[\\w-]+| \\.[\\w-]+)?|children|color|count|dot|label|max|style|text|tooltip)$"
             }
           }
         },
@@ -7517,6 +7556,71 @@
             },
             "propertyNames": {
               "pattern": "^(<<|[a-z][\\w-]*\\.Banner(#[\\w-]+| \\.[\\w-]+)?|children|severity|style|text|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.Board(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.Board(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "read_only": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "View without editing tools."
+              },
+              "scene": {
+                "description": "Board JSON snapshot (Scene::to_json) to restore.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^(<<|[a-z][\\w-]*\\.Board(#[\\w-]+| \\.[\\w-]+)?|children|read_only|scene|style|tooltip)$"
             }
           }
         },
@@ -7720,12 +7824,41 @@
                       "boolean",
                       "null"
                     ]
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
                   }
                 ],
                 "description": "Positional content — mapped to the element's primary prop."
               }
             },
             "properties": {
+              "borderless": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "children": {
                 "maxItems": 0,
                 "type": "array"
@@ -7743,8 +7876,47 @@
                   }
                 ]
               },
+              "destructive": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "disabled": {
                 "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   {
                     "anyOf": [
                       {
@@ -7804,6 +7976,22 @@
                       "boolean",
                       "null"
                     ]
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
                   }
                 ]
               },
@@ -7827,6 +8015,19 @@
                 ]
               },
               "outline": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "prominent": {
                 "anyOf": [
                   {
                     "type": "boolean"
@@ -7946,7 +8147,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Button(#[\\w-]+| \\.[\\w-]+)?|children|compact|disabled|icon|label|loading|on (click)|outline|size|style|tooltip|variant)$"
+              "pattern": "^(<<|[a-z][\\w-]*\\.Button(#[\\w-]+| \\.[\\w-]+)?|borderless|children|compact|destructive|disabled|icon|label|loading|on (click)|outline|prominent|size|style|tooltip|variant)$"
             }
           }
         },
@@ -8083,6 +8284,110 @@
           "if": {
             "not": {
               "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.Canvas(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.Canvas(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "controls": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Overlay the zoom/fit controls."
+              },
+              "graph": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "{nodes: [{id, x, y, label, type?}], edges: [{id, source, target, label?, type?, animated?}]}. Node type names a registered renderer; omitted nodes get the default chrome. Edge type: Bezier (default), Straight, SmoothStep."
+              },
+              "minimap": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Overlay the minimap."
+              },
+              "pattern": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "Dots",
+                      "Lines",
+                      "Cross"
+                    ]
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Canvas background grid pattern."
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^(<<|[a-z][\\w-]*\\.Canvas(#[\\w-]+| \\.[\\w-]+)?|children|controls|graph|minimap|pattern|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
                 "pattern": "^(?![a-z][\\w-]*\\.Caption(#[\\w-]+| \\.[\\w-]+)?$).*$"
               }
             }
@@ -8153,6 +8458,22 @@
                       "boolean",
                       "null"
                     ]
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
                   }
                 ],
                 "description": "Positional content — mapped to the element's primary prop."
@@ -8162,13 +8483,43 @@
               "checked": {
                 "anyOf": [
                   {
-                    "type": "boolean"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "type": "null"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 ]
               },
@@ -8177,6 +8528,49 @@
                 "type": "array"
               },
               "disabled": {
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "indeterminate": {
                 "anyOf": [
                   {
                     "type": "boolean"
@@ -8190,14 +8584,40 @@
                 ]
               },
               "label": {
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
                 ]
               },
               "on change": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on click": {
                 "type": [
                   "string",
                   "null"
@@ -8217,7 +8637,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Checkbox(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|label|on (change)|style|tooltip)$"
+              "pattern": "^(<<|[a-z][\\w-]*\\.Checkbox(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|indeterminate|label|on (change|click)|style|tooltip)$"
             }
           }
         },
@@ -8974,6 +9394,9 @@
                       "boolean",
                       "null"
                     ]
+                  },
+                  {
+                    "type": "null"
                   }
                 ],
                 "description": "Positional content — mapped to the element's primary prop."
@@ -10059,6 +10482,9 @@
                       "boolean",
                       "null"
                     ]
+                  },
+                  {
+                    "type": "null"
                   }
                 ],
                 "description": "Positional content — mapped to the element's primary prop."
@@ -10085,13 +10511,30 @@
               "disabled": {
                 "anyOf": [
                   {
-                    "type": "boolean"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 ]
               },
@@ -10122,11 +10565,23 @@
                 ]
               },
               "placeholder": {
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
                 ]
               },
               "readonly": {
@@ -10155,11 +10610,23 @@
                 ]
               },
               "value": {
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
                 ]
               }
             },
@@ -11030,6 +11497,9 @@
                 "anyOf": [
                   {
                     "type": "null"
+                  },
+                  {
+                    "type": "null"
                   }
                 ],
                 "description": "Positional content — mapped to the element's primary prop."
@@ -11041,11 +11511,64 @@
                 "type": "array"
               },
               "label": {
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ]
+              },
+              "max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "min": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "show_value": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
                 ]
               },
               "style": {
@@ -11063,20 +11586,38 @@
               "value": {
                 "anyOf": [
                   {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "pattern": "^(\\$|\\{)",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 ]
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Meter(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip|value)$"
+              "pattern": "^(<<|[a-z][\\w-]*\\.Meter(#[\\w-]+| \\.[\\w-]+)?|children|label|max|min|show_value|style|tooltip|value)$"
             }
           }
         },
@@ -11639,6 +12180,144 @@
           "if": {
             "not": {
               "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.Player(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.Player(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "buffer_capacity": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Frames buffered ahead of playback (latency vs smoothness)."
+              },
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "height": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              },
+              "looping": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "muted": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "playing": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "False pauses the stream; true resumes."
+              },
+              "src": {
+                "description": "Video file path (doc-relative) or URL.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "volume": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "0.0–1.0."
+              },
+              "width": {
+                "type": [
+                  "number",
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^(<<|[a-z][\\w-]*\\.Player(#[\\w-]+| \\.[\\w-]+)?|buffer_capacity|children|height|looping|muted|playing|src|style|tooltip|volume|width)$"
+            },
+            "required": [
+              "src"
+            ]
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
                 "pattern": "^(?![a-z][\\w-]*\\.Preview(#[\\w-]+| \\.[\\w-]+)?$).*$"
               }
             }
@@ -11728,6 +12407,12 @@
                   },
                   {
                     "type": "null"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "null"
                   }
                 ],
                 "description": "Positional content — mapped to the element's primary prop."
@@ -11744,6 +12429,14 @@
                   "null"
                 ]
               },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "loading": {
                 "anyOf": [
                   {
@@ -11757,6 +12450,33 @@
                   }
                 ],
                 "description": "Indeterminate animation."
+              },
+              "max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "show_value": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "style": {
                 "$ref": "#/definitions/style"
@@ -11799,13 +12519,41 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 ],
                 "description": "0–100."
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Progress(#[\\w-]+| \\.[\\w-]+)?|children|color|loading|style|tooltip|value)$"
+              "pattern": "^(<<|[a-z][\\w-]*\\.Progress(#[\\w-]+| \\.[\\w-]+)?|children|color|label|loading|max|show_value|style|tooltip|value)$"
             }
           }
         },
@@ -12634,6 +13382,9 @@
                       "boolean",
                       "null"
                     ]
+                  },
+                  {
+                    "type": "null"
                   }
                 ],
                 "description": "Positional content — mapped to the element's primary prop."
@@ -12668,17 +13419,38 @@
               "orientation": {
                 "anyOf": [
                   {
-                    "enum": [
-                      "Horizontal",
-                      "Vertical"
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "Horizontal",
+                          "Vertical"
+                        ]
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
                     ]
                   },
                   {
-                    "pattern": "^(\\$|\\{)",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "Horizontal",
+                          "Vertical"
+                        ]
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 ]
               },
@@ -13335,6 +14107,12 @@
                 "anyOf": [
                   {
                     "type": "null"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "null"
                   }
                 ],
                 "description": "Positional content — mapped to the element's primary prop."
@@ -13348,41 +14126,122 @@
               "disabled": {
                 "anyOf": [
                   {
-                    "type": "boolean"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 ]
               },
               "max": {
                 "anyOf": [
                   {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "pattern": "^(\\$|\\{)",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "type": "null"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 ]
               },
               "min": {
                 "anyOf": [
                   {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "pattern": "^(\\$|\\{)",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "type": "null"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 ]
               },
@@ -13408,14 +14267,46 @@
               "step": {
                 "anyOf": [
                   {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "pattern": "^(\\$|\\{)",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "type": "null"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 ]
               },
@@ -13434,14 +14325,46 @@
               "value": {
                 "anyOf": [
                   {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{|bind\\s)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "pattern": "^(\\$|\\{|bind\\s)",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "type": "null"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 ]
               },
@@ -13476,6 +14399,9 @@
             "patternProperties": {
               "^[a-z][\\w-]*\\.Spinner(#[\\w-]+| \\.[\\w-]+)?$": {
                 "anyOf": [
+                  {
+                    "type": "null"
+                  },
                   {
                     "type": "null"
                   },
@@ -14043,6 +14969,12 @@
                   },
                   {
                     "type": "null"
+                  },
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "null"
                   }
                 ],
                 "description": "Positional content — mapped to the element's primary prop."
@@ -14051,6 +14983,32 @@
             "properties": {
               "checked": {
                 "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   {
                     "anyOf": [
                       {
@@ -14086,25 +15044,73 @@
               "disabled": {
                 "anyOf": [
                   {
-                    "type": "boolean"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "type": "null"
+                    "anyOf": [
+                      {
+                        "type": "boolean"
+                      },
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 ]
               },
               "label": {
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
                 ]
               },
               "on change": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on click": {
                 "type": [
                   "string",
                   "null"
@@ -14124,7 +15130,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Switch(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|label|on (change)|style|tooltip)$"
+              "pattern": "^(<<|[a-z][\\w-]*\\.Switch(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|label|on (change|click)|style|tooltip)$"
             }
           }
         },
@@ -14866,6 +15872,84 @@
           "if": {
             "not": {
               "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.Tex(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.Tex(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "color": {
+                "description": "Glyph color (default white).",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "size": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Font size in px/em (default 16)."
+              },
+              "src": {
+                "description": "LaTeX source — overrides element text when set.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^(<<|[a-z][\\w-]*\\.Tex(#[\\w-]+| \\.[\\w-]+)?|children|color|size|src|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
                 "pattern": "^(?![a-z][\\w-]*\\.Text(#[\\w-]+| \\.[\\w-]+)?$).*$"
               }
             }
@@ -15255,6 +16339,93 @@
             },
             "propertyNames": {
               "pattern": "^(<<|[a-z][\\w-]*\\.TitleBar(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.Toggle(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.Toggle(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "disabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on click": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "pressed": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^(<<|[a-z][\\w-]*\\.Toggle(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|on (click)|pressed|style|tooltip)$"
             }
           }
         },
@@ -15743,6 +16914,75 @@
           "if": {
             "not": {
               "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.Viewer(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.Viewer(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "quality": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "DPI multiplier for page rasterization (1.0 = base)."
+              },
+              "src": {
+                "description": "PDF file path (doc-relative).",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^(<<|[a-z][\\w-]*\\.Viewer(#[\\w-]+| \\.[\\w-]+)?|children|quality|src|style|tooltip)$"
+            },
+            "required": [
+              "src"
+            ]
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
                 "pattern": "^(?![a-z][\\w-]*\\.ZStack(#[\\w-]+| \\.[\\w-]+)?$).*$"
               }
             }
@@ -15812,7 +17052,7 @@
         }
       },
       "propertyNames": {
-        "pattern": "^((DescriptionItem|DescriptionList|SidebarMenuItem|BreadcrumbItem|MessageContent|ProgressCircle|ResizablePanel|AccordionItem|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|SettingsGroup|SidebarFooter|SidebarHeader|DropdownMenu|TableCaption|AvatarGroup|Collapsible|ColorPicker|NumberInput|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|Breadcrumb|DatePicker|Pagination|RadioGroup|Accordion|FormField|Resizable|Separator|StatusBar|TableBody|TableCell|TableHead|TimeField|Calendar|Checkbox|GroupBox|MenuItem|OtpInput|Progress|Settings|Skeleton|TableRow|Textarea|TitleBar|TreeItem|Message|Sidebar|Spinner|Stepper|Toolbar|Avatar|Button|Dialog|Editor|HStack|Rating|Select|Slider|Switch|VStack|Alert|Badge|Empty|Image|Input|Label|Radio|Table|Form|Icon|Link|List|Tabs|Text|Tree|Box|Kbd|Tab|Tag)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(SegmentedControl|DescriptionItem|DescriptionList|SidebarMenuItem|BreadcrumbItem|MessageContent|ProgressCircle|ResizablePanel|TrendIndicator|AccordionItem|InlineMessage|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|SettingsGroup|SidebarFooter|SidebarHeader|StatusMessage|DropdownMenu|TableCaption|TimelineItem|ToggleButton|AspectRatio|AvatarGroup|Collapsible|ColorPicker|NumberInput|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|Breadcrumb|CopyButton|DatePicker|EmptyState|IconButton|Pagination|RadioGroup|Accordion|Container|FormField|Inspector|Paragraph|Resizable|Separator|Statistic|StatusBar|TableBody|TableCell|TableHead|TimeField|Calendar|Checkbox|GroupBox|MenuItem|OtpInput|Overline|Progress|Settings|Skeleton|Subtitle|TableRow|Textarea|TitleBar|TreeItem|UsageBar|Callout|Caption|Divider|Heading|KpiCard|Message|Outline|Palette|Preview|Sidebar|Spinner|Stepper|Toolbar|Avatar|Banner|Button|Dialog|Editor|HStack|QrCode|Rating|Select|Slider|Switch|VStack|ZStack|Alert|Badge|Empty|Image|Input|Label|Meter|Radio|Table|Title|Form|Icon|Link|List|Tabs|Text|Tree|Vars|Box|Kbd|Tab|Tag)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<)$"
+        "pattern": "^((DescriptionItem|DescriptionList|SidebarMenuItem|BreadcrumbItem|MessageContent|ProgressCircle|ResizablePanel|AccordionItem|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|SettingsGroup|SidebarFooter|SidebarHeader|DropdownMenu|TableCaption|AvatarGroup|Collapsible|ColorPicker|NumberInput|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|Breadcrumb|DatePicker|Pagination|RadioGroup|Accordion|FormField|Resizable|Separator|StatusBar|TableBody|TableCell|TableHead|TimeField|Calendar|Checkbox|GroupBox|MenuItem|OtpInput|Progress|Settings|Skeleton|TableRow|Textarea|TitleBar|TreeItem|Message|Sidebar|Spinner|Stepper|Toolbar|Avatar|Button|Dialog|Editor|HStack|Rating|Select|Slider|Switch|VStack|Alert|Badge|Empty|Image|Input|Label|Radio|Table|Form|Icon|Link|List|Tabs|Text|Tree|Box|Kbd|Tab|Tag)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(SegmentedControl|DescriptionItem|DescriptionList|SidebarMenuItem|BreadcrumbItem|MessageContent|ProgressCircle|ResizablePanel|TrendIndicator|AccordionItem|InlineMessage|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|SettingsGroup|SidebarFooter|SidebarHeader|StatusMessage|DropdownMenu|TableCaption|TimelineItem|ToggleButton|AspectRatio|AvatarGroup|Collapsible|ColorPicker|NumberInput|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|Breadcrumb|CopyButton|DatePicker|EmptyState|IconButton|Pagination|RadioGroup|Accordion|Container|FormField|Inspector|Paragraph|Resizable|Separator|Statistic|StatusBar|TableBody|TableCell|TableHead|TimeField|Calendar|Checkbox|GroupBox|MenuItem|OtpInput|Overline|Progress|Settings|Skeleton|Subtitle|TableRow|Textarea|TitleBar|TreeItem|UsageBar|Callout|Caption|Divider|Heading|KpiCard|Message|Outline|Palette|Preview|Sidebar|Spinner|Stepper|Toolbar|Avatar|Banner|Button|Canvas|Dialog|Editor|HStack|Player|QrCode|Rating|Select|Slider|Switch|Toggle|VStack|Viewer|ZStack|Alert|Badge|Board|Empty|Image|Input|Label|Meter|Radio|Table|Title|Form|Icon|Link|List|Tabs|Text|Tree|Vars|Box|Kbd|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<)$"
       },
       "type": "object"
     },
@@ -16385,7 +17625,7 @@
     },
     "use": {
       "additionalProperties": {
-        "pattern": "^(gpui-component|template-lib|ely-core|gpui-kit|forge)(\\s+\\S+)?$",
+        "pattern": "^(gpui-video-player|gpui-whiteboard|gpui-apple-hig|gpui-component|template-lib|ratex-gpui|base-gpui|gpui-flow|ely-core|gpui-kit|gpui-pdf|forge)(\\s+\\S+)?$",
         "type": "string"
       },
       "description": "Import alias → `<library-id> [<version-req>]`.",

@@ -1,0 +1,16 @@
+[package]
+name = "forge-lib-flow"
+description = "gpui-flow adapter for GPUI Forge (gflow.* namespaced elements on the gpui-kit base)."
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+repository.workspace = true
+
+[dependencies]
+# Vendored port (#89): upstream gpui-flow tracks Zed git HEAD for `gpui` —
+# retargeted to the gpui-kit base's gpui-pre =0.3.10. MIT.
+gpui-flow = { path = "../../vendor/gpui-flow" }
+gpui-forge-runtime = { path = "../gpui-forge-runtime" }
+
+[lints]
+workspace = true

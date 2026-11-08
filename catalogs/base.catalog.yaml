@@ -1,0 +1,179 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for the base-gpui adapter (forge-lib-base) —
+# `use: base: base-gpui` on the gpui-kit base (#85). Base GPUI is a headless
+# Base UI port: the adapter supplies default chrome via style_with_state.
+catalog: "0.1"
+library: base-gpui
+name: Base GPUI (headless)
+version: 0.1.0
+license: MIT
+bases:
+  gpui-kit: "*"
+
+elements:
+  Button:
+    icon: mouse-pointer-click
+    group: Buttons
+    summary: Headless button — Base UI ButtonRoot with default chrome.
+    component: base_gpui::button::ButtonRoot
+    content: label
+    children: none
+    props:
+      label: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      click:
+
+  Checkbox:
+    icon: square-check
+    group: Input
+    summary: Headless checkbox — root + indicator, checked state shown filled.
+    component: base_gpui::checkbox::{CheckboxRoot, CheckboxIndicator}
+    content: label
+    children: none
+    props:
+      label: string
+      checked:
+        type: bool
+        default: false
+      indeterminate:
+        type: bool
+        default: false
+      disabled:
+        type: bool
+        default: false
+    events:
+      click:
+
+  Switch:
+    icon: toggle-left
+    group: Input
+    summary: Headless toggle switch — root + thumb.
+    component: base_gpui::switch::{SwitchRoot, SwitchThumb}
+    children: none
+    props:
+      checked:
+        type: bool
+        default: false
+      disabled:
+        type: bool
+        default: false
+    events:
+      click:
+
+  Toggle:
+    icon: circle-dot
+    group: Input
+    summary: Headless pressed/unpressed toggle button.
+    component: base_gpui::toggle::Toggle
+    content: label
+    children: none
+    props:
+      label: string
+      pressed:
+        type: bool
+        default: false
+      disabled:
+        type: bool
+        default: false
+    events:
+      click:
+
+  Slider:
+    icon: sliders-horizontal
+    group: Input
+    summary: Headless slider — control + track + indicator + thumb.
+    component: base_gpui::slider::SliderRoot
+    children: none
+    props:
+      value:
+        type: number
+        default: 50
+      min:
+        type: number
+        default: 0
+      max:
+        type: number
+        default: 100
+      step:
+        type: number
+        default: 1
+      disabled:
+        type: bool
+        default: false
+
+  Progress:
+    icon: loader
+    group: Display
+    summary: Progress bar — root + track + indicator, optional label/value.
+    component: base_gpui::progress::ProgressRoot
+    children: none
+    props:
+      value:
+        type: number
+        default: 50
+      max:
+        type: number
+        default: 100
+      label: string
+      show_value:
+        type: bool
+        default: true
+
+  Meter:
+    icon: gauge
+    group: Display
+    summary: Scalar gauge — root + track + indicator, optional label/value.
+    component: base_gpui::meter::MeterRoot
+    children: none
+    props:
+      value:
+        type: number
+        default: 50
+      min:
+        type: number
+        default: 0
+      max:
+        type: number
+        default: 100
+      label: string
+      show_value:
+        type: bool
+        default: true
+
+  Separator:
+    icon: minus
+    group: Layout
+    summary: 'Divider — horizontal by default; `orientation: Vertical` for upright.'
+    component: base_gpui::separator::Separator
+    children: none
+    props:
+      orientation:
+        type: enum
+        values: [Horizontal, Vertical]
+        default: Horizontal
+
+  Input:
+    icon: text-cursor-input
+    group: Input
+    summary: Headless single-line text input.
+    component: base_gpui::input::Input
+    children: none
+    props:
+      value: string
+      placeholder: string
+      disabled:
+        type: bool
+        default: false
+
+  Avatar:
+    icon: circle-user-round
+    group: Display
+    summary: Avatar — image when `src` resolves, else `fallback` initials.
+    component: base_gpui::avatar::{AvatarRoot, AvatarImage, AvatarFallback}
+    children: none
+    props:
+      src: string
+      fallback: string

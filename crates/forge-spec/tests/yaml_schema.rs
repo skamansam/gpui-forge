@@ -8,9 +8,36 @@ use forge_spec::yaml_schema;
 use saphyr::{LoadableYamlNode, Yaml};
 use serde_json::{Value as Json, json};
 
+// Must mirror the bundled set in `gpui-forge-runtime`'s `check::catalogs()` —
+// the published schemas below are only "fresh" when generated from this list.
 fn catalogs() -> Vec<Catalog> {
     [
-        "gpui-kit", "forge", "ely", "gc", "gpui02", "adabraka", "bezel", "ratatui", "iced",
+        "gpui-kit",
+        "forge",
+        "ely",
+        "gc",
+        "gpui02",
+        "adabraka",
+        "bezel",
+        "ratatui",
+        "iced",
+        "video",
+        "pdf",
+        "whiteboard",
+        "math",
+        "bezel-chart",
+        "bezel-editor",
+        "bezel-canvas",
+        "bezel-markdown",
+        "bezel-terminal",
+        "bezel-icons",
+        "bezel-motion",
+        "ferrum",
+        "rhythm",
+        "symbols",
+        "hig",
+        "base",
+        "gflow",
     ]
     .iter()
     .map(|id| {
@@ -23,7 +50,28 @@ fn catalogs() -> Vec<Catalog> {
             "adabraka" => include_str!("../../../catalogs/adabraka.catalog.yaml"),
             "bezel" => include_str!("../../../catalogs/bezel.catalog.yaml"),
             "ratatui" => include_str!("../../../catalogs/ratatui.catalog.yaml"),
-            _ => include_str!("../../../catalogs/iced.catalog.yaml"),
+            "iced" => include_str!("../../../catalogs/iced.catalog.yaml"),
+            "video" => include_str!("../../../catalogs/video.catalog.yaml"),
+            "pdf" => include_str!("../../../catalogs/pdf.catalog.yaml"),
+            "whiteboard" => include_str!("../../../catalogs/whiteboard.catalog.yaml"),
+            "math" => include_str!("../../../catalogs/math.catalog.yaml"),
+            "bezel-chart" => include_str!("../../../catalogs/bezel-chart.catalog.yaml"),
+            "bezel-editor" => include_str!("../../../catalogs/bezel-editor.catalog.yaml"),
+            "bezel-canvas" => include_str!("../../../catalogs/bezel-canvas.catalog.yaml"),
+            "bezel-markdown" => {
+                include_str!("../../../catalogs/bezel-markdown.catalog.yaml")
+            }
+            "bezel-terminal" => {
+                include_str!("../../../catalogs/bezel-terminal.catalog.yaml")
+            }
+            "bezel-icons" => include_str!("../../../catalogs/bezel-icons.catalog.yaml"),
+            "bezel-motion" => include_str!("../../../catalogs/bezel-motion.catalog.yaml"),
+            "ferrum" => include_str!("../../../catalogs/ferrum.catalog.yaml"),
+            "rhythm" => include_str!("../../../catalogs/rhythm.catalog.yaml"),
+            "symbols" => include_str!("../../../catalogs/symbols.catalog.yaml"),
+            "hig" => include_str!("../../../catalogs/hig.catalog.yaml"),
+            "base" => include_str!("../../../catalogs/base.catalog.yaml"),
+            _ => include_str!("../../../catalogs/gflow.catalog.yaml"),
         };
         catalog::from_yaml(src).unwrap_or_else(|d| panic!("catalog {id}: {d}"))
     })

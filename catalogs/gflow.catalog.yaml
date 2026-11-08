@@ -1,0 +1,40 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for the gpui-flow adapter (forge-lib-flow) —
+# `use: gflow: gpui-flow` on the gpui-kit base (#89). Alias is `gflow` so it
+# can't be confused with the gpui02 base's `flow` (ferrum-flow) adapter.
+catalog: "0.1"
+library: gpui-flow
+name: gpui-flow
+version: 0.1.0
+license: MIT
+bases:
+  gpui-kit: "*"
+
+elements:
+  Canvas:
+    icon: workflow
+    group: Media
+    summary: React-Flow-style node editor canvas — pan/zoom graph of nodes and edges.
+    component: gpui_flow::FlowGraph
+    children: none
+    props:
+      graph:
+        type: map
+        summary: >-
+          {nodes: [{id, x, y, label, type?}], edges: [{id, source, target,
+          label?, type?, animated?}]}. Node type names a registered renderer;
+          omitted nodes get the default chrome. Edge type: Bezier (default),
+          Straight, SmoothStep.
+      controls:
+        type: bool
+        default: true
+        summary: Overlay the zoom/fit controls.
+      minimap:
+        type: bool
+        default: false
+        summary: Overlay the minimap.
+      pattern:
+        type: enum
+        values: [Dots, Lines, Cross]
+        default: Dots
+        summary: Canvas background grid pattern.

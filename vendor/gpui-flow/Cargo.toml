@@ -1,0 +1,27 @@
+[package]
+autoexamples = false
+name = "gpui-flow"
+version = "0.1.0"
+edition = "2024"
+description = "A node-based flow graph editor for GPUI, inspired by React Flow / xyflow."
+license = "MIT"
+repository = "https://github.com/pacifio/gpui-flow"
+homepage = "https://github.com/pacifio/gpui-flow"
+readme = "README.md"
+keywords = ["gpui", "flow", "graph", "node-editor", "react-flow"]
+categories = ["gui", "graphics"]
+
+[dependencies]
+# Forge port (#89): upstream tracks Zed git HEAD for `gpui` — retargeted to
+# the gpui-kit base's `gpui-pre =0.3.10` pin under the `gpui` crate name.
+gpui = { package = "gpui-pre", version = "=0.3.10" }
+
+# Forge port (#89): upstream dev-dep `gpui_macos` (Zed git, font-kit — the
+# platform backend the examples launch with) has no gpui-pre counterpart, so
+# the dev-dep and the [[example]] targets are dropped. The example sources
+# stay in examples/ for reference; they are not built by Forge.
+[dev-dependencies]
+
+
+[lints.clippy]
+type_complexity = "allow"

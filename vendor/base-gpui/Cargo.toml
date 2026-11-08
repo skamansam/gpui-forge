@@ -1,0 +1,34 @@
+[package]
+name = "base-gpui"
+version = "0.1.0"
+edition = "2021"
+authors = ["Luke Tandjung"]
+description = "A GPUI-native port of Base UI's rich, headless component APIs"
+license = "MIT"
+repository = "https://github.com/LukeTandjung/base-gpui"
+readme = "README.md"
+keywords = ["gpui", "ui", "components", "desktop", "unstyled"]
+categories = ["gui"]
+publish = false
+
+[dependencies]
+derive_setters = "0.1.9"
+# Forge port (#85): upstream pins a Zed git rev of `gpui` — retargeted to the
+# gpui-kit base's `gpui-pre =0.3.10` pin under the `gpui` crate name. The
+# rev's API (Role/Orientation/AccessibleAction, two-arg `focus`) postdates
+# crates.io gpui 0.2.2, so the Vanilla GPUI 0.2 base cannot host it.
+gpui = { package = "gpui-pre", version = "=0.3.10" }
+unicode-segmentation = "1"
+# std::time::{Instant, SystemTime} panic on wasm32-unknown-unknown ("time not
+# implemented on this platform"). web-time re-exports the std types unchanged
+# on native targets and swaps in performance.now()/Date.now()-backed
+# implementations on the web, so runtimes can keep passing plain Instants.
+web-time = "1"
+
+[dev-dependencies]
+gpui = { package = "gpui-pre", version = "=0.3.10", features = ["test-support"] }
+
+[lints.clippy]
+large_enum_variant = "allow"
+pub_with_shorthand = "deny"
+too_many_arguments = "allow"

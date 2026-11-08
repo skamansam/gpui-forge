@@ -19,6 +19,8 @@ forge-lib-gpui-component = { version = "0.1.0", path = "../forge-lib-gpui-compon
 forge-lib-video = { path = "../forge-lib-video" }
 forge-lib-zorite = { path = "../forge-lib-zorite" }
 forge-lib-hig = { path = "../forge-lib-hig" }
+forge-lib-base = { path = "../forge-lib-base" }
+forge-lib-flow = { path = "../forge-lib-flow" }
 
 [lints]
 workspace = true

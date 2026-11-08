@@ -1,0 +1,16 @@
+[package]
+name = "forge-lib-base"
+description = "Base GPUI adapter for GPUI Forge (base.* namespaced elements on the gpui-kit base)."
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+repository.workspace = true
+
+[dependencies]
+# Vendored port (#85): upstream base-gpui pins a Zed git rev of `gpui` —
+# retargeted to the gpui-kit base's gpui-pre =0.3.10. MIT.
+base-gpui = { path = "../../vendor/base-gpui" }
+gpui-forge-runtime = { path = "../gpui-forge-runtime" }
+
+[lints]
+workspace = true

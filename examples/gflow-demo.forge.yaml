@@ -1,0 +1,33 @@
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
+forge: "0.1"
+base: gpui-kit
+use:
+  gflow: gpui-flow
+
+root:
+  VStack:
+  style:
+    padding: 24px
+    gap: 12px
+  children:
+    - Text: gpui-flow
+      style:
+        size: xl
+        weight: semibold
+    - gflow.Canvas:
+      style:
+        height: 420px
+      graph:
+        nodes:
+          - {id: start, x: 0, y: 80, label: Start}
+          - {id: fetch, x: 220, y: 0, label: Fetch data}
+          - {id: transform, x: 220, y: 160, label: Transform}
+          - {id: sink, x: 460, y: 80, label: Sink}
+        edges:
+          - {id: e1, source: start, target: fetch}
+          - {id: e2, source: start, target: transform}
+          - {id: e3, source: fetch, target: sink, animated: true}
+          - {id: e4, source: transform, target: sink, type: Straight, label: rows}
+      controls: true
+      minimap: true
+      pattern: Dots

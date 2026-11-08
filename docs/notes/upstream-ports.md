@@ -10,12 +10,12 @@ crates on `gpui 0.2` go through the Vanilla GPUI 0.2 base (#96); crates on
 | ely-core | gpui-pre 0.3.10 | **done** — forge-lib-ely adapter | shipped |
 | gpui-video-player | gpui-pre (feature) | adapter (#77); GStreamer system dep | deferred |
 | zorite-markdown/editor | gpui 0.2 | adapter (#78); GPL-3.0 stays opt-in | deferred |
-| hig-gpui | gpui-kit 0.7.3 | needs upstream bump to gpui-kit 0.8 (#90) | needs port |
-| gpui-flow | Zed git | port to gpui-pre (#89) | needs port |
+| hig-gpui | gpui-kit 0.7.3 | landed — vendored gpui-kit 0.8 bump + forge-lib-hig (#90) | shipped |
+| gpui-flow | Zed git | landed — vendored gpui-pre 0.3.10 retarget + forge-lib-flow (#89) | shipped |
 | ferrum-flow | gpui 0.2 | via Vanilla GPUI 0.2 base (#86) | waits on #96 |
 | rhythm-gpui | gpui 0.2 | via Vanilla GPUI 0.2 base (#87) | waits on #96 |
 | gpui-symbols | gpui 0.2 | via Vanilla GPUI 0.2 base (#88) | waits on #96 |
-| Base GPUI | Zed git | port to gpui-pre (#85) | needs port |
+| Base GPUI | Zed git | landed — vendored gpui-pre 0.3.10 retarget + forge-lib-base (#85) | shipped |
 | Bezel | Zed git | landed — twin + host + `forge build` (#94) | shipped |
 | adabraka-ui | adabraka-gpui 0.5 | landed — nested workspace + vendored fix (#95) | shipped |
 | ratatui | — | landed — own base + TUI host (#112) | shipped |
