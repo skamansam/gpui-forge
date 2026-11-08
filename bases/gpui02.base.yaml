@@ -22,3 +22,6 @@ license: MIT
 
 libraries:               # adapters known compatible with this base
   gpui-video-player: {version: "0.1.3", crate: forge-lib-video, license: MIT}
+  ferrum-flow: {version: "0.3.1", crate: forge-lib-gpui02, license: Apache-2.0}
+  rhythm-gpui: {version: "0.2", crate: forge-lib-gpui02, license: MIT}
+  gpui-symbols: {version: "0.6.1", crate: forge-lib-gpui02, license: Apache-2.0}

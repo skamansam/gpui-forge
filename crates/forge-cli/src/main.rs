@@ -1558,6 +1558,30 @@ fn build_cmd(rest: &[String]) -> i32 {
                     lib_uses.push("use forge_lib_zorite::Math;".to_string());
                     lib_register.push("    view.register_library(Math::new());".to_string());
                 }
+                "ferrum-flow" => {
+                    lib_deps.push(format!(
+                        "forge-lib-gpui02 = {{ path = \"{}\", features = [\"ferrum\"] }}",
+                        root.join("crates/forge-lib-gpui02").display()
+                    ));
+                    lib_uses.push("use forge_lib_gpui02::Ferrum;".to_string());
+                    lib_register.push("    view.register_library(Ferrum::new());".to_string());
+                }
+                "rhythm-gpui" => {
+                    lib_deps.push(format!(
+                        "forge-lib-gpui02 = {{ path = \"{}\", features = [\"rhythm\"] }}",
+                        root.join("crates/forge-lib-gpui02").display()
+                    ));
+                    lib_uses.push("use forge_lib_gpui02::Rhythm;".to_string());
+                    lib_register.push("    view.register_library(Rhythm);".to_string());
+                }
+                "gpui-symbols" => {
+                    lib_deps.push(format!(
+                        "forge-lib-gpui02 = {{ path = \"{}\", features = [\"symbols\"] }}",
+                        root.join("crates/forge-lib-gpui02").display()
+                    ));
+                    lib_uses.push("use forge_lib_gpui02::Symbols;".to_string());
+                    lib_register.push("    view.register_library(Symbols);".to_string());
+                }
                 other => eprintln!("forge: no adapter crate known for `{other}` — skipped"),
             }
         }

@@ -37,13 +37,22 @@ required-features = ["base-iced"]
 [features]
 default = ["base-gpui-kit"]
 base-gpui-kit = ["dep:gpui-kit", "gpui-forge-runtime/base-gpui-kit"]
-base-gpui02 = ["dep:gpui", "dep:guise-ui", "gpui-forge-runtime/base-gpui02"]
+base-gpui02 = [
+    "dep:gpui",
+    "dep:guise-ui",
+    "gpui-forge-runtime/base-gpui02",
+    "dep:forge-lib-gpui02",
+    "forge-lib-gpui02/ferrum",
+    "forge-lib-gpui02/rhythm",
+    "forge-lib-gpui02/symbols",
+]
 base-bezel = ["dep:bezel", "gpui-forge-runtime/base-bezel"]
 base-ratatui = ["dep:ratatui", "dep:crossterm", "gpui-forge-runtime/base-ratatui"]
 base-iced = ["dep:iced", "gpui-forge-runtime/base-iced"]
 
 [dependencies]
 gpui-forge-runtime = { path = "../gpui-forge-runtime", default-features = false }
+forge-lib-gpui02 = { path = "../forge-lib-gpui02", optional = true, default-features = false }
 gpui-kit = { version = "=0.8.1", optional = true }
 gpui = { version = "=0.2.2", optional = true }
 guise-ui = { version = "1.10", optional = true }

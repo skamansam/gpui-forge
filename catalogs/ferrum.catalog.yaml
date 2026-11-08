@@ -1,0 +1,18 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for the ferrum-flow adapter (forge-lib-gpui02 `ferrum`
+# feature) — `use: flow: ferrum-flow` on the gpui02 base (#86).
+catalog: "0.1"
+library: ferrum-flow
+name: ferrum-flow
+version: 0.3.1
+license: Apache-2.0
+bases:
+  gpui02: "*"
+
+elements:
+  Canvas:
+    icon: workflow
+    group: Media
+    summary: Node-based editor canvas — graph of nodes and edges.
+    component: ferrum_flow::FlowCanvas
+    children: none

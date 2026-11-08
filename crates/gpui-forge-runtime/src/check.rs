@@ -49,6 +49,12 @@ pub fn catalogs() -> Vec<Catalog> {
             .expect("bundled bezel-icons catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/bezel-motion.catalog.yaml"))
             .expect("bundled bezel-motion catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/ferrum.catalog.yaml"))
+            .expect("bundled ferrum catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/rhythm.catalog.yaml"))
+            .expect("bundled rhythm catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/symbols.catalog.yaml"))
+            .expect("bundled symbols catalog is valid"),
     ]
 }
 
@@ -63,6 +69,12 @@ pub fn catalogs() -> Vec<Catalog> {
             .expect("bundled forge catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/video.catalog.yaml"))
             .expect("bundled video catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/ferrum.catalog.yaml"))
+            .expect("bundled ferrum catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/rhythm.catalog.yaml"))
+            .expect("bundled rhythm catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/symbols.catalog.yaml"))
+            .expect("bundled symbols catalog is valid"),
     ]
 }
 

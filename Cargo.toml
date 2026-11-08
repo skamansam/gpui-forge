@@ -40,4 +40,7 @@ gpui-video-player = { path = "vendor/gpui-video-player" }
 # gpui-pdf calls `Modifiers::secondary()` with no args — gpui-pre 0.3.10 made it
 # take `&App`; the vendored crate passes `cx` (#78).
 gpui-pdf = { path = "vendor/gpui-pdf" }
+# gpui-symbols' non-macOS stub predates the weight/scale/mode args its call
+# site passes — the vendored stub takes the macOS signature (#88).
+gpui-symbols = { path = "vendor/gpui-symbols" }
 xattr = { path = "vendor/xattr" }

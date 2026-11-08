@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for the rhythm-gpui adapter (forge-lib-gpui02 `rhythm`
+# feature) — `use: rhythm: rhythm-gpui` on the gpui02 base (#87).
+catalog: "0.1"
+library: rhythm-gpui
+name: rhythm-gpui
+version: 0.2.0
+license: MIT
+bases:
+  gpui02: "*"
+
+elements:
+  Frame:
+    icon: rows-3
+    group: Display
+    summary: Baseline-rhythm frame — content snaps to a real font-metric grid.
+    component: rhythm_gpui::RhythmFrame
+    content: text
+    children: none
+    props:
+      size:
+        type: number
+        summary: Grid cell size in px (default 8).
+      ratio:
+        type: number
+        summary: Baseline fraction of the cell, 0.0–1.0 (default 0.5).
+      text:
+        type: string
+        summary: Content text — overrides element content when set.

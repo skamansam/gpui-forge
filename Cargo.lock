@@ -3409,6 +3409,22 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "629c9d6b6f30b5604089e0980f4d924a013aacb1654a6cdf5d3d852224f68651"
 
 [[package]]
+name = "ferrum-flow"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0c7ec0f869d8e6fadcc6801b2fe93be87ecbaf2ae77577408e749aad7bbd85c9"
+dependencies = [
+ "anyhow",
+ "futures",
+ "gpui",
+ "image",
+ "serde",
+ "serde_json",
+ "smallvec",
+ "uuid",
+]
+
+[[package]]
 name = "field-offset"
 version = "0.3.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3679,6 +3695,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "forge-lib-gpui02"
+version = "0.1.0"
+dependencies = [
+ "ferrum-flow",
+ "gpui-forge-runtime",
+ "gpui-symbols",
+ "rhythm-gpui",
+ "serde_json",
+]
+
+[[package]]
 name = "forge-lib-template"
 version = "0.1.0"
 dependencies = [
@@ -3712,6 +3739,7 @@ version = "0.1.0"
 dependencies = [
  "bezel",
  "crossterm",
+ "forge-lib-gpui02",
  "gpui",
  "gpui-forge-runtime",
  "gpui-kit",
@@ -5245,6 +5273,16 @@ name = "gpui-pre-ztracing-macro"
 version = "0.3.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e0f9dae92b9bc15baa6e530c90bdd4c689d3710bd4d18c3566deb1d6ae182daf"
+
+[[package]]
+name = "gpui-symbols"
+version = "0.6.1"
+dependencies = [
+ "gpui",
+ "image",
+ "objc",
+ "smallvec",
+]
 
 [[package]]
 name = "gpui-video-player"
@@ -9954,6 +9992,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "47b34b781b31e5d73e9fbc8689c70551fd1ade9a19e3e28cfec8580a79290cc4"
 dependencies = [
  "bytemuck",
+]
+
+[[package]]
+name = "rhythm-gpui"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fecebe5bcf3d7f7dddcef53f02f790b8cc58b1c98b04fdfd41a1456f558d64af"
+dependencies = [
+ "gpui",
 ]
 
 [[package]]

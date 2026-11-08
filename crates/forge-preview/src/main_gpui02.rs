@@ -33,6 +33,11 @@ fn main() {
             move |_, cx| {
                 cx.new(move |cx| {
                     let mut view = ForgeView::new(check::catalogs());
+                    // gpui02-base adapters (#86-88) — namespaced elements on
+                    // foreign-base docs render through these.
+                    view.register_library(forge_lib_gpui02::Ferrum::new());
+                    view.register_library(forge_lib_gpui02::Rhythm);
+                    view.register_library(forge_lib_gpui02::Symbols);
                     view.set_dnd(true, cx);
                     // Fired hooks and state writes go out over stdout — same
                     // contract as the gpui-kit host.
