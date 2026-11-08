@@ -1,0 +1,22 @@
+# gpui-pdf — virtualized PDF viewer; pages rasterize off-thread via hayro.
+# `src` is doc-relative — drop a `sample.pdf` next to this file to see pages.
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
+forge: "0.1"
+base: gpui-kit
+use:
+  pdf: gpui-pdf
+
+root:
+  VStack:
+  style:
+    padding: 24px
+    gap: 12px
+  children:
+    - Text: gpui-pdf
+      style:
+        size: xl
+        weight: semibold
+    - pdf.Viewer:
+      src: ./sample.pdf
+      style:
+        height: 560px

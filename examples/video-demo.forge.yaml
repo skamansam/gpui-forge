@@ -1,0 +1,24 @@
+# gpui-video-player — hardware-decoded video on a GStreamer pipeline.
+# Requires GStreamer 1.14+ installed on the host (#77).
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
+forge: "0.1"
+base: gpui-kit
+use:
+  video: gpui-video-player
+
+root:
+  VStack:
+  style:
+    padding: 24px
+    gap: 12px
+  children:
+    - Text: gpui-video-player
+      style:
+        size: xl
+        weight: semibold
+    - video.Player:
+      src: https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4
+      width: 640px
+      height: 360px
+      muted: true
+      looping: true

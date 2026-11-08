@@ -1,0 +1,45 @@
+# gpui-apple-hig — macOS-styled widgets (HIG) on the gpui-kit base.
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
+forge: "0.1"
+base: gpui-kit
+use:
+  hig: gpui-apple-hig
+
+root:
+  VStack:
+  style:
+    padding: 24px
+    gap: 12px
+  children:
+    - Text: gpui-apple-hig
+      style:
+        size: xl
+        weight: semibold
+    - HStack:
+      style:
+        gap: 8px
+      children:
+        - hig.Button: Push
+          prominent: true
+        - hig.Button: Plain
+        - hig.Button: Destructive
+          destructive: true
+    - hig.Switch:
+      label: Toggle me
+      checked: true
+    - hig.Checkbox: I agree
+      checked: true
+    - hig.Slider:
+      value: 40
+      min: 0
+      max: 100
+      step: 1
+    - HStack:
+      style:
+        gap: 12px
+        align: center
+      children:
+        - hig.Progress:
+          value: 0.65
+        - hig.Spinner:
+        - hig.Badge: 3

@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 	import Canvas from '#lib/Canvas.svelte';
 	import YamlEditor from '#lib/YamlEditor.svelte';
-	import { examples } from '#lib/examples.ts';
+	import { examples, showcases } from '#lib/examples.ts';
 
 	let tab = $state<Record<string, 'yaml' | 'rust'>>({});
 	const share = (yaml: string, state: unknown) =>
@@ -43,11 +43,30 @@
 			</div>
 		</section>
 	{/each}
+
+	<h2 class="sets">Widget sets</h2>
+	<p class="lead">
+		Every add-on library Forge Studio ships, as the
+		<code>examples/*.forge.yaml</code> demo its Welcome tab opens. They render on a native base —
+		the canvas above only previews gpui-kit — so these show as source. Open them in Studio
+		(<code>cargo xtask studio</code> → Gallery) to run them.
+	</p>
+	{#each showcases as s (s.slug)}
+		<section id={s.slug}>
+			<h3>{s.title}</h3>
+			<p>{s.summary}</p>
+			<div class="panel">
+				<div class="panel-title"><span>{s.slug}.forge.yaml</span></div>
+				<YamlEditor value={s.yaml} readonly height="360px" />
+			</div>
+		</section>
+	{/each}
 </div>
 
 <style>
 	.page { max-width: 1200px; margin: 0 auto; padding: 32px 24px 80px; }
 	.lead { color: var(--muted); }
+	.sets { margin-top: 64px; }
 	section { margin-top: 40px; }
 	.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 	.panel-title button { background: none; border: 0; color: var(--muted); font: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer; padding: 0 8px 0 0; }

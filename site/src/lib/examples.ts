@@ -9,6 +9,94 @@ export type Example = {
 	rust: string;
 };
 
+// One demo per widget set — the same `examples/*.forge.yaml` files the
+// Welcome tab in Forge Studio opens (#129). The canvas only renders the
+// gpui-kit base, so these show as source; open them in Studio to run them.
+import elyDemo from '../../../examples/ely-demo.forge.yaml?raw';
+import gcShowcase from '../../../examples/gc-showcase.forge.yaml?raw';
+import gflowDemo from '../../../examples/gflow-demo.forge.yaml?raw';
+import baseDemo from '../../../examples/base-demo.forge.yaml?raw';
+import videoDemo from '../../../examples/video-demo.forge.yaml?raw';
+import higDemo from '../../../examples/hig-demo.forge.yaml?raw';
+import pdfDemo from '../../../examples/pdf-demo.forge.yaml?raw';
+import whiteboardDemo from '../../../examples/whiteboard-demo.forge.yaml?raw';
+import mathDemo from '../../../examples/math-demo.forge.yaml?raw';
+
+export type Showcase = {
+	slug: string;
+	/** The `use:` alias the document imports. */
+	alias: string;
+	title: string;
+	summary: string;
+	yaml: string;
+};
+
+export const showcases: Showcase[] = [
+	{
+		slug: 'ely-demo',
+		alias: 'ely',
+		title: 'Ely GPUI Components',
+		summary: '`use: ely: ely-core` — data-display widgets (KPI cards, meters, timelines).',
+		yaml: elyDemo
+	},
+	{
+		slug: 'gc-showcase',
+		alias: 'gc',
+		title: 'gpui-component',
+		summary: '`use: gc: gpui-component` — the upstream component suite.',
+		yaml: gcShowcase
+	},
+	{
+		slug: 'gflow-demo',
+		alias: 'gflow',
+		title: 'gpui-flow',
+		summary: '`use: gflow: gpui-flow` — node-graph canvas.',
+		yaml: gflowDemo
+	},
+	{
+		slug: 'base-demo',
+		alias: 'base',
+		title: 'base-gpui',
+		summary: '`use: base: base-gpui` — gpui-pre primitives ported to gpui-kit.',
+		yaml: baseDemo
+	},
+	{
+		slug: 'video-demo',
+		alias: 'video',
+		title: 'gpui-video-player',
+		summary: '`use: video: gpui-video-player` — GStreamer video element.',
+		yaml: videoDemo
+	},
+	{
+		slug: 'hig-demo',
+		alias: 'hig',
+		title: 'gpui-apple-hig',
+		summary: '`use: hig: gpui-apple-hig` — macOS-styled widgets.',
+		yaml: higDemo
+	},
+	{
+		slug: 'pdf-demo',
+		alias: 'pdf',
+		title: 'gpui-pdf',
+		summary: '`use: pdf: gpui-pdf` — virtualized PDF viewer.',
+		yaml: pdfDemo
+	},
+	{
+		slug: 'whiteboard-demo',
+		alias: 'wb',
+		title: 'gpui-whiteboard',
+		summary: '`use: wb: gpui-whiteboard` — infinite canvas.',
+		yaml: whiteboardDemo
+	},
+	{
+		slug: 'math-demo',
+		alias: 'math',
+		title: 'ratex-gpui',
+		summary: '`use: math: ratex-gpui` — LaTeX rendering + equation editor.',
+		yaml: mathDemo
+	}
+];
+
 export const examples: Example[] = [
 	{
 		slug: 'login',

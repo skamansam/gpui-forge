@@ -1,0 +1,20 @@
+# gpui-whiteboard — infinite canvas with shapes, arrows, freehand and text.
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
+forge: "0.1"
+base: gpui-kit
+use:
+  wb: gpui-whiteboard
+
+root:
+  VStack:
+  style:
+    padding: 24px
+    gap: 12px
+  children:
+    - Text: gpui-whiteboard
+      style:
+        size: xl
+        weight: semibold
+    - wb.Board:
+      style:
+        height: 560px

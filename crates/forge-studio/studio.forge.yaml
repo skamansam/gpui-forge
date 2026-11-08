@@ -8,6 +8,7 @@ state:
   studio.dark_themes: list
   studio.all_themes: list
   studio.widget_set: string
+  studio.widget_sets: list
   studio.diagnostics: string
   studio.file: string
   studio.host: string
@@ -247,11 +248,11 @@ root:
                                   src: ../../gpui_forge_icon_medallion.svg
                                   size: 56px
                                 - Select#widget_set:
-                                  options: [gpui-kit, forge]
+                                  options: $studio.widget_sets
                                   value: bind $studio.widget_set
                                   placeholder: widget set
                                   on change: widget_set_changed($studio.widget_set)
-                                - Text: Every element the adapter renders, per widget set.
+                                - Text: A showcase for every supported widget set.
                                   style: {size: sm, color: $theme.muted_foreground}
                                 - HStack:
                                   style: {justify: end, grow: true}

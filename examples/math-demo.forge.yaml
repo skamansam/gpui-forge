@@ -1,0 +1,28 @@
+# ratex-gpui — LaTeX rendering (rasterized formulas) and a structural
+# MathQuill-style equation editor.
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
+forge: "0.1"
+base: gpui-kit
+use:
+  math: ratex-gpui
+
+root:
+  VStack:
+  style:
+    padding: 24px
+    gap: 16px
+  children:
+    - Text: ratex-gpui
+      style:
+        size: xl
+        weight: semibold
+    - math.Tex:
+      src: "e^{{i\\pi} + 1 = 0"
+      size: 28
+    - math.Tex:
+      src: "\\frac{{-b \\pm \\sqrt{{b^2 - 4ac}}{{2a}"
+      size: 24
+    - Label: Live editor
+    - math.Editor:
+      style:
+        height: 120px

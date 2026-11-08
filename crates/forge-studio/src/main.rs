@@ -27,6 +27,23 @@ const GALLERY: &str = include_str!("../gallery.forge.yaml");
 const GALLERY_FORGE: &str = include_str!("../gallery.forge.forge.yaml");
 const BLANK: &str = "$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json\nforge: \"0.1\"\nbase: gpui-kit\n\nroot:\n  VStack:\n  style:\n    padding: 16px\n  children:\n    - Text: Hello, Forge!\n";
 
+// One demo per widget set, shared with `examples/` and the docs site (#129).
+const EXAMPLE_ELY: &str = include_str!("../../../examples/ely-demo.forge.yaml");
+const EXAMPLE_GC: &str = include_str!("../../../examples/gc-showcase.forge.yaml");
+const EXAMPLE_GFLOW: &str = include_str!("../../../examples/gflow-demo.forge.yaml");
+const EXAMPLE_BASE: &str = include_str!("../../../examples/base-demo.forge.yaml");
+const EXAMPLE_VIDEO: &str = include_str!("../../../examples/video-demo.forge.yaml");
+const EXAMPLE_PDF: &str = include_str!("../../../examples/pdf-demo.forge.yaml");
+const EXAMPLE_WB: &str = include_str!("../../../examples/whiteboard-demo.forge.yaml");
+const EXAMPLE_MATH: &str = include_str!("../../../examples/math-demo.forge.yaml");
+const EXAMPLE_HIG: &str = include_str!("../../../examples/hig-demo.forge.yaml");
+
+/// Widget sets the Welcome tab offers in its showcase picker (#129) — the
+/// gpui-kit base, the `forge` intrinsics, then every registered `forge-lib-*`.
+const WIDGET_SETS: &[&str] = &[
+    "gpui-kit", "forge", "ely", "gc", "gflow", "base", "video", "hig", "pdf", "wb", "math",
+];
+
 struct Shared {
     /// The file `editor.source` was loaded from; `None` for embedded documents.
     file: Option<PathBuf>,
@@ -225,6 +242,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
                 "theme": theme_name,
                 "file": "welcome.forge.yaml",
                 "diagnostics": "",
+                "widget_sets": WIDGET_SETS,
                 "spec": gpui_forge_runtime::forge_spec::SPEC_VERSION,
                 "base": BASE_ID,
             },
@@ -634,11 +652,8 @@ fn dispatch(
         "open_gallery" => start_from(view, &["gallery".into()], shared, cx),
         "start_from" => start_from(view, args, shared, cx),
         "widget_set_changed" => {
-            let name = match args.first().map(String::as_str) {
-                Some("forge") => "gallery.forge.forge.yaml",
-                _ => "gallery.forge.yaml",
-            };
-            start_from(view, &[name.to_owned()], shared, cx);
+            let alias = args.first().map(String::as_str).unwrap_or("gpui-kit");
+            start_from(view, &[alias.to_owned()], shared, cx);
         }
         "select_node" => select_node(view, args, cx),
         "prop_changed" => prop_changed(view, args, shared, cx),
@@ -658,44 +673,63 @@ fn dispatch(
     }
 }
 
-/// `start_from('welcome'|'gallery'|'blank')` — loads a starter document and shows
-/// the preview tab so the user sees the running app.
+/// `start_from('welcome'|'gallery'|'blank'|<widget-set>)` — loads a starter
+/// document and shows the preview tab so the user sees the running app.
+/// Widget-set aliases resolve to their demo in `examples/` (#129); the paths
+/// are relative to the crate so doc-relative `src:` props resolve too.
+fn starter(name: &str) -> Option<(&'static str, &'static str)> {
+    Some(match name {
+        "welcome" | "welcome.forge.yaml" => ("welcome.forge.yaml", WELCOME),
+        "gallery" | "gpui-kit" | "gallery.forge.yaml" => ("gallery.forge.yaml", GALLERY),
+        "forge" | "gallery.forge.forge.yaml" => {
+            ("gallery.forge.forge.yaml", GALLERY_FORGE)
+        }
+        "blank" | "blank.forge.yaml" => ("blank.forge.yaml", BLANK),
+        "ely" | "ely-demo.forge.yaml" => ("../../examples/ely-demo.forge.yaml", EXAMPLE_ELY),
+        "gc" | "gc-showcase.forge.yaml" => ("../../examples/gc-showcase.forge.yaml", EXAMPLE_GC),
+        "gflow" | "gflow-demo.forge.yaml" => {
+            ("../../examples/gflow-demo.forge.yaml", EXAMPLE_GFLOW)
+        }
+        "base" | "base-demo.forge.yaml" => ("../../examples/base-demo.forge.yaml", EXAMPLE_BASE),
+        "video" | "video-demo.forge.yaml" => {
+            ("../../examples/video-demo.forge.yaml", EXAMPLE_VIDEO)
+        }
+        "pdf" | "pdf-demo.forge.yaml" => ("../../examples/pdf-demo.forge.yaml", EXAMPLE_PDF),
+        "wb" | "whiteboard-demo.forge.yaml" => {
+            ("../../examples/whiteboard-demo.forge.yaml", EXAMPLE_WB)
+        }
+        "math" | "math-demo.forge.yaml" => ("../../examples/math-demo.forge.yaml", EXAMPLE_MATH),
+        "hig" | "hig-demo.forge.yaml" => ("../../examples/hig-demo.forge.yaml", EXAMPLE_HIG),
+        _ => return None,
+    })
+}
+
 fn start_from(
     view: &mut ForgeView,
     args: &[String],
     shared: &SharedState,
     cx: &mut Context<ForgeView>,
 ) {
-    let name = match args.first().map(String::as_str) {
-        Some("gallery" | "gallery.forge.yaml") => "gallery.forge.yaml",
-        Some("forge" | "gallery.forge.forge.yaml") => "gallery.forge.forge.yaml",
-        Some("blank" | "blank.forge.yaml") => "blank.forge.yaml",
-        _ => "welcome.forge.yaml",
+    let name = args.first().map(String::as_str).unwrap_or("welcome");
+    let Some((path, fallback)) = starter(name) else {
+        status(view, &format!("no starter `{name}`"), cx);
+        return;
     };
     // Read the real file from disk — `include_str!` would be stale the moment the
-    // user edits `crates/forge-studio/*.forge.yaml`. Falls back to embedded.
-    let src = std::fs::read_to_string(format!("{}/{name}", env!("CARGO_MANIFEST_DIR")))
+    // user edits it. Falls back to embedded.
+    let full = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(path);
+    let src = std::fs::read_to_string(&full)
         .ok()
-        .or_else(|| match name {
-            "gallery.forge.yaml" => Some(GALLERY.to_owned()),
-            "gallery.forge.forge.yaml" => Some(GALLERY_FORGE.to_owned()),
-            "welcome.forge.yaml" => Some(WELCOME.to_owned()),
-            _ => Some(BLANK.to_owned()),
-        });
-    match src {
-        Some(src) => {
-            load_source(
-                view,
-                name,
-                &src,
-                Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR"))),
-                shared,
-                cx,
-            );
-            view.update_state(&parse_path("studio.tab").unwrap(), Json::from(2), cx);
-        }
-        None => status(view, &format!("no starter `{name}`"), cx),
-    }
+        .unwrap_or_else(|| fallback.to_owned());
+    load_source(
+        view,
+        path.rsplit('/').next().unwrap_or(path),
+        &src,
+        full.parent(),
+        shared,
+        cx,
+    );
+    view.update_state(&parse_path("studio.tab").unwrap(), Json::from(2), cx);
 }
 
 /// `open_document()` → "open_document", `apply_theme(true)` → ("apply_theme", ["true"]).
