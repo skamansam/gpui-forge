@@ -8,7 +8,7 @@
 
 	type Prop = { type?: string; values?: string[]; default?: unknown; summary?: string } | string;
 	type Element = { summary?: string; content?: string; props?: Record<string, Prop>; children?: unknown };
-	type Base = { id: string; name?: string; catalog?: string; libraries?: Record<string, unknown> };
+	type Base = { id: string; name?: string; catalog?: string; wasm?: boolean; libraries?: Record<string, unknown> };
 
 	// The shipped registry — every `bases/*.base.yaml` manifest and every
 	// `catalogs/*.catalog.yaml`, keyed by library id (#98 base picker).
@@ -227,8 +227,12 @@
 	</div>
 
 	<div class="panel col">
-		<div class="panel-title"><span>Canvas</span><span>{hooks.at(-1) ? `hook: ${hooks.at(-1)}` : ''}</span></div>
-		<Canvas {yaml} bindings={examples[0].state} height="calc(100vh - 300px)" ondiagnostics={(d) => (diagnostics = d)} onhook={(c) => (hooks = [...hooks, c])} />
+		<div class="panel-title"><span>Canvas — {baseId}</span><span>{hooks.at(-1) ? `hook: ${hooks.at(-1)}` : ''}</span></div>
+		{#if baseDef?.wasm}
+			<Canvas {yaml} base={baseId} bindings={examples[0].state} height="calc(100vh - 300px)" ondiagnostics={(d) => (diagnostics = d)} onhook={(c) => (hooks = [...hooks, c])} />
+		{:else}
+			<div class="desktop-only">Desktop preview only — the {baseDef?.name ?? baseId} base has no WASM canvas.</div>
+		{/if}
 		<Diagnostics {diagnostics} />
 	</div>
 
@@ -254,6 +258,7 @@
 	.editor { display: grid; grid-template-columns: 170px 280px 1fr 1fr; gap: 10px; padding: 12px; }
 	.col { display: flex; flex-direction: column; min-width: 0; }
 	.hint { color: var(--muted); font-size: 12px; margin: 8px 12px; }
+	.desktop-only { flex: 1; display: grid; place-items: center; color: var(--muted); font-size: 13px; padding: 24px; text-align: center; }
 	.list { display: flex; flex-direction: column; overflow: auto; }
 	.lib { color: var(--muted); font-size: 11px; margin: 8px 12px 2px; text-transform: uppercase; letter-spacing: 0.05em; }
 	.item { text-align: left; background: none; border: 0; color: var(--fg); padding: 5px 12px; font: 13px var(--mono); cursor: pointer; }

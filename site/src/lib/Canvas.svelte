@@ -32,6 +32,12 @@
 	let frame: HTMLIFrameElement;
 	let ready = $state(false);
 
+	// A base switch swaps the iframe's bundle — wait for the new `ready`.
+	$effect(() => {
+		base;
+		ready = false;
+	});
+
 	const post = (message: object) => frame?.contentWindow?.postMessage(message, '*');
 
 	// State replaces the canvas's bindings (and resets its inputs), so it is only sent when it
@@ -65,7 +71,7 @@
 
 <div class="canvas" style:height>
 	<iframe bind:this={frame} src={asset('canvas/index.html') + `?base=${base}`} title="{base} canvas"></iframe>
-	{#if !ready}<div class="loading">Loading the gpui-kit canvas…</div>{/if}
+	{#if !ready}<div class="loading">Loading the {base} canvas…</div>{/if}
 </div>
 
 <style>
