@@ -16309,7 +16309,7 @@
     }
   },
   "patternProperties": {
-    "^Dialog(#[\\w-]+| \\.[\\w-]+)?$": {
+    "^Dialog((#| ?\\.)[\\w-]+)?$": {
       "properties": {
         "children": {
           "items": {

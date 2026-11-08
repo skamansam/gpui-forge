@@ -233,7 +233,9 @@ pub fn document_schema(base: Option<&Base>, bases: &[Base], catalogs: &[Catalog]
         // `Dialog#name:` declarations; other unknown top-level keys are
         // fragment slots for `&anchor` declarations, so they stay allowed.
         "patternProperties": {
-            format!("^Dialog{ID_SUFFIX}$"): dialog_body_schema(&dialog_defs),
+            // `Dialog#name:`, `Dialog.name:` and `Dialog .name:` are all
+            // declarations — the reader accepts each spelling.
+            "^Dialog((#| ?\\.)[\\w-]+)?$": dialog_body_schema(&dialog_defs),
         },
         "additionalProperties": true,
         "definitions": {

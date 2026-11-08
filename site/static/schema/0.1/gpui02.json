@@ -2865,7 +2865,7 @@
     }
   },
   "patternProperties": {
-    "^Dialog(#[\\w-]+| \\.[\\w-]+)?$": {
+    "^Dialog((#| ?\\.)[\\w-]+)?$": {
       "propertyNames": {
         "pattern": "^([a-z_][A-Za-z0-9_-]*|on [a-z_][A-Za-z0-9_-]*|<<)$"
       },
