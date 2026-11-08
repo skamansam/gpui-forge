@@ -25,7 +25,7 @@ const SHELL: &str = include_str!("../studio.forge.yaml");
 const WELCOME: &str = include_str!("../welcome.forge.yaml");
 const GALLERY: &str = include_str!("../gallery.forge.yaml");
 const GALLERY_FORGE: &str = include_str!("../gallery.forge.forge.yaml");
-const BLANK: &str = "forge: \"0.1\"\nbase: gpui-kit\n\nroot:\n  VStack:\n  style:\n    padding: 16px\n  children:\n    - Text: Hello, Forge!\n";
+const BLANK: &str = "$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json\nforge: \"0.1\"\nbase: gpui-kit\n\nroot:\n  VStack:\n  style:\n    padding: 16px\n  children:\n    - Text: Hello, Forge!\n";
 
 struct Shared {
     /// The file `editor.source` was loaded from; `None` for embedded documents.
@@ -812,7 +812,8 @@ fn create_project(view: &mut ForgeView, shared: SharedState, cx: &mut Context<Fo
                 "[package]\nname = \"{name}\"\nversion = \"0.1.0\"\nid = \"dev.forge.{name}\"\n\n[forge]\nbase = \"{base}\"\ndocument = \"app.forge.yaml\"\n"
             );
             let doc = format!(
-                "forge: \"0.1\"\nbase: {base}\n\nroot:\n  VStack:\n  style:\n    padding: 16px\n    gap: 8px\n  children:\n    - Text: Hello, Forge!\n"
+                "$schema: {}\nforge: \"0.1\"\nbase: {base}\n\nroot:\n  VStack:\n  style:\n    padding: 16px\n    gap: 8px\n  children:\n    - Text: Hello, Forge!\n",
+                gpui_forge_runtime::forge_spec::yaml_schema::schema_url(&base)
             );
             if std::fs::write(&toml, &manifest).is_err()
                 || std::fs::write(dir.join("app.forge.yaml"), &doc).is_err()
@@ -984,36 +985,31 @@ fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<F
             // #120 Phase 1 — poll the canvas slot's bounds + send frame_rect
             // so the host can float its window over the Studio card
             // (fake-embed position tracking).
-            if let Ok(bounds) = view.update(cx, |view, cx| {
+            if let Ok(Some((WindowBounds::Windowed(wb), b))) = view.update(cx, |view, cx| {
                 view.preview_bounds("canvas")
                     .and_then(|cell| *cell.borrow())
-                    .map(|b| {
+                    .and_then(|b| {
                         let wb = cx
                             .windows()
                             .first()
                             .and_then(|h| h.update(cx, |_, w, _| w.window_bounds()).ok());
                         wb.map(|wb| (wb, b))
                     })
-                    .flatten()
             }) {
-                if let Some((wb, b)) = bounds {
-                    // window space → screen space: add the window's origin
-                    if let WindowBounds::Windowed(wb) = wb {
-                        let rect = json!({
-                            "cmd": "frame_rect",
-                            "x": f64::from(wb.origin.x) + f64::from(b.origin.x),
-                            "y": f64::from(wb.origin.y) + f64::from(b.origin.y),
-                            "w": f64::from(b.size.width),
-                            "h": f64::from(b.size.height),
-                        });
-                        // Send only on change — unconditional sends at 20Hz are
-                        // pure noise for an idle canvas.
-                        let key = rect.to_string();
-                        if last_rect.as_deref() != Some(key.as_str()) {
-                            last_rect = Some(key);
-                            host_send(&rect);
-                        }
-                    }
+                // window space → screen space: add the window's origin
+                let rect = json!({
+                    "cmd": "frame_rect",
+                    "x": f64::from(wb.origin.x) + f64::from(b.origin.x),
+                    "y": f64::from(wb.origin.y) + f64::from(b.origin.y),
+                    "w": f64::from(b.size.width),
+                    "h": f64::from(b.size.height),
+                });
+                // Send only on change — unconditional sends at 20Hz are
+                // pure noise for an idle canvas.
+                let key = rect.to_string();
+                if last_rect.as_deref() != Some(key.as_str()) {
+                    last_rect = Some(key);
+                    host_send(&rect);
                 }
             }
             if events.is_empty() {

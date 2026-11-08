@@ -1,3 +1,4 @@
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/adabraka.json
 forge: "0.1"
 base: adabraka
 root:

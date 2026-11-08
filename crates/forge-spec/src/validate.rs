@@ -102,6 +102,12 @@ impl<'a> Validator<'a> {
         }
         self.base = Some(base_catalog);
         self.node(&doc.root, base_catalog, &mut Vec::new());
+        // `Dialog#name:` bodies validate like any other node. The source map
+        // only indexes `root` descendants, so dialogs start at an unreachable
+        // path — span lookups miss and positions fall back to `1:1`.
+        for (i, dialog) in doc.dialogs.iter().enumerate() {
+            self.node(dialog, base_catalog, &mut vec![usize::MAX - i]);
+        }
     }
 
     fn spans(&self, path: &[usize]) -> Option<&'a NodeSpans> {

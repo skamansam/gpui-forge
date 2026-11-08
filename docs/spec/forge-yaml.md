@@ -182,11 +182,16 @@ YAML gotchas the validator reports with a fix hint:
 
 - `forge schema` emits the JSON Schema for the document model — generated from
   the serde types via schemars, so it cannot drift from `forge-spec`.
-- `forge convert` turns a `.forge.yaml` document into that JSON form (and back),
-  and `site/static/schema/forge-doc.schema.json` ships the generated schema
+- `forge schema --yaml [--base <id>]` emits the JSON Schema for the YAML
+  *syntax* — generated from the catalog manifests, so elements, props, events
+  and `use:` libraries validate in editors. `cargo xtask schemas` regenerates
+  the set published at `site/static/schema/0.1/` (`<base>.json` per base plus
+  `generic.json`).
+- `forge convert` turns a `.forge.yaml` document into the JSON form (and back),
+  and `site/static/schema/forge-doc.schema.json` ships the generated model schema
   alongside generated TypeScript declarations for the web editor.
 - Editor association: the `$schema` key, the `yaml-language-server` comment, or a
-  `*.forge.yaml` file-name mapping.
+  `*.forge.yaml` file-name mapping — see `docs/guide/yaml-validation.md`.
 - Schema validation is a convenience. `forge-spec` validation is authoritative (unique ids,
   binding rules, base compatibility).
 

@@ -355,10 +355,7 @@ fn main() {
         "bases" => bases_cmd(),
         "migrate" => migrate_cmd(&rest),
         "check" | "validate" => check_cmd(&rest),
-        "schema" => {
-            print!("{}", gpui_forge_runtime::forge_spec::json::schema());
-            0
-        }
+        "schema" => schema_cmd(&rest),
         "convert" => convert_cmd(&rest),
         "fmt" => fmt_cmd(&rest),
         "build" => build_cmd(&rest),
@@ -394,7 +391,8 @@ fn usage() {
     eprintln!("      --from yaml|json  input format (else detected by extension/content)");
     eprintln!("      --to yaml|json    output format (default: the other one)");
     eprintln!("      -o <path>         output file (default: stdout; `-` reads stdin)");
-    eprintln!("  forge schema                          JSON Schema for the document model");
+    eprintln!("  forge schema                          JSON Schema for the document model (JSON)");
+    eprintln!("  forge schema --yaml [--base <id>]     JSON Schema for .forge.yaml — base-aware");
     eprintln!("  forge hooks <doc>                     hook manifest (JSON) the doc requires");
     eprintln!(
         "  forge license <doc>                   license report for base + imported libraries"
@@ -410,6 +408,42 @@ fn workspace_root() -> PathBuf {
         .and_then(Path::parent)
         .unwrap_or_else(|| Path::new("."))
         .to_path_buf()
+}
+
+/// `forge schema` — JSON Schema emission. Bare `forge schema` prints the
+/// document-*model* schema (the `.forge.json` form); `--yaml` prints the
+/// `.forge.yaml` surface-syntax schema generated from the catalogs, scoped
+/// to one base with `--base <id>` or generic without.
+fn schema_cmd(rest: &[String]) -> i32 {
+    if !rest.iter().any(|a| a == "--yaml") {
+        print!("{}", gpui_forge_runtime::forge_spec::json::schema());
+        return 0;
+    }
+    let bases = gpui_forge_runtime::check::bases();
+    let base = opt_value(rest, "--base").map(|id| match bases.iter().find(|b| b.id == id) {
+        Some(b) => b.clone(),
+        None => {
+            eprintln!(
+                "forge: unknown base `{id}` — registered: {}",
+                bases
+                    .iter()
+                    .map(|b| b.id.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
+            std::process::exit(2);
+        }
+    });
+    let schema = gpui_forge_runtime::forge_spec::yaml_schema::document_schema(
+        base.as_ref(),
+        &bases,
+        &gpui_forge_runtime::check::catalogs(),
+    );
+    print!(
+        "{}",
+        gpui_forge_runtime::forge_spec::yaml_schema::to_json(&schema)
+    );
+    0
 }
 
 fn doc_path(rest: &[String]) -> Option<PathBuf> {
@@ -479,7 +513,8 @@ document = "app.forge.yaml"
     write(
         &dir.join("app.forge.yaml"),
         &format!(
-            r#"forge: "0.1"
+            r#"$schema: {}
+forge: "0.1"
 base: {base}
 
 root:
@@ -489,7 +524,8 @@ root:
     gap: 8px
   children:
     - Text: Hello, Forge!
-"#
+"#,
+            gpui_forge_runtime::forge_spec::yaml_schema::schema_url(&base)
         ),
     );
     println!(
@@ -1282,10 +1318,10 @@ fn codegen_doc(doc: &gpui_forge_runtime::forge_spec::Document) -> String {
                 from_value(a, vars);
                 // `update_state('path')`/`set_path('path')` — the arg is a
                 // `Value::String` of a state path.
-                if matches!(e.handler.name.as_str(), "update_state" | "set_path") {
-                    if let Value::String(p) = a {
-                        vars.insert(p.clone());
-                    }
+                if matches!(e.handler.name.as_str(), "update_state" | "set_path")
+                    && let Value::String(p) = a
+                {
+                    vars.insert(p.clone());
                 }
             }
         }

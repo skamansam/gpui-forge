@@ -1,3 +1,4 @@
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui02.json
 forge: "0.1"
 state:
   sel: string

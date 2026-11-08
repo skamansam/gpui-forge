@@ -13,6 +13,7 @@ pub mod style;
 pub mod validate;
 pub mod value;
 pub mod yaml;
+pub mod yaml_schema;
 
 pub use diagnostic::{Diagnostic, Diagnostics, Pos};
 pub use model::*;

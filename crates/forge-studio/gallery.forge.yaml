@@ -1,4 +1,5 @@
 # Every element the gpui-kit adapter renders, for a quick visual check.
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
 forge: "0.1"
 state:
   user.name: string

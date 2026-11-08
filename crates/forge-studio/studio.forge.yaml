@@ -1,4 +1,5 @@
 # The Forge Studio shell, described in Forge YAML and rendered by gpui-forge-runtime.
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
 forge: "0.1"
 state:
   studio.theme: string
@@ -95,9 +96,11 @@ Dialog#preferences:
     height: 300px
     padding: 16px
     gap: 16px
-    border-radius: 8px
+    radius: 8px
     background: $theme.background
-    border: 1px solid $theme.border
+    border: 1px
+    border-style: solid
+    border-color: $theme.border
   children:
     - Text: "Preferences"
       style:
@@ -123,9 +126,11 @@ Dialog#new-project:
     width: 420px
     padding: 16px
     gap: 12px
-    border-radius: 8px
+    radius: 8px
     background: $theme.background
-    border: 1px solid $theme.border
+    border: 1px
+    border-style: solid
+    border-color: $theme.border
   children:
     - Text: New Forge project
       style: {size: lg, weight: semibold}
@@ -182,12 +187,12 @@ root:
             padding: 8px
           children:
             - Tabs#panes:
+              variant: Pill
               style:
                 grow: true
                 min-height: 0
                 basis: 100%
                 border: 1px
-              variant: pill
               selected: bind $studio.tab
               children:
                 - Tab: Welcome
@@ -271,7 +276,6 @@ root:
                 - Tab: Source
                   children:
                     - Editor#source:
-                      grow: true
                       language: yaml
                       highlighting:
                         languages: [yaml]

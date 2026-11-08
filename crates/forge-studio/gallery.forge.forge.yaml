@@ -1,5 +1,6 @@
 # Component gallery for the `forge` widget set — the intrinsic elements the
 # runtime provides on top of base libraries.
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
 forge: "0.1"
 base: gpui-kit
 use:

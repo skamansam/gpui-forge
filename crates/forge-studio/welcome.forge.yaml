@@ -1,4 +1,5 @@
 # The document Forge Studio opens in its preview on startup.
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
 forge: "0.1"
 base: gpui-kit
 

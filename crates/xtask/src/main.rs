@@ -86,7 +86,63 @@ fn usage() -> ! {
     eprintln!("      [--base <id>]        (default gpui-kit)");
     eprintln!("  xtask check-base <base>  clippy the runtime under a base feature");
     eprintln!("  xtask check-bases        check-base for every registered base");
+    eprintln!("  xtask schemas [--check]  regenerate site/static/schema/0.1/*.json");
     std::process::exit(2)
+}
+
+/// `xtask schemas` — regenerate the `.forge.yaml` JSON Schemas editors load
+/// (`site/static/schema/0.1/<base>.json` + `generic.json`) via
+/// `forge schema --yaml`. `--check` verifies they're current without writing.
+fn schemas_cmd(args: &[String]) -> ! {
+    let check = args.iter().any(|a| a == "--check");
+    let out_dir = root().join("site/static/schema/0.1");
+    let mut slugs: Vec<Option<String>> = bases().iter().cloned().map(Some).collect();
+    slugs.push(None);
+
+    let mut stale = Vec::new();
+    for slug in &slugs {
+        let name = slug.clone().unwrap_or_else(|| "generic".into());
+        let mut forge = vec![
+            "run".into(),
+            "-q".into(),
+            "-p".into(),
+            "forge-cli".into(),
+            "--".into(),
+            "schema".into(),
+            "--yaml".into(),
+        ];
+        if let Some(id) = slug {
+            forge.extend(["--base".into(), id.clone()]);
+        }
+        let output = Command::new("cargo")
+            .args(&forge)
+            .current_dir(root())
+            .output()
+            .expect("spawn cargo");
+        if !output.status.success() {
+            eprint!("{}", String::from_utf8_lossy(&output.stderr));
+            std::process::exit(1);
+        }
+        let path = out_dir.join(format!("{name}.json"));
+        if check {
+            let current = std::fs::read(&path).unwrap_or_default();
+            if current != output.stdout {
+                stale.push(name);
+            }
+        } else {
+            std::fs::create_dir_all(&out_dir).expect("schema output dir");
+            std::fs::write(&path, &output.stdout).expect("write schema");
+            println!("==> {}", path.display());
+        }
+    }
+    if check && !stale.is_empty() {
+        eprintln!(
+            "schemas out of date: {} — run `cargo xtask schemas`",
+            stale.join(", ")
+        );
+        std::process::exit(1);
+    }
+    std::process::exit(0)
 }
 
 fn main() {
@@ -151,6 +207,7 @@ fn main() {
                 println!("{b}");
             }
         }
+        Some("schemas") => schemas_cmd(&args[1..]),
         Some("host") => {
             let requested: Vec<&str> = args[1..].iter().map(String::as_str).collect();
             let targets: Vec<String> = if requested.is_empty() {
@@ -206,7 +263,7 @@ fn main() {
         }
         Some("check-base") => {
             let Some(base) = args.get(1) else { usage() };
-            let cargo = check_base_cmd(&base);
+            let cargo = check_base_cmd(base);
             let argv: Vec<&str> = cargo.iter().map(String::as_str).collect();
             std::process::exit(!run(&argv) as i32);
         }

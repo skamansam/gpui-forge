@@ -3546,10 +3546,7 @@ fn container(
     cx: &App,
 ) -> AnyElement {
     if scrollable(entries) {
-        let handle = handles
-            .entry(id.to_string())
-            .or_insert_with(ScrollHandle::new)
-            .clone();
+        let handle = handles.entry(id.to_string()).or_default().clone();
         // `.id()` — `Scrollable` defaults `id` to `caller_id()`, so every
         // `overflow: scroll` element would share one `element_state` slot and
         // the offsets would clobber each other; a per-element id keeps them
@@ -3580,10 +3577,7 @@ fn wrap(
     if entries.is_empty() && tooltip.is_none() {
         element
     } else if scrollable(entries) {
-        let handle = handles
-            .entry(format!("{id}-scroll"))
-            .or_insert_with(ScrollHandle::new)
-            .clone();
+        let handle = handles.entry(format!("{id}-scroll")).or_default().clone();
         let mut wrapper = style(
             div()
                 .id(SharedString::from(format!("{id}-scroll")))
