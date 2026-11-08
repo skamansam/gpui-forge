@@ -1,4 +1,4 @@
-use gpui_kit::{FontWeight, Styled, px};
+use gpui_kit::{px, FontWeight, Styled};
 
 pub const SYSTEM_FONT_NAME: &str = ".AppleSystemUIFont";
 pub const MONO_FONT_NAME: &str = "SF Mono";

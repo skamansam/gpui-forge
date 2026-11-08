@@ -1,13 +1,13 @@
-use std::rc::Rc;
 use gpui_kit::assets::IconName;
 use gpui_kit::base::StyledExt;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::{
-    App, ClickEvent, ElementId, InteractiveElement, IntoElement, ParentElement as _,
-    RenderOnce, SharedString, StatefulInteractiveElement, StyleRefinement, Styled,
-    Window, div, px, rgb, rgba, svg,
+    div, px, rgb, rgba, svg, App, ClickEvent, ElementId, InteractiveElement, IntoElement,
+    ParentElement as _, RenderOnce, SharedString, StatefulInteractiveElement, StyleRefinement,
+    Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 use crate::typography::MacTypographyExt;
@@ -142,7 +142,11 @@ impl RenderOnce for MacSegmentedControl {
             .rounded(px(6.0))
             .bg(track_bg)
             .border_1()
-            .border_color(if is_dark { rgba(0xFFFFFF14) } else { rgba(0x0000000D) })
+            .border_color(if is_dark {
+                rgba(0xFFFFFF14)
+            } else {
+                rgba(0x0000000D)
+            })
             .flex()
             .items_center()
             .gap(px(0.0))
@@ -214,10 +218,11 @@ impl RenderOnce for MacSegmentedControl {
 
             if idx + 1 < count {
                 let show_divider = idx != selected && (idx + 1) != selected;
-                let divider = div()
-                    .w(px(1.0))
-                    .h(px(14.0))
-                    .bg(if show_divider { divider_color } else { rgba(0x00000000) });
+                let divider = div().w(px(1.0)).h(px(14.0)).bg(if show_divider {
+                    divider_color
+                } else {
+                    rgba(0x00000000)
+                });
                 row = row.child(divider);
             }
         }

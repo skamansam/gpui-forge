@@ -1,12 +1,12 @@
-use std::rc::Rc;
 use gpui_kit::assets::IconName;
 use gpui_kit::base::StyledExt;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::{
-    App, ClickEvent, ElementId, Hsla, InteractiveElement, IntoElement, ParentElement as _,
-    RenderOnce, SharedString, StatefulInteractiveElement, StyleRefinement, Styled,
-    Window, div, px, rgb, rgba, svg,
+    div, px, rgb, rgba, svg, App, ClickEvent, ElementId, Hsla, InteractiveElement, IntoElement,
+    ParentElement as _, RenderOnce, SharedString, StatefulInteractiveElement, StyleRefinement,
+    Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 use crate::typography::MacTypographyExt;
@@ -173,7 +173,11 @@ impl RenderOnce for MacSlider {
                     .w(gpui_kit::DefiniteLength::Fraction(fraction))
                     .h(px(4.0))
                     .rounded(px(2.0))
-                    .bg(if self.disabled { track_inactive } else { track_active }),
+                    .bg(if self.disabled {
+                        track_inactive
+                    } else {
+                        track_active
+                    }),
             )
             .child(
                 // Thumb knob (16x16 circular button with shadow)

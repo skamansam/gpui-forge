@@ -158,7 +158,10 @@ fn paint_minimap(
 
         let node_bounds = Bounds::new(
             Point::new(px(nx), px(ny)),
-            Size { width: px(nw), height: px(nh) },
+            Size {
+                width: px(nw),
+                height: px(nh),
+            },
         );
 
         let color = if node.selected {
@@ -212,19 +215,46 @@ fn paint_minimap(
 
     let vp_bounds = Bounds::new(
         Point::new(px(vx), px(vy)),
-        Size { width: px(vw), height: px(vh) },
+        Size {
+            width: px(vw),
+            height: px(vh),
+        },
     );
     window.paint_quad(fill(vp_bounds, gpui::rgba(0x3b82f620)));
 
     // Viewport border
     let border_color: Background = gpui::rgba(0x3b82f6aa).into();
-    let top = Bounds::new(Point::new(px(vx), px(vy)), Size { width: px(vw), height: px(1.0) });
+    let top = Bounds::new(
+        Point::new(px(vx), px(vy)),
+        Size {
+            width: px(vw),
+            height: px(1.0),
+        },
+    );
     window.paint_quad(fill(top, border_color.clone()));
-    let bottom = Bounds::new(Point::new(px(vx), px(vy + vh)), Size { width: px(vw), height: px(1.0) });
+    let bottom = Bounds::new(
+        Point::new(px(vx), px(vy + vh)),
+        Size {
+            width: px(vw),
+            height: px(1.0),
+        },
+    );
     window.paint_quad(fill(bottom, border_color.clone()));
-    let left = Bounds::new(Point::new(px(vx), px(vy)), Size { width: px(1.0), height: px(vh) });
+    let left = Bounds::new(
+        Point::new(px(vx), px(vy)),
+        Size {
+            width: px(1.0),
+            height: px(vh),
+        },
+    );
     window.paint_quad(fill(left, border_color.clone()));
-    let right = Bounds::new(Point::new(px(vx + vw), px(vy)), Size { width: px(1.0), height: px(vh) });
+    let right = Bounds::new(
+        Point::new(px(vx + vw), px(vy)),
+        Size {
+            width: px(1.0),
+            height: px(vh),
+        },
+    );
     window.paint_quad(fill(right, border_color));
 }
 

@@ -59,12 +59,7 @@ impl Render for Controls {
                     cx.notify(entity_id);
                 }
             }))
-            .child(
-                div()
-                    .h(px(1.0))
-                    .bg(gpui::rgb(0x27272a))
-                    .mx_1(),
-            )
+            .child(div().h(px(1.0)).bg(gpui::rgb(0x27272a)).mx_1())
             .child(control_button("\u{2922}", {
                 // Fit view icon (↢)
                 move |_, _, cx| {

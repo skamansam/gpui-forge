@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use gpui::{
     div, prelude::*, px, size, Bounds, IntoElement, Modifiers, MouseButton, Pixels, Render,
-    ScrollDelta, ScrollWheelEvent, SharedString, TestAppContext, VisualTestContext, WindowHandle,
+    ScrollDelta, ScrollEvent, SharedString, TestAppContext, VisualTestContext, WindowHandle,
 };
 
 use crate::{
@@ -426,7 +426,7 @@ pub fn simulate_wheel(
     let bounds = debug_bounds(cx, window, selector).expect("selector should render");
     let mut visual = VisualTestContext::from_window(window.into(), cx);
 
-    visual.simulate_event(ScrollWheelEvent {
+    visual.simulate_event(ScrollEvent {
         position: bounds.center(),
         delta: ScrollDelta::Pixels(gpui::point(px(0.0), delta_y)),
         modifiers: Modifiers::default(),

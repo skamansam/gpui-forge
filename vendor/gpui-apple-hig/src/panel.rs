@@ -1,10 +1,10 @@
-use std::rc::Rc;
 use gpui_kit::assets::IconName;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::{
-    AnyElement, App, ClickEvent, ElementId, InteractiveElement, IntoElement, ParentElement as _,
-    RenderOnce, SharedString, StyleRefinement, Styled, Window, div, px, rgb, rgba, svg,
+    div, px, rgb, rgba, svg, AnyElement, App, ClickEvent, ElementId, InteractiveElement,
+    IntoElement, ParentElement as _, RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 
@@ -123,14 +123,26 @@ impl RenderOnce for MacPanel {
                     .justify_between()
                     .h(px(26.0))
                     .px_3()
-                    .bg(if is_hud { rgba(0x00000040) } else { rgba(0x00000008) })
+                    .bg(if is_hud {
+                        rgba(0x00000040)
+                    } else {
+                        rgba(0x00000008)
+                    })
                     .border_b_1()
-                    .border_color(if is_hud { rgba(0xFFFFFF15) } else { rgba(0x00000010) })
+                    .border_color(if is_hud {
+                        rgba(0xFFFFFF15)
+                    } else {
+                        rgba(0x00000010)
+                    })
                     .child(
                         div()
                             .text_size(px(11.0))
                             .font_weight(gpui_kit::FontWeight::SEMIBOLD)
-                            .text_color(if is_hud { rgb(0xFFFFFF).into() } else { apple_colors.label })
+                            .text_color(if is_hud {
+                                rgb(0xFFFFFF).into()
+                            } else {
+                                apple_colors.label
+                            })
                             .child(self.title),
                     )
                     .child(
@@ -141,15 +153,26 @@ impl RenderOnce for MacPanel {
                             .w(px(14.0))
                             .h(px(14.0))
                             .rounded_full()
-                            .bg(if is_hud { rgba(0xFFFFFF20) } else { rgba(0x00000015) })
-                            .hover(|s| s.bg(if is_hud { rgba(0xFFFFFF40) } else { rgba(0x00000030) }))
+                            .bg(if is_hud {
+                                rgba(0xFFFFFF20)
+                            } else {
+                                rgba(0x00000015)
+                            })
+                            .hover(|s| {
+                                s.bg(if is_hud {
+                                    rgba(0xFFFFFF40)
+                                } else {
+                                    rgba(0x00000030)
+                                })
+                            })
                             .cursor_pointer()
-                            .child(
-                                svg()
-                                    .path(IconName::Close.path())
-                                    .size(px(7.0))
-                                    .text_color(if is_hud { rgb(0xFFFFFF).into() } else { apple_colors.secondary_label }),
-                            ),
+                            .child(svg().path(IconName::Close.path()).size(px(7.0)).text_color(
+                                if is_hud {
+                                    rgb(0xFFFFFF).into()
+                                } else {
+                                    apple_colors.secondary_label
+                                },
+                            )),
                     ),
             )
             // Panel Content

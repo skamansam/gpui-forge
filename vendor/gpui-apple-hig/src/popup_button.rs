@@ -1,13 +1,13 @@
-use std::rc::Rc;
 use gpui_kit::assets::IconName;
 use gpui_kit::base::Popover;
 use gpui_kit::base::StyledExt;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::{
-    Anchor, App, ClickEvent, ElementId, InteractiveElement, IntoElement, MouseButton,
-    ParentElement as _, RenderOnce, SharedString, StatefulInteractiveElement, StyleRefinement,
-    Styled, Window, div, px, rgb, rgba, svg,
+    div, px, rgb, rgba, svg, Anchor, App, ClickEvent, ElementId, InteractiveElement, IntoElement,
+    MouseButton, ParentElement as _, RenderOnce, SharedString, StatefulInteractiveElement,
+    StyleRefinement, Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 use crate::typography::MacTypographyExt;
@@ -55,7 +55,10 @@ impl MacMenuItem {
         self
     }
 
-    pub fn on_click(mut self, handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static) -> Self {
+    pub fn on_click(
+        mut self,
+        handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
+    ) -> Self {
         self.on_click = Some(Rc::new(handler));
         self
     }
@@ -391,7 +394,11 @@ impl RenderOnce for MacPopupButton {
                         menu_div = menu_div.child(
                             div()
                                 .h(px(1.0))
-                                .bg(if is_dark { rgba(0xFFFFFF15) } else { rgba(0x00000015) })
+                                .bg(if is_dark {
+                                    rgba(0xFFFFFF15)
+                                } else {
+                                    rgba(0x00000015)
+                                })
                                 .my(px(3.0))
                                 .mx(px(6.0)),
                         );
@@ -458,7 +465,10 @@ impl MacPullDownButton {
         self
     }
 
-    pub fn on_click(mut self, handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static) -> Self {
+    pub fn on_click(
+        mut self,
+        handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
+    ) -> Self {
         self.on_click = Some(Rc::new(handler));
         self
     }
@@ -628,12 +638,8 @@ impl RenderOnce for MacPullDownButton {
                             .text_color(apple_colors.label),
                     );
                 }
-                leading = leading.child(
-                    div()
-                        .mac_body()
-                        .text_color(apple_colors.label)
-                        .child(title),
-                );
+                leading =
+                    leading.child(div().mac_body().text_color(apple_colors.label).child(title));
 
                 div()
                     .id(id.clone())
@@ -758,7 +764,11 @@ impl RenderOnce for MacPullDownButton {
                         menu_div = menu_div.child(
                             div()
                                 .h(px(1.0))
-                                .bg(if is_dark { rgba(0xFFFFFF15) } else { rgba(0x00000015) })
+                                .bg(if is_dark {
+                                    rgba(0xFFFFFF15)
+                                } else {
+                                    rgba(0x00000015)
+                                })
                                 .my(px(3.0))
                                 .mx(px(6.0)),
                         );

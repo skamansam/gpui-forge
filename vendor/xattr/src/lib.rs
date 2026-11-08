@@ -1,3 +1,5 @@
+// Vendored upstream code — patched locally where pinned, but not ours to lint.
+#![allow(clippy::all)]
 //! A pure-Rust library to manage extended attributes.
 //!
 //! It provides support for manipulating extended attributes

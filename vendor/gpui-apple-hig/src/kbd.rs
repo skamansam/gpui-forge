@@ -1,9 +1,8 @@
 use gpui_kit::base::StyledExt;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::{
-    App, ElementId, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
-    SharedString, StyleRefinement, Styled, Window, div,
-    px, rgba,
+    div, px, rgba, App, ElementId, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
+    SharedString, StyleRefinement, Styled, Window,
 };
 
 use crate::theme::{AppleColors, MacAccentColor};

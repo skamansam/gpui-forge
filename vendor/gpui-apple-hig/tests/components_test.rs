@@ -289,12 +289,30 @@ fn test_material_thickness_and_blur() {
 
 #[test]
 fn test_material_roles_mapping() {
-    assert_eq!(MacMaterialRole::Sidebar.default_thickness(), MacMaterialThickness::Thin);
-    assert_eq!(MacMaterialRole::Titlebar.default_thickness(), MacMaterialThickness::Regular);
-    assert_eq!(MacMaterialRole::Sheet.default_thickness(), MacMaterialThickness::Thick);
-    assert_eq!(MacMaterialRole::WindowBackground.default_thickness(), MacMaterialThickness::UltraThick);
-    assert_eq!(MacMaterialRole::Sidebar.default_blending_mode(), MacBlendingMode::BehindWindow);
-    assert_eq!(MacMaterialRole::Titlebar.default_blending_mode(), MacBlendingMode::WithinWindow);
+    assert_eq!(
+        MacMaterialRole::Sidebar.default_thickness(),
+        MacMaterialThickness::Thin
+    );
+    assert_eq!(
+        MacMaterialRole::Titlebar.default_thickness(),
+        MacMaterialThickness::Regular
+    );
+    assert_eq!(
+        MacMaterialRole::Sheet.default_thickness(),
+        MacMaterialThickness::Thick
+    );
+    assert_eq!(
+        MacMaterialRole::WindowBackground.default_thickness(),
+        MacMaterialThickness::UltraThick
+    );
+    assert_eq!(
+        MacMaterialRole::Sidebar.default_blending_mode(),
+        MacBlendingMode::BehindWindow
+    );
+    assert_eq!(
+        MacMaterialRole::Titlebar.default_blending_mode(),
+        MacBlendingMode::WithinWindow
+    );
 }
 
 #[test]

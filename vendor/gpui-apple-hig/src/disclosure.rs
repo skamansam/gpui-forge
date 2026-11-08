@@ -1,11 +1,10 @@
-use std::rc::Rc;
 use gpui_kit::base::StyledExt;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::{
-    AnyElement, App, ElementId, InteractiveElement, IntoElement, ParentElement as _,
-    RenderOnce, SharedString, StatefulInteractiveElement, StyleRefinement, Styled,
-    Window, div, px, svg,
+    div, px, svg, AnyElement, App, ElementId, InteractiveElement, IntoElement, ParentElement as _,
+    RenderOnce, SharedString, StatefulInteractiveElement, StyleRefinement, Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 use crate::typography::MacTypographyExt;

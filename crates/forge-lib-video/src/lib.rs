@@ -17,10 +17,10 @@
 // `gpui_video_player::gpui` re-exports whichever GPUI build the selected
 // `base-*` feature links — always the same crate the runtime's types come
 // from, on both variants.
-use gpui_video_player::gpui::*;
 use gpui_forge_runtime::forge_spec::catalog::{self, Catalog};
 use gpui_forge_runtime::forge_spec::{Node, Value};
 use gpui_forge_runtime::render::{ForgeLibrary, ForgeView, get_path};
+use gpui_video_player::gpui::*;
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::sync::OnceLock;

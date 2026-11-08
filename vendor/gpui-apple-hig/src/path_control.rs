@@ -1,11 +1,11 @@
-use std::rc::Rc;
 use gpui_kit::assets::IconName;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::{
-    App, ElementId, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
-    SharedString, StyleRefinement, Styled, Window, div, px, rgba, svg,
+    div, px, rgba, svg, App, ElementId, InteractiveElement, IntoElement, ParentElement as _,
+    RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 
@@ -102,9 +102,17 @@ impl RenderOnce for MacPathControl {
             .items_center()
             .h(px(22.0))
             .px_2()
-            .bg(if is_dark { rgba(0xFFFFFF0D) } else { rgba(0x00000008) })
+            .bg(if is_dark {
+                rgba(0xFFFFFF0D)
+            } else {
+                rgba(0x00000008)
+            })
             .border_1()
-            .border_color(if is_dark { rgba(0xFFFFFF1F) } else { rgba(0x00000015) })
+            .border_color(if is_dark {
+                rgba(0xFFFFFF1F)
+            } else {
+                rgba(0x00000015)
+            })
             .rounded(px(5.0))
             .children(self.items.into_iter().enumerate().map(|(idx, item)| {
                 let is_last = idx + 1 == total_items;
@@ -121,20 +129,22 @@ impl RenderOnce for MacPathControl {
                             .py(px(2.0))
                             .rounded(px(3.0))
                             .when(!self.disabled, |d| {
-                                d.cursor_pointer()
-                                    .hover(|s| s.bg(if is_dark { rgba(0xFFFFFF1F) } else { rgba(0x0000000F) }))
+                                d.cursor_pointer().hover(|s| {
+                                    s.bg(if is_dark {
+                                        rgba(0xFFFFFF1F)
+                                    } else {
+                                        rgba(0x0000000F)
+                                    })
+                                })
                             })
                             .when_some(item.icon, |d, ico| {
-                                d.child(
-                                    svg()
-                                        .path(ico.path())
-                                        .size(px(12.0))
-                                        .text_color(if is_last {
-                                            apple_colors.accent
-                                        } else {
-                                            apple_colors.secondary_label
-                                        }),
-                                )
+                                d.child(svg().path(ico.path()).size(px(12.0)).text_color(
+                                    if is_last {
+                                        apple_colors.accent
+                                    } else {
+                                        apple_colors.secondary_label
+                                    },
+                                ))
                             })
                             .child(
                                 div()

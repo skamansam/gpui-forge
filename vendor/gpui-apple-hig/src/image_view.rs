@@ -2,8 +2,8 @@ use gpui_kit::assets::IconName;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::{
-    App, ElementId, InteractiveElement, IntoElement, ParentElement as _, RenderOnce, SharedString,
-    StyleRefinement, Styled, Window, div, px, rgb, rgba, svg,
+    div, px, rgb, rgba, svg, App, ElementId, InteractiveElement, IntoElement, ParentElement as _,
+    RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
 
 use crate::theme::{AppleColors, MacAccentColor};
@@ -109,9 +109,7 @@ impl RenderOnce for MacImageView {
                     .w(px(self.width))
                     .h(px(self.height))
                     .bg(bg)
-                    .when(self.bordered, |d| {
-                        d.border_1().border_color(border_color)
-                    })
+                    .when(self.bordered, |d| d.border_1().border_color(border_color))
                     .rounded(px(self.corner_radius))
                     .overflow_hidden()
                     .flex()

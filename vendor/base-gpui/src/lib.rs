@@ -1,3 +1,5 @@
+// Vendored upstream code — patched locally where pinned, but not ours to lint.
+#![allow(clippy::all)]
 pub mod accordion;
 pub mod alert_dialog;
 pub mod autocomplete;

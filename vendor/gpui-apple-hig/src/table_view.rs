@@ -1,11 +1,11 @@
-use std::rc::Rc;
 use gpui_kit::assets::IconName;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::{
-    App, ElementId, Hsla, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
-    SharedString, StyleRefinement, Styled, Window, div, px, rgb, rgba, svg,
+    div, px, rgb, rgba, svg, App, ElementId, Hsla, InteractiveElement, IntoElement,
+    ParentElement as _, RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 
@@ -124,7 +124,11 @@ impl RenderOnce for MacTableView {
                     .flex()
                     .items_center()
                     .h(px(24.0))
-                    .bg(if is_dark { rgb(0x282828) } else { rgb(0xF2F2F2) })
+                    .bg(if is_dark {
+                        rgb(0x282828)
+                    } else {
+                        rgb(0xF2F2F2)
+                    })
                     .border_b_1()
                     .border_color(border_color)
                     .px_2()
@@ -158,7 +162,11 @@ impl RenderOnce for MacTableView {
                 let row_bg: Hsla = if is_selected {
                     apple_colors.accent
                 } else if self.zebra_striping && !is_even {
-                    if is_dark { rgba(0xFFFFFF08).into() } else { rgba(0x00000005).into() }
+                    if is_dark {
+                        rgba(0xFFFFFF08).into()
+                    } else {
+                        rgba(0x00000005).into()
+                    }
                 } else {
                     rgba(0x00000000).into()
                 };
@@ -178,20 +186,30 @@ impl RenderOnce for MacTableView {
                     .cursor_pointer()
                     .hover(|s| {
                         if !is_selected {
-                            s.bg(if is_dark { rgba(0xFFFFFF15) } else { rgba(0x0000000A) })
+                            s.bg(if is_dark {
+                                rgba(0xFFFFFF15)
+                            } else {
+                                rgba(0x0000000A)
+                            })
                         } else {
                             s
                         }
                     })
-                    .children(row.cells.into_iter().enumerate().map(|(col_idx, cell_val)| {
-                        let col_width = self.columns.get(col_idx).map(|c| c.width).unwrap_or(120.0);
-                        div()
-                            .w(px(col_width))
-                            .text_size(px(12.0))
-                            .text_color(text_color)
-                            .truncate()
-                            .child(cell_val)
-                    }))
+                    .children(
+                        row.cells
+                            .into_iter()
+                            .enumerate()
+                            .map(|(col_idx, cell_val)| {
+                                let col_width =
+                                    self.columns.get(col_idx).map(|c| c.width).unwrap_or(120.0);
+                                div()
+                                    .w(px(col_width))
+                                    .text_size(px(12.0))
+                                    .text_color(text_color)
+                                    .truncate()
+                                    .child(cell_val)
+                            }),
+                    )
             }))
     }
 }

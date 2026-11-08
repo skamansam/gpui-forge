@@ -1,7 +1,7 @@
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::{
-    App, ElementId, InteractiveElement, IntoElement, ParentElement as _, RenderOnce, SharedString,
-    StyleRefinement, Styled, Window, div, px, rgb, rgba,
+    div, px, rgb, rgba, App, ElementId, InteractiveElement, IntoElement, ParentElement as _,
+    RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
 
 use crate::theme::{AppleColors, MacAccentColor};
@@ -37,7 +37,12 @@ impl MacActivityRings {
         self
     }
 
-    pub fn ring(mut self, name: impl Into<SharedString>, progress: f32, color: MacAccentColor) -> Self {
+    pub fn ring(
+        mut self,
+        name: impl Into<SharedString>,
+        progress: f32,
+        color: MacAccentColor,
+    ) -> Self {
         self.metrics.push(MacRingMetric {
             name: name.into(),
             progress: progress.clamp(0.0, 1.5),
@@ -77,9 +82,17 @@ impl RenderOnce for MacActivityRings {
                     .items_center()
                     .justify_center()
                     .rounded_full()
-                    .bg(if is_dark { rgb(0x181818) } else { rgb(0xEDEDED) })
+                    .bg(if is_dark {
+                        rgb(0x181818)
+                    } else {
+                        rgb(0xEDEDED)
+                    })
                     .border_1()
-                    .border_color(if is_dark { rgba(0xFFFFFF1F) } else { rgba(0x00000015) })
+                    .border_color(if is_dark {
+                        rgba(0xFFFFFF1F)
+                    } else {
+                        rgba(0x00000015)
+                    })
                     .children(self.metrics.iter().enumerate().map(|(idx, m)| {
                         let inset = (idx as f32) * 10.0;
                         let ring_size = (self.size - (inset * 2.0)).max(10.0);

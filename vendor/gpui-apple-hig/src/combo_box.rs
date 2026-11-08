@@ -1,11 +1,11 @@
-use std::rc::Rc;
 use gpui_kit::assets::IconName;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::{
-    App, ElementId, Hsla, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
-    SharedString, StyleRefinement, Styled, Window, div, px, rgb, rgba, svg,
+    div, px, rgb, rgba, svg, App, ElementId, Hsla, InteractiveElement, IntoElement,
+    ParentElement as _, RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::text_field::MacFieldSize;
 use crate::theme::{AppleColors, MacAccentColor};
@@ -124,7 +124,11 @@ impl RenderOnce for MacComboBox {
         let disabled = self.disabled;
 
         let bg = if disabled {
-            if is_dark { rgba(0xFFFFFF08) } else { rgba(0x00000008) }
+            if is_dark {
+                rgba(0xFFFFFF08)
+            } else {
+                rgba(0x00000008)
+            }
         } else if is_dark {
             rgba(0xFFFFFF15)
         } else {
@@ -153,55 +157,50 @@ impl RenderOnce for MacComboBox {
             apple_colors.label
         };
 
-        let root = div()
-            .id(self.id)
-            .relative()
-            .flex()
-            .flex_col()
-            .child(
-                div()
-                    .flex()
-                    .items_center()
-                    .justify_between()
-                    .h(px(height))
-                    .px_2()
-                    .bg(bg)
-                    .border_1()
-                    .border_color(border_color)
-                    .rounded(px(5.0))
-                    .when(!disabled, |d| {
-                        d.cursor_pointer()
-                            .hover(|s| s.border_color(apple_colors.accent))
-                    })
-                    .child(
-                        div()
-                            .flex_1()
-                            .text_size(px(font_size))
-                            .text_color(text_color)
-                            .truncate()
-                            .child(display_text),
-                    )
-                    // Down chevron button
-                    .child(
-                        div()
-                            .flex()
-                            .items_center()
-                            .justify_center()
-                            .w(px(14.0))
-                            .h(px(14.0))
-                            .ml_1()
-                            .child(
-                                svg()
-                                    .path(IconName::ChevronDown.path())
-                                    .size(px(10.0))
-                                    .text_color(if disabled {
-                                        apple_colors.disabled()
-                                    } else {
-                                        apple_colors.secondary_label
-                                    }),
-                            ),
-                    ),
-            );
+        let root = div().id(self.id).relative().flex().flex_col().child(
+            div()
+                .flex()
+                .items_center()
+                .justify_between()
+                .h(px(height))
+                .px_2()
+                .bg(bg)
+                .border_1()
+                .border_color(border_color)
+                .rounded(px(5.0))
+                .when(!disabled, |d| {
+                    d.cursor_pointer()
+                        .hover(|s| s.border_color(apple_colors.accent))
+                })
+                .child(
+                    div()
+                        .flex_1()
+                        .text_size(px(font_size))
+                        .text_color(text_color)
+                        .truncate()
+                        .child(display_text),
+                )
+                // Down chevron button
+                .child(
+                    div()
+                        .flex()
+                        .items_center()
+                        .justify_center()
+                        .w(px(14.0))
+                        .h(px(14.0))
+                        .ml_1()
+                        .child(
+                            svg()
+                                .path(IconName::ChevronDown.path())
+                                .size(px(10.0))
+                                .text_color(if disabled {
+                                    apple_colors.disabled()
+                                } else {
+                                    apple_colors.secondary_label
+                                }),
+                        ),
+                ),
+        );
 
         if self.is_open && !disabled && !self.options.is_empty() {
             root.child(
@@ -210,9 +209,17 @@ impl RenderOnce for MacComboBox {
                     .top(px(height + 3.0))
                     .left_0()
                     .right_0()
-                    .bg(if is_dark { rgb(0x282828) } else { rgb(0xFFFFFF) })
+                    .bg(if is_dark {
+                        rgb(0x282828)
+                    } else {
+                        rgb(0xFFFFFF)
+                    })
                     .border_1()
-                    .border_color(if is_dark { rgba(0xFFFFFF26) } else { rgba(0x0000001F) })
+                    .border_color(if is_dark {
+                        rgba(0xFFFFFF26)
+                    } else {
+                        rgba(0x0000001F)
+                    })
                     .rounded(px(6.0))
                     .shadow_md()
                     .py_1()
@@ -241,7 +248,11 @@ impl RenderOnce for MacComboBox {
                             .mx_1()
                             .hover(|s| {
                                 if !is_selected {
-                                    s.bg(if is_dark { rgba(0xFFFFFF1F) } else { rgba(0x0000000F) })
+                                    s.bg(if is_dark {
+                                        rgba(0xFFFFFF1F)
+                                    } else {
+                                        rgba(0x0000000F)
+                                    })
                                 } else {
                                     s
                                 }

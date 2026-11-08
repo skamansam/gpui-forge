@@ -1,11 +1,10 @@
 use gpui_kit::assets::IconName;
 use gpui_kit::base::StyledExt;
-use gpui_kit::component::ActiveTheme;
 use gpui_kit::component::input::{Input, InputState};
+use gpui_kit::component::ActiveTheme;
 use gpui_kit::{
-    App, ElementId, Entity, InteractiveElement, IntoElement, ParentElement as _,
-    RenderOnce, SharedString, StyleRefinement, Styled,
-    Window, div, px, rgba, svg,
+    div, px, rgba, svg, App, ElementId, Entity, InteractiveElement, IntoElement,
+    ParentElement as _, RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
 
 use crate::theme::{AppleColors, MacAccentColor};
@@ -97,18 +96,13 @@ impl RenderOnce for MacSearchField {
             .gap(px(6.0))
             .child(search_icon)
             .child(
-                div()
-                    .flex_1()
-                    .h_full()
-                    .flex()
-                    .items_center()
-                    .child(
-                        Input::new(&self.state)
-                            .appearance(false)
-                            .bordered(false)
-                            .cleanable(true)
-                            .h_full(),
-                    ),
+                div().flex_1().h_full().flex().items_center().child(
+                    Input::new(&self.state)
+                        .appearance(false)
+                        .bordered(false)
+                        .cleanable(true)
+                        .h_full(),
+                ),
             )
             .children(shortcut_el)
     }

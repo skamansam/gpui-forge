@@ -1,3 +1,5 @@
+// Vendored upstream code — patched locally where pinned, but not ours to lint.
+#![allow(clippy::all)]
 //! A video player library for [gpui](https://github.com/zed-industries/zed/tree/main/crates/gpui)
 //! applications, built on top of GStreamer.
 //!

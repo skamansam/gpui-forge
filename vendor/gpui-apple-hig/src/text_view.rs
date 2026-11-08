@@ -1,7 +1,7 @@
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::{
-    App, ElementId, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
-    SharedString, StyleRefinement, Styled, Window, div, px, rgb, rgba,
+    div, px, rgb, rgba, App, ElementId, InteractiveElement, IntoElement, ParentElement as _,
+    RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
 
 use crate::theme::{AppleColors, MacAccentColor};
@@ -78,7 +78,11 @@ impl RenderOnce for MacTextView {
         };
 
         let bg = if self.disabled {
-            if is_dark { rgba(0xFFFFFF08) } else { rgba(0x00000008) }
+            if is_dark {
+                rgba(0xFFFFFF08)
+            } else {
+                rgba(0x00000008)
+            }
         } else if is_dark {
             rgba(0xFFFFFF12)
         } else {
@@ -113,7 +117,11 @@ impl RenderOnce for MacTextView {
                 div()
                     .w(px(32.0))
                     .h_full()
-                    .bg(if is_dark { rgba(0x00000030) } else { rgba(0x00000008) })
+                    .bg(if is_dark {
+                        rgba(0x00000030)
+                    } else {
+                        rgba(0x00000008)
+                    })
                     .border_r_1()
                     .border_color(border_color)
                     .p_2()
@@ -131,23 +139,21 @@ impl RenderOnce for MacTextView {
                 .flex_1()
                 .h_full()
                 .p_2()
-                .child(
-                    if self.text.is_empty() {
-                        div()
-                            .text_size(px(12.0))
-                            .text_color(apple_colors.placeholder())
-                            .child(self.placeholder)
-                    } else {
-                        div()
-                            .text_size(px(12.0))
-                            .text_color(if self.disabled {
-                                apple_colors.disabled()
-                            } else {
-                                apple_colors.label
-                            })
-                            .child(self.text)
-                    },
-                ),
+                .child(if self.text.is_empty() {
+                    div()
+                        .text_size(px(12.0))
+                        .text_color(apple_colors.placeholder())
+                        .child(self.placeholder)
+                } else {
+                    div()
+                        .text_size(px(12.0))
+                        .text_color(if self.disabled {
+                            apple_colors.disabled()
+                        } else {
+                            apple_colors.label
+                        })
+                        .child(self.text)
+                }),
         )
     }
 }

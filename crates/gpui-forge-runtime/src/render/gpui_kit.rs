@@ -1013,27 +1013,18 @@ impl ForgeView {
                         },
                         name: name.clone(),
                     },
-                    content: def
-                        .content
-                        .as_ref()
-                        .map(|_| Value::String(name.clone())),
+                    content: def.content.as_ref().map(|_| Value::String(name.clone())),
                     props,
                     ..Default::default()
                 };
-                let widget =
-                    self.render_node(&synth, &format!("{key}-{i}-{name}"), window, cx);
+                let widget = self.render_node(&synth, &format!("{key}-{i}-{name}"), window, cx);
                 col = col.child(
                     div()
                         .flex()
                         .flex_col()
                         .gap_1()
                         .w_full()
-                        .child(
-                            div()
-                                .text_xs()
-                                .text_color(muted)
-                                .child(name.clone()),
-                        )
+                        .child(div().text_xs().text_color(muted).child(name.clone()))
                         .child(widget),
                 );
             }

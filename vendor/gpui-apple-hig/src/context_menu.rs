@@ -1,11 +1,11 @@
-use std::rc::Rc;
 use gpui_kit::assets::IconName;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::{
-    App, ElementId, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
-    SharedString, StyleRefinement, Styled, Window, div, px, rgb, rgba, svg,
+    div, px, rgb, rgba, svg, App, ElementId, InteractiveElement, IntoElement, ParentElement as _,
+    RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 
@@ -152,7 +152,11 @@ impl RenderOnce for MacContextMenu {
                 match kind {
                     MacMenuItemKind::Separator => div()
                         .h(px(1.0))
-                        .bg(if is_dark { rgba(0xFFFFFF15) } else { rgba(0x00000015) })
+                        .bg(if is_dark {
+                            rgba(0xFFFFFF15)
+                        } else {
+                            rgba(0x00000015)
+                        })
                         .my(px(4.0))
                         .mx(px(8.0)),
                     MacMenuItemKind::Header(title) => div()

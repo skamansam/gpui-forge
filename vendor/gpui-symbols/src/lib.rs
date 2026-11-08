@@ -1,3 +1,5 @@
+// Vendored upstream code — patched locally where pinned, but not ours to lint.
+#![allow(clippy::all)]
 //! # gpui-symbols
 //!
 //! SF Symbols rendering for GPUI applications on macOS.

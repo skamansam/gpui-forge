@@ -1,10 +1,10 @@
-use std::rc::Rc;
 use gpui_kit::assets::IconName;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::{
-    App, ElementId, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
-    SharedString, StyleRefinement, Styled, Window, div, px, rgb, rgba, svg,
+    div, px, rgb, rgba, svg, App, ElementId, InteractiveElement, IntoElement, ParentElement as _,
+    RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 
@@ -58,7 +58,8 @@ impl MacTokenField {
 
     pub fn token(mut self, title: impl Into<SharedString>) -> Self {
         let count = self.tokens.len();
-        self.tokens.push(MacToken::new(format!("token_{}", count), title));
+        self.tokens
+            .push(MacToken::new(format!("token_{}", count), title));
         self
     }
 
@@ -104,7 +105,11 @@ impl RenderOnce for MacTokenField {
         };
 
         let bg = if self.disabled {
-            if is_dark { rgba(0xFFFFFF08) } else { rgba(0x00000008) }
+            if is_dark {
+                rgba(0xFFFFFF08)
+            } else {
+                rgba(0x00000008)
+            }
         } else if is_dark {
             rgba(0xFFFFFF15)
         } else {

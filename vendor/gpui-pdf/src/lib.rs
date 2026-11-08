@@ -1,3 +1,5 @@
+// Vendored upstream code — patched locally where pinned, but not ours to lint.
+#![allow(clippy::all)]
 //! **PDF viewing for [GPUI](https://www.gpui.rs/)** — a page-virtualized viewer
 //! built on the pure-Rust [`hayro`](https://crates.io/crates/hayro) rasterizer (no
 //! native libraries, no system-font dependency).
@@ -2722,7 +2724,7 @@ impl Render for PdfView {
                                     .py(px(PAGE_PAD_Y))
                                     // Scrolling doesn't re-run render on its own; notify so
                                     // the next frame re-runs `ensure_window` + page counter.
-                                    .on_scroll_wheel(cx.listener(|_this, _ev, _window, cx| {
+                                    .on_scroll(cx.listener(|_this, _ev, _window, cx| {
                                         cx.notify();
                                     }))
                                     .children(slots),

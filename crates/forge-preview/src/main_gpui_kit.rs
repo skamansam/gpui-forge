@@ -51,8 +51,7 @@ fn main() {
                     if entry.path().extension().and_then(|s| s.to_str()) == Some("json")
                         && let Ok(content) = std::fs::read_to_string(entry.path())
                     {
-                        let _ = ThemeRegistry::global_mut(cx)
-                            .load_themes_from_str(&content);
+                        let _ = ThemeRegistry::global_mut(cx).load_themes_from_str(&content);
                     }
                 }
             }
@@ -88,115 +87,110 @@ fn main() {
                         );
                         // Control channel polled on a timer — doc syncs and
                         // quit commands arrive after window creation too.
-                        cx.spawn(async move |view, cx| loop {
-                            cx.background_executor()
-                                .timer(std::time::Duration::from_millis(50))
-                                .await;
-                            let mut msgs = Vec::new();
-                            while let Ok(m) = rx.try_recv() {
-                                msgs.push(m);
-                            }
-                            if msgs.is_empty() {
-                                continue;
-                            }
-                            let mut quit = false;
-                            let _ = view.update(cx, |view: &mut ForgeView, cx| {
-                                for msg in msgs.drain(..) {
-                                    match msg {
-                                        HostMsg::Source { src, dir } => {
-                                            if let Some(dir) = dir {
-                                                view.set_base_dir(dir);
-                                            }
-                                            let catalogs = view.catalogs.clone();
-                                            let (doc, diags) = check::check(
-                                                &src,
-                                                gpui_forge_runtime::base::BASE_ID,
-                                                &catalogs,
-                                            );
-                                            emit(json!({"event":"diagnostics","items":
-                                                check::diagnostics_json(&diags)})
-                                            );
-                                            if let Some(doc) = doc {
-                                                view.set_document(doc, cx);
-                                            }
-                                        }
-                                        HostMsg::Pick(on) => view.set_pick(on, cx),
-                                        HostMsg::Place(on) => view.set_placing(on, cx),
-                                        HostMsg::Dnd(on) => view.set_dnd(on, cx),
-                                        HostMsg::Select(path) => view.update_state(
-                                            &gpui_forge_runtime::forge_spec::value::parse_path(
-                                                "document.selected",
-                                            )
-                                            .unwrap(),
-                                            serde_json::Value::String(path),
-                                            cx,
-                                        ),
-                                        HostMsg::Theme { name, dark } => {
-                                            let config = name.as_deref().and_then(|n| {
-                                                ThemeRegistry::global(cx)
-                                                    .themes()
-                                                    .get(n)
-                                                    .cloned()
-                                            });
-                                            match config {
-                                                Some(config) => Theme::update(cx, |t| {
-                                                    t.apply_config(&config)
-                                                }),
-                                                None => Theme::change(
-                                                    if dark {
-                                                        ThemeMode::Dark
-                                                    } else {
-                                                        ThemeMode::Light
-                                                    },
-                                                    None,
-                                                    cx,
-                                                ),
-                                            }
-                                        }
-                                        HostMsg::Raise => {
-                                            // Deferred — a window update from
-                                            // inside the entity update would
-                                            // hit the leased slot.
-                                            cx.defer(|cx| {
-                                                for handle in cx.windows() {
-                                                    let _ = handle.update(
-                                                        cx,
-                                                        |_, window, _| {
-                                                            window.activate_window()
-                                                        },
-                                                    );
+                        cx.spawn(async move |view, cx| {
+                            loop {
+                                cx.background_executor()
+                                    .timer(std::time::Duration::from_millis(50))
+                                    .await;
+                                let mut msgs = Vec::new();
+                                while let Ok(m) = rx.try_recv() {
+                                    msgs.push(m);
+                                }
+                                if msgs.is_empty() {
+                                    continue;
+                                }
+                                let mut quit = false;
+                                let _ = view.update(cx, |view: &mut ForgeView, cx| {
+                                    for msg in msgs.drain(..) {
+                                        match msg {
+                                            HostMsg::Source { src, dir } => {
+                                                if let Some(dir) = dir {
+                                                    view.set_base_dir(dir);
                                                 }
-                                            });
-                                        }
-                                        HostMsg::FrameRect { x, y, w, h } => {
-                                            // #120 — the X11 escape for
-                                            // position: `HasWindowHandle`
-                                            // gives the XID, `x11rb` moves it.
-                                            cx.defer(move |cx| {
-                                                for handle in cx.windows() {
-                                                    let _ = handle.update(
+                                                let catalogs = view.catalogs.clone();
+                                                let (doc, diags) = check::check(
+                                                    &src,
+                                                    gpui_forge_runtime::base::BASE_ID,
+                                                    &catalogs,
+                                                );
+                                                emit(json!({"event":"diagnostics","items":
+                                                check::diagnostics_json(&diags)}));
+                                                if let Some(doc) = doc {
+                                                    view.set_document(doc, cx);
+                                                }
+                                            }
+                                            HostMsg::Pick(on) => view.set_pick(on, cx),
+                                            HostMsg::Place(on) => view.set_placing(on, cx),
+                                            HostMsg::Dnd(on) => view.set_dnd(on, cx),
+                                            HostMsg::Select(path) => view.update_state(
+                                                &gpui_forge_runtime::forge_spec::value::parse_path(
+                                                    "document.selected",
+                                                )
+                                                .unwrap(),
+                                                serde_json::Value::String(path),
+                                                cx,
+                                            ),
+                                            HostMsg::Theme { name, dark } => {
+                                                let config = name.as_deref().and_then(|n| {
+                                                    ThemeRegistry::global(cx)
+                                                        .themes()
+                                                        .get(n)
+                                                        .cloned()
+                                                });
+                                                match config {
+                                                    Some(config) => Theme::update(cx, |t| {
+                                                        t.apply_config(&config)
+                                                    }),
+                                                    None => Theme::change(
+                                                        if dark {
+                                                            ThemeMode::Dark
+                                                        } else {
+                                                            ThemeMode::Light
+                                                        },
+                                                        None,
                                                         cx,
-                                                        |_, window, _| {
-                                                            window.resize(
-                                                                gpui_kit::size(
+                                                    ),
+                                                }
+                                            }
+                                            HostMsg::Raise => {
+                                                // Deferred — a window update from
+                                                // inside the entity update would
+                                                // hit the leased slot.
+                                                cx.defer(|cx| {
+                                                    for handle in cx.windows() {
+                                                        let _ = handle
+                                                            .update(cx, |_, window, _| {
+                                                                window.activate_window()
+                                                            });
+                                                    }
+                                                });
+                                            }
+                                            HostMsg::FrameRect { x, y, w, h } => {
+                                                // #120 — the X11 escape for
+                                                // position: `HasWindowHandle`
+                                                // gives the XID, `x11rb` moves it.
+                                                cx.defer(move |cx| {
+                                                    for handle in cx.windows() {
+                                                        let _ =
+                                                            handle.update(cx, |_, window, _| {
+                                                                window.resize(gpui_kit::size(
                                                                     gpui_kit::px(w as f32),
                                                                     gpui_kit::px(h as f32),
-                                                                ),
-                                                            );
-                                                            #[cfg(target_os = "linux")]
-                                                            x11_move(window, x, y);
-                                                        },
-                                                    );
-                                                }
-                                            });
+                                                                ));
+                                                                #[cfg(target_os = "linux")]
+                                                                x11_move(window, x, y);
+                                                            });
+                                                    }
+                                                });
+                                            }
+                                            HostMsg::Quit => quit = true,
                                         }
-                                        HostMsg::Quit => quit = true,
                                     }
+                                });
+                                if quit {
+                                    cx.update(|cx| cx.quit());
+                                    return;
                                 }
-                            });
-                            if quit {
-                                cx.update(|cx| cx.quit());
-                                return;
                             }
                         })
                         .detach();

@@ -1,5 +1,5 @@
 use gpui_kit::component::{Theme, ThemeMode};
-use gpui_kit::{App, Hsla, px, rgb, rgba};
+use gpui_kit::{px, rgb, rgba, App, Hsla};
 
 /// Apple System Accent Color options per macOS System Settings.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -43,7 +43,11 @@ impl MacAccentColor {
     }
 
     pub fn color(&self, is_dark: bool) -> Hsla {
-        let hex = if is_dark { self.dark_hex() } else { self.light_hex() };
+        let hex = if is_dark {
+            self.dark_hex()
+        } else {
+            self.light_hex()
+        };
         rgb(hex).into()
     }
 }
@@ -228,7 +232,11 @@ impl AppleColors {
 
 /// Applies the Apple HIG theme (Light or Dark) into GPUI's Theme system.
 pub fn apply_apple_theme(is_dark: bool, accent: MacAccentColor, cx: &mut App) {
-    let mode = if is_dark { ThemeMode::Dark } else { ThemeMode::Light };
+    let mode = if is_dark {
+        ThemeMode::Dark
+    } else {
+        ThemeMode::Light
+    };
     Theme::change(mode, None, cx);
     let colors = if is_dark {
         AppleColors::dark(accent)

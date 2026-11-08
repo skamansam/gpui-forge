@@ -1,11 +1,10 @@
-use std::rc::Rc;
 use gpui_kit::base::StyledExt;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::{
-    App, ClickEvent, ElementId, Hsla, InteractiveElement, IntoElement, ParentElement as _,
-    RenderOnce, StatefulInteractiveElement, StyleRefinement, Styled,
-    Window, div, px, rgb, rgba,
+    div, px, rgb, rgba, App, ClickEvent, ElementId, Hsla, InteractiveElement, IntoElement,
+    ParentElement as _, RenderOnce, StatefulInteractiveElement, StyleRefinement, Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 
@@ -35,7 +34,10 @@ impl MacColorWell {
         self
     }
 
-    pub fn on_click(mut self, handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static) -> Self {
+    pub fn on_click(
+        mut self,
+        handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
+    ) -> Self {
         self.on_click = Some(Rc::new(handler));
         self
     }
@@ -69,7 +71,11 @@ impl RenderOnce for MacColorWell {
             .h(px(22.0))
             .rounded(px(5.0))
             .p(px(2.0))
-            .bg(if is_dark { rgba(0xFFFFFF1F) } else { rgb(0xFFFFFF).into() })
+            .bg(if is_dark {
+                rgba(0xFFFFFF1F)
+            } else {
+                rgb(0xFFFFFF).into()
+            })
             .border_1()
             .border_color(border_color)
             .shadow_sm()

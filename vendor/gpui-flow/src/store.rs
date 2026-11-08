@@ -165,11 +165,7 @@ impl FlowState {
                         node.dragging = *dragging;
                     }
                 }
-                NodeChange::Dimensions {
-                    id,
-                    width,
-                    height,
-                } => {
+                NodeChange::Dimensions { id, width, height } => {
                     if let Some(node) = self.get_node_mut(id) {
                         node.measured_width = Some(*width);
                         node.measured_height = Some(*height);
@@ -287,7 +283,8 @@ impl FlowState {
 
         self.viewport.zoom = zoom;
         self.viewport.x = (container_width - content_width * zoom) / 2.0 - (min_x - padding) * zoom;
-        self.viewport.y = (container_height - content_height * zoom) / 2.0 - (min_y - padding) * zoom;
+        self.viewport.y =
+            (container_height - content_height * zoom) / 2.0 - (min_y - padding) * zoom;
     }
 
     /// Zoom in by a step, centered on the container center.
@@ -315,7 +312,13 @@ impl FlowState {
     }
 
     /// Center the viewport on a specific flow coordinate.
-    pub fn set_center(&mut self, flow_x: f32, flow_y: f32, container_width: f32, container_height: f32) {
+    pub fn set_center(
+        &mut self,
+        flow_x: f32,
+        flow_y: f32,
+        container_width: f32,
+        container_height: f32,
+    ) {
         self.viewport.x = container_width / 2.0 - flow_x * self.viewport.zoom;
         self.viewport.y = container_height / 2.0 - flow_y * self.viewport.zoom;
     }
@@ -389,7 +392,9 @@ impl FlowState {
                     continue;
                 }
 
-                if let Some((hx, hy)) = self.find_handle_center(&node.id, &handle.id, handle.position) {
+                if let Some((hx, hy)) =
+                    self.find_handle_center(&node.id, &handle.id, handle.position)
+                {
                     let dx = mouse_x - hx;
                     let dy = mouse_y - hy;
                     let dist = (dx * dx + dy * dy).sqrt();
@@ -437,8 +442,16 @@ impl FlowState {
     }
 
     /// Add an edge from a completed connection.
-    pub fn add_edge_from_connection(&mut self, connection: &Connection, edge_id: impl Into<SharedString>) {
-        let mut edge = FlowEdge::new(edge_id, connection.source.clone(), connection.target.clone());
+    pub fn add_edge_from_connection(
+        &mut self,
+        connection: &Connection,
+        edge_id: impl Into<SharedString>,
+    ) {
+        let mut edge = FlowEdge::new(
+            edge_id,
+            connection.source.clone(),
+            connection.target.clone(),
+        );
         if let Some(ref sh) = connection.source_handle {
             edge.source_handle = Some(sh.clone());
         }

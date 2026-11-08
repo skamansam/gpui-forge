@@ -1,12 +1,12 @@
-use std::rc::Rc;
-use gpui_kit::base::{StyledExt, spring};
+use gpui_kit::base::{spring, StyledExt};
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::{
-    App, ClickEvent, ElementId, Hsla, InteractiveElement, IntoElement,
-    ParentElement as _, RenderOnce, SharedString, StatefulInteractiveElement,
-    StyleRefinement, Styled, Window, div, px, rgb, rgba,
+    div, px, rgb, rgba, App, ClickEvent, ElementId, Hsla, InteractiveElement, IntoElement,
+    ParentElement as _, RenderOnce, SharedString, StatefulInteractiveElement, StyleRefinement,
+    Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 use crate::typography::MacTypographyExt;
@@ -112,11 +112,12 @@ impl RenderOnce for MacRadio {
             .gap_2()
             .when(disabled, |this| this.opacity(0.45).cursor_not_allowed())
             .when(!disabled, |this| {
-                this.cursor_pointer().on_click(move |_: &ClickEvent, window, cx| {
-                    if let Some(ref handler) = on_click {
-                        handler(window, cx);
-                    }
-                })
+                this.cursor_pointer()
+                    .on_click(move |_: &ClickEvent, window, cx| {
+                        if let Some(ref handler) = on_click {
+                            handler(window, cx);
+                        }
+                    })
             })
             .child(
                 div().pt(px(2.0)).child(
@@ -140,26 +141,23 @@ impl RenderOnce for MacRadio {
                         ),
                 ),
             )
-            .children((self.label.is_some() || self.description.is_some()).then(|| {
-                div()
-                    .flex()
-                    .flex_col()
-                    .when_some(self.label, |this, label| {
-                        this.child(
-                            div()
-                                .mac_body()
-                                .text_color(apple_colors.label)
-                                .child(label),
-                        )
-                    })
-                    .when_some(self.description, |this, desc| {
-                        this.child(
-                            div()
-                                .mac_subheadline()
-                                .text_color(apple_colors.secondary_label)
-                                .child(desc),
-                        )
-                    })
-            }))
+            .children(
+                (self.label.is_some() || self.description.is_some()).then(|| {
+                    div()
+                        .flex()
+                        .flex_col()
+                        .when_some(self.label, |this, label| {
+                            this.child(div().mac_body().text_color(apple_colors.label).child(label))
+                        })
+                        .when_some(self.description, |this, desc| {
+                            this.child(
+                                div()
+                                    .mac_subheadline()
+                                    .text_color(apple_colors.secondary_label)
+                                    .child(desc),
+                            )
+                        })
+                }),
+            )
     }
 }

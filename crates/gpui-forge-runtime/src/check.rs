@@ -41,10 +41,14 @@ pub fn catalogs() -> Vec<Catalog> {
             .expect("bundled bezel-editor catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/bezel-canvas.catalog.yaml"))
             .expect("bundled bezel-canvas catalog is valid"),
-        catalog::from_yaml(include_str!("../../../catalogs/bezel-markdown.catalog.yaml"))
-            .expect("bundled bezel-markdown catalog is valid"),
-        catalog::from_yaml(include_str!("../../../catalogs/bezel-terminal.catalog.yaml"))
-            .expect("bundled bezel-terminal catalog is valid"),
+        catalog::from_yaml(include_str!(
+            "../../../catalogs/bezel-markdown.catalog.yaml"
+        ))
+        .expect("bundled bezel-markdown catalog is valid"),
+        catalog::from_yaml(include_str!(
+            "../../../catalogs/bezel-terminal.catalog.yaml"
+        ))
+        .expect("bundled bezel-terminal catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/bezel-icons.catalog.yaml"))
             .expect("bundled bezel-icons catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/bezel-motion.catalog.yaml"))
@@ -103,10 +107,14 @@ pub fn catalogs() -> Vec<Catalog> {
             .expect("bundled bezel-editor catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/bezel-canvas.catalog.yaml"))
             .expect("bundled bezel-canvas catalog is valid"),
-        catalog::from_yaml(include_str!("../../../catalogs/bezel-markdown.catalog.yaml"))
-            .expect("bundled bezel-markdown catalog is valid"),
-        catalog::from_yaml(include_str!("../../../catalogs/bezel-terminal.catalog.yaml"))
-            .expect("bundled bezel-terminal catalog is valid"),
+        catalog::from_yaml(include_str!(
+            "../../../catalogs/bezel-markdown.catalog.yaml"
+        ))
+        .expect("bundled bezel-markdown catalog is valid"),
+        catalog::from_yaml(include_str!(
+            "../../../catalogs/bezel-terminal.catalog.yaml"
+        ))
+        .expect("bundled bezel-terminal catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/bezel-icons.catalog.yaml"))
             .expect("bundled bezel-icons catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/bezel-motion.catalog.yaml"))

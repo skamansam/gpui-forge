@@ -21,8 +21,8 @@ pub use symbols::Symbols;
 #[cfg(feature = "ferrum")]
 mod ferrum {
     use gpui_forge_runtime::base::kit::gpui::*;
-    use gpui_forge_runtime::forge_spec::catalog::{self, Catalog};
     use gpui_forge_runtime::forge_spec::Node;
+    use gpui_forge_runtime::forge_spec::catalog::{self, Catalog};
     use gpui_forge_runtime::render::{ForgeLibrary, ForgeView};
     use std::cell::RefCell;
     use std::collections::HashMap;

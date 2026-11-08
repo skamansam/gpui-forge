@@ -1,11 +1,11 @@
-use std::rc::Rc;
 use gpui_kit::assets::IconName;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::{
-    App, ElementId, Hsla, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
-    SharedString, StyleRefinement, Styled, Window, div, px, rgb, rgba, svg,
+    div, px, rgb, rgba, svg, App, ElementId, Hsla, InteractiveElement, IntoElement,
+    ParentElement as _, RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 
@@ -133,12 +133,21 @@ impl RenderOnce for MacTabBar {
                     .h_full()
                     .rounded(px(4.0))
                     .when(is_selected, |d| {
-                        d.bg(if is_dark { rgba(0xFFFFFF33) } else { rgb(0xFFFFFF).into() })
-                            .shadow_xs()
+                        d.bg(if is_dark {
+                            rgba(0xFFFFFF33)
+                        } else {
+                            rgb(0xFFFFFF).into()
+                        })
+                        .shadow_xs()
                     })
                     .when(!is_selected && !self.disabled, |d| {
-                        d.cursor_pointer()
-                            .hover(|s| s.bg(if is_dark { rgba(0xFFFFFF15) } else { rgba(0x00000008) }))
+                        d.cursor_pointer().hover(|s| {
+                            s.bg(if is_dark {
+                                rgba(0xFFFFFF15)
+                            } else {
+                                rgba(0x00000008)
+                            })
+                        })
                     })
                     .when_some(tab.icon, |d, ico| {
                         d.child(

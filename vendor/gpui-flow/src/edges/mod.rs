@@ -5,8 +5,8 @@ pub mod straight;
 use gpui::{Background, PathBuilder, Point, SharedString, Window, px};
 
 use crate::store::FlowState;
-use crate::types::*;
 use crate::types::Viewport;
+use crate::types::*;
 
 use self::bezier::get_bezier_path;
 use self::smooth_step::get_smooth_step_path;
@@ -40,15 +40,19 @@ pub fn paint_edges(state: &FlowState, window: &mut Window) {
         };
 
         // Compute handle positions and screen coordinates inline
-        let source_handle_pos = find_handle_position(source_node, &edge.source_handle, HandleType::Source);
-        let target_handle_pos = find_handle_position(target_node, &edge.target_handle, HandleType::Target);
+        let source_handle_pos =
+            find_handle_position(source_node, &edge.source_handle, HandleType::Source);
+        let target_handle_pos =
+            find_handle_position(target_node, &edge.target_handle, HandleType::Target);
 
         let (sx, sy) = handle_center_from_node(source_node, source_handle_pos, &state.viewport);
         let (tx, ty) = handle_center_from_node(target_node, target_handle_pos, &state.viewport);
 
         // Cull edges where both endpoints are off-screen
-        let both_off_x = (sx < -margin && tx < -margin) || (sx > win_w + margin && tx > win_w + margin);
-        let both_off_y = (sy < -margin && ty < -margin) || (sy > win_h + margin && ty > win_h + margin);
+        let both_off_x =
+            (sx < -margin && tx < -margin) || (sx > win_w + margin && tx > win_w + margin);
+        let both_off_y =
+            (sy < -margin && ty < -margin) || (sy > win_h + margin && ty > win_h + margin);
         if both_off_x || both_off_y {
             continue;
         }
@@ -116,10 +120,17 @@ pub fn paint_edges(state: &FlowState, window: &mut Window) {
                     color,
                 );
             }
-            EdgeType::SmoothStep { border_radius: _, offset } => {
+            EdgeType::SmoothStep {
+                border_radius: _,
+                offset,
+            } => {
                 let step = get_smooth_step_path(
-                    sx, sy, source_handle_pos,
-                    tx, ty, target_handle_pos,
+                    sx,
+                    sy,
+                    source_handle_pos,
+                    tx,
+                    ty,
+                    target_handle_pos,
                     offset,
                 );
 
@@ -141,12 +152,7 @@ pub fn paint_edges(state: &FlowState, window: &mut Window) {
                     window.paint_path(path, color.clone());
                 }
 
-                paint_arrowhead(
-                    window,
-                    last.0, last.1,
-                    prev.0, prev.1,
-                    color,
-                );
+                paint_arrowhead(window, last.0, last.1, prev.0, prev.1, color);
             }
         }
     }
@@ -202,14 +208,26 @@ fn paint_arrowhead(
 pub fn compute_edge_label_position(state: &FlowState, edge: &FlowEdge) -> Option<(f32, f32)> {
     let source_node = state.get_node(&edge.source)?;
     let target_node = state.get_node(&edge.target)?;
-    let source_handle_pos = find_handle_position(source_node, &edge.source_handle, HandleType::Source);
-    let target_handle_pos = find_handle_position(target_node, &edge.target_handle, HandleType::Target);
-    let (sx, sy) = state.find_handle_center(&edge.source, &edge.source_handle, source_handle_pos)?;
-    let (tx, ty) = state.find_handle_center(&edge.target, &edge.target_handle, target_handle_pos)?;
+    let source_handle_pos =
+        find_handle_position(source_node, &edge.source_handle, HandleType::Source);
+    let target_handle_pos =
+        find_handle_position(target_node, &edge.target_handle, HandleType::Target);
+    let (sx, sy) =
+        state.find_handle_center(&edge.source, &edge.source_handle, source_handle_pos)?;
+    let (tx, ty) =
+        state.find_handle_center(&edge.target, &edge.target_handle, target_handle_pos)?;
 
     match edge.edge_type {
         EdgeType::Bezier { curvature } => {
-            let bezier = get_bezier_path(sx, sy, source_handle_pos, tx, ty, target_handle_pos, curvature);
+            let bezier = get_bezier_path(
+                sx,
+                sy,
+                source_handle_pos,
+                tx,
+                ty,
+                target_handle_pos,
+                curvature,
+            );
             Some((bezier.label_x, bezier.label_y))
         }
         EdgeType::Straight | EdgeType::SmoothStep { .. } => {
@@ -235,27 +253,44 @@ pub fn hit_test_edges(state: &FlowState, mx: f32, my: f32, threshold: f32) -> Op
             None => continue,
         };
 
-        let source_handle_pos = find_handle_position(source_node, &edge.source_handle, HandleType::Source);
-        let target_handle_pos = find_handle_position(target_node, &edge.target_handle, HandleType::Target);
+        let source_handle_pos =
+            find_handle_position(source_node, &edge.source_handle, HandleType::Source);
+        let target_handle_pos =
+            find_handle_position(target_node, &edge.target_handle, HandleType::Target);
 
-        let (sx, sy) = match state.find_handle_center(&edge.source, &edge.source_handle, source_handle_pos) {
-            Some(pos) => pos,
-            None => continue,
-        };
-        let (tx, ty) = match state.find_handle_center(&edge.target, &edge.target_handle, target_handle_pos) {
-            Some(pos) => pos,
-            None => continue,
-        };
+        let (sx, sy) =
+            match state.find_handle_center(&edge.source, &edge.source_handle, source_handle_pos) {
+                Some(pos) => pos,
+                None => continue,
+            };
+        let (tx, ty) =
+            match state.find_handle_center(&edge.target, &edge.target_handle, target_handle_pos) {
+                Some(pos) => pos,
+                None => continue,
+            };
 
         let dist = match edge.edge_type {
             EdgeType::Bezier { curvature } => {
-                let bezier = get_bezier_path(sx, sy, source_handle_pos, tx, ty, target_handle_pos, curvature);
+                let bezier = get_bezier_path(
+                    sx,
+                    sy,
+                    source_handle_pos,
+                    tx,
+                    ty,
+                    target_handle_pos,
+                    curvature,
+                );
                 point_to_cubic_bezier_distance(
-                    mx, my,
-                    bezier.source.0, bezier.source.1,
-                    bezier.source_control.0, bezier.source_control.1,
-                    bezier.target_control.0, bezier.target_control.1,
-                    bezier.target.0, bezier.target.1,
+                    mx,
+                    my,
+                    bezier.source.0,
+                    bezier.source.1,
+                    bezier.source_control.0,
+                    bezier.source_control.1,
+                    bezier.target_control.0,
+                    bezier.target_control.1,
+                    bezier.target.0,
+                    bezier.target.1,
                     20,
                 )
             }
@@ -288,11 +323,16 @@ fn point_to_segment_distance(px: f32, py: f32, x1: f32, y1: f32, x2: f32, y2: f3
 
 /// Approximate distance from point to cubic bezier by sampling.
 fn point_to_cubic_bezier_distance(
-    px: f32, py: f32,
-    x0: f32, y0: f32,
-    cx0: f32, cy0: f32,
-    cx1: f32, cy1: f32,
-    x1: f32, y1: f32,
+    px: f32,
+    py: f32,
+    x0: f32,
+    y0: f32,
+    cx0: f32,
+    cy0: f32,
+    cx1: f32,
+    cy1: f32,
+    x1: f32,
+    y1: f32,
     samples: usize,
 ) -> f32 {
     let mut min_dist = f32::MAX;
@@ -334,7 +374,11 @@ fn find_handle_position(
 }
 
 /// Compute handle center directly from a node reference (no HashMap lookup).
-fn handle_center_from_node(node: &FlowNode, handle_pos: HandlePosition, viewport: &Viewport) -> (f32, f32) {
+fn handle_center_from_node(
+    node: &FlowNode,
+    handle_pos: HandlePosition,
+    viewport: &Viewport,
+) -> (f32, f32) {
     let (sx, sy) = viewport.flow_to_screen(node.position);
     let w = node.measured_width.map(|p| p.as_f32()).unwrap_or(114.0);
     let h = node.measured_height.map(|p| p.as_f32()).unwrap_or(54.0);

@@ -3,9 +3,8 @@ use gpui_kit::base::StyledExt;
 use gpui_kit::component::input::{Input, InputState};
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::{
-    App, ElementId, Entity, InteractiveElement, IntoElement, ParentElement as _,
-    RenderOnce, SharedString, StyleRefinement, Styled,
-    Window, div, px, rgb, rgba, svg,
+    div, px, rgb, rgba, svg, App, ElementId, Entity, InteractiveElement, IntoElement,
+    ParentElement as _, RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
 
 use crate::theme::{AppleColors, MacAccentColor};
@@ -153,17 +152,12 @@ impl RenderOnce for MacTextField {
         }
 
         field = field.child(
-            div()
-                .flex_1()
-                .h_full()
-                .flex()
-                .items_center()
-                .child(
-                    Input::new(&self.state)
-                        .appearance(false)
-                        .bordered(false)
-                        .h_full(),
-                ),
+            div().flex_1().h_full().flex().items_center().child(
+                Input::new(&self.state)
+                    .appearance(false)
+                    .bordered(false)
+                    .h_full(),
+            ),
         );
 
         if let Some(icon) = self.trailing_icon {
@@ -268,17 +262,12 @@ impl RenderOnce for MacSecureField {
                     .text_color(apple_colors.tertiary_label),
             )
             .child(
-                div()
-                    .flex_1()
-                    .h_full()
-                    .flex()
-                    .items_center()
-                    .child(
-                        Input::new(&self.state)
-                            .appearance(false)
-                            .bordered(false)
-                            .h_full(),
-                    ),
+                div().flex_1().h_full().flex().items_center().child(
+                    Input::new(&self.state)
+                        .appearance(false)
+                        .bordered(false)
+                        .h_full(),
+                ),
             )
     }
 }

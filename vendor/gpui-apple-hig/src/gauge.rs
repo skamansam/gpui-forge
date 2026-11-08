@@ -1,7 +1,7 @@
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::{
-    App, ElementId, InteractiveElement, IntoElement, ParentElement as _, RenderOnce, SharedString,
-    StyleRefinement, Styled, Window, div, px, rgba,
+    div, px, rgba, App, ElementId, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
+    SharedString, StyleRefinement, Styled, Window,
 };
 
 use crate::theme::{AppleColors, MacAccentColor};
@@ -101,9 +101,9 @@ impl RenderOnce for MacGauge {
         };
 
         let fill_percent = (self.value * 100.0).round();
-        let display_value = self.value_label.unwrap_or_else(|| {
-            SharedString::from(format!("{}%", fill_percent as i32))
-        });
+        let display_value = self
+            .value_label
+            .unwrap_or_else(|| SharedString::from(format!("{}%", fill_percent as i32)));
 
         div()
             .id(self.id)

@@ -2,8 +2,8 @@ use gpui_kit::assets::IconName;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::{
-    App, ElementId, Hsla, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
-    SharedString, StyleRefinement, Styled, Window, div, px, rgb, rgba, svg,
+    div, px, rgb, rgba, svg, App, ElementId, Hsla, InteractiveElement, IntoElement,
+    ParentElement as _, RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
 
 use crate::theme::{AppleColors, MacAccentColor};
@@ -83,84 +83,79 @@ impl RenderOnce for MacColumnView {
                 div()
                     .flex()
                     .h_full()
-                    .child(
-                        div()
-                            .w(px(self.column_width))
-                            .h_full()
-                            .p_1()
-                            .children(col.entries.into_iter().map(|entry| {
-                                let entry_bg: Hsla = if entry.is_selected {
-                                    apple_colors.accent
-                                } else {
-                                    rgba(0x00000000).into()
-                                };
+                    .child(div().w(px(self.column_width)).h_full().p_1().children(
+                        col.entries.into_iter().map(|entry| {
+                            let entry_bg: Hsla = if entry.is_selected {
+                                apple_colors.accent
+                            } else {
+                                rgba(0x00000000).into()
+                            };
 
-                                div()
-                                    .flex()
-                                    .items_center()
-                                    .justify_between()
-                                    .h(px(22.0))
-                                    .px_2()
-                                    .rounded(px(4.0))
-                                    .bg(entry_bg)
-                                    .cursor_pointer()
-                                    .hover(|s| {
-                                        if !entry.is_selected {
-                                            s.bg(if is_dark { rgba(0xFFFFFF15) } else { rgba(0x0000000A) })
+                            div()
+                                .flex()
+                                .items_center()
+                                .justify_between()
+                                .h(px(22.0))
+                                .px_2()
+                                .rounded(px(4.0))
+                                .bg(entry_bg)
+                                .cursor_pointer()
+                                .hover(|s| {
+                                    if !entry.is_selected {
+                                        s.bg(if is_dark {
+                                            rgba(0xFFFFFF15)
                                         } else {
-                                            s
-                                        }
-                                    })
-                                    .child(
-                                        div()
-                                            .flex()
-                                            .items_center()
-                                            .gap_1()
-                                            .child(
-                                                svg()
-                                                    .path(if entry.is_folder {
-                                                        IconName::Folder.path()
-                                                    } else {
-                                                        IconName::File.path()
-                                                    })
-                                                    .size(px(12.0))
-                                                    .text_color(if entry.is_selected {
-                                                        rgb(0xFFFFFF).into()
-                                                    } else {
-                                                        apple_colors.accent
-                                                    }),
-                                            )
-                                            .child(
-                                                div()
-                                                    .text_size(px(12.0))
-                                                    .text_color(if entry.is_selected {
-                                                        rgb(0xFFFFFF).into()
-                                                    } else {
-                                                        apple_colors.label
-                                                    })
-                                                    .child(entry.title),
-                                            ),
-                                    )
-                                    .when(entry.is_folder, |d| {
-                                        d.child(
+                                            rgba(0x0000000A)
+                                        })
+                                    } else {
+                                        s
+                                    }
+                                })
+                                .child(
+                                    div()
+                                        .flex()
+                                        .items_center()
+                                        .gap_1()
+                                        .child(
                                             svg()
-                                                .path(IconName::ChevronRight.path())
-                                                .size(px(8.0))
+                                                .path(if entry.is_folder {
+                                                    IconName::Folder.path()
+                                                } else {
+                                                    IconName::File.path()
+                                                })
+                                                .size(px(12.0))
                                                 .text_color(if entry.is_selected {
                                                     rgb(0xFFFFFF).into()
                                                 } else {
-                                                    apple_colors.tertiary_label
+                                                    apple_colors.accent
                                                 }),
                                         )
-                                    })
-                            })),
-                    )
-                    .child(
-                        div()
-                            .w(px(1.0))
-                            .h_full()
-                            .bg(divider_color),
-                    )
+                                        .child(
+                                            div()
+                                                .text_size(px(12.0))
+                                                .text_color(if entry.is_selected {
+                                                    rgb(0xFFFFFF).into()
+                                                } else {
+                                                    apple_colors.label
+                                                })
+                                                .child(entry.title),
+                                        ),
+                                )
+                                .when(entry.is_folder, |d| {
+                                    d.child(
+                                        svg()
+                                            .path(IconName::ChevronRight.path())
+                                            .size(px(8.0))
+                                            .text_color(if entry.is_selected {
+                                                rgb(0xFFFFFF).into()
+                                            } else {
+                                                apple_colors.tertiary_label
+                                            }),
+                                    )
+                                })
+                        }),
+                    ))
+                    .child(div().w(px(1.0)).h_full().bg(divider_color))
             }))
     }
 }

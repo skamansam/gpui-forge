@@ -1,3 +1,5 @@
+// Vendored upstream code — patched locally where pinned, but not ours to lint.
+#![allow(clippy::all)]
 //! # Apple Human Interface Guidelines (macOS HIG) for GPUI
 //!
 //! A comprehensive, production-grade implementation of Apple HIG for GPUI applications.

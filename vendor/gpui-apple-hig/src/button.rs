@@ -1,13 +1,13 @@
-use std::rc::Rc;
 use gpui_kit::assets::IconName;
 use gpui_kit::base::StyledExt;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::{
-    App, ClickEvent, ElementId, InteractiveElement, IntoElement, ParentElement as _,
-    RenderOnce, SharedString, StatefulInteractiveElement, StyleRefinement, Styled,
-    Window, div, px, rgb, rgba, svg,
+    div, px, rgb, rgba, svg, App, ClickEvent, ElementId, InteractiveElement, IntoElement,
+    ParentElement as _, RenderOnce, SharedString, StatefulInteractiveElement, StyleRefinement,
+    Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 use crate::typography::MacTypographyExt;
@@ -257,12 +257,13 @@ impl RenderOnce for MacButton {
             })
             .when(disabled, |this| this.opacity(0.45).cursor_not_allowed())
             .when(!disabled, |this| {
-                this.hover(|style| style.bg(hover_bg))
-                    .on_click(move |event: &ClickEvent, window, cx| {
+                this.hover(|style| style.bg(hover_bg)).on_click(
+                    move |event: &ClickEvent, window, cx| {
                         if let Some(ref handler) = on_click {
                             handler(event, window, cx);
                         }
-                    })
+                    },
+                )
             })
             .children(self.icon.map(|icon| {
                 svg()

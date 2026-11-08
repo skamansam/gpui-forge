@@ -1,11 +1,11 @@
-use std::rc::Rc;
 use gpui_kit::assets::IconName;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::{
-    App, ElementId, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
-    SharedString, StyleRefinement, Styled, Window, div, px, rgb, rgba, svg,
+    div, px, rgb, rgba, svg, App, ElementId, InteractiveElement, IntoElement, ParentElement as _,
+    RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 
@@ -105,7 +105,11 @@ impl RenderOnce for MacDatePicker {
         };
 
         let bg = if self.disabled {
-            if is_dark { rgba(0xFFFFFF08) } else { rgba(0x00000008) }
+            if is_dark {
+                rgba(0xFFFFFF08)
+            } else {
+                rgba(0x00000008)
+            }
         } else if is_dark {
             rgba(0xFFFFFF15)
         } else {
@@ -122,8 +126,18 @@ impl RenderOnce for MacDatePicker {
             "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
         ];
         let full_month_names = [
-            "January", "February", "March", "April", "May", "June", "July", "August", "September",
-            "October", "November", "December",
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
         ];
         let month_idx = (self.month as usize).saturating_sub(1);
         let month_str = month_names.get(month_idx).unwrap_or(&"Oct");
@@ -137,7 +151,11 @@ impl RenderOnce for MacDatePicker {
                 let mut card = div()
                     .id(self.id)
                     .w(px(260.0))
-                    .bg(if is_dark { rgba(0x282828F0) } else { rgb(0xFFFFFF).into() })
+                    .bg(if is_dark {
+                        rgba(0x282828F0)
+                    } else {
+                        rgb(0xFFFFFF).into()
+                    })
                     .border_1()
                     .border_color(border_color)
                     .rounded(px(10.0))
@@ -158,27 +176,35 @@ impl RenderOnce for MacDatePicker {
                                 .text_size(px(13.0))
                                 .font_weight(gpui_kit::FontWeight::SEMIBOLD)
                                 .text_color(apple_colors.label)
-                                .child(SharedString::from(format!("{} {}", full_month_str, self.year))),
+                                .child(SharedString::from(format!(
+                                    "{} {}",
+                                    full_month_str, self.year
+                                ))),
                         )
                         .child(
-                            div()
-                                .flex()
-                                .items_center()
-                                .gap_1()
-                                .child(
-                                    svg()
-                                        .path(IconName::Calendar.path())
-                                        .size(px(12.0))
-                                        .text_color(apple_colors.secondary_label),
-                                ),
+                            div().flex().items_center().gap_1().child(
+                                svg()
+                                    .path(IconName::Calendar.path())
+                                    .size(px(12.0))
+                                    .text_color(apple_colors.secondary_label),
+                            ),
                         ),
                 );
 
                 // Weekday Headers
                 let weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-                let mut wd_row = div().flex().justify_between().text_size(px(10.0)).text_color(apple_colors.secondary_label);
+                let mut wd_row = div()
+                    .flex()
+                    .justify_between()
+                    .text_size(px(10.0))
+                    .text_color(apple_colors.secondary_label);
                 for wd in weekdays {
-                    wd_row = wd_row.child(div().w(px(28.0)).text_align(gpui_kit::TextAlign::Center).child(SharedString::from(wd)));
+                    wd_row = wd_row.child(
+                        div()
+                            .w(px(28.0))
+                            .text_align(gpui_kit::TextAlign::Center)
+                            .child(SharedString::from(wd)),
+                    );
                 }
                 card = card.child(wd_row);
 
@@ -197,9 +223,7 @@ impl RenderOnce for MacDatePicker {
                         .when(is_sel, |s| {
                             s.bg(apple_colors.accent).text_color(rgb(0xFFFFFF))
                         })
-                        .when(!is_sel, |s| {
-                            s.text_color(apple_colors.label)
-                        })
+                        .when(!is_sel, |s| s.text_color(apple_colors.label))
                         .child(SharedString::from(d.to_string()));
                     days_grid = days_grid.child(day_btn);
                 }
@@ -230,76 +254,64 @@ impl RenderOnce for MacDatePicker {
 
                 card
             }
-            MacDatePickerStyle::Stepper => {
+            MacDatePickerStyle::Stepper => div().id(self.id).flex().items_center().gap_2().child(
                 div()
-                    .id(self.id)
                     .flex()
                     .items_center()
-                    .gap_2()
+                    .gap_1()
+                    .h(px(26.0))
+                    .px_2()
+                    .bg(bg)
+                    .border_1()
+                    .border_color(border_color)
+                    .rounded(px(6.0))
+                    .child(SharedString::from(date_str))
                     .child(
-                        div()
-                            .flex()
-                            .items_center()
-                            .gap_1()
-                            .h(px(26.0))
-                            .px_2()
-                            .bg(bg)
-                            .border_1()
-                            .border_color(border_color)
-                            .rounded(px(6.0))
-                            .child(SharedString::from(date_str))
-                            .child(
-                                svg()
-                                    .path(IconName::ChevronDown.path())
-                                    .size(px(10.0))
-                                    .text_color(apple_colors.secondary_label),
-                            ),
-                    )
-            }
+                        svg()
+                            .path(IconName::ChevronDown.path())
+                            .size(px(10.0))
+                            .text_color(apple_colors.secondary_label),
+                    ),
+            ),
             MacDatePickerStyle::Compact => {
-                let mut root = div()
-                    .id(self.id)
-                    .flex()
-                    .items_center()
-                    .gap_2()
-                    .child(
-                        div()
-                            .flex()
-                            .items_center()
-                            .gap_1()
-                            .h(px(26.0))
-                            .px_2()
-                            .bg(bg)
-                            .border_1()
-                            .border_color(border_color)
-                            .rounded(px(6.0))
-                            .when(!self.disabled, |d| {
-                                d.cursor_pointer()
-                                    .hover(|s| s.border_color(apple_colors.accent))
-                            })
-                            .child(
-                                svg()
-                                    .path(IconName::Calendar.path())
-                                    .size(px(12.0))
-                                    .text_color(apple_colors.secondary_label),
-                            )
-                            .child(
-                                div()
-                                    .text_size(px(12.0))
-                                    .text_color(if self.disabled {
-                                        apple_colors.disabled()
-                                    } else {
-                                        apple_colors.label
-                                    })
-                                    .child(SharedString::from(date_str)),
-                            )
-                            .child(
-                                svg()
-                                    .path(IconName::ChevronDown.path())
-                                    .size(px(9.0))
-                                    .text_color(apple_colors.secondary_label),
-                            ),
-                    );
+                let mut root = div().id(self.id).flex().items_center().gap_2().child(
+                    div()
+                        .flex()
+                        .items_center()
+                        .gap_1()
+                        .h(px(26.0))
+                        .px_2()
+                        .bg(bg)
+                        .border_1()
+                        .border_color(border_color)
+                        .rounded(px(6.0))
+                        .when(!self.disabled, |d| {
+                            d.cursor_pointer()
+                                .hover(|s| s.border_color(apple_colors.accent))
+                        })
+                        .child(
+                            svg()
+                                .path(IconName::Calendar.path())
+                                .size(px(12.0))
+                                .text_color(apple_colors.secondary_label),
+                        )
+                        .child(
+                            div()
+                                .text_size(px(12.0))
+                                .text_color(if self.disabled {
+                                    apple_colors.disabled()
+                                } else {
+                                    apple_colors.label
+                                })
+                                .child(SharedString::from(date_str)),
+                        )
+                        .child(
+                            svg()
+                                .path(IconName::ChevronDown.path())
+                                .size(px(9.0))
+                                .text_color(apple_colors.secondary_label),
+                        ),
+                );
 
                 if self.show_time {
                     root = root.child(

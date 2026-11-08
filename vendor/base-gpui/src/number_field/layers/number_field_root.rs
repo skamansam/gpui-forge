@@ -253,7 +253,7 @@ impl RenderOnce for NumberFieldRoot {
             .on_action(move |_: &NumberFieldMax, window, cx| {
                 max_context.move_to_boundary(NumberFieldStepDirection::Up, window, cx);
             })
-            .on_scroll_wheel(move |event, window, cx| {
+            .on_scroll(move |event, window, cx| {
                 let allow_wheel_scrub =
                     wheel_context.read(cx, |_runtime, props| props.allow_wheel_scrub());
                 if !allow_wheel_scrub || event.modifiers.control {

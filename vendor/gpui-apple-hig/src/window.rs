@@ -1,10 +1,10 @@
-use std::rc::Rc;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::{
-    AnyElement, App, ClickEvent, ElementId, InteractiveElement, IntoElement, ParentElement as _,
-    RenderOnce, SharedString, StyleRefinement, Styled, Window, div, px, rgb, rgba,
+    div, px, rgb, rgba, AnyElement, App, ClickEvent, ElementId, InteractiveElement, IntoElement,
+    ParentElement as _, RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 
@@ -118,7 +118,11 @@ impl RenderOnce for MacWindow {
                     .px_3()
                     .bg(titlebar_bg)
                     .border_b_1()
-                    .border_color(if is_dark { rgba(0xFFFFFF15) } else { rgba(0x00000010) })
+                    .border_color(if is_dark {
+                        rgba(0xFFFFFF15)
+                    } else {
+                        rgba(0x00000010)
+                    })
                     // Traffic lights (Close, Minimize, Zoom)
                     .child(
                         div()

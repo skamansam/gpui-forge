@@ -681,9 +681,7 @@ fn starter(name: &str) -> Option<(&'static str, &'static str)> {
     Some(match name {
         "welcome" | "welcome.forge.yaml" => ("welcome.forge.yaml", WELCOME),
         "gallery" | "gpui-kit" | "gallery.forge.yaml" => ("gallery.forge.yaml", GALLERY),
-        "forge" | "gallery.forge.forge.yaml" => {
-            ("gallery.forge.forge.yaml", GALLERY_FORGE)
-        }
+        "forge" | "gallery.forge.forge.yaml" => ("gallery.forge.forge.yaml", GALLERY_FORGE),
         "blank" | "blank.forge.yaml" => ("blank.forge.yaml", BLANK),
         "ely" | "ely-demo.forge.yaml" => ("../../examples/ely-demo.forge.yaml", EXAMPLE_ELY),
         "gc" | "gc-showcase.forge.yaml" => ("../../examples/gc-showcase.forge.yaml", EXAMPLE_GC),

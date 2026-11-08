@@ -1,10 +1,10 @@
-use std::rc::Rc;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::{
-    App, ElementId, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
-    StyleRefinement, Styled, Window, div, px, rgba,
+    div, px, rgba, App, ElementId, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
+    StyleRefinement, Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 

@@ -1530,8 +1530,7 @@ fn build_cmd(rest: &[String]) -> i32 {
                         base.id
                     ));
                     lib_uses.push("use forge_lib_video::VideoPlayer;".to_string());
-                    lib_register
-                        .push("    view.register_library(VideoPlayer::new());".to_string());
+                    lib_register.push("    view.register_library(VideoPlayer::new());".to_string());
                 }
                 "gpui-pdf" => {
                     lib_deps.push(format!(
@@ -1547,8 +1546,7 @@ fn build_cmd(rest: &[String]) -> i32 {
                         root.join("crates/forge-lib-zorite").display()
                     ));
                     lib_uses.push("use forge_lib_zorite::Whiteboard;".to_string());
-                    lib_register
-                        .push("    view.register_library(Whiteboard::new());".to_string());
+                    lib_register.push("    view.register_library(Whiteboard::new());".to_string());
                 }
                 "ratex-gpui" => {
                     lib_deps.push(format!(

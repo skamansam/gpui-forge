@@ -1,10 +1,10 @@
-use std::rc::Rc;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::{
-    App, ElementId, Hsla, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
-    SharedString, StyleRefinement, Styled, Window, div, px, rgb, rgba,
+    div, px, rgb, rgba, App, ElementId, Hsla, InteractiveElement, IntoElement, ParentElement as _,
+    RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 
@@ -92,7 +92,11 @@ impl RenderOnce for MacDigitEntry {
                 let has_value = char_opt.is_some();
 
                 let bg: Hsla = if self.disabled {
-                    if is_dark { rgba(0xFFFFFF08).into() } else { rgba(0x00000008).into() }
+                    if is_dark {
+                        rgba(0xFFFFFF08).into()
+                    } else {
+                        rgba(0x00000008).into()
+                    }
                 } else if is_dark {
                     rgba(0xFFFFFF15).into()
                 } else {
@@ -102,7 +106,11 @@ impl RenderOnce for MacDigitEntry {
                 let border_color: Hsla = if is_current {
                     apple_colors.focus_ring
                 } else if has_value {
-                    if is_dark { rgba(0xFFFFFF40).into() } else { rgba(0x00000040).into() }
+                    if is_dark {
+                        rgba(0xFFFFFF40).into()
+                    } else {
+                        rgba(0x00000040).into()
+                    }
                 } else if is_dark {
                     rgba(0xFFFFFF20).into()
                 } else {

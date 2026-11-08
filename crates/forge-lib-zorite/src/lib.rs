@@ -20,12 +20,12 @@ use gpui_forge_runtime::render::{ForgeView, get_path};
 use std::cell::RefCell;
 use std::collections::HashMap;
 
+#[cfg(feature = "math")]
+pub use math::Math;
 #[cfg(feature = "pdf")]
 pub use pdf::Pdf;
 #[cfg(feature = "whiteboard")]
 pub use whiteboard::Whiteboard;
-#[cfg(feature = "math")]
-pub use math::Math;
 
 #[cfg(feature = "pdf")]
 mod pdf {
@@ -102,8 +102,7 @@ mod pdf {
                 "Viewer" => {
                     let src = prop_str(node, "src", view)?;
                     let quality = prop_num(node, "quality", view).unwrap_or(1.5) as f32;
-                    let viewer =
-                        self.viewer(key, view.resolve_path(&src), quality, window, cx);
+                    let viewer = self.viewer(key, view.resolve_path(&src), quality, window, cx);
                     Some(viewer.into_any_element())
                 }
                 _ => None,
@@ -123,7 +122,8 @@ mod whiteboard {
     /// `WhiteboardView` entities are cached per node key and rebuilt when
     /// `scene`/`read_only` change.
     /// `key → (scene_json, read_only, board)` — rebuilt when either prop changes.
-    type BoardCache = RefCell<HashMap<String, (String, bool, Entity<gpui_whiteboard::WhiteboardView>)>>;
+    type BoardCache =
+        RefCell<HashMap<String, (String, bool, Entity<gpui_whiteboard::WhiteboardView>)>>;
 
     #[derive(Default)]
     pub struct Whiteboard {
@@ -194,12 +194,12 @@ mod whiteboard {
                                     cx.new(|cx| {
                                         if read_only {
                                             gpui_whiteboard::WhiteboardView::new_read_only(
-                                                scene, style(), cx,
+                                                scene,
+                                                style(),
+                                                cx,
                                             )
                                         } else {
-                                            gpui_whiteboard::WhiteboardView::new(
-                                                scene, style(), cx,
-                                            )
+                                            gpui_whiteboard::WhiteboardView::new(scene, style(), cx)
                                         }
                                     }),
                                 ));
@@ -215,12 +215,12 @@ mod whiteboard {
                                     cx.new(|cx| {
                                         if read_only {
                                             gpui_whiteboard::WhiteboardView::new_read_only(
-                                                scene, style(), cx,
+                                                scene,
+                                                style(),
+                                                cx,
                                             )
                                         } else {
-                                            gpui_whiteboard::WhiteboardView::new(
-                                                scene, style(), cx,
-                                            )
+                                            gpui_whiteboard::WhiteboardView::new(scene, style(), cx)
                                         }
                                     }),
                                 ))
@@ -290,12 +290,8 @@ mod math {
                     let color = prop_str(node, "color", view)
                         .and_then(|c| hex_color(&c))
                         .unwrap_or_else(|| hsla(0.0, 0.0, 0.95, 1.0));
-                    let rendered = ratex_gpui::render::render_latex(
-                        &src,
-                        size,
-                        window.scale_factor(),
-                        color,
-                    )?;
+                    let rendered =
+                        ratex_gpui::render::render_latex(&src, size, window.scale_factor(), color)?;
                     Some(
                         img(rendered.image)
                             .w(px(rendered.width))
@@ -370,15 +366,14 @@ fn node_text(node: &Node, view: &ForgeView) -> Option<String> {
                 .iter()
                 .map(|seg| match seg {
                     gpui_forge_runtime::forge_spec::Segment::Text(t) => t.clone(),
-                    gpui_forge_runtime::forge_spec::Segment::Binding(p) => get_path(
-                        view.state(),
-                        p,
-                    )
-                    .map(|j| match j {
-                        serde_json::Value::String(s) => s.clone(),
-                        other => other.to_string(),
-                    })
-                    .unwrap_or_default(),
+                    gpui_forge_runtime::forge_spec::Segment::Binding(p) => {
+                        get_path(view.state(), p)
+                            .map(|j| match j {
+                                serde_json::Value::String(s) => s.clone(),
+                                other => other.to_string(),
+                            })
+                            .unwrap_or_default()
+                    }
                 })
                 .collect(),
         ),

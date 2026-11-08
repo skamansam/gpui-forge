@@ -15,7 +15,7 @@ use web_time::Instant;
 use gpui::{
     fill, point, px, relative, size, App, Axis, Bounds, ContentMask, Element, ElementId, Entity,
     GlobalElementId, Hitbox, HitboxBehavior, InspectorElementId, IntoElement, LayoutId,
-    MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, Position, ScrollWheelEvent, Size, Style,
+    MouseDownEvent, MouseMoveEvent, MouseUpEvent, Pixels, Position, ScrollEvent, Size, Style,
     Window,
 };
 
@@ -393,7 +393,7 @@ impl Element for Scrollbar {
                     window.on_mouse_event({
                         let runtime = runtime.clone();
                         let target = target.clone();
-                        move |event: &ScrollWheelEvent, phase, _, cx| {
+                        move |event: &ScrollEvent, phase, _, cx| {
                             if phase.bubble() && hitbox_bounds.contains(&event.position) {
                                 let offset = target.offset();
                                 runtime.update(cx, |runtime, cx| {

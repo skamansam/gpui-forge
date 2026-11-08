@@ -1,10 +1,10 @@
-use std::rc::Rc;
 use gpui_kit::assets::IconName;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::{
-    App, ElementId, Hsla, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
-    SharedString, StyleRefinement, Styled, Window, div, px, rgb, rgba, svg,
+    div, px, rgb, rgba, svg, App, ElementId, Hsla, InteractiveElement, IntoElement,
+    ParentElement as _, RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 
@@ -160,7 +160,11 @@ impl RenderOnce for MacMenuBar {
                             .bg(item_bg)
                             .hover(|s| {
                                 if !is_active {
-                                    s.bg(if is_dark { rgba(0xFFFFFF1F) } else { rgba(0x0000000F) })
+                                    s.bg(if is_dark {
+                                        rgba(0xFFFFFF1F)
+                                    } else {
+                                        rgba(0x0000000F)
+                                    })
                                 } else {
                                     s
                                 }

@@ -14,8 +14,8 @@
 
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::{
-    AnyElement, App, ElementId, InteractiveElement, IntoElement, ParentElement as _,
-    RenderOnce, StyleRefinement, Styled, Window, div, px, rgb, rgba, Hsla,
+    div, px, rgb, rgba, AnyElement, App, ElementId, Hsla, InteractiveElement, IntoElement,
+    ParentElement as _, RenderOnce, StyleRefinement, Styled, Window,
 };
 
 /// Thickness / Translucency spectrum of Apple HIG Materials.

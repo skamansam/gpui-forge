@@ -1,7 +1,7 @@
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::{
-    AnyElement, App, ElementId, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
-    StyleRefinement, Styled, Window, div, px, rgba,
+    div, px, rgba, AnyElement, App, ElementId, InteractiveElement, IntoElement, ParentElement as _,
+    RenderOnce, StyleRefinement, Styled, Window,
 };
 
 use crate::theme::{AppleColors, MacAccentColor};
@@ -69,12 +69,7 @@ impl RenderOnce for MacSplitView {
             rgba(0x00000015)
         };
 
-        let mut root = div()
-            .id(self.id)
-            .flex()
-            .w_full()
-            .h_full()
-            .overflow_hidden();
+        let mut root = div().id(self.id).flex().w_full().h_full().overflow_hidden();
 
         if let Some(leading) = self.leading_pane {
             root = root.child(
@@ -96,13 +91,7 @@ impl RenderOnce for MacSplitView {
         );
 
         if let Some(trailing) = self.trailing_pane {
-            root = root.child(
-                div()
-                    .flex_1()
-                    .h_full()
-                    .overflow_hidden()
-                    .child(trailing),
-            );
+            root = root.child(div().flex_1().h_full().overflow_hidden().child(trailing));
         }
 
         root

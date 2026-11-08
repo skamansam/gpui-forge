@@ -95,8 +95,7 @@ impl ForgeLibrary for Hig {
             ),
             "Spinner" => Some(MacSpinner::new(key.to_string()).into_any_element()),
             "Badge" => Some(
-                MacBadge::new(key.to_string(), prop_str(node, "text", view))
-                    .into_any_element(),
+                MacBadge::new(key.to_string(), prop_str(node, "text", view)).into_any_element(),
             ),
             _ => None,
         }

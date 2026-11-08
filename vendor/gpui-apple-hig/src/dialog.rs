@@ -1,12 +1,11 @@
-use std::rc::Rc;
 use gpui_kit::assets::IconName;
 use gpui_kit::base::StyledExt;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::{
-    AnyElement, App, ClickEvent, ElementId, Hsla, InteractiveElement, IntoElement, ParentElement as _,
-    RenderOnce, SharedString, StyleRefinement, Styled,
-    Window, div, px, rgb, rgba, svg,
+    div, px, rgb, rgba, svg, AnyElement, App, ClickEvent, ElementId, Hsla, InteractiveElement,
+    IntoElement, ParentElement as _, RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::button::{MacButton, MacButtonVariant};
 use crate::theme::{AppleColors, MacAccentColor};
@@ -100,12 +99,18 @@ impl MacDialog {
         self
     }
 
-    pub fn on_primary(mut self, handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static) -> Self {
+    pub fn on_primary(
+        mut self,
+        handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
+    ) -> Self {
         self.on_primary = Some(Rc::new(handler));
         self
     }
 
-    pub fn on_secondary(mut self, handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static) -> Self {
+    pub fn on_secondary(
+        mut self,
+        handler: impl Fn(&ClickEvent, &mut Window, &mut App) + 'static,
+    ) -> Self {
         self.on_secondary = Some(Rc::new(handler));
         self
     }
@@ -226,11 +231,10 @@ impl RenderOnce for MacDialog {
                             .justify_center()
                             .gap(px(8.0))
                             .children(self.secondary_label.map(|label| {
-                                let mut btn = MacButton::new("dialog-cancel")
-                                    .label(label)
-                                    .flex_1();
+                                let mut btn = MacButton::new("dialog-cancel").label(label).flex_1();
                                 if let Some(handler) = on_secondary {
-                                    btn = btn.on_click(move |ev, window, cx| handler(ev, window, cx));
+                                    btn =
+                                        btn.on_click(move |ev, window, cx| handler(ev, window, cx));
                                 }
                                 btn
                             }))
@@ -240,7 +244,8 @@ impl RenderOnce for MacDialog {
                                     .variant(primary_btn_variant)
                                     .flex_1();
                                 if let Some(handler) = on_primary {
-                                    btn = btn.on_click(move |ev, window, cx| handler(ev, window, cx));
+                                    btn =
+                                        btn.on_click(move |ev, window, cx| handler(ev, window, cx));
                                 }
                                 btn
                             }),

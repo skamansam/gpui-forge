@@ -2,7 +2,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use gpui::{
     div, point, prelude::*, px, rgb, size, Bounds, Modifiers, Pixels, Render, ScrollDelta,
-    ScrollWheelEvent, TestAppContext, TouchPhase, VisualTestContext, WindowHandle,
+    ScrollEvent, TestAppContext, TouchPhase, VisualTestContext, WindowHandle,
 };
 
 use crate::select::{
@@ -416,7 +416,7 @@ impl Render for SelectTestView {
                             outside_observations.borrow_mut().outside_clicks += 1;
                         }
                     })
-                    .on_scroll_wheel(move |_event, _window, _cx| {
+                    .on_scroll(move |_event, _window, _cx| {
                         outside_observations.borrow_mut().outside_scrolls += 1;
                     }),
             )
@@ -494,7 +494,7 @@ pub fn scroll_over_selector(
     let bounds = debug_bounds(cx, window, selector).expect("debug bounds should exist");
     let mut visual = VisualTestContext::from_window(window.into(), cx);
 
-    visual.simulate_event(ScrollWheelEvent {
+    visual.simulate_event(ScrollEvent {
         position: bounds.center(),
         delta: ScrollDelta::Pixels(point(px(0.0), px(-24.0))),
         modifiers: Modifiers::default(),

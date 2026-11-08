@@ -2,9 +2,8 @@ use gpui_kit::assets::IconName;
 use gpui_kit::base::StyledExt;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::{
-    AnyElement, App, ElementId, Hsla, InteractiveElement, IntoElement,
-    ParentElement as _, RenderOnce, SharedString,
-    StyleRefinement, Styled, Window, div, px, rgb, rgba, svg,
+    div, px, rgb, rgba, svg, AnyElement, App, ElementId, Hsla, InteractiveElement, IntoElement,
+    ParentElement as _, RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
 
 use crate::theme::{AppleColors, MacAccentColor};
@@ -188,9 +187,7 @@ impl RenderOnce for MacSettingsGroup {
                                 })),
                         ),
                 )
-                .children(row.control.map(|ctrl| {
-                    div().flex_shrink_0().child(ctrl)
-                }));
+                .children(row.control.map(|ctrl| div().flex_shrink_0().child(ctrl)));
 
             card_content = card_content.child(row_el);
 
@@ -199,12 +196,7 @@ impl RenderOnce for MacSettingsGroup {
                 let divider = div()
                     .w_full()
                     .pl(px(16.0))
-                    .child(
-                        div()
-                            .w_full()
-                            .h(px(1.0))
-                            .bg(apple_colors.separator),
-                    );
+                    .child(div().w_full().h(px(1.0)).bg(apple_colors.separator));
                 card_content = card_content.child(divider);
             }
         }

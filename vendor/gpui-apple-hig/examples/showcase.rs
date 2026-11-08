@@ -25,8 +25,10 @@ struct ShowcaseApp {
 
 impl ShowcaseApp {
     fn new(window: &mut Window, filter: Option<String>, cx: &mut Context<Self>) -> Self {
-        let search_state = cx.new(|cx| InputState::new(window, cx).placeholder("Search photos, clips, songs..."));
-        let text_state = cx.new(|cx| InputState::new(window, cx).placeholder("Enter account name…"));
+        let search_state =
+            cx.new(|cx| InputState::new(window, cx).placeholder("Search photos, clips, songs..."));
+        let text_state =
+            cx.new(|cx| InputState::new(window, cx).placeholder("Enter account name…"));
         Self {
             is_dark: false,
             accent: MacAccentColor::Blue,
@@ -423,6 +425,7 @@ fn main() {
         let filter_clone = filter.clone();
         open_window(options, cx, move |window, cx| {
             cx.new(|cx| ShowcaseApp::new(window, filter_clone, cx))
-        }).expect("failed to open window");
+        })
+        .expect("failed to open window");
     });
 }

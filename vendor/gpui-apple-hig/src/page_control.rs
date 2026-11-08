@@ -1,10 +1,10 @@
-use std::rc::Rc;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::{
-    App, ElementId, Hsla, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
-    StyleRefinement, Styled, Window, div, px, rgba,
+    div, px, rgba, App, ElementId, Hsla, InteractiveElement, IntoElement, ParentElement as _,
+    RenderOnce, StyleRefinement, Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 
@@ -86,8 +86,7 @@ impl RenderOnce for MacPageControl {
                     .rounded_full()
                     .bg(dot_bg)
                     .when(self.interactive, |d| {
-                        d.cursor_pointer()
-                            .hover(|s| s.bg(apple_colors.accent))
+                        d.cursor_pointer().hover(|s| s.bg(apple_colors.accent))
                     })
             }))
     }

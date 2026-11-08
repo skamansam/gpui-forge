@@ -83,7 +83,7 @@ fn add_backdrop_piece(
                 on_dismiss(window, cx);
                 cx.stop_propagation();
             })
-            .on_scroll_wheel(move |_event, _window, cx| {
+            .on_scroll(move |_event, _window, cx| {
                 cx.stop_propagation();
             }),
     )

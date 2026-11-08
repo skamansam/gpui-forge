@@ -1,11 +1,11 @@
-use std::rc::Rc;
 use gpui_kit::assets::IconName;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::{
-    App, ClickEvent, ElementId, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
-    SharedString, StyleRefinement, Styled, Window, div, px, rgb, rgba, svg,
+    div, px, rgb, rgba, svg, App, ClickEvent, ElementId, InteractiveElement, IntoElement,
+    ParentElement as _, RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 
@@ -98,7 +98,11 @@ impl RenderOnce for MacImageWell {
         };
 
         let bg = if self.has_image {
-            if is_dark { rgb(0x1E1E1E) } else { rgb(0xEAEAEA) }
+            if is_dark {
+                rgb(0x1E1E1E)
+            } else {
+                rgb(0xEAEAEA)
+            }
         } else if is_dark {
             rgba(0xFFFFFF0D)
         } else {
@@ -133,48 +137,46 @@ impl RenderOnce for MacImageWell {
                         d.cursor_pointer()
                             .hover(|s| s.border_color(apple_colors.accent))
                     })
-                    .child(
-                        if self.has_image {
-                            div()
-                                .flex()
-                                .flex_col()
-                                .items_center()
-                                .justify_center()
-                                .child(
-                                    svg()
-                                        .path(IconName::Image.path())
-                                        .size(px(32.0))
-                                        .text_color(apple_colors.accent),
-                                )
-                                .child(
-                                    div()
-                                        .mt_1()
-                                        .text_size(px(10.0))
-                                        .text_color(apple_colors.secondary_label)
-                                        .child("RAW Image Preview"),
-                                )
-                        } else {
-                            div()
-                                .flex()
-                                .flex_col()
-                                .items_center()
-                                .justify_center()
-                                .px_2()
-                                .child(
-                                    svg()
-                                        .path(IconName::Plus.path())
-                                        .size(px(20.0))
-                                        .text_color(apple_colors.secondary_label),
-                                )
-                                .child(
-                                    div()
-                                        .mt_1()
-                                        .text_size(px(10.0))
-                                        .text_color(apple_colors.secondary_label)
-                                        .child(self.placeholder),
-                                )
-                        },
-                    ),
+                    .child(if self.has_image {
+                        div()
+                            .flex()
+                            .flex_col()
+                            .items_center()
+                            .justify_center()
+                            .child(
+                                svg()
+                                    .path(IconName::Image.path())
+                                    .size(px(32.0))
+                                    .text_color(apple_colors.accent),
+                            )
+                            .child(
+                                div()
+                                    .mt_1()
+                                    .text_size(px(10.0))
+                                    .text_color(apple_colors.secondary_label)
+                                    .child("RAW Image Preview"),
+                            )
+                    } else {
+                        div()
+                            .flex()
+                            .flex_col()
+                            .items_center()
+                            .justify_center()
+                            .px_2()
+                            .child(
+                                svg()
+                                    .path(IconName::Plus.path())
+                                    .size(px(20.0))
+                                    .text_color(apple_colors.secondary_label),
+                            )
+                            .child(
+                                div()
+                                    .mt_1()
+                                    .text_size(px(10.0))
+                                    .text_color(apple_colors.secondary_label)
+                                    .child(self.placeholder),
+                            )
+                    }),
             )
             .when_some(self.caption, |d, cap| {
                 d.child(

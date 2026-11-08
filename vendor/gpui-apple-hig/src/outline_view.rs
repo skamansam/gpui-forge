@@ -1,11 +1,11 @@
-use std::rc::Rc;
 use gpui_kit::assets::IconName;
 use gpui_kit::component::ActiveTheme;
 use gpui_kit::prelude::FluentBuilder;
 use gpui_kit::{
-    App, ElementId, Hsla, InteractiveElement, IntoElement, ParentElement as _, RenderOnce,
-    SharedString, StyleRefinement, Styled, Window, div, px, rgb, rgba, svg,
+    div, px, rgb, rgba, svg, App, ElementId, Hsla, InteractiveElement, IntoElement,
+    ParentElement as _, RenderOnce, SharedString, StyleRefinement, Styled, Window,
 };
+use std::rc::Rc;
 
 use crate::theme::{AppleColors, MacAccentColor};
 
@@ -144,7 +144,11 @@ impl RenderOnce for MacOutlineView {
                     .cursor_pointer()
                     .hover(|s| {
                         if !is_selected {
-                            s.bg(if is_dark { rgba(0xFFFFFF15) } else { rgba(0x0000000A) })
+                            s.bg(if is_dark {
+                                rgba(0xFFFFFF15)
+                            } else {
+                                rgba(0x0000000A)
+                            })
                         } else {
                             s
                         }
