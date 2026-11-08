@@ -23,6 +23,7 @@
 		yaml: string;
 		bindings?: unknown;
 		height?: string;
+		base?: string;
 		ondiagnostics?: (d: Diagnostic[]) => void;
 		onhook?: (call: string) => void;
 		onstate?: (state: unknown) => void;
@@ -63,7 +64,7 @@
 </script>
 
 <div class="canvas" style:height>
-	<iframe bind:this={frame} src={asset(`canvas/index.html?base=${base}`)} title="{base} canvas"></iframe>
+	<iframe bind:this={frame} src={asset('canvas/index.html') + `?base=${base}`} title="{base} canvas"></iframe>
 	{#if !ready}<div class="loading">Loading the gpui-kit canvas…</div>{/if}
 </div>
 
