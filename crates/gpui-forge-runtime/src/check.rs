@@ -27,10 +27,19 @@ pub fn catalogs() -> Vec<Catalog> {
             .expect("bundled ratatui catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/iced.catalog.yaml"))
             .expect("bundled iced catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/video.catalog.yaml"))
+            .expect("bundled video catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/pdf.catalog.yaml"))
+            .expect("bundled pdf catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/whiteboard.catalog.yaml"))
+            .expect("bundled whiteboard catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/math.catalog.yaml"))
+            .expect("bundled math catalog is valid"),
     ]
 }
 
-/// The gpui02 build's catalogs: its own library plus the Forge intrinsics.
+/// The gpui02 build's catalogs: its own library plus the Forge intrinsics and
+/// the libraries compatible with this base (video, #77).
 #[cfg(all(feature = "base-gpui02", not(feature = "base-gpui-kit")))]
 pub fn catalogs() -> Vec<Catalog> {
     vec![
@@ -38,6 +47,8 @@ pub fn catalogs() -> Vec<Catalog> {
             .expect("bundled gpui02 catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/forge.catalog.yaml"))
             .expect("bundled forge catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/video.catalog.yaml"))
+            .expect("bundled video catalog is valid"),
     ]
 }
 

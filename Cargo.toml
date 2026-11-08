@@ -34,4 +34,10 @@ strip = true
 # macOS/BSD. Pulled by zed-async-tar → gpui_http_client → gpui 0.2.2 (gpui02).
 [patch.crates-io]
 bezel-gpui-web = { path = "vendor/bezel-gpui-web" }
+# gpui-video-player pins gpui_pre =0.3.9; the gpui-kit base pins =0.3.10 and a
+# graph can only hold one — the vendored crate relaxes the pin (#77).
+gpui-video-player = { path = "vendor/gpui-video-player" }
+# gpui-pdf calls `Modifiers::secondary()` with no args — gpui-pre 0.3.10 made it
+# take `&App`; the vendored crate passes `cx` (#78).
+gpui-pdf = { path = "vendor/gpui-pdf" }
 xattr = { path = "vendor/xattr" }

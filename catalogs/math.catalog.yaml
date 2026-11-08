@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for the ratex-gpui adapter (forge-lib-zorite `math`
+# feature) — `use: math: ratex-gpui`. Opt-in zorite adapter (#78).
+catalog: "0.1"
+library: ratex-gpui
+name: ratex-gpui
+version: 0.4.1
+license: MIT
+bases:
+  gpui-kit: "*"
+
+elements:
+  Tex:
+    icon: sigma
+    group: Display
+    summary: Rendered LaTeX formula, rasterized to an image.
+    component: ratex_gpui::render::render_latex
+    content: tex
+    children: none
+    props:
+      src:
+        type: string
+        summary: LaTeX source — overrides element text when set.
+      size:
+        type: number
+        summary: Font size in px/em (default 16).
+      color:
+        type: color
+        summary: Glyph color (default white).
+  Editor:
+    icon: square-pen
+    group: Input
+    summary: Structural MathQuill-style LaTeX editor.
+    component: ratex_gpui::MathEditor
+    children: none

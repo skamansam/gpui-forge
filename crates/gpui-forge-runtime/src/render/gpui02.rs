@@ -253,6 +253,18 @@ impl ForgeView {
         self.base_dir = Some(dir.into());
     }
 
+    /// Resolves `src` against `base_dir` when relative — adapters (forge-lib-*)
+    /// use this so `src` props are document-relative, not cwd-relative.
+    pub fn resolve_path(&self, src: &str) -> std::path::PathBuf {
+        let path = std::path::Path::new(src);
+        if path.is_relative()
+            && let Some(base) = &self.base_dir
+        {
+            return base.join(path);
+        }
+        path.to_path_buf()
+    }
+
     /// Element-picker mode — rendered nodes report `document.selected` (staged).
     pub fn set_pick(&mut self, pick: bool, cx: &mut Context<Self>) {
         self.pick = pick;

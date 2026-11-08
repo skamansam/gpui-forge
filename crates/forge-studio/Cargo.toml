@@ -16,6 +16,8 @@ gpui-forge-runtime = { workspace = true, features = ["base-gpui-kit"] }
 gpui-kit = { workspace = true, features = ["tree-sitter-yaml"] }
 serde_json = "1"
 forge-lib-gpui-component = { version = "0.1.0", path = "../forge-lib-gpui-component" }
+forge-lib-video = { path = "../forge-lib-video" }
+forge-lib-zorite = { path = "../forge-lib-zorite" }
 
 [lints]
 workspace = true

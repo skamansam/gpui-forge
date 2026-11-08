@@ -1521,6 +1521,43 @@ fn build_cmd(rest: &[String]) -> i32 {
                     lib_uses.push("use forge_lib_template::Template;".to_string());
                     lib_register.push("    view.register_library(Template);".to_string());
                 }
+                "gpui-video-player" => {
+                    // Two variants (#77): the adapter's base feature selects
+                    // the crate's gpui-pre or crates.io-gpui-0.2 build.
+                    lib_deps.push(format!(
+                        "forge-lib-video = {{ path = \"{}\", default-features = false, features = [\"base-{}\"] }}",
+                        root.join("crates/forge-lib-video").display(),
+                        base.id
+                    ));
+                    lib_uses.push("use forge_lib_video::VideoPlayer;".to_string());
+                    lib_register
+                        .push("    view.register_library(VideoPlayer::new());".to_string());
+                }
+                "gpui-pdf" => {
+                    lib_deps.push(format!(
+                        "forge-lib-zorite = {{ path = \"{}\", default-features = false, features = [\"pdf\"] }}",
+                        root.join("crates/forge-lib-zorite").display()
+                    ));
+                    lib_uses.push("use forge_lib_zorite::Pdf;".to_string());
+                    lib_register.push("    view.register_library(Pdf::new());".to_string());
+                }
+                "gpui-whiteboard" => {
+                    lib_deps.push(format!(
+                        "forge-lib-zorite = {{ path = \"{}\", default-features = false, features = [\"whiteboard\"] }}",
+                        root.join("crates/forge-lib-zorite").display()
+                    ));
+                    lib_uses.push("use forge_lib_zorite::Whiteboard;".to_string());
+                    lib_register
+                        .push("    view.register_library(Whiteboard::new());".to_string());
+                }
+                "ratex-gpui" => {
+                    lib_deps.push(format!(
+                        "forge-lib-zorite = {{ path = \"{}\", default-features = false, features = [\"math\"] }}",
+                        root.join("crates/forge-lib-zorite").display()
+                    ));
+                    lib_uses.push("use forge_lib_zorite::Math;".to_string());
+                    lib_register.push("    view.register_library(Math::new());".to_string());
+                }
                 other => eprintln!("forge: no adapter crate known for `{other}` — skipped"),
             }
         }

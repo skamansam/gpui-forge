@@ -1,0 +1,25 @@
+[package]
+name = "forge-lib-zorite"
+description = "Opt-in zorite adapters for GPUI Forge (pdf.*, wb.*, math.* namespaced elements)."
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+repository.workspace = true
+
+# Opt-in adapters (#78): each zorite library is a feature so projects link only
+# what they `use:`. All target the gpui-kit base (the crates pin gpui-pre).
+[features]
+default = ["pdf", "whiteboard", "math"]
+pdf = ["dep:gpui-pdf"]
+whiteboard = ["dep:gpui-whiteboard"]
+math = ["dep:ratex-gpui"]
+
+[dependencies]
+gpui-pdf = { version = "0.7.0", optional = true }
+gpui-whiteboard = { version = "0.5.2", optional = true }
+ratex-gpui = { version = "0.4.1", optional = true }
+gpui-forge-runtime = { path = "../gpui-forge-runtime" }
+serde_json = "1"
+
+[lints]
+workspace = true

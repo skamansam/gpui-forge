@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for the gpui-pdf adapter (forge-lib-zorite `pdf` feature) —
+# `use: pdf: gpui-pdf`. Opt-in zorite adapter (#78).
+catalog: "0.1"
+library: gpui-pdf
+name: gpui-pdf
+version: 0.7.0
+license: MIT
+bases:
+  gpui-kit: "*"
+
+elements:
+  Viewer:
+    icon: file-text
+    group: Media
+    summary: Virtualized PDF viewer — pages rasterize off-thread via hayro.
+    component: gpui_pdf::PdfView
+    children: none
+    props:
+      src:
+        type: string
+        required: true
+        summary: PDF file path (doc-relative).
+      quality:
+        type: number
+        summary: DPI multiplier for page rasterization (1.0 = base).

@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for the gpui-whiteboard adapter (forge-lib-zorite
+# `whiteboard` feature) — `use: wb: gpui-whiteboard`. Opt-in zorite
+# adapter (#78).
+catalog: "0.1"
+library: gpui-whiteboard
+name: gpui-whiteboard
+version: 0.5.2
+license: MIT
+bases:
+  gpui-kit: "*"
+
+elements:
+  Board:
+    icon: pen-tool
+    group: Media
+    summary: Infinite whiteboard canvas — shapes, arrows, freehand, text.
+    component: gpui_whiteboard::WhiteboardView
+    children: none
+    props:
+      read_only:
+        type: bool
+        summary: View without editing tools.
+      scene:
+        type: string
+        summary: Board JSON snapshot (Scene::to_json) to restore.

@@ -20,4 +20,5 @@ theme: guise             # theme system this base consumes
 catalog: gpui02          # base catalog id (catalogs/gpui02.catalog.yaml)
 license: MIT
 
-libraries: {}            # no compatible adapters registered yet
+libraries:               # adapters known compatible with this base
+  gpui-video-player: {version: "0.1.3", crate: forge-lib-video, license: MIT}

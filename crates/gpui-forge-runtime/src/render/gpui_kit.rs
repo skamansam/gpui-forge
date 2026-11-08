@@ -1262,8 +1262,9 @@ impl ForgeView {
     }
 
     /// Resolves `src` against `base_dir` when relative — `std::fs` calls use this
-    /// so `src` is document-relative, not cwd-relative.
-    fn resolve_path(&self, src: &str) -> std::path::PathBuf {
+    /// so `src` is document-relative, not cwd-relative. Public for adapters
+    /// (forge-lib-*) that load files from `src`-style props.
+    pub fn resolve_path(&self, src: &str) -> std::path::PathBuf {
         let path = std::path::Path::new(src);
         if path.is_relative()
             && let Some(base) = &self.base_dir
