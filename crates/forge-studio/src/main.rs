@@ -161,6 +161,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     view.register_library(forge_lib_zorite::Pdf::new());
     view.register_library(forge_lib_zorite::Whiteboard::new());
     view.register_library(forge_lib_zorite::Math::new());
+    view.register_library(forge_lib_hig::Hig);
     view.set_base_dir(env!("CARGO_MANIFEST_DIR"));
     let dark = Theme::global(cx).is_dark();
     // Load every vendored theme JSON — `default-theme.json` is only

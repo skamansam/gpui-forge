@@ -1558,6 +1558,14 @@ fn build_cmd(rest: &[String]) -> i32 {
                     lib_uses.push("use forge_lib_zorite::Math;".to_string());
                     lib_register.push("    view.register_library(Math::new());".to_string());
                 }
+                "gpui-apple-hig" => {
+                    lib_deps.push(format!(
+                        "forge-lib-hig = {{ path = \"{}\" }}",
+                        root.join("crates/forge-lib-hig").display()
+                    ));
+                    lib_uses.push("use forge_lib_hig::Hig;".to_string());
+                    lib_register.push("    view.register_library(Hig);".to_string());
+                }
                 "ferrum-flow" => {
                     lib_deps.push(format!(
                         "forge-lib-gpui02 = {{ path = \"{}\", features = [\"ferrum\"] }}",

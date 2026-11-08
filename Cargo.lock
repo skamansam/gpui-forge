@@ -3706,6 +3706,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "forge-lib-hig"
+version = "0.1.0"
+dependencies = [
+ "gpui-apple-hig",
+ "gpui-forge-runtime",
+ "serde_json",
+]
+
+[[package]]
 name = "forge-lib-template"
 version = "0.1.0"
 dependencies = [
@@ -3772,6 +3781,7 @@ dependencies = [
  "forge-hooks-macros",
  "forge-lib-ely",
  "forge-lib-gpui-component",
+ "forge-lib-hig",
  "forge-lib-video",
  "forge-lib-zorite",
  "gpui-forge-runtime",
@@ -4606,6 +4616,14 @@ dependencies = [
  "zed-font-kit",
  "zed-scap",
  "zed-xim",
+]
+
+[[package]]
+name = "gpui-apple-hig"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "gpui-kit",
 ]
 
 [[package]]

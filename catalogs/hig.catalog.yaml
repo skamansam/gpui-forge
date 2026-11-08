@@ -1,0 +1,80 @@
+# yaml-language-server: $schema=../schema/catalog-0.1.json
+# Catalog manifest for the gpui-apple-hig adapter (forge-lib-hig) —
+# `use: hig: gpui-apple-hig` on the gpui-kit base (#90).
+catalog: "0.1"
+library: gpui-apple-hig
+name: Apple HIG Components
+version: 0.1.0
+license: MIT
+bases:
+  gpui-kit: "*"
+
+elements:
+  Button:
+    icon: mouse-pointer-click
+    group: Buttons
+    summary: macOS push button.
+    component: gpui_apple_hig::button::MacButton
+    content: label
+    children: none
+    props:
+      label: string
+      prominent: bool
+      borderless: bool
+      destructive: bool
+      disabled: bool
+  Switch:
+    icon: toggle-left
+    group: Input
+    summary: macOS toggle switch.
+    component: gpui_apple_hig::switch::MacSwitch
+    children: none
+    props:
+      checked: bool
+      label: string
+      disabled: bool
+  Checkbox:
+    icon: square-check
+    group: Input
+    summary: macOS checkbox with label.
+    component: gpui_apple_hig::checkbox::MacCheckbox
+    content: label
+    children: none
+    props:
+      checked: bool
+      label: string
+      disabled: bool
+  Slider:
+    icon: sliders-horizontal
+    group: Input
+    summary: macOS slider.
+    component: gpui_apple_hig::slider::MacSlider
+    children: none
+    props:
+      value: number
+      min: number
+      max: number
+      step: number
+  Progress:
+    icon: loader
+    group: Display
+    summary: macOS progress bar.
+    component: gpui_apple_hig::progress::MacProgress
+    children: none
+    props:
+      value: number
+  Spinner:
+    icon: loader-circle
+    group: Display
+    summary: macOS busy spinner.
+    component: gpui_apple_hig::progress::MacSpinner
+    children: none
+  Badge:
+    icon: badge
+    group: Display
+    summary: macOS notification badge.
+    component: gpui_apple_hig::badge::MacBadge
+    content: text
+    children: none
+    props:
+      text: string

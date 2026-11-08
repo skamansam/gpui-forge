@@ -1,0 +1,17 @@
+[package]
+name = "forge-lib-hig"
+description = "Apple HIG adapter for GPUI Forge (hig.* namespaced elements on the gpui-kit base)."
+version.workspace = true
+edition.workspace = true
+publish.workspace = true
+repository.workspace = true
+
+[dependencies]
+# Vendored port (#90): upstream gpui-apple-hig pinned gpui-kit 0.7.3 — bumped
+# to the base's 0.8.1. MIT.
+gpui-apple-hig = { path = "../../vendor/gpui-apple-hig" }
+gpui-forge-runtime = { path = "../gpui-forge-runtime" }
+serde_json = "1"
+
+[lints]
+workspace = true

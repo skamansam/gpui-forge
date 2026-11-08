@@ -24,3 +24,4 @@ libraries:                   # adapters known compatible with this base
   gpui-pdf: {version: "0.7.0", crate: forge-lib-zorite, license: MIT}
   gpui-whiteboard: {version: "0.5.2", crate: forge-lib-zorite, license: MIT}
   ratex-gpui: {version: "0.4.1", crate: forge-lib-zorite, license: MIT}
+  gpui-apple-hig: {version: "0.1.0", crate: forge-lib-hig, license: MIT}

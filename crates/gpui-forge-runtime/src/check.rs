@@ -55,6 +55,8 @@ pub fn catalogs() -> Vec<Catalog> {
             .expect("bundled rhythm catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/symbols.catalog.yaml"))
             .expect("bundled symbols catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/hig.catalog.yaml"))
+            .expect("bundled hig catalog is valid"),
     ]
 }
 
