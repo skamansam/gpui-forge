@@ -12,5 +12,7 @@ pub mod bezel;
 mod gpui_kit_impl;
 #[cfg(feature = "base-iced")]
 pub mod iced;
+#[cfg(feature = "base-ratatui")]
+pub mod ratatui_impl;
 #[cfg(feature = "base-gpui-kit")]
 pub use gpui_kit_impl::*;

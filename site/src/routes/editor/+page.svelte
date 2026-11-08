@@ -2,6 +2,7 @@
 	import { parse as parseYaml, isMap } from 'yaml';
 	import { onMount } from 'svelte';
 	import Canvas, { type Diagnostic } from '#lib/Canvas.svelte';
+	import TuiCanvas from '#lib/TuiCanvas.svelte';
 	import YamlEditor from '#lib/YamlEditor.svelte';
 	import Diagnostics from '#lib/Diagnostics.svelte';
 	import { examples, showcases } from '#lib/examples.ts';
@@ -306,7 +307,9 @@
 
 	<div class="panel col">
 		<div class="panel-title"><span>Canvas — {baseId}</span><span>{hooks.at(-1) ? `hook: ${hooks.at(-1)}` : ''}</span></div>
-		{#if baseDef?.wasm}
+		{#if baseId === 'ratatui'}
+			<TuiCanvas {yaml} {bindings} height="calc(100vh - 430px)" ondiagnostics={(d) => (diagnostics = d)} />
+		{:else if baseDef?.wasm}
 			<Canvas {yaml} base={baseId} {bindings} height="calc(100vh - 430px)" ondiagnostics={(d) => (diagnostics = d)}
 				onhook={(c) => (hooks = [...hooks.slice(-4), c])} onstate={(s) => (liveState = s)} />
 		{:else}

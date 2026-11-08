@@ -11,8 +11,8 @@ ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 OUT="$ROOT/site/static/canvas"
 cd "$ROOT"
 
-declare -A TOOLCHAIN=( [gpui-kit]=+nightly [bezel]=+nightly [iced]="" )
-declare -A FEATURE=( [gpui-kit]=base-gpui-kit [bezel]=base-bezel [iced]=base-iced )
+declare -A TOOLCHAIN=( [gpui-kit]=+nightly [bezel]=+nightly [iced]="" [ratatui]="" )
+declare -A FEATURE=( [gpui-kit]=base-gpui-kit [bezel]=base-bezel [iced]=base-iced [ratatui]=base-ratatui )
 
 for base in "${!FEATURE[@]}"; do
   tc="${TOOLCHAIN[$base]}"
