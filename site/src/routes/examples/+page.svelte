@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import Canvas from '#lib/Canvas.svelte';
+	import TuiCanvas from '#lib/TuiCanvas.svelte';
 	import YamlEditor from '#lib/YamlEditor.svelte';
 	import { examples, showcases } from '#lib/examples.ts';
 
@@ -48,17 +49,31 @@
 	<p class="lead">
 		Every add-on library Forge Studio ships, as the
 		<code>examples/*.forge.yaml</code> demo its Welcome tab opens. They render on a native base —
-		the canvas above only previews gpui-kit — so these show as source. Open them in Studio
+		the canvas above only previews gpui-kit — so these show as source (the ratatui demo draws a
+		terminal frame). Open them in Studio
 		(<code>cargo xtask studio</code> → Gallery) to run them.
 	</p>
 	{#each showcases as s (s.slug)}
 		<section id={s.slug}>
 			<h3>{s.title}</h3>
 			<p>{s.summary}</p>
-			<div class="panel">
-				<div class="panel-title"><span>{s.slug}.forge.yaml</span></div>
-				<YamlEditor value={s.yaml} readonly height="360px" />
-			</div>
+			{#if s.base === 'ratatui'}
+				<div class="grid">
+					<div class="panel">
+						<div class="panel-title"><span>{s.slug}.forge.yaml</span></div>
+						<YamlEditor value={s.yaml} readonly height="360px" />
+					</div>
+					<div class="panel">
+						<div class="panel-title"><span>terminal frame</span></div>
+						<TuiCanvas yaml={s.yaml} height="360px" />
+					</div>
+				</div>
+			{:else}
+				<div class="panel">
+					<div class="panel-title"><span>{s.slug}.forge.yaml</span></div>
+					<YamlEditor value={s.yaml} readonly height="360px" />
+				</div>
+			{/if}
 		</section>
 	{/each}
 </div>

@@ -172,7 +172,7 @@
 	// Examples and the widget-set demos share one picker (#130).
 	const entries = [
 		...examples.map((e) => ({ title: e.title, yaml: e.yaml, state: e.state })),
-		...showcases.map((s) => ({ title: `${s.title} (${s.alias})`, yaml: s.yaml, state: undefined as unknown })),
+		...showcases.map((s) => ({ title: s.alias ? `${s.title} (${s.alias})` : s.title, yaml: s.yaml, state: undefined as unknown })),
 	];
 	function loadExample(i: number) {
 		if (i < 0 || !entries[i]) return;

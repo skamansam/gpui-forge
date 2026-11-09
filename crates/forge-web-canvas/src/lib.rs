@@ -6,6 +6,11 @@
 
 #![recursion_limit = "256"]
 
+// Feature-forwarding only — pulls `instant`'s wasm-bindgen backend so parking_lot's
+// `now()` resolves on wasm32 (see Cargo.toml).
+#[cfg(target_arch = "wasm32")]
+use instant as _;
+
 #[cfg(feature = "base-bezel")]
 pub mod bezel;
 #[cfg(feature = "base-gpui-kit")]

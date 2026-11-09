@@ -12,7 +12,8 @@ root:
       - List:
         items: "first\nsecond\nthird"
       - Gauge:
-        value: 0.6
+        value: 60
       - Tabs:
+        titles: "one\ntwo\nthree"
       - Input:
         placeholder: "editable input…"

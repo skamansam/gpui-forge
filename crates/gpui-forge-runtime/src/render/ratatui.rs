@@ -487,11 +487,17 @@ impl ForgeView {
                     .map(|p| self.is_focused(p))
                     .unwrap_or(false);
                 if node.element.name == "Tabs" {
-                    let titles: Vec<Line> = node
-                        .children
-                        .iter()
-                        .map(|c| Line::from(self.node_text(c)))
-                        .collect();
+                    let titles: Vec<Line> = if node.children.is_empty() {
+                        self.prop_text(node, "titles")
+                            .lines()
+                            .map(|l| Line::from(l.to_string()))
+                            .collect()
+                    } else {
+                        node.children
+                            .iter()
+                            .map(|c| Line::from(self.node_text(c)))
+                            .collect()
+                    };
                     let selected = self.num(node, "selected", 0.0) as usize;
                     let mut tabs = Tabs::new(titles)
                         .select(selected)
@@ -505,11 +511,17 @@ impl ForgeView {
                     }
                     frame.render_widget(tabs, area);
                 } else {
-                    let items: Vec<ListItem> = node
-                        .children
-                        .iter()
-                        .map(|c| ListItem::new(self.node_text(c)))
-                        .collect();
+                    let items: Vec<ListItem> = if node.children.is_empty() {
+                        self.prop_text(node, "items")
+                            .lines()
+                            .map(|l| ListItem::new(l.to_string()))
+                            .collect()
+                    } else {
+                        node.children
+                            .iter()
+                            .map(|c| ListItem::new(self.node_text(c)))
+                            .collect()
+                    };
                     let title = self.prop_text(node, "title");
                     let mut list =
                         List::new(items).block(Block::default().borders(Borders::ALL).title(title));

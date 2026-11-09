@@ -3933,6 +3933,7 @@ dependencies = [
  "gpui-forge-runtime",
  "gpui-kit",
  "iced",
+ "instant",
  "ratatui",
  "serde_json",
  "wasm-bindgen",

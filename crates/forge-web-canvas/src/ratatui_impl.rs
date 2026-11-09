@@ -25,8 +25,8 @@ pub fn render_frame(yaml: &str, state_json: &str, width: u16, height: u16) -> St
     {
         view.set_state(state);
     }
-    let mut term = Terminal::new(TestBackend::new(width.max(20), height.max(5)))
-        .expect("test backend");
+    let mut term =
+        Terminal::new(TestBackend::new(width.max(20), height.max(5))).expect("test backend");
     let _ = term.draw(|f| view.render(f));
     let buffer = term.backend().buffer();
     let rows: Vec<String> = (0..buffer.area.height)

@@ -12,6 +12,7 @@ export type Example = {
 // One demo per widget set — the same `examples/*.forge.yaml` files the
 // Welcome tab in Forge Studio opens (#129). The canvas only renders the
 // gpui-kit base, so these show as source; open them in Studio to run them.
+// `base: ratatui` docs are the exception — TuiCanvas draws a terminal frame.
 import elyDemo from '../../../examples/ely-demo.forge.yaml?raw';
 import gcShowcase from '../../../examples/gc-showcase.forge.yaml?raw';
 import gflowDemo from '../../../examples/gflow-demo.forge.yaml?raw';
@@ -21,11 +22,14 @@ import higDemo from '../../../examples/hig-demo.forge.yaml?raw';
 import pdfDemo from '../../../examples/pdf-demo.forge.yaml?raw';
 import whiteboardDemo from '../../../examples/whiteboard-demo.forge.yaml?raw';
 import mathDemo from '../../../examples/math-demo.forge.yaml?raw';
+import ratatuiShowcase from '../../../examples/ratatui-showcase.forge.yaml?raw';
 
 export type Showcase = {
 	slug: string;
-	/** The `use:` alias the document imports. */
-	alias: string;
+	/** The `use:` alias the document imports, if any. */
+	alias?: string;
+	/** Set when the doc previews on the site via a non-gpui-kit canvas. */
+	base?: 'ratatui';
 	title: string;
 	summary: string;
 	yaml: string;
@@ -94,6 +98,13 @@ export const showcases: Showcase[] = [
 		title: 'ratex-gpui',
 		summary: '`use: math: ratex-gpui` — LaTeX rendering + equation editor.',
 		yaml: mathDemo
+	},
+	{
+		slug: 'ratatui-showcase',
+		base: 'ratatui',
+		title: 'ratatui',
+		summary: '`base: ratatui` — terminal widgets drawn into a text-cell frame.',
+		yaml: ratatuiShowcase
 	}
 ];
 
