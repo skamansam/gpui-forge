@@ -126,7 +126,8 @@ Dialog#preferences:
                       placeholder: pick a theme
                       on change: apply_theme_name($studio.theme)
 
-# File → New Project… — scaffolds forge.toml + app.forge.yaml like `forge new`
+# File → New Project… — opens a fresh document in the editor; a folder is
+# only asked for on save (#133).
 Dialog#new-project:
   style:
     width: 420px

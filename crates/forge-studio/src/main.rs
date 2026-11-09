@@ -794,9 +794,12 @@ fn open_project(shared: SharedState, cx: &mut Context<ForgeView>) {
 }
 
 /// `create_project()` — the New Project dialog's Create button (#98): reads the
-/// dialog's `name`/`base` fields (its state lands in `dialog.state` as JSON),
-/// prompts for a parent folder, scaffolds `forge.toml` + `app.forge.yaml` like
-/// `forge new`, then opens the project.
+/// dialog's `name`/`base` fields (its state lands in `dialog.state` as JSON)
+/// and loads a fresh `app.forge.yaml`-style document into the editor.
+///
+/// #133 — no folder prompt: a project is one YAML file, so nothing needs a
+/// path until an operation does. `save_document` → `save_as` asks where to
+/// put it; `forge.toml` scaffolding waits for `forge new`/`forge build`.
 fn create_project(view: &mut ForgeView, shared: SharedState, cx: &mut Context<ForgeView>) {
     let fields = get_path(view.state(), &parse_path("dialog.state").unwrap())
         .and_then(|j| j.as_str())
@@ -825,48 +828,25 @@ fn create_project(view: &mut ForgeView, shared: SharedState, cx: &mut Context<Fo
         status(view, &format!("unknown base `{base}`"), cx);
         return;
     }
-    let receiver = cx.prompt_for_paths(PathPromptOptions {
-        files: false,
-        directories: true,
-        multiple: false,
-        prompt: Some("Choose a parent folder for the project".into()),
-    });
-    cx.spawn(async move |view, cx| {
-        let Ok(Ok(Some(paths))) = receiver.await else {
-            return;
-        };
-        let Some(parent) = paths.into_iter().next() else {
-            return;
-        };
-        view.update(cx, move |view, cx| {
-            let dir = parent.join(&name);
-            if dir.exists() {
-                status(view, &format!("{} already exists", dir.display()), cx);
-                return;
-            }
-            if let Err(e) = std::fs::create_dir_all(&dir) {
-                status(view, &format!("cannot create {}: {e}", dir.display()), cx);
-                return;
-            }
-            let toml = dir.join("forge.toml");
-            let manifest = format!(
-                "[package]\nname = \"{name}\"\nversion = \"0.1.0\"\nid = \"dev.forge.{name}\"\n\n[forge]\nbase = \"{base}\"\ndocument = \"app.forge.yaml\"\n"
-            );
-            let doc = format!(
-                "$schema: {}\nforge: \"0.1\"\nbase: {base}\n\nroot:\n  VStack:\n  style:\n    padding: 16px\n    gap: 8px\n  children:\n    - Text: Hello, Forge!\n",
-                gpui_forge_runtime::forge_spec::yaml_schema::schema_url(&base)
-            );
-            if std::fs::write(&toml, &manifest).is_err()
-                || std::fs::write(dir.join("app.forge.yaml"), &doc).is_err()
-            {
-                status(view, "project files could not be written", cx);
-                return;
-            }
-            load_project(toml, view, shared.clone(), cx);
-        })
-        .ok();
-    })
-    .detach();
+    let doc = format!(
+        "$schema: {}\nforge: \"0.1\"\nbase: {base}\n\nroot:\n  VStack:\n  style:\n    padding: 16px\n    gap: 8px\n  children:\n    - Text: Hello, Forge!\n",
+        gpui_forge_runtime::forge_spec::yaml_schema::schema_url(&base)
+    );
+    shared.borrow_mut().file = None;
+    shared.borrow_mut().dir = None;
+    load_source(view, &format!("{name}.forge.yaml"), &doc, None, &shared, cx);
+    view.update_state(
+        &parse_path("studio.project").unwrap(),
+        Json::String(String::new()),
+        cx,
+    );
+    view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(true), cx);
+    view.update_state(&parse_path("studio.tab").unwrap(), Json::from(2), cx);
+    status(
+        view,
+        &format!("new project `{name}` — unsaved; pick a folder on first save"),
+        cx,
+    );
 }
 
 /// `preview_in_host()` — spawn the out-of-process preview host (#97) on the
