@@ -135,7 +135,7 @@
 <section class="cta-bottom">
 	<h2>Start building</h2>
 	<div class="cta">
-		<a class="btn primary" href={resolve('/docs/getting-started')}>Get started</a>
+		<a class="btn primary" href={resolve('/docs/[slug]', { slug: 'getting-started' })}>Get started</a>
 		<a class="btn" href={resolve('/examples')}>Browse the examples</a>
 	</div>
 </section>
