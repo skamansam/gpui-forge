@@ -624,8 +624,26 @@ impl ForgeView {
             }
             "Table" => {
                 let title = self.prop_text(node, "title");
+                let cell = |s: &str| ratatui::widgets::Cell::from(s.trim().to_string());
+                let header = self
+                    .prop_text(node, "header")
+                    .split('|')
+                    .map(cell)
+                    .collect::<Vec<_>>();
+                let rows: Vec<ratatui::widgets::Row> = self
+                    .prop_text(node, "rows")
+                    .lines()
+                    .map(|line| {
+                        ratatui::widgets::Row::new(line.split('|').map(cell).collect::<Vec<_>>())
+                    })
+                    .collect();
+                let widths = vec![Constraint::Fill(1); header.len().max(1)];
                 frame.render_widget(
-                    Paragraph::new("table — rows pending the port")
+                    ratatui::widgets::Table::new(rows, widths)
+                        .header(
+                            ratatui::widgets::Row::new(header)
+                                .style(Style::default().add_modifier(Modifier::BOLD)),
+                        )
                         .block(Block::default().borders(Borders::ALL).title(title)),
                     area,
                 );

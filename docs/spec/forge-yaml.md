@@ -51,6 +51,22 @@ root:
 | `meta` | no | Map of string → string (title, description, …) |
 | `root` | yes | The root node |
 
+### Base and library prerequisites
+
+A `base:` picks which renderer runs the document. Most bases are pure Rust
+and need nothing extra; a few libraries and bases require system packages at
+build or run time:
+
+| Base / `use:` library | Requirement |
+|---|---|
+| `gpui-video-player` | GStreamer 1.14+ and its plugins — [install guide](https://github.com/GStreamer/gstreamer-rs#installation) (Debian: `libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`; macOS: `brew install gstreamer`; Windows: the MSVC runtime+devel MSIs) |
+| `iced` | A GPU the app can open a surface on — wgpu needs Vulkan/Metal/DX12 (the web canvas targets WebGL2) |
+| `gpui-kit`, `bezel`, `adabraka`, `gpui02`, `ratatui` | No system deps — pure Rust |
+
+Everything else (`ely-core`, `gpui-component`, `gpui-flow`, `base-gpui`,
+`gpui-apple-hig`, `gpui-pdf`, `gpui-whiteboard`, `ratex-gpui`) is pure Rust
+and builds anywhere the base does.
+
 ## Fragments, anchors and merge keys
 
 Forge supports standard YAML anchors, aliases and merge keys, so documents can share

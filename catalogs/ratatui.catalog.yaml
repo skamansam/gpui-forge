@@ -58,6 +58,7 @@ elements:
     component: ratatui::widgets::List
     props:
       items: string
+      title: string
     events:
       select:
 
@@ -69,6 +70,7 @@ elements:
     props:
       header: string
       rows: string
+      title: string
 
   Gauge:
     icon: rectangle-horizontal

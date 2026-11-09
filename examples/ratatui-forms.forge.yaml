@@ -1,0 +1,26 @@
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/ratatui.json
+forge: "0.1"
+base: ratatui
+meta:
+  title: ratatui forms + lists
+root:
+  HStack:
+  style: {gap: 1}
+  children:
+      - Block:
+        title: "sign in"
+        children:
+          - VStack:
+            style: {gap: 1}
+            children:
+              - Input:
+                placeholder: "email"
+              - Input:
+                placeholder: "password"
+              - List:
+                items: "remember me\nstay signed in"
+      - Block:
+        title: "results"
+        children:
+          - List:
+            items: "one\ntwo\nthree\nfour\nfive"

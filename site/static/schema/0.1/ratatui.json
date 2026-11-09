@@ -267,6 +267,14 @@
               "style": {
                 "$ref": "#/definitions/style"
               },
+              "title": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "tooltip": {
                 "description": "Universal prop — hover tooltip text.",
                 "type": [
@@ -278,7 +286,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|List(#[\\w-]+| \\.[\\w-]+)?|children|items|on (select)|style|tooltip)$"
+              "pattern": "^(<<|List(#[\\w-]+| \\.[\\w-]+)?|children|items|on (select)|style|title|tooltip)$"
             }
           }
         },
@@ -325,6 +333,14 @@
               "style": {
                 "$ref": "#/definitions/style"
               },
+              "title": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "tooltip": {
                 "description": "Universal prop — hover tooltip text.",
                 "type": [
@@ -336,7 +352,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Table(#[\\w-]+| \\.[\\w-]+)?|children|header|rows|style|tooltip)$"
+              "pattern": "^(<<|Table(#[\\w-]+| \\.[\\w-]+)?|children|header|rows|style|title|tooltip)$"
             }
           }
         },
@@ -816,6 +832,14 @@
               "style": {
                 "$ref": "#/definitions/style"
               },
+              "title": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "tooltip": {
                 "description": "Universal prop — hover tooltip text.",
                 "type": [
@@ -827,7 +851,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.List(#[\\w-]+| \\.[\\w-]+)?|children|items|on (select)|style|tooltip)$"
+              "pattern": "^(<<|[a-z][\\w-]*\\.List(#[\\w-]+| \\.[\\w-]+)?|children|items|on (select)|style|title|tooltip)$"
             }
           }
         },
@@ -874,6 +898,14 @@
               "style": {
                 "$ref": "#/definitions/style"
               },
+              "title": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "tooltip": {
                 "description": "Universal prop — hover tooltip text.",
                 "type": [
@@ -885,7 +917,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Table(#[\\w-]+| \\.[\\w-]+)?|children|header|rows|style|tooltip)$"
+              "pattern": "^(<<|[a-z][\\w-]*\\.Table(#[\\w-]+| \\.[\\w-]+)?|children|header|rows|style|title|tooltip)$"
             }
           }
         },

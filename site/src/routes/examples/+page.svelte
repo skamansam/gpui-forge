@@ -63,11 +63,13 @@
 					<YamlEditor value={s.yaml} readonly height="360px" />
 				</div>
 				<div class="panel">
-					<div class="panel-title"><span>{s.base === 'ratatui' ? 'terminal frame' : 'rendered by gpui-kit'}</span></div>
+					<div class="panel-title"><span>{s.base === 'ratatui' ? 'terminal frame' : s.base === 'native' ? 'native only' : s.base ? `rendered by ${s.base}` : 'rendered by gpui-kit'}</span></div>
 					{#if s.base === 'ratatui'}
 						<TuiCanvas yaml={s.yaml} height="360px" />
+					{:else if s.base === 'native'}
+						<div class="native">no web canvas for this base — open in Studio (<code>cargo xtask studio</code>) to run it</div>
 					{:else}
-						<Canvas yaml={s.yaml} height="360px" />
+						<Canvas yaml={s.yaml} base={s.base ?? 'gpui-kit'} height="360px" />
 					{/if}
 				</div>
 			</div>
@@ -84,5 +86,6 @@
 	.panel-title button { background: none; border: 0; color: var(--muted); font: inherit; text-transform: inherit; letter-spacing: inherit; cursor: pointer; padding: 0 8px 0 0; }
 	.panel-title button.on { color: var(--fg); }
 	pre.rust { margin: 0; border: 0; border-radius: 0; height: 420px; }
+	.native { display: grid; place-items: center; height: 360px; color: var(--muted); font-size: 13px; text-align: center; padding: 0 24px; }
 	@media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
 </style>

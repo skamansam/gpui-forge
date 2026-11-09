@@ -1,0 +1,34 @@
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/ratatui.json
+forge: "0.1"
+base: ratatui
+meta:
+  title: ratatui dashboard
+root:
+  VStack:
+  style: {gap: 1}
+  children:
+      - Tabs:
+        titles: "Overview\nNodes\nLogs"
+        selected: 0
+      - HStack:
+        style: {gap: 1}
+        children:
+          - Block:
+            title: "cpu"
+            children:
+              - Gauge:
+                value: 72
+          - Block:
+            title: "mem"
+            children:
+              - Gauge:
+                value: 41
+          - Block:
+            title: "disk"
+            children:
+              - Gauge:
+                value: 88
+      - Table:
+        title: "nodes"
+        header: "name | status | load"
+        rows: "web-1 | up | 0.62\nweb-2 | up | 0.41\ndb-1 | degraded | 0.91"

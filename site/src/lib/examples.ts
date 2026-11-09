@@ -10,9 +10,10 @@ export type Example = {
 };
 
 // One demo per widget set — the same `examples/*.forge.yaml` files the
-// Welcome tab in Forge Studio opens (#129). The canvas only renders the
-// gpui-kit base, so these show as source; open them in Studio to run them.
-// `base: ratatui` docs are the exception — TuiCanvas draws a terminal frame.
+// Welcome tab in Forge Studio opens (#129). gpui-kit docs render on the
+// web canvas (libraries the wasm build can't run degrade to a placeholder
+// element); `base: ratatui` docs draw a terminal frame via TuiCanvas, and
+// `native` bases have no web renderer, so the source stands alone.
 import elyDemo from '../../../examples/ely-demo.forge.yaml?raw';
 import gcShowcase from '../../../examples/gc-showcase.forge.yaml?raw';
 import gflowDemo from '../../../examples/gflow-demo.forge.yaml?raw';
@@ -23,13 +24,21 @@ import pdfDemo from '../../../examples/pdf-demo.forge.yaml?raw';
 import whiteboardDemo from '../../../examples/whiteboard-demo.forge.yaml?raw';
 import mathDemo from '../../../examples/math-demo.forge.yaml?raw';
 import ratatuiShowcase from '../../../examples/ratatui-showcase.forge.yaml?raw';
+import ratatuiDashboard from '../../../examples/ratatui-dashboard.forge.yaml?raw';
+import ratatuiForms from '../../../examples/ratatui-forms.forge.yaml?raw';
+import gpuiKitShowcase from '../../../examples/gpui-kit-showcase.forge.yaml?raw';
+import icedShowcase from '../../../examples/iced-showcase.forge.yaml?raw';
+import bezelShowcase from '../../../examples/bezel-showcase.forge.yaml?raw';
+import gpui02Showcase from '../../../examples/gpui02-showcase.forge.yaml?raw';
+import adabrakaShowcase from '../../../examples/adabraka-showcase.forge.yaml?raw';
 
 export type Showcase = {
 	slug: string;
 	/** The `use:` alias the document imports, if any. */
 	alias?: string;
-	/** Set when the doc previews on the site via a non-gpui-kit canvas. */
-	base?: 'ratatui';
+	/** The canvas the doc previews on: defaults to gpui-kit; `native` means no
+	 *  web renderer exists, so the source stands alone. */
+	base?: 'ratatui' | 'iced' | 'bezel' | 'native';
 	title: string;
 	summary: string;
 	yaml: string;
@@ -100,11 +109,59 @@ export const showcases: Showcase[] = [
 		yaml: mathDemo
 	},
 	{
+		slug: 'gpui-kit-showcase',
+		title: 'gpui-kit',
+		summary: '`base: gpui-kit` — the base widget set itself.',
+		yaml: gpuiKitShowcase
+	},
+	{
 		slug: 'ratatui-showcase',
 		base: 'ratatui',
 		title: 'ratatui',
 		summary: '`base: ratatui` — terminal widgets drawn into a text-cell frame.',
 		yaml: ratatuiShowcase
+	},
+	{
+		slug: 'ratatui-dashboard',
+		base: 'ratatui',
+		title: 'ratatui dashboard',
+		summary: '`base: ratatui` — tabs, gauges and a table in a tiled layout.',
+		yaml: ratatuiDashboard
+	},
+	{
+		slug: 'ratatui-forms',
+		base: 'ratatui',
+		title: 'ratatui forms',
+		summary: '`base: ratatui` — inputs and lists in a two-pane form.',
+		yaml: ratatuiForms
+	},
+	{
+		slug: 'iced-showcase',
+		base: 'native',
+		title: 'Iced',
+		summary: '`base: iced` — the same document on the Elm-style Iced runtime; its web canvas does not paint yet.',
+		yaml: icedShowcase
+	},
+	{
+		slug: 'bezel-showcase',
+		base: 'native',
+		title: 'Bezel',
+		summary: '`base: bezel` — the gpui-web/bezel render path; its web canvas does not paint yet.',
+		yaml: bezelShowcase
+	},
+	{
+		slug: 'gpui02-showcase',
+		base: 'native',
+		title: 'GPUI 0.2 · guise',
+		summary: '`base: gpui02` — Vanilla GPUI 0.2 + guise; native only.',
+		yaml: gpui02Showcase
+	},
+	{
+		slug: 'adabraka-showcase',
+		base: 'native',
+		title: 'adabraka-ui',
+		summary: '`base: adabraka` — the adabraka GPUI port; native only.',
+		yaml: adabrakaShowcase
 	}
 ];
 

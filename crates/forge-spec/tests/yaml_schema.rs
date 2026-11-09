@@ -259,6 +259,51 @@ fn shipped_docs_validate() {
             "ratatui",
         ),
         (
+            "ratatui-dashboard",
+            include_str!("../../../examples/ratatui-dashboard.forge.yaml"),
+            "ratatui",
+        ),
+        (
+            "ratatui-forms",
+            include_str!("../../../examples/ratatui-forms.forge.yaml"),
+            "ratatui",
+        ),
+        (
+            "base-demo",
+            include_str!("../../../examples/base-demo.forge.yaml"),
+            "gpui-kit",
+        ),
+        (
+            "gflow-demo",
+            include_str!("../../../examples/gflow-demo.forge.yaml"),
+            "gpui-kit",
+        ),
+        (
+            "hig-demo",
+            include_str!("../../../examples/hig-demo.forge.yaml"),
+            "gpui-kit",
+        ),
+        (
+            "math-demo",
+            include_str!("../../../examples/math-demo.forge.yaml"),
+            "gpui-kit",
+        ),
+        (
+            "pdf-demo",
+            include_str!("../../../examples/pdf-demo.forge.yaml"),
+            "gpui-kit",
+        ),
+        (
+            "video-demo",
+            include_str!("../../../examples/video-demo.forge.yaml"),
+            "gpui-kit",
+        ),
+        (
+            "whiteboard-demo",
+            include_str!("../../../examples/whiteboard-demo.forge.yaml"),
+            "gpui-kit",
+        ),
+        (
             "bezel-showcase",
             include_str!("../../../examples/bezel-showcase.forge.yaml"),
             "bezel",
