@@ -26,6 +26,10 @@ root:
       on click: go()
 "#;
 
+// Not on macOS: `MacPlatform::new` demands a `MainThreadMarker`, which only
+// exists on the real main thread — cargo test runs cases on worker threads,
+// so a live App context can't be created there.
+#[cfg(not(target_os = "macos"))]
 #[test]
 fn forge_view_integration() {
     let fired = Rc::new(RefCell::new(Vec::new()));
