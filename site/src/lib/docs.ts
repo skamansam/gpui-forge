@@ -39,6 +39,8 @@ const PAGE_ORDER: Record<string, string[]> = {
 	cli: ['forge-cli', 'forge-toml']
 };
 
+export type TocEntry = { depth: number; text: string; id: string };
+
 export type Doc = {
 	slug: string;
 	title: string;
@@ -46,6 +48,8 @@ export type Doc = {
 	category: string;
 	/** First paragraph after the title — the landing page's blurb. */
 	blurb: string;
+	/** h2/h3 outline for the "on this page" rail. */
+	toc: TocEntry[];
 };
 
 export const docs: Doc[] = Object.entries(files)
@@ -56,8 +60,28 @@ export const docs: Doc[] = Object.entries(files)
 		const slug = parts.pop()!.replace(/\.md$/, '');
 		const category = parts.pop()!;
 		const title = md.match(/^# (.+)$/m)?.[1] ?? slug;
-		// Links between docs become links between doc pages.
-		const html = (marked.parse(md, { async: false }) as string).replace(
+		// h2/h3 outline — heading text gets link/code markup stripped for display.
+		const seen = new Map<string, number>();
+		const toc = [...md.matchAll(/^(#{2,3})\s+(.+?)\s*$/gm)].map((m) => {
+			const text = m[2]
+				.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+				.replace(/[`*_]/g, '');
+			let id = text
+				.toLowerCase()
+				.replace(/[^\p{L}\p{N}]+/gu, '-')
+				.replace(/^-|-$/g, '');
+			const n = seen.get(id) ?? 0;
+			seen.set(id, n + 1);
+			if (n) id = `${id}-${n}`;
+			return { depth: m[1].length, text, id };
+		});
+		let heading = 0;
+		const html = (marked.parse(md, { async: false }) as string)
+			.replace(/<h([23])>/g, (m) => {
+				const t = toc[heading++];
+				return t ? `<h${t.depth} id="${t.id}">` : m;
+			})
+			.replace(
 			/href="(?:\.\/)?([a-z0-9-]+)\.md(#[^"]*)?"/g,
 			(_, s, hash = '') => `href="${resolve('/docs/[slug]', { slug: s })}${hash}"`
 		).replace(
@@ -73,7 +97,7 @@ export const docs: Doc[] = Object.entries(files)
 				?.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
 				.replace(/[`*_]/g, '')
 				.slice(0, 160) ?? '';
-		return { slug, title, html, category, blurb };
+		return { slug, title, html, category, blurb, toc };
 	})
 	.sort((a, b) => order(a) - order(b));
 
