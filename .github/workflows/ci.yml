@@ -70,6 +70,8 @@ jobs:
       - name: Install GStreamer (Windows)
         if: runner.os == 'Windows'
         uses: blinemedical/setup-gstreamer@v1
+        with:
+          version: "1.28.8"
       - name: Clippy
         run: cargo clippy --workspace --all-targets --locked -- --deny warnings
       - name: Test

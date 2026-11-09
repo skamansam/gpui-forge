@@ -169,6 +169,8 @@ fn main() {
                                                 // #120 — the X11 escape for
                                                 // position: `HasWindowHandle`
                                                 // gives the XID, `x11rb` moves it.
+                                                #[cfg(not(target_os = "linux"))]
+                                                let _ = (x, y);
                                                 cx.defer(move |cx| {
                                                     for handle in cx.windows() {
                                                         let _ =
