@@ -71,7 +71,9 @@ jobs:
         if: runner.os == 'Windows'
         uses: blinemedical/setup-gstreamer@v1
         with:
-          version: "1.28.8"
+          # 1.28.x ships .exe installers — the action's .msi URL scheme only
+          # works through 1.26.x; pin the newest 1.26 release.
+          version: "1.26.11"
       - name: Clippy
         run: cargo clippy --workspace --all-targets --locked -- --deny warnings
       - name: Test
