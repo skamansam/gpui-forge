@@ -60,7 +60,16 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y gcc g++ clang libfontconfig-dev libwayland-dev \
             libwebkit2gtk-4.1-dev libxkbcommon-x11-dev libx11-xcb-dev \
-            libssl-dev libzstd-dev libasound2-dev vulkan-validationlayers libvulkan1
+            libssl-dev libzstd-dev libasound2-dev vulkan-validationlayers libvulkan1 \
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+            libgstreamer-plugins-bad1.0-dev gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good
+      - name: Install GStreamer (macOS)
+        if: runner.os == 'macOS'
+        run: brew install gstreamer
+      - name: Install GStreamer (Windows)
+        if: runner.os == 'Windows'
+        uses: blinemedical/setup-gstreamer@v1
       - name: Clippy
         run: cargo clippy --workspace --all-targets --locked -- --deny warnings
       - name: Test
