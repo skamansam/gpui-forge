@@ -1,5 +1,7 @@
 # GPUI Forge
 
+> *While I have been doing software development since the 1990s, I lack the time necessary to put forth my ideas into reality, so I have enlisted the help of [Devin](https://devin.ai) and vibecoded this app into existence. If you notice anything wrong or see any bugs, please use the [gpui-forge GitHub issue reporting](https://github.com/skamansam/gpui-forge/issues) to do so and I will attend to it as soon as I can. Thank you — I hope this app helps you in some small way.*
+
 **GPUI Forge** is an integrated ecosystem of tools designed to bring visual prototyping and rapid UI development to the [GPUI](https://www.gpui.rs/) framework. 
 
 The goal of this project is to bridge the gap between high-level design and low-level Rust implementation, allowing developers to visually compose complex, high-performance user interfaces that can be seamlessly compiled into standalone, production-ready GPUI applications.
@@ -46,7 +48,7 @@ A multi-format specification for defining GPUI element trees. To ensure interope
 *   **Forge YAML:** Plain YAML with a JSON Schema: human-readable, one fact per line for clean Git diffs, and editable with existing YAML tooling.
 *   **JSON:** the machine interchange format between the Web Builder and the Rust Engine (YAML is a JSON superset, so conversion is a serialize, not a translate).
 
-See the draft [Forge YAML format](docs/spec/forge-yaml.md) and [document model](docs/spec/document-model.md). [Writing a Forge adapter](docs/guide/adapters.md) covers integrating third-party GPUI component libraries (the `forge-lib-ely` pattern).
+See the draft [Forge YAML format](docs/format/forge-yaml.md) and [document model](docs/format/document-model.md). [Writing a Forge adapter](docs/format/adapters.md) covers integrating third-party GPUI component libraries (the `forge-lib-ely` pattern).
 
 ### 2. The Forge Converter (`forge-cli`)
 A powerful command-line utility used to transform interface definitions between all supported formats (e.g., converting a JSON blob from the web editor into a `.forge` file for the desktop editor).

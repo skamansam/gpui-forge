@@ -1,4 +1,4 @@
-//! The style & layout model (`docs/spec/style-layout.md`): which keys a `style:` map may hold and
+//! The style & layout model (`docs/format/style-layout.md`): which keys a `style:` map may hold and
 //! what values each accepts. Renderers map each key onto GPUI `Styled` methods.
 
 use crate::model::{Unit, Value};

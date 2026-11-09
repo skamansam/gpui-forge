@@ -24,7 +24,7 @@ crates on `gpui 0.2` go through the Vanilla GPUI 0.2 base (#96); crates on
 **Porting means** a fork or upstream PR moving the crate's `gpui` dep to
 `gpui-pre 0.3.10` (the gpui-kit base pin) or confirming it on `gpui 0.2`
 (for the Vanilla base). A landed port then follows the adapter checklist
-in `docs/guide/adapters.md`.
+in `docs/format/adapters.md`.
 
 ## Vendored upstream bugs
 

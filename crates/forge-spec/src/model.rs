@@ -1,4 +1,4 @@
-//! The canonical, format-independent document model (`docs/spec/document-model.md`).
+//! The canonical, format-independent document model (`docs/format/document-model.md`).
 
 use std::fmt;
 

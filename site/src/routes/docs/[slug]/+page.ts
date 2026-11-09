@@ -8,5 +8,5 @@ export function entries() {
 export function load({ params }) {
 	const doc = docs.find((d) => d.slug === params.slug);
 	if (!doc) error(404, 'No such page');
-	return { doc, docs: docs.map(({ slug, title }) => ({ slug, title })) };
+	return { doc };
 }

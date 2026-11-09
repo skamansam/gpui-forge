@@ -1,4 +1,4 @@
-//! Catalog manifests (`docs/spec/catalog-manifest.md`): the elements a library offers.
+//! Catalog manifests (`docs/format/catalog-manifest.md`): the elements a library offers.
 
 use std::collections::HashMap;
 use std::fmt;

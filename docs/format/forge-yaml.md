@@ -207,7 +207,7 @@ YAML gotchas the validator reports with a fix hint:
   and `site/static/schema/forge-doc.schema.json` ships the generated model schema
   alongside generated TypeScript declarations for the web editor.
 - Editor association: the `$schema` key, the `yaml-language-server` comment, or a
-  `*.forge.yaml` file-name mapping — see `docs/guide/yaml-validation.md`.
+  `*.forge.yaml` file-name mapping — see the [validation guide](yaml-validation.md).
 - Schema validation is a convenience. `forge-spec` validation is authoritative (unique ids,
   binding rules, base compatibility).
 

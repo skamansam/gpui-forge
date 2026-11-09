@@ -92,7 +92,7 @@ constructs the upstream widget:
 1. `cargo add` the upstream crate — it must link the same `gpui-pre` version
    as the base (the gpui-kit base pins `0.3.10`); mismatches won't compile.
 2. Write `catalogs/<lib>.catalog.yaml` per the manifest schema
-   (`docs/spec/catalog-manifest.md`).
+   ([catalog manifest](catalog-manifest.md)).
 3. Create `crates/forge-lib-<name>` implementing `ForgeLibrary`
    (see `crates/forge-lib-ely/` — ~200 lines).
 4. Add the catalog to `check::catalogs()`; add the crate to the workspace.

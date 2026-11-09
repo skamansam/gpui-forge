@@ -1,7 +1,7 @@
 use forge_spec::yaml::{self, IdStyle, WriteOptions};
 use forge_spec::{BindingMode, Document, ElementRef, Path, PathSegment, Segment, Unit, Value};
 
-const SPEC: &str = include_str!("../../../docs/spec/forge-yaml.md");
+const SPEC: &str = include_str!("../../../docs/format/forge-yaml.md");
 
 fn yaml_blocks(md: &str) -> Vec<String> {
     md.replace("\r\n", "\n")

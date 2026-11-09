@@ -48,7 +48,7 @@ pub fn to_json(schema: &Json) -> String {
     out
 }
 
-/// Optional `#id` / ` .id` suffix on an element key (`docs/spec/forge-yaml.md`).
+/// Optional `#id` / ` .id` suffix on an element key (`docs/format/forge-yaml.md`).
 const ID_SUFFIX: &str = r"(#[\w-]+| \.[\w-]+)?";
 /// An import alias — `is_namespace` in the reader.
 const ALIAS: &str = r"[a-z][\w-]*";

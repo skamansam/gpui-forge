@@ -1,4 +1,4 @@
-//! Forge YAML (`docs/spec/forge-yaml.md`): reader and canonical writer.
+//! Forge YAML (`docs/format/forge-yaml.md`): reader and canonical writer.
 
 mod preserve;
 mod read;

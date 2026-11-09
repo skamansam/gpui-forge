@@ -4038,7 +4038,7 @@ fn color(value: &Value, cx: &App) -> Option<Hsla> {
     }
 }
 
-/// Applies a node's `style:` map (`docs/spec/style-layout.md`).
+/// Applies a node's `style:` map (`docs/format/style-layout.md`).
 fn style<E: Styled>(element: E, entries: &Entries, cx: &App) -> E {
     entries.iter().fold(element, |e, (key, value)| {
         let word = match value {

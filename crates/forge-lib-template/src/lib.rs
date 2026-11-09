@@ -2,7 +2,7 @@
 //!
 //! To ship a real adapter: copy this crate, rename it, point `use:` at your
 //! library's upstream crate, and fill in the `render()` match. See
-//! `docs/guide/adapters.md` for the full checklist.
+//! `docs/format/adapters.md` for the full checklist.
 
 use gpui_forge_runtime::base::kit::*;
 use gpui_forge_runtime::forge_spec::catalog::{self, Catalog};

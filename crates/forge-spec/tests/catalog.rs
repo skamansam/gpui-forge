@@ -2,8 +2,8 @@ use forge_spec::catalog::{self, Catalog, Children, PropType};
 use forge_spec::{Value, yaml};
 
 const GPUI_KIT: &str = include_str!("../../../catalogs/gpui-kit.catalog.yaml");
-const SPEC: &str = include_str!("../../../docs/spec/forge-yaml.md");
-const MANIFEST_SPEC: &str = include_str!("../../../docs/spec/catalog-manifest.md");
+const SPEC: &str = include_str!("../../../docs/format/forge-yaml.md");
+const MANIFEST_SPEC: &str = include_str!("../../../docs/format/catalog-manifest.md");
 
 fn gpui_kit() -> Catalog {
     catalog::from_yaml(GPUI_KIT).unwrap_or_else(|e| panic!("{e}"))

@@ -3,7 +3,7 @@ use forge_spec::validate::validate;
 use forge_spec::yaml;
 
 const GPUI_KIT: &str = include_str!("../../../catalogs/gpui-kit.catalog.yaml");
-const SPEC: &str = include_str!("../../../docs/spec/forge-yaml.md");
+const SPEC: &str = include_str!("../../../docs/format/forge-yaml.md");
 const ELY: &str = "catalog: \"0.1\"
 library: ely-gpui-components
 version: 0.4.0
@@ -237,7 +237,7 @@ fn missing_base_catalog() {
     );
 }
 
-const STYLE_SPEC: &str = include_str!("../../../docs/spec/style-layout.md");
+const STYLE_SPEC: &str = include_str!("../../../docs/format/style-layout.md");
 
 #[test]
 fn style_spec_examples_are_valid() {
