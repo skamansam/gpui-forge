@@ -174,7 +174,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     }
     refresh_recent_menu(&mut view, &load_recents(), cx);
 
-    view.register_library(forge_lib_ely::Ely);
+    view.register_library(forge_lib_ely::Ely::new());
     view.register_library(forge_lib_gpui_component::GpuiComponent);
     view.register_library(forge_lib_video::VideoPlayer::new());
     view.register_library(forge_lib_zorite::Pdf::new());

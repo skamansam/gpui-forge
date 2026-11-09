@@ -71,6 +71,16 @@ pub fn start(dark: bool, assets: String) {
         let (_, view) = gpui_kit::open_window(WindowOptions::default(), cx, |_, cx| {
             cx.new(|cx| {
                 let mut view = ForgeView::new(CATALOGS.with(Clone::clone));
+                // The `use:` libraries the examples page demos — the Studio set
+                // minus VideoPlayer (GStreamer is native-only) and Whiteboard/
+                // Flow (their views don't paint on the web platform; the
+                // elements fall back to "not provided by this adapter yet").
+                view.register_library(forge_lib_ely::Ely::new());
+                view.register_library(forge_lib_gpui_component::GpuiComponent);
+                view.register_library(forge_lib_zorite::Pdf::new());
+                view.register_library(forge_lib_zorite::Math::new());
+                view.register_library(forge_lib_hig::Hig);
+                view.register_library(forge_lib_base::Base::new());
                 view.set_sinks(
                     Rc::new(|call, _, _| forge_hook(call)),
                     Rc::new(|state, _, _| forge_state(&state.to_string())),

@@ -17,10 +17,31 @@ use gpui_forge_runtime::base::kit::*;
 use gpui_forge_runtime::forge_spec::catalog::{self, Catalog};
 use gpui_forge_runtime::forge_spec::{Node, Value};
 use gpui_forge_runtime::render::{ForgeLibrary, ForgeView};
+use std::cell::Cell;
 use std::sync::OnceLock;
 
 /// `ely.*` adapter — register with `view.register_library(Ely)`.
-pub struct Ely;
+///
+/// Installs `ely_core::theme::Theme` on first render — widgets read it through
+/// `ActiveTheme` and panic when the global is missing (`ely_core::init` also
+/// loads Ely's asset bundle, which hosts may not ship).
+pub struct Ely {
+    inited: Cell<bool>,
+}
+
+impl Ely {
+    pub fn new() -> Self {
+        Self {
+            inited: Cell::new(false),
+        }
+    }
+}
+
+impl Default for Ely {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 
 impl ForgeLibrary for Ely {
     fn alias(&self) -> &'static str {
@@ -41,8 +62,15 @@ impl ForgeLibrary for Ely {
         key: &str,
         _view: &ForgeView,
         _window: &mut Window,
-        _cx: &mut Context<ForgeView>,
+        cx: &mut Context<ForgeView>,
     ) -> Option<AnyElement> {
+        if !self.inited.replace(true) {
+            ely_core::theme::Theme::init(cx);
+            // Ely's Theme defaults to light — match the host's mode.
+            if gpui_forge_runtime::base::kit::component::theme::Theme::global(cx).is_dark() {
+                ely_core::theme::Theme::set_mode(ely_core::theme::Mode::Dark, cx);
+            }
+        }
         match node.element.name.as_str() {
             "Button" => {
                 let mut b = Button::new(key.to_string(), prop_str(node, "label"));

@@ -339,6 +339,7 @@ fn prop_str(node: &Node, name: &str, view: &ForgeView) -> Option<String> {
     }
 }
 
+#[cfg(feature = "whiteboard")]
 fn prop_bool(node: &Node, name: &str, view: &ForgeView, fallback: bool) -> bool {
     match prop(node, name) {
         Some(Value::Bool(b)) => *b,

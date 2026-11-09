@@ -48,32 +48,29 @@
 	<h2 class="sets">Widget sets</h2>
 	<p class="lead">
 		Every add-on library Forge Studio ships, as the
-		<code>examples/*.forge.yaml</code> demo its Welcome tab opens. They render on a native base —
-		the canvas above only previews gpui-kit — so these show as source (the ratatui demo draws a
-		terminal frame). Open them in Studio
-		(<code>cargo xtask studio</code> → Gallery) to run them.
+		<code>examples/*.forge.yaml</code> demo its Welcome tab opens. Each renders live — gpui-kit
+		docs on the WASM canvas above, the ratatui doc as a terminal frame (<code>video.*</code>
+		needs GStreamer, so those elements show as placeholders on the web). Open them in Studio
+		(<code>cargo xtask studio</code> → Gallery) to run them natively.
 	</p>
 	{#each showcases as s (s.slug)}
 		<section id={s.slug}>
 			<h3>{s.title}</h3>
 			<p>{s.summary}</p>
-			{#if s.base === 'ratatui'}
-				<div class="grid">
-					<div class="panel">
-						<div class="panel-title"><span>{s.slug}.forge.yaml</span></div>
-						<YamlEditor value={s.yaml} readonly height="360px" />
-					</div>
-					<div class="panel">
-						<div class="panel-title"><span>terminal frame</span></div>
-						<TuiCanvas yaml={s.yaml} height="360px" />
-					</div>
-				</div>
-			{:else}
+			<div class="grid">
 				<div class="panel">
 					<div class="panel-title"><span>{s.slug}.forge.yaml</span></div>
 					<YamlEditor value={s.yaml} readonly height="360px" />
 				</div>
-			{/if}
+				<div class="panel">
+					<div class="panel-title"><span>{s.base === 'ratatui' ? 'terminal frame' : 'rendered by gpui-kit'}</span></div>
+					{#if s.base === 'ratatui'}
+						<TuiCanvas yaml={s.yaml} height="360px" />
+					{:else}
+						<Canvas yaml={s.yaml} height="360px" />
+					{/if}
+				</div>
+			</div>
 		</section>
 	{/each}
 </div>
