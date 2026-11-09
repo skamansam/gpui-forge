@@ -6,6 +6,11 @@
 //! harness `#[gpui_kit::test]` needs `test-support`, which pulls the whole
 //! gpui-fast engine graph into the workspace.
 
+// Not on macOS: `MacPlatform::new` demands a `MainThreadMarker`, which only
+// exists on the real main thread — cargo test runs cases on worker threads,
+// so a live App context can't be created there.
+#![cfg(not(target_os = "macos"))]
+
 use gpui_forge_runtime::check;
 use gpui_forge_runtime::forge_spec::yaml;
 use gpui_forge_runtime::render::ForgeView;
@@ -26,10 +31,6 @@ root:
       on click: go()
 "#;
 
-// Not on macOS: `MacPlatform::new` demands a `MainThreadMarker`, which only
-// exists on the real main thread — cargo test runs cases on worker threads,
-// so a live App context can't be created there.
-#[cfg(not(target_os = "macos"))]
 #[test]
 fn forge_view_integration() {
     let fired = Rc::new(RefCell::new(Vec::new()));
