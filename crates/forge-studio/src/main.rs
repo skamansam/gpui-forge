@@ -372,10 +372,12 @@ fn open_dialog(
         return;
     };
     let catalogs = view.catalogs.clone();
+    let libraries = view.libraries.clone();
     let shell = cx.entity().downgrade();
     let shared = shared.clone();
     let child = cx.new(|cx| {
         let mut v = ForgeView::new(catalogs);
+        v.libraries = libraries;
         let weak = shell.clone();
         let shared = shared.clone();
         v.set_sinks(

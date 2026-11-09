@@ -199,7 +199,7 @@ pub struct ForgeView {
     /// GC drops scroll offsets on every `cx.notify` re-render; an explicit
     /// `track_scroll` handle keeps them alive.
     scroll_handles: HashMap<String, ScrollHandle>,
-    pub libraries: Vec<Box<dyn ForgeLibrary>>,
+    pub libraries: Vec<Rc<dyn ForgeLibrary>>,
     hooks: HashMap<String, HookHandler>,
     on_hook: Option<HookSink>,
     on_state: Option<StateSink>,
@@ -369,11 +369,20 @@ impl ForgeView {
     }
 
     /// The `forge.Preview` host for `id`, creating the nested view on first use.
+    /// The child shares the parent's registered libraries so `alias.Name`
+    /// elements render inside previews too.
     pub fn preview(&mut self, id: &str, cx: &mut Context<Self>) -> Entity<ForgeView> {
         let catalogs = self.catalogs.clone();
+        let libraries = self.libraries.clone();
         self.previews
             .entry(id.to_owned())
-            .or_insert_with(|| cx.new(|_| ForgeView::new(catalogs)))
+            .or_insert_with(|| {
+                cx.new(|_| {
+                    let mut view = ForgeView::new(catalogs);
+                    view.libraries = libraries;
+                    view
+                })
+            })
             .clone()
     }
 
@@ -1490,7 +1499,7 @@ impl ForgeView {
         if let Some(cat) = lib.catalog().cloned() {
             self.catalogs.push(cat);
         }
-        self.libraries.push(Box::new(lib));
+        self.libraries.push(Rc::new(lib));
     }
 
     /// Resolves `src` against `base_dir` when relative — `std::fs` calls use this
@@ -2097,11 +2106,13 @@ impl ForgeView {
                     } else {
                         let empty_text = self.prop_text(node, "placeholder");
                         let catalogs = self.catalogs.clone();
+                        let libraries = self.libraries.clone();
                         self.previews
                             .entry(id)
                             .or_insert_with(|| {
                                 cx.new(|_| {
                                     let mut view = ForgeView::new(catalogs);
+                                    view.libraries = libraries;
                                     view.empty_text = empty_text;
                                     view
                                 })

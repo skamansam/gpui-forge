@@ -9,7 +9,7 @@ is only needed once you do something that requires one.
 | Item | What it does |
 |---|---|
 | **New** | An empty gpui-kit document, unsaved. |
-| **New Project…** | A scaffolded document — also unsaved. No folder prompt: a path is only asked for when you save or build (#133). |
+| **New Project…** | A scaffolded document — also unsaved. No folder prompt: a path is only asked for when you save or build. |
 | **Open…** | A `.forge.yaml` document. |
 | **Open Project…** | A `forge.toml` — its [`forge.document`](forge-toml.md) resolves the doc, and the manifest dir becomes the project dir for `src:` and `base_dir` resolution. |
 | **Preview in Host…** | Spawn the [native preview host](studio-preview.md) for the document's base. |

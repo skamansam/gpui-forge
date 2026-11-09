@@ -1,6 +1,6 @@
 # Forge document model
 
-Status: **draft** (spec version `0.1`). Tracks [#3](https://github.com/skamansam/gpui-forge/issues/3).
+Status: **draft** (spec version `0.1`).
 
 The document model is the canonical, format-independent AST. [Forge YAML](forge-yaml.md), JSON
 (the same tree as YAML) are its encodings; any document must survive
@@ -31,7 +31,7 @@ Node
   id       : Ident?                // unique within the document; written Element#id or Element .id
   content  : Value?                // positional value; the catalog maps it to the element's primary prop
   props    : OrderedMap<Ident, Value>
-  style    : OrderedMap<Ident, Value>   // keys defined by the style & layout model (#5)
+  style    : OrderedMap<Ident, Value>   // keys defined by the style & layout model
   events   : [EventBinding]        // ordered
   children : [Node]                // ordered
 
@@ -74,8 +74,7 @@ Path    = Ident ("." Ident | "[" integer "]")*   // rooted in the view state, e.
 6. `TwoWay` bindings appear only as prop values, never in `style`, `content` or handler args.
 
 Everything else (does `kit.Button` exist, is `variant` a valid prop, is `Primary` an allowed enum
-value, may a `Text` have children, is the library compatible with the base) is catalog validation
-([#10](https://github.com/skamansam/gpui-forge/issues/10), [#92](https://github.com/skamansam/gpui-forge/issues/92)).
+value, may a `Text` have children, is the library compatible with the base) is catalog validation.
 
 ## Ordering and identity
 
@@ -118,7 +117,7 @@ Document {
 ## Open questions
 
 - **Control flow.** Conditional (`if`) and repeated (`for`) nodes are reserved but not in 0.1; they
-  depend on the state model in [#18](https://github.com/skamansam/gpui-forge/issues/18).
+  depend on the state model.
 - **Reusable components / includes.** Referencing another `.forge` file as an element (`use` of a
   local file) is out of scope for 0.1.
 - **Expressions.** Bindings are plain paths in 0.1 (no `!`, `==`, arithmetic). Derived values are

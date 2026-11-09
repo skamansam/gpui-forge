@@ -44,7 +44,7 @@ Format** runs the canonical formatter over it.
 
 Catalog validation runs on every change — the same engine `forge check`
 uses. Errors surface as squiggles in the source and in the Diagnostics group
-with line, column, and a hint (#128).
+with line, column, and a hint.
 
 ## Pick mode
 

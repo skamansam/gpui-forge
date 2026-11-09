@@ -1,10 +1,10 @@
 # Forge YAML
 
-Status: **draft** (spec version `0.1`). Tracks [#2](https://github.com/skamansam/gpui-forge/issues/2).
+Status: **draft** (spec version `0.1`).
 
 Forge documents are **plain YAML 1.2** with a JSON Schema, so any YAML parser, YAML↔JSON converter,
-linter or schema-aware editor works on them. The same tree encoded as JSON is the Forge JSON format
-([#6](https://github.com/skamansam/gpui-forge/issues/6)). Both encode the
+linter or schema-aware editor works on them. The same tree encoded as JSON is the Forge JSON format.
+Both encode the
 [document model](document-model.md).
 
 File extension: `.forge.yaml` (`.forge.json` for JSON).
@@ -128,7 +128,7 @@ A node is a YAML mapping with exactly one **element key** plus optional reserved
 
 | Key | Value |
 |---|---|
-| `style` | map of style & layout properties ([#5](https://github.com/skamansam/gpui-forge/issues/5)) |
+| `style` | map of style & layout properties |
 | `children` | list of nodes (order is significant, duplicates allowed) |
 | `on <event>` | handler call: `sign_in`, `sign_in()`, `go_to($wizard.id, 2)` |
 | anything else | a prop of the element (lower-case identifier) |

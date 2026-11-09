@@ -1,6 +1,6 @@
 # Style & layout model
 
-Status: **draft** (spec version `0.1`). Tracks [#5](https://github.com/skamansam/gpui-forge/issues/5).
+Status: **draft** (spec version `0.1`).
 
 A node's `style:` map holds presentation that is not a component prop: flex layout, sizing,
 spacing, borders, colors and text. Every key maps onto one family of GPUI `Styled` methods, and
@@ -101,6 +101,5 @@ Grid layout, absolute positioning, transitions and responsive variants. They wil
 keys, so existing documents stay valid.
 
 The keys above are the **GPUI-family profile**: they name GPUI `Styled` methods and gpui-kit theme
-fields. Non-GPUI bases ([ratatui](https://github.com/skamansam/gpui-forge/issues/112),
-[iced](https://github.com/skamansam/gpui-forge/issues/113)) will get their own style profiles
+fields. Non-GPUI bases (ratatui, iced) will get their own style profiles
 matching their toolkit's styling model (e.g. ratatui `Constraint`s and `Modifier`s).

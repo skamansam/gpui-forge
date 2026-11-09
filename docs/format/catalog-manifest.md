@@ -7,7 +7,7 @@ about a library's elements is hard-coded.
 
 Each library adapter ships one manifest. The gpui-kit base library's manifest is
 [`catalogs/gpui-kit.catalog.yaml`](../../catalogs/gpui-kit.catalog.yaml); it moves into the gpui-kit
-adapter crate once that exists (#75).
+adapter crate once that exists.
 
 Manifests are YAML, read with the same parser as Forge documents, and validated by editors
 through [`schema/catalog-0.1.json`](../../schema/catalog-0.1.json). The loader is
@@ -64,7 +64,7 @@ elements:
 | `children` | `none` (default), `any`, or a list of allowed element names. A bare name is an element of the same library; `<library-id>.Element` names another library's element (import aliases are chosen per document, so catalogs use library ids). |
 
 Element names are PascalCase. Props and events are lower-case identifiers. Styling is not part of
-the catalog: `style` keys come from the style and layout model (#5) and apply to every element.
+the catalog: `style` keys come from the style and layout model and apply to every element.
 
 ## Props
 
@@ -98,7 +98,7 @@ accepted by `color`, `length` and `number`.
 
 `bases` lists the base component systems the library works on. A project can only import
 libraries whose manifest lists its base; the loader exposes `Catalog::supports_base` for that
-check (#92). Version requirements are recorded but not evaluated yet.
+check. Version requirements are recorded but not evaluated yet.
 
 ## Adding a component
 
@@ -106,5 +106,5 @@ check (#92). Version requirements are recorded but not evaluated yet.
    allowed children. Use the library's own names, including its Rust enum variant names for enum
    values (`Primary` for `ButtonVariant::Primary`, `Small` for `Size::Small`), so a document maps
    one-to-one onto the Rust API.
-2. Map the element to the library's component in the library's runtime adapter (#74, #75).
+2. Map the element to the library's component in the library's runtime adapter.
 3. Run `cargo test -p forge-spec`; the catalog tests load every manifest under `catalogs/`.

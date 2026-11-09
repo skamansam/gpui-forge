@@ -55,7 +55,7 @@ pub struct ForgeView {
     doc: Option<Document>,
     pub catalogs: Vec<Catalog>,
     state: Json,
-    pub libraries: Vec<Box<dyn ForgeLibrary>>,
+    pub libraries: Vec<Rc<dyn ForgeLibrary>>,
     hooks: HashMap<String, HookHandler>,
     on_hook: Option<HookSink>,
     on_state: Option<StateSink>,
@@ -189,7 +189,7 @@ impl ForgeView {
         if let Some(cat) = lib.catalog().cloned() {
             self.catalogs.push(cat);
         }
-        self.libraries.push(Box::new(lib));
+        self.libraries.push(Rc::new(lib));
     }
 
     pub fn take_errors(&mut self) -> Vec<String> {
@@ -313,11 +313,18 @@ impl ForgeView {
 
     /// iced `update` — a widget message routes into hooks or a state write.
     /// The `forge.Preview` host for `id`, creating the nested view on first use.
+    /// The child shares the parent's registered libraries so `alias.Name`
+    /// elements render inside previews too.
     pub fn preview(&mut self, id: &str) -> &mut ForgeView {
         let catalogs = self.catalogs.clone();
+        let libraries = self.libraries.clone();
         self.previews
             .entry(id.to_owned())
-            .or_insert_with(|| ForgeView::new(catalogs))
+            .or_insert_with(|| {
+                let mut view = ForgeView::new(catalogs);
+                view.libraries = libraries;
+                view
+            })
     }
 
     /// Sets the document a `forge.Preview` renders.
