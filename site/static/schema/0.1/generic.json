@@ -14035,9 +14035,27 @@
               }
             },
             "properties": {
+              "base": {
+                "description": "Preview host base override (`gpui-kit`, `iced`, `ratatui`, …). Empty → the document's own `base:`. Each unique (doc, base) pane gets its own preview host.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "children": {
                 "maxItems": 0,
                 "type": "array"
+              },
+              "doc": {
+                "description": "Document to preview — a doc-relative `.forge.yaml` path, or a named ref (`name: &name`) holding a head-less node body. Empty → the host sets the document.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               },
               "mode": {
                 "description": "`embedded` → the host window floats over a transparent slot (Studio's `frame_rect` tracking); `remote` (default) → the framed 'click to focus' card.",
@@ -14065,7 +14083,7 @@
                 ]
               },
               "remote": {
-                "description": "Non-empty → the document previews in an out-of-process host; the element renders a framed card with this label instead of a nested view.",
+                "description": "Non-empty → the document previews in an out-of-process host; the element renders a framed card with this label instead of a nested view. Set `id:` on the pane so its host can be addressed — each declared remote pane spawns its own `forge-preview-{base}` host (`base:`/empty → the document's base).",
                 "type": [
                   "string",
                   "number",
@@ -14087,7 +14105,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Preview(#[\\w-]+| \\.[\\w-]+)?|children|mode|on (click)|placeholder|remote|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Preview(#[\\w-]+| \\.[\\w-]+)?|base|children|doc|mode|on (click)|placeholder|remote|style|tooltip)$"
             }
           }
         },
@@ -14111,9 +14129,27 @@
               }
             },
             "properties": {
+              "base": {
+                "description": "Preview host base override (`gpui-kit`, `iced`, `ratatui`, …). Empty → the document's own `base:`. Each unique (doc, base) pane gets its own preview host.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "children": {
                 "maxItems": 0,
                 "type": "array"
+              },
+              "doc": {
+                "description": "Document to preview — a doc-relative `.forge.yaml` path, or a named ref (`name: &name`) holding a head-less node body. Empty → the host sets the document.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               },
               "mode": {
                 "description": "`embedded` → the host window floats over a transparent slot (Studio's `frame_rect` tracking); `remote` (default) → the framed 'click to focus' card.",
@@ -14141,7 +14177,7 @@
                 ]
               },
               "remote": {
-                "description": "Non-empty → the document previews in an out-of-process host; the element renders a framed card with this label instead of a nested view.",
+                "description": "Non-empty → the document previews in an out-of-process host; the element renders a framed card with this label instead of a nested view. Set `id:` on the pane so its host can be addressed — each declared remote pane spawns its own `forge-preview-{base}` host (`base:`/empty → the document's base).",
                 "type": [
                   "string",
                   "number",
@@ -14163,7 +14199,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Preview(#[\\w-]+| \\.[\\w-]+)?|children|mode|on (click)|placeholder|remote|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Preview(#[\\w-]+| \\.[\\w-]+)?|base|children|doc|mode|on (click)|placeholder|remote|style|tooltip)$"
             }
           }
         },
