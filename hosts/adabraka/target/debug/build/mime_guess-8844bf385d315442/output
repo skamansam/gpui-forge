@@ -1,1 +1,0 @@
-cargo:rustc-env=MIME_TYPES_GENERATED_PATH=/home/sam/workspace-other/gpui-forge/hosts/adabraka/target/debug/build/mime_guess-8844bf385d315442/out/mime_types_generated.rs

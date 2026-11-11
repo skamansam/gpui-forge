@@ -1,6 +1,21 @@
+# Rust build artifacts
 /target
+hosts/*/target/
+vendor/*/target/
+CACHEDIR.TAG
+
+# forge build outputs
 .forge-build/
 target/forge-apps/
+
+# Studio dist
 crates/forge-studio/dist/
-hosts/*/target/
-hosts/*/target/
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.log
+.idea/
+.vscode/
