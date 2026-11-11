@@ -35,12 +35,15 @@ mod pdf {
     use std::sync::OnceLock;
 
     /// `pdf.*` adapter — register with `view.register_library(Pdf::new())`.
+    /// `src` -> bundled bytes — hosts without a filesystem resolve here.
+    type AssetResolver = std::rc::Rc<dyn Fn(&str) -> Option<std::sync::Arc<Vec<u8>>>>;
+
     /// `PdfView` entities are cached per node key. A `src` change releases the
     /// old viewer's atlas textures (`PdfView::release`) before rebuilding.
     #[derive(Default)]
     pub struct Pdf {
         viewers: RefCell<HashMap<String, (std::path::PathBuf, Entity<gpui_pdf::PdfView>)>>,
-        assets: Option<std::rc::Rc<dyn Fn(&str) -> Option<std::sync::Arc<Vec<u8>>>>>,
+        assets: Option<AssetResolver>,
     }
 
     impl Pdf {
