@@ -137,6 +137,9 @@ mainLayout: &mainLayout
     gap: 16px
     background: $theme.background
 
+# ============================================================================
+# THE WELCOME TAB
+# ============================================================================
 welcomeTab: &welcomeTab
   children:
     - VStack:
@@ -261,15 +264,56 @@ gpuiBasePreview: &gpuiBasePreview
 # ============================================================================
 previewSelector: &previewSelector
   children:
+    - Select:
+      options: [gpui-kit, gpui02, bezel, adabraka, iced, ratatui]
+      value: bind $studio.theme_preview
+      placeholder: preview base
+    # Each case is a remote `forge.Preview` — the selected base's own
+    # `forge-preview-{base}` host renders the showcase over this slot.
     - match: $studio.theme_preview
       case gpui-base: *gpuiBasePreview
       case gpui-kit:
-        - Text: "GPUI Kit Preview"
-          style:
-            size: lg
-            weight: semibold
-      # iced/ratatui/web can't render inside a gpui-kit document — other-base
-      # previews would need a remote `forge.Preview` per host.
+        - forge.Preview#preview-gpui-kit:
+          remote: gpui-kit
+          base: gpui-kit
+          doc: ../../examples/gpui-kit-showcase.forge.yaml
+          mode: embedded
+          style: {height: 480px}
+      case gpui02:
+        - forge.Preview#preview-gpui02:
+          remote: gpui02
+          base: gpui02
+          doc: ../../examples/gpui02-showcase.forge.yaml
+          mode: embedded
+          style: {height: 480px}
+      case bezel:
+        - forge.Preview#preview-bezel:
+          remote: bezel
+          base: bezel
+          doc: ../../examples/bezel-showcase.forge.yaml
+          mode: embedded
+          style: {height: 480px}
+      case adabraka:
+        - forge.Preview#preview-adabraka:
+          remote: adabraka
+          base: adabraka
+          doc: ../../examples/adabraka-showcase.forge.yaml
+          mode: embedded
+          style: {height: 480px}
+      case iced:
+        - forge.Preview#preview-iced:
+          remote: iced
+          base: iced
+          doc: ../../examples/iced-showcase.forge.yaml
+          mode: embedded
+          style: {height: 480px}
+      case ratatui:
+        - forge.Preview#preview-ratatui:
+          remote: ratatui
+          base: ratatui
+          doc: ../../examples/ratatui-dashboard.forge.yaml
+          mode: embedded
+          style: {height: 480px}
       else:
         - Text: "No preview active"
           style:
@@ -328,6 +372,9 @@ themesTab: &themesTab
 
 
 
+# ============================================================================
+# THE VARS TAB
+# ============================================================================
 varsTab: &varsTab
   children:
     - VStack:
@@ -343,6 +390,9 @@ varsTab: &varsTab
 
 
 
+# ============================================================================
+# THE PREVIEW TAB
+# ============================================================================
 previewTab: &previewTab
   children:
     - VStack:
@@ -362,6 +412,10 @@ previewTab: &previewTab
             size: xs
             color: $theme.muted_foreground
 
+
+# ============================================================================
+# THE INSPECTOR PANEL
+# ============================================================================
 inspector: &inspector
   style:
     width: 280px

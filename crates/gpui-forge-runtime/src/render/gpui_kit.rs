@@ -1203,7 +1203,8 @@ impl ForgeView {
     }
 
     /// A `Value` as state `Json` — bindings look up, literals convert.
-    fn resolve(&self, value: &Value) -> Json {
+    /// `pub` so hosts (Studio's pane sync) evaluate control flow the same way.
+    pub fn resolve(&self, value: &Value) -> Json {
         match value {
             Value::Binding { path, .. } => self.lookup(path).cloned().unwrap_or(Json::Null),
             Value::Bool(b) => Json::Bool(*b),
@@ -1220,7 +1221,8 @@ impl ForgeView {
     }
 
     /// An `if:` condition — truthiness alone, or equality against `is:`/`not:`.
-    fn condition(&self, when: &Value, test: &Option<Compare>) -> bool {
+    /// `pub` so hosts (Studio's pane sync) evaluate control flow the same way.
+    pub fn condition(&self, when: &Value, test: &Option<Compare>) -> bool {
         let value = self.resolve(when);
         match test {
             None => json_truthy(&value),
@@ -1231,7 +1233,8 @@ impl ForgeView {
 
     /// `for:`'s source as items — a single (non-list) value iterates once,
     /// which is what makes `for` double as a per-object template.
-    fn for_items(&self, source: &Value) -> Vec<Json> {
+    /// `pub` so hosts (Studio's pane sync) evaluate control flow the same way.
+    pub fn for_items(&self, source: &Value) -> Vec<Json> {
         match self.resolve(source) {
             Json::Array(items) => items,
             Json::Null => Vec::new(),

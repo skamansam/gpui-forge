@@ -1225,19 +1225,26 @@ fn host_send_source(view: &ForgeView, shared: &SharedState) {
 
 /// Sends the current theme to the host — the registry name when `studio.theme`
 /// names a config, else just the light/dark mode.
-fn host_send_theme(view: &ForgeView) {
+/// The `theme` command payload — registry name when `studio.theme` names a
+/// theme, else just the light/dark flag. Shared by the main host and pane
+/// hosts so a theme preview applies to every live preview.
+fn theme_cmd(view: &ForgeView) -> Json {
     match get_path(view.state(), &parse_path("studio.theme").unwrap())
         .and_then(|j| j.as_str())
         .map(str::to_owned)
     {
-        Some(name) => host_send(&json!({"cmd":"theme","name": name})),
+        Some(name) => json!({"cmd":"theme","name": name}),
         None => {
             let dark = get_path(view.state(), &parse_path("studio.dark").unwrap())
                 .and_then(|j| j.as_bool())
                 .unwrap_or_default();
-            host_send(&json!({"cmd":"theme","dark": dark}));
+            json!({"cmd":"theme","dark": dark})
         }
     }
+}
+
+fn host_send_theme(view: &ForgeView) {
+    host_send(&theme_cmd(view));
 }
 
 /// Reads `key = "value"` lines out of a manifest's `[forge]` section — the
@@ -1324,10 +1331,11 @@ fn pane_prop<'a>(node: &'a Node, name: &str) -> Option<&'a str> {
         })
 }
 
-/// Every `forge.Preview` with a non-empty `remote:` in the tree — including
-/// `else:`/`case:` branch children so gated panes still spawn their hosts.
-/// Panes without `id:` can't be addressed — counted in `skipped`.
-fn remote_panes(node: &Node, out: &mut Vec<PaneSpec>, skipped: &mut usize) {
+/// Every `forge.Preview` with a non-empty `remote:` in the *rendered* tree —
+/// control flow evaluates against view state, so a `match`/`if` arm's pane
+/// only spawns while that branch is live. Panes without `id:` can't be
+/// addressed — counted in `skipped`.
+fn remote_panes(view: &ForgeView, node: &Node, out: &mut Vec<PaneSpec>, skipped: &mut usize) {
     if node.element.namespace.as_deref() == Some("forge")
         && node.element.name == "Preview"
         && pane_prop(node, "remote").is_some_and(|s| !s.is_empty())
@@ -1342,27 +1350,56 @@ fn remote_panes(node: &Node, out: &mut Vec<PaneSpec>, skipped: &mut usize) {
             None => *skipped += 1,
         }
     }
-    for child in &node.children {
-        remote_panes(child, out, skipped);
-    }
+    // Which children render decides which panes exist — walk the branch the
+    // control flow actually selects, never a hidden arm.
     match &node.control {
-        Some(Control::If { otherwise, .. }) | Some(Control::For { otherwise, .. }) => {
-            for child in otherwise {
-                remote_panes(child, out, skipped);
+        Some(Control::If {
+            when,
+            test,
+            otherwise,
+        }) => {
+            let arm = if view.condition(when, test) {
+                &node.children
+            } else {
+                otherwise
+            };
+            for child in arm {
+                remote_panes(view, child, out, skipped);
+            }
+        }
+        Some(Control::For {
+            source, otherwise, ..
+        }) => {
+            let arm = if view.for_items(source).is_empty() {
+                otherwise
+            } else {
+                &node.children
+            };
+            for child in arm {
+                remote_panes(view, child, out, skipped);
             }
         }
         Some(Control::Match {
-            cases, otherwise, ..
+            source,
+            cases,
+            otherwise,
+            ..
         }) => {
-            for child in cases
+            let resolved = view.resolve(source);
+            let arm = cases
                 .iter()
-                .flat_map(|c| c.children.iter())
-                .chain(otherwise.iter())
-            {
-                remote_panes(child, out, skipped);
+                .find(|c| view.resolve(&c.value) == resolved)
+                .map(|c| &c.children)
+                .unwrap_or(otherwise);
+            for child in arm {
+                remote_panes(view, child, out, skipped);
             }
         }
-        _ => {}
+        _ => {
+            for child in &node.children {
+                remote_panes(view, child, out, skipped);
+            }
+        }
     }
 }
 
@@ -1430,6 +1467,7 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
     cx.spawn(async move |view, cx| {
         let mut fed: std::collections::HashMap<String, String> = Default::default();
         let mut rects: std::collections::HashMap<String, String> = Default::default();
+        let mut themes: std::collections::HashMap<String, String> = Default::default();
         let mut last_skipped = 0usize;
         loop {
             cx.background_executor()
@@ -1439,7 +1477,7 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                 let mut panes = Vec::new();
                 let mut skipped = 0usize;
                 if let Some(doc) = view.document() {
-                    remote_panes(&doc.root, &mut panes, &mut skipped);
+                    remote_panes(view, &doc.root, &mut panes, &mut skipped);
                 }
                 let wb = cx
                     .windows()
@@ -1460,12 +1498,14 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                     .and_then(Json::as_str)
                     .unwrap_or(BASE_ID)
                     .to_owned();
+                let theme = theme_cmd(view);
                 let dir = shared.borrow().dir.clone();
-                (panes, slots, wb, doc_base, dir, skipped)
+                (panes, slots, wb, doc_base, dir, skipped, theme)
             }) else {
                 return;
             };
-            let (panes, slots, wb, doc_base, dir, skipped) = work;
+            let (panes, slots, wb, doc_base, dir, skipped, theme) = work;
+            let theme_key = theme.to_string();
             if skipped != last_skipped {
                 last_skipped = skipped;
                 if skipped > 0 {
@@ -1497,6 +1537,7 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                 }
                 fed.remove(&id);
                 rects.remove(&id);
+                themes.remove(&id);
             }
 
             // A dead pane host respawns on the next tick — report, then drop it
@@ -1529,6 +1570,7 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                         let _ = old.child.kill();
                         let _ = old.child.wait();
                     }
+                    themes.remove(&pane.id);
                     match spawn_pane(base) {
                         Some(host) => {
                             HOSTS.lock().unwrap().insert(pane.id.clone(), (spec, host));
@@ -1571,6 +1613,13 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                             fed.insert(pane.id.clone(), key);
                         }
                     }
+                }
+
+                // Theme applies to pane hosts too — a theme preview shows the
+                // same theme everywhere it can.
+                if themes.get(&pane.id) != Some(&theme_key) {
+                    pane_send(&pane.id, &theme);
+                    themes.insert(pane.id.clone(), theme_key.clone());
                 }
 
                 // Float the host window over the pane's tracked slot.
