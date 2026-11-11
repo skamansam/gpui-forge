@@ -5,7 +5,7 @@ use crate::model::{
 };
 use crate::value::{self, Quoting};
 
-/// How node ids are written; both forms are always accepted when reading.
+/// How node ids are written. Both forms are always accepted when reading.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum IdStyle {
     /// `Input#email`
@@ -149,7 +149,7 @@ pub(crate) fn write_entries(out: &mut String, node: &Node, indent: usize, option
     // Entries the merges contributed live in the ref block — never re-emit.
     let merged = |key: &str| node.merged.iter().any(|k| k == key);
     if let Some(control) = &node.control {
-        // Modifiers repeat the control key under the element head; bare
+        // Modifiers repeat the control key under the element head. Bare
         // blocks already wrote it as their head line.
         if !node.is_block() {
             line(

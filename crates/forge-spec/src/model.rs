@@ -2,7 +2,7 @@
 
 use std::fmt;
 
-/// Ordered key/value pairs; order is preserved so hand-edited files diff cleanly.
+/// Ordered key/value pairs. Order is preserved so hand-edited files diff cleanly.
 pub type Entries = Vec<(String, Value)>;
 
 #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema, Clone, Debug, PartialEq)]
@@ -194,7 +194,7 @@ impl Document {
     }
 
     /// Sets or clears the `<<: *name` merge on the node at `path`. Assigning a
-    /// new name gives the node a ref block covering its own facets; clearing
+    /// new name gives the node a ref block covering its own facets. Clearing
     /// flattens merged entries back into the node on write.
     pub fn set_refname(&mut self, path: &str, refname: Option<String>) -> bool {
         let Some(node) = self.node_at_mut(path) else {
@@ -419,7 +419,7 @@ impl Document {
 pub struct Node {
     pub element: ElementRef,
     pub id: Option<String>,
-    /// Positional value; the catalog maps it to the element's primary prop.
+    /// Positional value. The catalog maps it to the element's primary prop.
     pub content: Option<Value>,
     pub props: Entries,
     pub style: Entries,
@@ -748,7 +748,7 @@ pub enum Value {
         unit: Option<Unit>,
     },
     Bool(bool),
-    /// A bare word; the catalog decides whether it is an enum value or plain text.
+    /// A bare word. The catalog decides whether it is an enum value or plain text.
     Enum(String),
     Color(Color),
     /// Theme token path, written `$theme.<path>`.

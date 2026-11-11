@@ -3,11 +3,11 @@
 Status: **draft** (spec version `0.1`).
 
 The document model is the canonical, format-independent AST. [Forge YAML](forge-yaml.md), JSON
-(the same tree as YAML) are its encodings; any document must survive
-`YAML -> model -> JSON -> model -> YAML` without loss. XML was considered and
-dropped — JSON covers the machine-interchange need, so the format matrix stays
+(the same tree as YAML) are its encodings. Any document must survive
+`YAML -> model -> JSON -> model -> YAML` without loss. We considered XML and
+dropped it — JSON covers the machine-interchange need. The format matrix stays
 at one authoring format (YAML) plus one machine format (JSON). The model is pure data: it knows nothing about GPUI or any base component system.
-Whether an element, prop or event *exists* is decided later by validation against the catalog
+Whether an element, prop or event *exists* is one validation decides later against the catalog
 manifests of the document's base and imported libraries.
 
 ## Types
@@ -87,23 +87,23 @@ Path    = Ident ("." Ident | "[" integer "]")*   // rooted in the view state, e.
 2. Node `id`s are unique across the document.
 3. Import aliases are unique and do not shadow the base namespace.
 4. `ElementRef.namespace`, when present, names a declared import (or the base's own alias).
-5. A key appears at most once in `props` and in `style`; `content` and a prop may not both set the
-   element's primary prop (detected at catalog validation, since only the catalog knows which prop
-   is primary).
+5. A key appears at most once in `props` and in `style`. `content` and a prop may not both set the
+   element's primary prop. Catalog validation detects this, since only the catalog knows which prop
+   is primary.
 6. `TwoWay` bindings appear only as prop values, never in `style`, `content` or handler args.
 
-Everything else (does `kit.Button` exist, is `variant` a valid prop, is `Primary` an allowed enum
-value, may a `Text` have children, is the library compatible with the base) is catalog validation.
+Everything else is catalog validation — element existence (`kit.Button`), prop validity
+(`variant`), enum values (`Primary`), child rules (`Text` children), and library compatibility.
 
 ## Ordering and identity
 
-- `props`, `style`, `events`, `imports` and `children` are ordered; serializers preserve order so
+- `props`, `style`, `events`, `imports` and `children` stay ordered — serializers preserve order, so
   hand-edited files produce minimal diffs.
 - `Node.refname` records the node's `<<: *name` merge source (and `merged`, its
-  merge-contributed entry keys); `Document.refs` holds each `name: &name` ref
+  merge-contributed entry keys). `Document.refs` holds each `name: &name` ref
   block as a head-less node body — edits splice into the block in place.
-- Nodes without an `id` are identified by their path from the root (`root/2/0`) for tooling
-  (inspector selection, error reporting). Studio assigns ids when it needs a stable reference.
+- For nodes without an `id`, tooling uses the path from the root (`root/2/0`) —
+  inspector selection, error reporting. Studio assigns ids when it needs a stable reference.
 
 ## Example (as a Rust-ish literal)
 
@@ -135,14 +135,14 @@ Document {
 - `set_prop(path, name, Option<Value>)` — upsert or remove a prop.
 - `set_style(path, name, Option<Value>)` — upsert or remove a `style:` entry.
 - `insert_node(path, node, index)` / `remove_node(path)` — the palette/undo ops.
-- `set_refname(path, Option<String>)` — assigns the `<<: *name` ref; a fresh name
+- `set_refname(path, Option<String>)` — assigns the `<<: *name` ref. A fresh name
   becomes a new `name: &name` block. All mutation ops end with `sync_refs()`,
   which pushes merged-facet edits into `refs[name]` and applies them back to
   every `*name` site (the Inspector's refname input rides this).
 
 ## Open questions
 
-- **Control flow.** Conditional (`if`) and repeated (`for`) nodes are reserved but not in 0.1; they
+- **Control flow.** Forge reserves conditional (`if`) and repeated (`for`) nodes but leaves them out of 0.1. They
   depend on the state model.
 - **Reusable components / includes.** Referencing another `.forge` file as an element (`use` of a
   local file) is out of scope for 0.1.

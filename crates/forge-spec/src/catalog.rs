@@ -82,7 +82,7 @@ pub enum PropType {
     Icon,
     Enum(Vec<String>),
     List(Box<PropType>),
-    /// A YAML mapping; nested keys are the element's own contract.
+    /// A YAML mapping. Nested keys are the element's own contract.
     Map,
 }
 

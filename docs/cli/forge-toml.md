@@ -1,6 +1,6 @@
 # `forge.toml` — the project manifest
 
-A document is one file; a *project* wraps it in a `forge.toml`. The manifest
+A document is one file. A *project* wraps it in a `forge.toml`. The manifest
 tells the CLI which document is the entry point, which base it targets, and
 how to package the app. Studio's **Open Project…** reads the same file —
 its `forge.document` resolves the document and sets `dir` so relative asset
@@ -47,7 +47,7 @@ document = "app.forge.yaml"
 
 | Key | Meaning |
 |---|---|
-| `dir` | Directory of assets bundled with the app; `src:` props resolve relative to it. |
+| `dir` | Directory of assets bundled with the app. `src:` props resolve relative to it. |
 
 ## `[hooks]` — Rust glue
 

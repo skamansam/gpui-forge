@@ -22,7 +22,7 @@ pub enum HostMsg {
         dark: bool,
     },
     Raise,
-    /// #120 Phase 1 — the canvas slot's screen-space bounds; the host
+    /// #120 Phase 1 — the canvas slot's screen-space bounds. The host
     /// floats its window over them (fake-embed).
     #[allow(dead_code)]
     FrameRect {

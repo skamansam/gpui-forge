@@ -265,7 +265,7 @@ impl ForgeView {
             }
             "Enter" => {
                 // `on submit:` hooks on the focused node — the node's key
-                // identifies it; events live on the node itself.
+                // identifies it. Events live on the node itself.
             }
             "Backspace" => {
                 if let Some((path, _)) = self.focusables.get(self.focused).cloned() {
@@ -422,7 +422,7 @@ impl ForgeView {
         }
         if node.element.namespace.is_some() {
             // `use:`/`forge` non-Preview elements — ForgeLibrary is GPUI-typed
-            // and can't dispatch on a TUI; render an honest placeholder.
+            // and can't dispatch on a TUI. Render an honest placeholder.
             frame.render_widget(
                 Paragraph::new(format!(
                     "{}.{} — namespaced elements need a GPUI host",

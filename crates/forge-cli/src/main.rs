@@ -188,7 +188,7 @@ fn main() {
 "#;
 
 /// The bezel app's bootstrap: `bezel::gpui` (the Zed f16f96 fork) takes a
-/// caller-provided platform; bezel's appearance global does the theming (#94).
+/// caller-provided platform. Bezel's appearance global does the theming (#94).
 const APP_MAIN_BEZEL: &str = r#"use gpui_forge_runtime::render::ForgeView;
 use bezel::gpui::prelude::*;
 use bezel::gpui::*;
@@ -595,7 +595,7 @@ fn hooks_cmd(rest: &[String]) -> i32 {
         return 1;
     };
     use gpui_forge_runtime::forge_spec::Node;
-    // handler -> sorted (event -> count); keep signature args of last use
+    // handler -> sorted (event -> count). Keep signature args of last use
     let mut map: std::collections::BTreeMap<String, (Vec<String>, Vec<String>)> =
         std::collections::BTreeMap::new();
     fn walk(n: &Node, map: &mut std::collections::BTreeMap<String, (Vec<String>, Vec<String>)>) {
@@ -1449,7 +1449,7 @@ fn codegen_doc(doc: &gpui_forge_runtime::forge_spec::Document) -> String {
         "// no state vars referenced".to_string()
     } else {
         // emit `view.set_state(json!({...}))` — every path initialized to
-        // null; the user fills in the real types/values.
+        // null. The user fills in the real types/values.
         format!(
             "view.set_state(serde_json::json!({{{}}}), cx);",
             state_vars
@@ -1764,7 +1764,7 @@ fn build_cmd(rest: &[String]) -> i32 {
         &std::fs::read_to_string(&path).unwrap_or_default(),
     );
     // Bundle every shipped theme — assets live in the binary, not on disk.
-    // Only gpui-kit apps read the theme registry; other bases theme their own
+    // Only gpui-kit apps read the theme registry. Other bases theme their own
     // way (#96).
     if base.theme == "gpui-kit" {
         let themes_in = root.join("themes");

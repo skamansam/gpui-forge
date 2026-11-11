@@ -1,6 +1,6 @@
 # Forge Studio
 
-Forge Studio is the native workbench — the same document model as the
+Forge Studio is the native workbench. It uses the same document model as the
 [web editor](editor.md), plus real windows, host previews, themes, files on
 disk, and the [CLI toolchain](forge-cli.md). Studio itself is a Forge
 document (`crates/forge-studio/studio.forge.yaml`) rendered by its own
@@ -40,10 +40,10 @@ widget set like `ely`) or a `.forge.yaml` path to open.
 - **[Projects & files](studio-projects.md)** — New vs New Project, `forge.toml`,
   save/save-as, recents, file watching, dialogs.
 
-## Starting points
+## Entry points
 
 The Welcome tab offers starters: the Welcome screen, the gpui-kit component
-gallery, a blank document, and a widget-set Select that opens the showcase for
+gallery, and a blank document. A widget-set Select opens the showcase for
 any registered set (`ely`, `gc`, `gflow`, `base`, `video`, `hig`, `pdf`, `wb`,
 `math`). The other bases' demos (`ratatui`, `iced`, `bezel`, `gpui02`,
 `adabraka`) ship in `examples/` — open them with Open….

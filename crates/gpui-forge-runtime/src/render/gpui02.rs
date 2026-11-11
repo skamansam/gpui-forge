@@ -92,7 +92,7 @@ pub trait ForgeLibrary {
 }
 
 // A fixed dark palette — guise's Theme installs a global, but primitive divs
-// need literal colors; these match the zinc/blue scheme Studio uses.
+// need literal colors. These match the zinc/blue scheme Studio uses.
 const BG: u32 = 0x18181b;
 const BORDER: u32 = 0x3f3f46;
 const FG: u32 = 0xf4f4f5;
@@ -189,7 +189,7 @@ impl ForgeView {
     }
 
     /// Registers `handler` for `on <event>: name(args)` bindings. Handlers may
-    /// edit this view freely; unregistered names report to the hook sink.
+    /// edit this view freely. Unregistered names report to the hook sink.
     pub fn set_hook(&mut self, name: impl Into<String>, handler: HookHandler) {
         self.hooks.insert(name.into(), handler);
     }

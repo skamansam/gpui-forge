@@ -312,7 +312,7 @@ impl ForgeView {
 
     pub fn set_state(&mut self, state: Json, cx: &mut Context<Self>) {
         self.state = state;
-        // Inputs and selects copy their value once; rebuild them from the new state.
+        // Inputs and selects copy their value once. Rebuild them from the new state.
         self.inputs.clear();
         self.textareas.clear();
         self.editors.clear();
@@ -358,7 +358,7 @@ impl ForgeView {
     }
 
     /// Registers `handler` for `on <event>: name(args)` bindings. Handlers may edit this
-    /// view (state, previews) freely; unregistered names are reported to the hook sink.
+    /// view (state, previews) freely. Unregistered names are reported to the hook sink.
     pub fn set_hook(&mut self, name: impl Into<String>, handler: HookHandler) {
         self.hooks.insert(name.into(), handler);
     }
@@ -420,7 +420,7 @@ impl ForgeView {
         let preview = self.preview(&of, cx);
         let state = preview.read(cx).state().clone();
         // `state:` declarations on the doc — `path -> type` — pick the editor
-        // widget per type; undeclared vars fall back to the Json type.
+        // widget per type. Undeclared vars fall back to the Json type.
         let doc_state: Vec<(String, String)> = preview
             .read(cx)
             .document()
@@ -2371,7 +2371,7 @@ impl ForgeView {
                 (Some("forge"), "Preview") => {
                     let id = node.id.clone().unwrap_or_else(|| key.to_owned());
                     // `remote:` non-empty — the document previews in an
-                    // out-of-process host (#97); the element is a framed card
+                    // out-of-process host (#97). The element is a framed card
                     // instead of a nested view, and `on click:` fires through
                     // the hook path (Studio uses it to raise the host window).
                     if let Some(remote) = self.prop_text(node, "remote").filter(|t| !t.is_empty()) {
@@ -3895,7 +3895,7 @@ impl ForgeView {
                 };
                 // Sync the bound `selected` value into the tree's internal
                 // `selected_ix` — the element-picker writes `document.selected`
-                // (a doc path like "0.0.1"); the item id uses the same
+                // (a doc path like "0.0.1"). The item id uses the same
                 // `{key}/{i}` shape, so a `/`-normalized path matches.
                 if let Some(selected) = self.prop_text(node, "selected") {
                     // doc path "0.4.1" → item id "root/4/1"
@@ -4053,7 +4053,7 @@ impl ForgeView {
             }
         };
         // Drag & drop — palette items (`insert_component` handlers) drag a
-        // component tag; the preview also drags nodes (reparent) and accepts
+        // component tag. The preview also drags nodes (reparent) and accepts
         // drops at `studio.drop_target`.
         let tag = component_tag(node);
         if tag.is_none() && !self.dnd {
@@ -4202,7 +4202,7 @@ fn container(
         let handle = handles.entry(id.to_string()).or_default().clone();
         // `.id()` — `Scrollable` defaults `id` to `caller_id()`, so every
         // `overflow: scroll` element would share one `element_state` slot and
-        // the offsets would clobber each other; a per-element id keeps them
+        // the offsets would clobber each other. A per-element id keeps them
         // distinct.
         let scrollbar_id = SharedString::from(format!("{id}-scrollbar"));
         style(element.id(id).track_scroll(&handle), entries, cx)

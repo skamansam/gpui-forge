@@ -1,6 +1,6 @@
 # Editing in Studio
 
-Studio edits the document *model* — every palette click, drag, or inspector
+Studio edits the document *model*. Every palette click, drag, or inspector
 edit is a mutation that writes back to the YAML source, with undo/redo on top.
 
 ## Palette
@@ -9,10 +9,10 @@ The left rail lists every element in the base catalog (and any library the
 document imports via `use:`), grouped by section.
 
 - **Click** an element to insert it inside the node selected in the outline.
-- **Drag** it onto the outline or the preview to pick the exact drop point —
-  dropping on a container inserts inside it, dropping on a leaf lands next to
+- **Drag** it onto the outline or the preview to pick the exact drop point.
+  Dropping on a container inserts inside it. Dropping on a leaf lands next to
   it.
-- Elements from a `use:` library appear under their `alias.` prefix; placing
+- Elements from a `use:` library appear under their `alias.` prefix. Placing
   one adds the import line to the document if it isn't there.
 
 ## Outline — the Structure group
@@ -23,21 +23,21 @@ palette inserts and loads it into the inspector.
 - **Move** — the arrow buttons nudge the selected node among its siblings.
 - **Reparent** — drag a row onto another node to move it there (cycles are
   refused).
-- **Delete** — the trash button (or the outline's own affordances) removes the
+- **Delete** — the trash button (or the outline's own affordances) deletes the
   selected node.
 
 ## Inspector
 
 Typed editors for the selected node's props and `style:` entries, driven by
-the catalog — enum props become dropdowns, colors are validated, unknown props
-are flagged. Changes fire `prop_changed`/`style_changed` and land in the
+the catalog — enum props become dropdowns, Studio checks colors, and Studio flags
+unknown props. Changes fire `prop_changed`/`style_changed` and land in the
 source immediately.
 
 ## Source pane
 
-The Source tab is the YAML itself and edits both ways: palette/inspector
-mutations rewrite the text (preserving anchors and comments where possible),
-and typing in the source re-checks and re-renders on the fly. **File →
+The Source tab is the YAML itself and edits both ways. Palette/inspector
+mutations rewrite the text (preserving anchors and comments where possible).
+Typing in the source re-checks and re-renders on the fly. **File →
 Format** runs the canonical formatter over it.
 
 ## Diagnostics
@@ -50,7 +50,7 @@ with line, column, and a hint.
 
 The crosshair button in the Inspector arm turns on pick mode: the next element
 you click in the preview becomes the outline selection. In a host preview the
-same mode is forwarded to the host process.
+Studio forwards the same mode to the host process.
 
 ## Undo/redo
 

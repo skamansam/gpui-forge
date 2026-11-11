@@ -1,5 +1,5 @@
 //! Adapter for `gpui-apple-hig` (`use: hig: gpui-apple-hig` → `hig.*` elements)
-//! — #90. macOS-HIG components on the gpui-kit base; render-only arms like the
+//! — #90. macOS-HIG components on the gpui-kit base. Render-only arms like the
 //! Ely adapter (hook wiring is follow-up work).
 
 use gpui_apple_hig::badge::MacBadge;

@@ -83,7 +83,7 @@ enum HostEvent {
         base: String,
     },
     /// `check` items from the host — `{line, col, message, hint?}` maps (older
-    /// hosts sent bare strings; both are handled).
+    /// hosts sent bare strings. Both are handled).
     Diagnostics(Vec<Json>),
     /// A hook fired in the host's view, as `name(args)` — the `on_hook` sink.
     Call(String),
@@ -316,7 +316,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         );
     }
 
-    // Hooks fired inside the preview bubble up to the shell dispatch; the preview's
+    // Hooks fired inside the preview bubble up to the shell dispatch. The preview's
     // view state shows in the inspector.
     let shell = cx.entity().downgrade();
     let preview = view.preview("canvas", cx);
@@ -497,7 +497,7 @@ fn open_dialog(
 }
 
 /// `apply_theme_name('Theme name')` — the titlebar `Select` writes `studio.theme`
-/// and fires this; swaps the theme config + mode to match.
+/// and fires this. Swaps the theme config + mode to match.
 #[forge_hooks_macros::forge_hook]
 fn apply_theme_name(
     view: &mut ForgeView,
@@ -553,7 +553,7 @@ fn reset_theme(
     let dark = Theme::global(cx).is_dark();
     // #123+#126 — reset loads the theme STORED in
     // `~/.gpui-forge/settings.toml` (the per-user prefs), not whatever's
-    // selected in-session; falls back to the mode default.
+    // selected in-session. Falls back to the mode default.
     let stored = load_prefs()
         .get("theme")
         .and_then(|j| j.as_str())
@@ -614,7 +614,7 @@ fn dispatch(
     cx: &mut Context<ForgeView>,
 ) {
     // Registry first — #[forge_hook] functions register via inventory and need
-    // no arm here; anything unhandled falls through to the legacy match.
+    // no arm here. Anything unhandled falls through to the legacy match.
     if forge_hooks::dispatch::<SharedState>(shared, view, name, args, cx) {
         return;
     }
@@ -1146,7 +1146,7 @@ fn host_event(
                     .collect::<Vec<_>>()
                     .join("\n")
             };
-            // Squiggle markers for the source editor — objects only; bare
+            // Squiggle markers for the source editor — objects only. Bare
             // strings carry no position.
             let markers = Json::Array(items.iter().filter(|i| i.is_object()).cloned().collect());
             view.update_state(
@@ -1788,7 +1788,7 @@ fn place_component(
             .filter(|path| doc.node_at(path).is_some())
             .unwrap_or("0");
         let into = target == "0" || accepts_children(&shared.borrow().catalogs, &doc, target);
-        // Container targets take the node inside; leaf targets take it as
+        // Container targets take the node inside. Leaf targets take it as
         // the sibling right after.
         let result = if into {
             doc.insert_node(target, node, None).then(|| {
@@ -1871,7 +1871,7 @@ fn move_node(
         let Some(mut doc) = p.document().cloned() else {
             return;
         };
-        // Container targets take the node inside; leaf targets take it as
+        // Container targets take the node inside. Leaf targets take it as
         // the sibling right after.
         let into = target == "0" || accepts_children(&shared.borrow().catalogs, &doc, &target);
         let result = if into {
@@ -1942,7 +1942,7 @@ fn insert_at(
             .filter(|path| doc.node_at(path).is_some())
             .unwrap_or("0");
         let into = target == "0" || accepts_children(&shared.borrow().catalogs, &doc, target);
-        // Container targets take the node inside; leaf targets take it as
+        // Container targets take the node inside. Leaf targets take it as
         // the sibling right after.
         let result = if into {
             doc.insert_node(target, node, None).then(|| {

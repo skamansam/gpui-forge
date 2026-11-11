@@ -910,7 +910,7 @@ impl Reader<'_> {
         }
     }
 
-    /// A prop or style value; empty values get a hint (often an unquoted color).
+    /// A prop or style value. Empty values get a hint (often an unquoted color).
     fn value(&mut self, val: YNode, key: &Scalar, allow_two_way: bool) -> Option<Value> {
         if let YNode::Scalar(s) = &val
             && s.is_null()

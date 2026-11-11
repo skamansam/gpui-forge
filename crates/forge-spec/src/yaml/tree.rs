@@ -286,7 +286,7 @@ fn convert(node: MarkedYamlOwned) -> Result<YNode, Diagnostic> {
                 }
                 entries.push((key, value));
             }
-            // Explicit keys win; merged keys dedup against them and each other,
+            // Explicit keys win. Merged keys dedup against them and each other,
             // first occurrence taking precedence per the YAML spec.
             for (k, v) in merged {
                 if !entries.iter().any(|(ek, _)| ek.text == k.text) {

@@ -10,7 +10,7 @@ This document defines the design philosophy, brand identity, and visual language
 
 ### 1.1 The myth behind the name
 
-Hephaestus is the Greek god of the forge, craftsmanship, and metalworking. He is the maker of the gods: he built Achilles' shield, Hermes' winged sandals, and the thrones of Olympus. Unlike the other gods, he is defined by *work*, not by glory. His power is skill applied patiently to difficult material.
+Hephaestus is the Greek god of the forge, craftsmanship, and metalworking. He is the maker of the gods: he built Achilles' shield, Hermes' winged sandals, and the thrones of Olympus. Unlike the other gods, *work*, not glory, defines him. His power is skill applied patiently to difficult material.
 
 GPUI Forge takes that spirit. The app is a workshop where developers shape GPU-accelerated interfaces. It is not a showroom.
 
@@ -48,7 +48,7 @@ The tone is that of a master craftsperson: calm, precise, a little dry. Not a hy
 
 The logo is a **circular medallion**, evoking an ancient coin or shield, the kind of object Hephaestus himself might forge. At its center:
 
-- **A hammer and a pair of tongs, crossed.** These are the two defining tools of the smith god and his most common attributes in classical art. The hammer strikes and shapes; the tongs hold and guide. Together they stand for the two halves of building software: force and precision.
+- **A hammer and a pair of tongs, crossed.** These are the two defining tools of the smith god and his most common attributes in classical art. The hammer strikes and shapes. The tongs hold and guide. Together they stand for the two halves of building software: force and precision.
 - **A glowing ember held in the tongs.** The ember is the raw idea, the work in progress, and the one point of bright heat in the mark. It is the focal point and the origin of the brand's warm accent color.
 - **A dashed inner ring.** A nod to the meander and border bands of Greek decorative art, and a visual echo of rivets on a forged shield.
 - **A solid gold outer ring.** Frames the mark and gives it weight, like a struck coin's rim.
@@ -94,7 +94,7 @@ The logo is a **circular medallion**, evoking an ancient coin or shield, the kin
 - **Clear space:** keep a margin of at least 25% of the logo's diameter on all sides.
 - **Minimum size:** 32 px for the full medallion. Below that, use the simplified mark (section 2.6).
 - **Recommended sizes:** 16, 32, 64, 128, 256, 512, 1024 px for app icons.
-- **Never:** stretch, rotate the whole medallion, add drop shadows or glows, recolor the ember to a non-warm color, or place it on a busy photographic background.
+- **Never:** stretch, rotate the whole medallion, add drop shadows or glows, or recolor the ember to a non-warm color. Never place it on a busy photographic background.
 
 ### 2.5 Backgrounds
 
@@ -158,7 +158,7 @@ These values are suggestions derived from the brand colors for building a full i
 
 1. **Warm is active, cool is passive.** Ember Orange and Yellow mark interactive or hot elements. Steel and neutrals handle everything at rest.
 2. **One accent at a time.** A screen should have a single primary Ember Orange action. Don't scatter it.
-3. **Gold for structure, orange for state.** Forge Gold draws borders and icons. Ember Orange shows focus, selection, and progress.
+3. **Gold for structure, orange for state.** Forge Gold draws borders and icons. Ember Orange marks focus, selection, and progress.
 4. **Dark mode is the default.** A forge is a dark room lit by fire. Soot is the home surface. Light mode is fully supported but treated as the secondary theme.
 5. **Contrast is non-negotiable.** Body text must meet WCAG AA (4.5:1). Pale Gold on Forge Red passes. Forge Gold on Soot passes. Do not place Ember Orange text on Forge Red for small text.
 
@@ -191,7 +191,7 @@ Rules:
 
 ## 5. Shape, Space, and Surface
 
-- **Corners:** modest radii (4 to 8 px for controls, 12 px for cards). Hard enough to feel like metal, soft enough to feel finished. Circles are reserved for the logo and avatars.
+- **Corners:** modest radii (4 to 8 px for controls, 12 px for cards). Hard enough to feel like metal, soft enough to feel finished. Reserve circles for the logo and avatars.
 - **Borders:** thin (1 px or less), using Soot Border on dark and a low-opacity Steel on light. Use Forge Gold borders only for emphasis or branded containers.
 - **Elevation:** express depth with surface color steps (Soot, Soot Raised), not drop shadows or blur.
 - **Spacing:** use a consistent scale based on 4 px increments (4, 8, 12, 16, 24, 32, 48).
@@ -203,7 +203,7 @@ Rules:
 
 - Outline style, 1.5 to 2 px strokes, rounded caps and joins, to match the tongs and hammer in the logo.
 - Single color, inheriting from the surrounding text. Use Forge Gold or Ember Orange only for emphasis.
-- Favor tool and craft metaphors where natural (hammer for build, tongs for grab and move, anvil for base components), but never at the cost of clarity.
+- Favor tool and craft metaphors where natural (hammer for build, tongs for grab and move, anvil for base components). Never let them cost clarity.
 
 ---
 

@@ -1,15 +1,15 @@
 # Upstream porting tracker
 
 Libraries whose GPUI dependency doesn't match a registered base, plus how
-each gets supported. Only libraries that fit **no** base belong here —
-crates on `gpui 0.2` go through the Vanilla GPUI 0.2 base (#96); crates on
+each gets supported. Only libraries that fit **no** base belong here.
+Crates on `gpui 0.2` go through the Vanilla GPUI 0.2 base (#96). Crates on
 `gpui-pre 0.3.x` work today via the gpui-kit base.
 
 | Library | Upstream GPUI | Path to support | Status |
 |---|---|---|---|
 | ely-core | gpui-pre 0.3.10 | **done** — forge-lib-ely adapter | shipped |
-| gpui-video-player | gpui-pre (feature) | adapter (#77), gpui-kit + gpui02 arms; GStreamer system dep | shipped |
-| zorite-markdown/editor | gpui 0.2 | adapter (#78); GPL-3.0 stays opt-in per feature | shipped |
+| gpui-video-player | gpui-pre (feature) | adapter (#77), gpui-kit + gpui02 arms. GStreamer system dep | shipped |
+| zorite-markdown/editor | gpui 0.2 | adapter (#78). GPL-3.0 stays opt-in per feature | shipped |
 | hig-gpui | gpui-kit 0.7.3 | landed — vendored gpui-kit 0.8 bump + forge-lib-hig (#90) | shipped |
 | gpui-flow | Zed git | landed — vendored gpui-pre 0.3.10 retarget + forge-lib-flow (#89) | shipped |
 | ferrum-flow | gpui 0.2 | landed — forge-lib-gpui02 `ferrum` feature (#86) | shipped |

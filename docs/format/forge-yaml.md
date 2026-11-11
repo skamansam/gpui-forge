@@ -46,7 +46,7 @@ root:
 |---|---|---|
 | `$schema` | no | Schema URL (also accepted as a `# yaml-language-server: $schema=…` comment) |
 | `forge` | yes | Spec version, as a string (`"0.1"`) — see Versioning below |
-| `base` | no | Base component system (`gpui-kit`, `bezel`, `adabraka`, `gpui-0.2`, and planned non-GPUI bases `ratatui`, `iced`); defaults to the project's `forge.toml` |
+| `base` | no | Base component system (`gpui-kit`, `bezel`, `adabraka`, `gpui-0.2`, and planned non-GPUI bases `ratatui`, `iced`). Defaults to the project's `forge.toml` |
 | `use` | no | Map of import alias → `"<library-id> [<version-req>]"` |
 | `meta` | no | Map of string → string (title, description, …) |
 | `root` | yes | The root node |
@@ -54,12 +54,12 @@ root:
 ### Base and library prerequisites
 
 A `base:` picks which renderer runs the document. Most bases are pure Rust
-and need nothing extra; a few libraries and bases require system packages at
+and need nothing extra. A few libraries and bases require system packages at
 build or run time:
 
 | Base / `use:` library | Requirement |
 |---|---|
-| `gpui-video-player` | GStreamer 1.14+ and its plugins — [install guide](https://github.com/GStreamer/gstreamer-rs#installation) (Debian: `libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`; macOS: `brew install gstreamer`; Windows: the MSVC runtime+devel MSIs) |
+| `gpui-video-player` | GStreamer 1.14+ and its plugins — [install guide](https://github.com/GStreamer/gstreamer-rs#installation) (Debian: `libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`. macOS: `brew install gstreamer`. Windows: the MSVC runtime+devel MSIs) |
 | `iced` | A GPU the app can open a surface on — wgpu needs Vulkan/Metal/DX12 (the web canvas targets WebGL2) |
 | `gpui-kit`, `bezel`, `adabraka`, `gpui02`, `ratatui` | No system deps — pure Rust |
 
@@ -70,9 +70,9 @@ and builds anywhere the base does.
 ## Fragments, anchors and merge keys
 
 Forge supports standard YAML anchors, aliases and merge keys, so documents can share
-repeated structure through top-level fragment slots. Any unknown top-level key whose
-value is a mapping or sequence is treated as a fragment slot — it is not rendered or
-validated as part of the document; scalar fragments go inside a container:
+repeated structure through top-level fragment slots. Any unknown top-level key with
+a mapping or sequence value acts as a fragment slot. Forge neither renders nor
+validates it as part of the document. Scalar fragments go inside a container:
 
 ```yaml
 forge: "0.1"
@@ -94,7 +94,7 @@ root:
     - Button: *label           # alias — copies the anchored scalar
 ```
 
-- `&name` anchors attach to scalars, sequences or mappings; `*name` aliases resolve to
+- `&name` anchors attach to scalars, sequences or mappings. `*name` aliases resolve to
   a clone of the anchored value and may appear anywhere — including as a whole node.
 - `<<` merges a mapping (or a list of mappings, earlier winning) into the current one.
   Explicit keys always override merged ones.
@@ -104,19 +104,19 @@ root:
 - Anchored top-level maps become **named refs** (`Document.refs`): a `name: &name`
   block parses as a head-less node body — an entry-bag of props, `style:`, events
   and `children:` — and every `<<: *name` node records `refname`. Ref names must be
-  unique; a second `&name` is a `duplicate ref` diagnostic (YAML permits shadowing,
-  but refs are addressed by name).
-- **Edits land in the ref, not the site.** When a merge-derived facet changes —
-  an Inspector edit on a `<<: *appMenu` node — `Document::sync_refs` pushes the
-  new facet into `refs.appMenu` and every other `*appMenu` site, so the preserving
-  writer splices the change into the `appMenu:` block and leaves `<<: *appMenu`
+  unique. A second `&name` is a `duplicate ref` diagnostic (YAML permits shadowing,
+  but a name addresses each ref).
+- **Edits land in the ref, not the site.** When a merge-derived facet changes
+  (an Inspector edit on a `<<: *appMenu` node), `Document::sync_refs` pushes the
+  new facet into `refs.appMenu` and every other `*appMenu` site. The preserving
+  writer then splices the change into the `appMenu:` block and leaves `<<: *appMenu`
   lines alone. Assigning a node's `refname` to a fresh name creates the block
-  (`sync_refs` fills it from the node's own facets); clearing it flattens the
+  (`sync_refs` fills it from the node's own facets). Clearing it flattens the
   merged entries back into the node.
-- `yaml::to_string_preserving` writes documents back with their original source
-  wherever the model did not change — anchors, aliases, merge keys, comments and
-  formatting all survive a save; `yaml::to_string` remains the canonical
-  formatter and emits the ref blocks followed by `<<` merge keys (never flattened).
+- `yaml::to_string_preserving` writes the original source back wherever the model
+  did not change — anchors, aliases, merge keys, comments and formatting all
+  survive a save. `yaml::to_string` remains the canonical formatter and emits the
+  ref blocks followed by `<<` merge keys (never flattened).
 - YAML tags (`!tag`) remain unsupported.
 
 ## Nodes
@@ -130,7 +130,7 @@ A node is a YAML mapping with exactly one **element key** plus optional reserved
 [alias.]Element[ .id]     e.g.  Input .email
 ```
 
-- `Element` is PascalCase. `alias.` selects an imported library; base-library elements have no
+- `Element` is PascalCase. `alias.` selects an imported library. Base-library elements have no
   prefix (the base's own alias, e.g. `kit.`, may be written explicitly).
 - The id may be written `#id` (no space: YAML only treats `#` as a comment after whitespace) or
   ` .id` (space, dot). Both parse to the same document. The formatter writes `#id` unless the
@@ -149,7 +149,7 @@ A node is a YAML mapping with exactly one **element key** plus optional reserved
 | `else`, `is`, `not`, `each`, `index`, `as`, `case <v>` | control-flow sub-keys |
 | anything else | a prop of the element (lower-case identifier) |
 
-Keys are classified by shape: the element key matches `^([a-z][\w-]*\.)?[A-Z]\w*(#[\w-]+| \.[\w-]+)?$`,
+Forge classifies keys by shape: the element key matches `^([a-z][\w-]*\.)?[A-Z]\w*(#[\w-]+| \.[\w-]+)?$`,
 `on <event>` keys start with `on `, and everything else is a prop. Exactly one element key per node.
 
 Canonical key order written by the formatter: element key, props, `style`, events, `children`.
@@ -166,8 +166,8 @@ names — e.g. `document.edits.style.text-align`.
 ### Control flow
 
 Four lower-case control keys — `if`, `for`, `with`, `match` — condition, repeat or scope
-nodes. They are reserved words, never element names (elements are PascalCase) and never
-props. As a node's only key they form a **control block**; alongside an element key they
+nodes. Forge reserves them — they are never element names (elements are PascalCase) and never
+props. As a node's only key they form a **control block**. Alongside an element key they
 become a **modifier** on that element (the element repeats or conditionally renders).
 
 ```yaml
@@ -228,20 +228,20 @@ root:
   `for:` a list binding (also a plain `[a, b]` list), `with:`/`match:` a binding. Use one-way
   `$path` bindings — `bind` is a write target and has no meaning here.
 - `each`/`index`/`as` names create **scope vars**: `$item`, `$tab`, `$i` bind the scoped
-  value anywhere inside the block (innermost scope wins; they shadow state paths and are
+  value anywhere inside the block (innermost scope wins. They shadow state paths and are
   read-only — `bind $item` cannot write back to the list).
 - `case` operands are value literals — `case gpui:`, `case 2:`, `case 'a b':` — compared by
-  value equality against the resolved `match` source; a binding also works (`case $mode:`).
+  value equality against the resolved `match` source. A binding also works (`case $mode:`).
 - `else:` is valid on `if`, `for` (empty list) and `match` (no arm matched).
 - Only one control key per node — nest blocks for combined conditions (`for` + `if` inside).
-- `match` uses `case`/`else` instead of `children`, and cannot modify an element.
+- `match` uses `case`/`else` instead of `children`, and cannot be an element modifier.
 
 ### File paths in `src`
 
-`Image`'s `src` resolves **relative to the document file**, not the process cwd — a `.forge.yaml`
+`Image`'s `src` resolves **relative to the document file**, not the process cwd. A `.forge.yaml`
 in `examples/` writes `src: ../shared/logo.svg` to reach the workspace root. `Image` renders
 raster formats (PNG, JPEG, WebP, GIF, BMP, TIFF, ICO) and multicolor SVGs at full color via
-gpui's `img()`; URLs and asset keys pass through to the app's `HttpClient`/`AssetSource`. Theme
+gpui's `img()`. URLs and asset keys pass through to the app's `HttpClient`/`AssetSource`. Theme
 icons come from `Icon` (Lucide names, tinted by `text_color`), not `Image`.
 
 `DropdownMenu`/`MenuItem` render a button that opens a popover menu — `MenuItem` children fire
@@ -249,12 +249,12 @@ icons come from `Icon` (Lucide names, tinted by `text_color`), not `Image`.
 
 ## Values
 
-Forge reads every scalar as **text** and types it with the micro-syntax below. YAML's own typing
-is ignored, so `0.1`, `on`, `no` or `1e3` are never turned into floats or booleans behind your back.
-How a scalar is quoted selects the rules:
+Forge reads every scalar as **text** and types it with the micro-syntax below. Forge ignores
+YAML's own typing, so `0.1`, `on`, `no` or `1e3` never become floats or booleans behind your
+back. The scalar's quoting selects the rules:
 
-- **plain** scalars are fully typed (table below);
-- **double-quoted** scalars are text with `{$path}` interpolation, or a color;
+- **plain** scalars are fully typed (table below).
+- **double-quoted** scalars are text with `{$path}` interpolation, or a color.
 - **single-quoted** scalars are always literal text (no interpolation, no typing).
 
 | Syntax | Model value |
@@ -273,15 +273,16 @@ How a scalar is quoted selects the rules:
 Event handlers are `name`, `name()` or `name(arg, ...)`, where arguments use the same value syntax
 (`go_to($wizard.id, 2, 'next step')`). The formatter writes `name()`.
 
-The formatter writes canonical output: key order element key, props, `style`, events, `children`;
-colors as `#rrggbb[aa]`; and strings that a generic YAML 1.1 tool could mis-type (`yes`, `on`,
-`0.1`, ...) single-quoted. Comments are not preserved by the formatter yet.
+The formatter writes canonical output: key order element key, props, `style`, events,
+`children`. Colors write as `#rrggbb[aa]`. Strings that a generic YAML 1.1 tool could
+mis-type (`yes`, `on`, `0.1`, ...) write single-quoted. The formatter does not preserve
+comments yet.
 
 YAML gotchas the validator reports with a fix hint:
 
 - `color: #fff` parses as an empty value plus a comment → *"expected a color; quote it: `\"#fff\"`"*.
 - A value starting with `{` is a YAML flow mapping → quote interpolated strings that start with `{`.
-- Values cannot start with `@` or `` ` `` in YAML; Forge does not use them.
+- Values cannot start with `@` or `` ` `` in YAML. Forge does not use them.
 
 ## Schema and editor support
 

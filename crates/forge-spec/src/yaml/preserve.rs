@@ -30,7 +30,7 @@ pub(crate) fn preserving(doc: &Document, options: &WriteOptions) -> Option<Strin
     };
 
     let mut out = String::new();
-    // Next source line (1-based) not yet emitted; everything before each
+    // Next source line (1-based) not yet emitted. Everything before each
     // region is copied verbatim, which is what keeps comments and blank lines.
     let mut cursor = 1usize;
     let mut seen: HashSet<String> = HashSet::new();
@@ -327,7 +327,7 @@ fn splice_top_field(
     if unchanged {
         emit(out, ctx.lines, a, b);
     }
-    // Changed or removed top fields are dropped; canonical replacements for
+    // Changed or removed top fields are dropped. Canonical replacements for
     // schema/base/imports/meta are rare enough that emit_pending_top-style
     // output is skipped here — a changed scalar still needs emitting though.
     else {
@@ -479,7 +479,7 @@ fn splice_map(
     // Control flow splices all-or-nothing too: its keys (`if`, `else`,
     // `case`…) rewrite canonically whenever the facet differs. The head
     // (`- Button:` / `- if: …`) lives inside this map for seq items and root
-    // nodes, so it is rewritten here; dialog heads live outside.
+    // nodes, so it is rewritten here. Dialog heads live outside.
     let flattened = baseline
         .props
         .iter()

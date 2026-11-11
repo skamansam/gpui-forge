@@ -1,6 +1,6 @@
 //! Renders Forge documents with gpui-kit inside a browser canvas.
 //!
-//! The page drives the canvas through the exported functions; the canvas reports fired
+//! The page drives the canvas through the exported functions. The canvas reports fired
 //! hooks and state changes back through `globalThis.forgeHook` and `globalThis.forgeState`.
 
 pub use gpui_forge_runtime::{check, render};
@@ -73,7 +73,7 @@ pub fn start(dark: bool, assets: String) {
                 let mut view = ForgeView::new(CATALOGS.with(Clone::clone));
                 // The `use:` libraries the examples page demos — the Studio set
                 // minus VideoPlayer (GStreamer is native-only) and Whiteboard/
-                // Flow (their views don't paint on the web platform; the
+                // Flow (their views don't paint on the web platform. The
                 // elements fall back to "not provided by this adapter yet").
                 view.register_library(forge_lib_ely::Ely::new());
                 view.register_library(forge_lib_gpui_component::GpuiComponent);
@@ -98,7 +98,7 @@ pub fn start(dark: bool, assets: String) {
         VIEW.with(|v| *v.borrow_mut() = Some(view));
         cx.activate(true);
         // The browser's GPU setup is asynchronous, so the window (and the view `render`
-        // updates) only exists from here on; tell the page it can start sending documents.
+        // updates) only exists from here on. Tell the page it can start sending documents.
         forge_ready();
     };
     #[cfg(target_family = "wasm")]

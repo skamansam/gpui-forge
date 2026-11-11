@@ -1,7 +1,7 @@
 //! Document validation against catalog manifests.
 //!
 //! Checks that need no catalog (syntax, value micro-syntax, duplicate keys) happen while
-//! reading; this pass checks what depends on the selected base and imported libraries.
+//! reading. This pass checks what depends on the selected base and imported libraries.
 
 use std::collections::HashMap;
 

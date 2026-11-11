@@ -1,7 +1,7 @@
 # Projects and files
 
-A Forge project is basically one YAML file — Studio's file model follows
-that: you can keep a document in memory for as long as you like, and a folder
+A Forge project is basically one YAML file. Studio's file model follows
+that — you can keep a document in memory for as long as you like. A folder
 is only needed once you do something that requires one.
 
 ## The File menu
@@ -14,7 +14,7 @@ is only needed once you do something that requires one.
 | **Open Project…** | A `forge.toml` — its [`forge.document`](forge-toml.md) resolves the doc, and the manifest dir becomes the project dir for `src:` and `base_dir` resolution. |
 | **Preview in Host…** | Spawn the [native preview host](studio-preview.md) for the document's base. |
 | **Format** | Canonical formatting of the current source. |
-| **Save** | Writes in place; on an unsaved document it becomes Save As and asks for a location. |
+| **Save** | Writes in place. On an unsaved document it becomes Save As and asks for a location. |
 | **Preferences…** | The [preferences dialog](studio-themes.md). |
 
 Recent files live in the menu too — the list persists at

@@ -12,7 +12,7 @@ the host window's pixels inside Studio's canvas area.
 ## Options evaluated
 
 1. **XEmbed** — X11-only `XReparentWindow` of the host's window into the
-   canvas slot. Works on the GPUI-family's Linux X11 platform; fails
+   canvas slot. Works on the GPUI-family's Linux X11 platform. It fails
    Wayland, macOS, the WASM canvases, ratatui (TUI), and iced (winit's
    XEmbed story is flaky). High fidelity, narrow reach.
 2. **Render-to-texture / framebuffer streaming** — the host renders to an
@@ -22,24 +22,24 @@ the host window's pixels inside Studio's canvas area.
    easily, ratatui's `TestBackend` captures trivially. Protocol gets
    heavy (per-frame pixel buffers over JSON-lines needs a side channel).
 3. **Fake-embed (position tracking)** — Studio reports the canvas slot's
-   screen-space bounds; the host positions its window over it and hides
+   screen-space bounds. The host positions its window over it and hides
    its chrome. The window still floats but *appears* embedded. Works on
-   every windowed base today; no pixel pipeline at all.
+   every windowed base today. No pixel pipeline at all.
 
 ## Decision — fake-embed first, framebuffer as phase 2
 
 **Phase 1: position tracking.** A new `frame_rect` protocol command —
 Studio sends `{type:"frame_rect", x,y,w,h}` in screen coordinates on
-layout/scroll/resize; each windowed host translates its window's bounds
-to match (gpui-family `window.set_bounds`/`WindowOptions`, iced `winit`,
-ratatui unaffected — its canvas is Studio's terminal tab). Studio keeps
+layout/scroll/resize. Each windowed host translates its window's bounds
+to match. Gpui-family hosts call `window.set_bounds`/`WindowOptions`, iced
+uses `winit`, and ratatui is unaffected — its canvas is Studio's terminal tab. Studio keeps
 drawing the frame card's chrome (title/statusbar) so raise/focus still
-works — the card just gets a `mode: embedded` where the host window
+works. The card just gets a `mode: embedded` where the host window
 floats exactly over the card's content area.
 
 **Phase 2: real pixels (per-base, where the toolkit allows).** A
 `framebuffer` protocol event carrying an offscreen render — gpui-family
-hosts render-to-texture + stream; iced via `winit`'s surface; ratatui's
+hosts render-to-texture + stream. Iced via `winit`'s surface. Ratatui's
 `TestBackend` already gives text cells. The protocol gains a binary side
 channel (shared memory or a second fd — JSON-lines can't carry
 megabytes/frame efficiently).
@@ -55,10 +55,10 @@ megabytes/frame efficiently).
 
 ## Constraints
 
-- Wayland: XEmbed is dead; position tracking works only if the
+- Wayland: XEmbed is dead. Position tracking works only if the
   compositor allows absolute positioning (gpui's Wayland backend may
-  not). Fake-embed is an X11/macOS answer; Wayland needs Phase 2.
+  not). Fake-embed is an X11/macOS answer. Wayland needs Phase 2.
 - macOS: `NSView addSubview:` cross-process doesn't exist — Phase 1
   position tracking is the only option there too.
-- WASM canvases (#99) already ARE embedded — the canvas *is* the
+- WASM canvases (#99) embed natively already — the canvas *is* the
   preview. Phase 1/2 don't apply.

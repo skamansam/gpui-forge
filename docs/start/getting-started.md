@@ -1,8 +1,8 @@
 # Getting started
 
-GPUI Forge is a declarative layer over [GPUI](https://www.gpui.rs/): you write
-(or draw) one `.forge.yaml` document, and every tool in the ecosystem can read
-it — the web editor, Forge Studio, the preview hosts, and the compiler that
+GPUI Forge is a declarative layer over [GPUI](https://www.gpui.rs/). You write
+(or draw) one `.forge.yaml` document. Every tool in the ecosystem can read
+it — the web editor, Forge Studio, and the preview hosts. The compiler
 turns it into a native Rust app.
 
 ## The tools
@@ -14,7 +14,7 @@ turns it into a native Rust app.
 | `forge` CLI | Scaffold, validate, format, build and package apps from documents |
 | `forge-preview-<base>` | Out-of-process preview hosts Studio drives over IPC |
 
-All four share the same document format and the same catalogs, so a doc that
+All four share the same document format and the same catalogs. A doc that
 validates in one place renders the same everywhere its base runs.
 
 ## Requirements
@@ -42,7 +42,7 @@ cargo xtask studio                    # Forge Studio (needs a display)
 cargo run -p forge-cli -- check examples/gpui-kit-showcase.forge.yaml
 ```
 
-`cargo run -p forge-cli --` runs the `forge` binary from source; add an alias
+`cargo run -p forge-cli --` runs the `forge` binary from source. Add an alias
 or `cargo install --path crates/forge-cli` if you want `forge` on your PATH.
 
 ## Your first project

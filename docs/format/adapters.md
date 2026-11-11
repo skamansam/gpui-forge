@@ -1,7 +1,7 @@
 # Writing a Forge adapter
 
 An **adapter** (`forge-lib-*` crate) lets a Forge document use a third-party
-GPUI component library by namespace: a document `use:`-imports the library
+GPUI component library by namespace. A document `use:`-imports the library
 and renders `alias.Element` elements that the adapter maps onto real widgets.
 
 ```
@@ -37,7 +37,7 @@ view.register_library(forge_lib_ely::Ely);
 ```
 
 `register_library` merges the adapter's catalog (so `use: alias: lib` validates,
-props type-check, and the Studio palette learns the elements) and routes
+props validate, and the Studio palette learns the elements) and routes
 namespaced nodes through `render()`.
 
 ## The catalog manifest — `catalogs/<lib>.catalog.yaml`
@@ -90,14 +90,14 @@ constructs the upstream widget:
 ## Checklist for a new adapter
 
 1. `cargo add` the upstream crate — it must link the same `gpui-pre` version
-   as the base (the gpui-kit base pins `0.3.10`); mismatches won't compile.
+   as the base (the gpui-kit base pins `0.3.10`). Mismatches won't compile.
 2. Write `catalogs/<lib>.catalog.yaml` per the manifest schema
    ([catalog manifest](catalog-manifest.md)).
 3. Create `crates/forge-lib-<name>` implementing `ForgeLibrary`
    (see `crates/forge-lib-ely/` — ~200 lines).
-4. Add the catalog to `check::catalogs()`; add the crate to the workspace.
+4. Add the catalog to `check::catalogs()`. Add the crate to the workspace.
 5. Register in the host app (`forge-studio` already registers `Ely`).
-6. Add a demo `examples/<lib>-demo.forge.yaml` and verify `forge check` passes.
+6. Add a demo `examples/<lib>-demo.forge.yaml` and make `forge check` pass.
 7. `forge license <demo>` should report the library's declared license —
    copyleft licenses (GPL/AGPL) stay opt-in, never linked into defaults.
 
@@ -110,7 +110,7 @@ constructs the upstream widget:
   the v1 shim is stateless per render.
 - **Children aren't mapped.** Elements that take child components
   (`children: any` in the catalog) render their own frame but don't yet
-  receive the node's Forge children — adapters that want them must walk
+  receive the node's Forge children. Adapters that want them must walk
   `node.children` and `view.render_node` them (a helper is a follow-up).
 - **License policy:** GPL-family libraries stay opt-in (separate crate,
   explicit `use:`), never linked into Studio or generated apps by default.

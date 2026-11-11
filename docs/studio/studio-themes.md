@@ -1,7 +1,7 @@
 # Themes and preferences
 
 Studio ships 21 vendored theme JSONs (`themes/`) plus the built-in
-light/dark pair — and its own UI is a Forge document, so every theme applies
+light/dark pair. Its own UI is a Forge document, so every theme applies
 to the workbench *and* the document you're previewing.
 
 ## Picking a theme
@@ -18,13 +18,13 @@ same picker, which is also where theme choice gets persisted.
 A live theme workbench:
 
 - **Select** — pick a theme to edit.
-- **JSON editor** — the theme's color/token config, editable; **Apply**
+- **JSON editor** — the theme's color/token config, editable. **Apply**
   pushes it through `Theme.apply_config` and the whole app repaints.
 - **Reset** (the `rotate-ccw` button) — back to the default theme.
 - **Showcase** — a `forge.Showcase` widget strip rendering beside the editor,
   so you see every component in the theme as you tweak it.
 
-The `themes/` directory is watched — save a theme JSON on disk and the
+Studio watches the `themes/` directory — save a theme JSON on disk and the
 registry reloads it without a restart.
 
 ## Persisted preferences

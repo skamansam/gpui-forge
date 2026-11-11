@@ -113,7 +113,7 @@ fn get_state_path<'a>(state: &'a serde_json::Value, path: &str) -> Option<&'a se
 
 impl<'a> HookCtx<'a> {
     /// Spawns an async task for a hook (#57) — file I/O, network, timers.
-    /// The closure gets the view's weak entity + an async context; it may
+    /// The closure gets the view's weak entity + an async context. It may
     /// `weak.update(cx, |view, cx| ...)` when the work finishes.
     ///
     /// ```ignore

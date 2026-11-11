@@ -30,5 +30,5 @@ The page picks a canvas per example, matching what the
 ## Loading one into the editor
 
 The editor's **Examples…** picker loads any of these documents — curated
-examples and showcases share one list — so you can remix them, then
+examples and showcases share one list. You can remix them, then
 [share the result](editor.md#sharing-and-files) as a link.

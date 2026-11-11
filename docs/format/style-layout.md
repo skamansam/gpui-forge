@@ -3,8 +3,8 @@
 Status: **draft** (spec version `0.1`).
 
 A node's `style:` map holds presentation that is not a component prop: flex layout, sizing,
-spacing, borders, colors and text. Every key maps onto one family of GPUI `Styled` methods, and
-values use the names of those methods (and of gpui-kit's theme fields), so a document reads like
+spacing, borders, colors and text. Every key maps onto one family of GPUI `Styled` methods. Values
+use the names of those methods (and of gpui-kit's theme fields), so a document reads like
 the Rust it becomes. Component-specific presentation (button variants, component sizes) stays in
 props, defined by each library's catalog.
 
@@ -23,7 +23,7 @@ props, defined by each library's catalog.
 
 | Type | Written as | Notes |
 |---|---|---|
-| length | `12px`, `1.5rem`, `50%`, `0` | bare numbers are pixels; `%` is relative to the parent |
+| length | `12px`, `1.5rem`, `50%`, `0` | bare numbers are pixels. `%` is relative to the parent |
 | size | a length, `auto` or `full` | `full` is `w_full()` / `h_full()` |
 | edges | one value, `[y, x]` or `[top, right, bottom, left]` | for `padding`, `margin` |
 | color | `"#rrggbb"`, `"#rrggbbaa"` or `$theme.<field>` | colors must be quoted in YAML |
@@ -31,7 +31,7 @@ props, defined by each library's catalog.
 
 `$theme.<field>` names a field of gpui-kit's `ThemeColor` in its Rust spelling, e.g.
 `$theme.primary`, `$theme.muted_foreground`, `$theme.border`, `$theme.danger`. Theme tokens keep a
-document correct in light and dark themes; prefer them to literal colors.
+document correct in light and dark themes. Prefer them to literal colors.
 
 ## Keys
 
@@ -71,14 +71,14 @@ document correct in light and dark themes; prefer them to literal colors.
 | `border` | length (width) | `border()` |
 | `border-color` | color | `border_color()` |
 | `border-style` | `solid`, `dashed` | `border_dashed()` |
-| `radius` | length, or `sm`, `md`, `lg`, `full` | `rounded()`, `rounded_full()`; `sm`/`md`/`lg` follow gpui-kit's theme radius |
+| `radius` | length, or `sm`, `md`, `lg`, `full` | `rounded()`, `rounded_full()`. `sm`/`md`/`lg` follow gpui-kit's theme radius |
 | `background` | color | `bg()` |
 | `opacity` | number `0`–`1` | `opacity()` |
 | `shadow` | `none`, `sm`, `md`, `lg`, `xl` | `shadow_*()` |
 
 ### Text
 
-Text keys apply to the element and are inherited by its children, as in GPUI.
+Text keys apply to the element and inherit to its children, as in GPUI.
 
 | Key | Values | GPUI |
 |---|---|---|
@@ -92,8 +92,8 @@ Text keys apply to the element and are inherited by its children, as in GPUI.
 ## Validation
 
 `forge_spec::validate` checks every `style:` entry: unknown keys are errors (with the closest key
-as a hint), and values must have the key's type. Bindings are allowed in values (`$ui.width`) and
-checked at runtime; two-way bindings (`bind …`) are not allowed in `style`.
+as a hint), and values must have the key's type. Values may hold bindings (`$ui.width`), checked
+at runtime. `style` forbids two-way bindings (`bind …`).
 
 ## Not in 0.1
 
