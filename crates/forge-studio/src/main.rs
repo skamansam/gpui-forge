@@ -1499,7 +1499,13 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                     .unwrap_or(BASE_ID)
                     .to_owned();
                 let theme = theme_cmd(view);
-                let dir = shared.borrow().dir.clone();
+                // No open file → pane `doc:` paths resolve against the shell
+                // doc's own directory (`studio.forge.yaml` lives in the crate).
+                let dir = shared
+                    .borrow()
+                    .dir
+                    .clone()
+                    .or_else(|| Some(env!("CARGO_MANIFEST_DIR").into()));
                 (panes, slots, wb, doc_base, dir, skipped, theme)
             }) else {
                 return;
