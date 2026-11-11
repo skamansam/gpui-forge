@@ -1,5 +1,5 @@
 //! base-ratatui — the terminal twin compiled to WASM (#137). Renders a Forge
-//! document into a `TestBackend` and hands the frame back as text rows; the
+//! document into a `TestBackend` and hands the frame back as text rows. The
 //! site's `TuiCanvas` component draws them as a monospace grid. No iframe —
 //! it's a pure function call, unlike the GPUI canvases.
 

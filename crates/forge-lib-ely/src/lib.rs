@@ -184,7 +184,7 @@ impl ForgeLibrary for Ely {
                 .into_any_element(),
             ),
             "Meter" => {
-                // `value` is a share 0..=1; a number past 1 reads as a
+                // `value` is a share 0..=1. A number past 1 reads as a
                 // percent (68 → 0.68). ely asserts on shares outside 0..=1,
                 // so clamp rather than panic in the showcase.
                 let v = prop_num(node, "value").unwrap_or(0.0) as f32;

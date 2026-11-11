@@ -1,5 +1,5 @@
 //! `forge-preview-iced` — the out-of-process preview host for the iced base
-//! (#113). Same JSON wire protocol; the host is an `iced::application` whose
+//! (#113). Same JSON wire protocol. The host is an `iced::application` whose
 //! update loop bridges the channel into the view's Elm messages.
 
 use gpui_forge_runtime::check;
@@ -133,7 +133,7 @@ impl Host {
             Message::Quit => return iced::exit(),
             Message::Screenshot(shot) => {
                 // #120 Phase 2 — downsample the rgba to a luminance text
-                // grid; `frame` events share ratatui's wire + renderer
+                // grid. `frame` events share ratatui's wire + renderer
                 // (`preview.frame` → `{$preview.frame}` Text in the card).
                 let bytes = shot.as_ref();
                 let (w, h) = (shot.size.width as usize, shot.size.height as usize);

@@ -29,7 +29,7 @@ mod ferrum {
     use std::sync::OnceLock;
 
     /// `flow.*` adapter — `flow.Canvas` is a `FlowCanvas` entity cached per
-    /// node key; its `Graph` starts empty (a `scene` prop may follow).
+    /// node key. Its `Graph` starts empty (a `scene` prop may follow).
     #[derive(Default)]
     pub struct Ferrum {
         canvases: RefCell<HashMap<String, Entity<ferrum_flow::FlowCanvas>>>,

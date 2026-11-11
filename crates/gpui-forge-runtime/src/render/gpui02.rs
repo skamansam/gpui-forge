@@ -79,7 +79,7 @@ pub trait ForgeLibrary {
     fn catalog(&self) -> Option<&Catalog> {
         None
     }
-    /// Renders `alias.<element>`; `None` falls through to the unknown-element
+    /// Renders `alias.<element>`. `None` falls through to the unknown-element
     /// placeholder.
     fn render(
         &self,
@@ -183,7 +183,7 @@ impl ForgeView {
         self.write(path, value, cx);
     }
 
-    /// Text shown while the view has no document (used by `forge.Preview`).
+    /// Text displayed while the view has no document (used by `forge.Preview`).
     pub fn set_empty_text(&mut self, text: Option<String>) {
         self.empty_text = text;
     }
@@ -315,7 +315,7 @@ impl ForgeView {
         self.libraries.push(Rc::new(lib));
     }
 
-    /// Drains accumulated errors — the host captures them to show or handle.
+    /// Drains accumulated errors — the host captures them to display or handle.
     pub fn take_errors(&mut self) -> Vec<String> {
         let mut errors = std::mem::take(&mut self.errors);
         errors.append(&mut PENDING_ERRORS.lock().unwrap_or_else(|e| e.into_inner()));
@@ -593,7 +593,7 @@ impl ForgeView {
         if let Some(ns) = node.element.namespace.as_deref() {
             if ns == "forge" {
                 // `forge.Preview` hosts a nested document — `set_preview_document`
-                // fills `previews`; the other intrinsics stay stubs until the
+                // fills `previews`. The other intrinsics stay stubs until the
                 // Studio-parity port lands.
                 if node.element.name == "Preview" {
                     let id = self.prop_text(node, "id");

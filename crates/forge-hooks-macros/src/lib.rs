@@ -2,7 +2,7 @@
 //!
 //! The hook's standard signature is
 //! `fn(&mut ForgeView, &HookCtx, &[String], &mut Context<ForgeView>)` where the
-//! crate declares `type HookCtx = ...` once; `forge_hooks::dispatch::<Ctx>`
+//! crate declares `type HookCtx = ...` once. `forge_hooks::dispatch::<Ctx>`
 //! routes events to the generated registry entries.
 
 use proc_macro::TokenStream;

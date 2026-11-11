@@ -1,5 +1,5 @@
 //! `forge-preview-bezel` — the out-of-process preview host for the gpui02 base
-//! (crates.io bezel-gpui + bezel-ui). Same wire protocol as `forge-preview`;
+//! (crates.io bezel-gpui + bezel-ui). Same wire protocol as `forge-preview`.
 //! Studio spawns this binary for `base: gpui02` documents (#96).
 
 use bezel::gpui::prelude::*;
@@ -116,7 +116,7 @@ fn main() {
                                     }
                                     HostMsg::FrameRect { x, y, w, h } => {
                                         // #120 Phase 1 — PlatformWindow only
-                                        // exposes `resize`; size the host
+                                        // exposes `resize`. Size the host
                                         // window to the canvas slot.
                                         cx.defer(move |cx| {
                                             for handle in cx.windows() {
@@ -153,7 +153,7 @@ fn main() {
 }
 
 /// #120 — the X11 position escape for position (PlatformWindow only has
-/// `resize`); `HasWindowHandle` gives the XID, `x11rb` moves the window.
+/// `resize`). `HasWindowHandle` gives the XID, `x11rb` moves the window.
 #[cfg(target_os = "linux")]
 fn x11_move(window: &mut ::bezel::gpui::Window, x: f64, y: f64) {
     use raw_window_handle::{HasWindowHandle, RawWindowHandle};

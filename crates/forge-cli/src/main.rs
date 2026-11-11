@@ -411,7 +411,7 @@ fn workspace_root() -> PathBuf {
 }
 
 /// `forge schema` — JSON Schema emission. Bare `forge schema` prints the
-/// document-*model* schema (the `.forge.json` form); `--yaml` prints the
+/// document-*model* schema (the `.forge.json` form). `--yaml` prints the
 /// `.forge.yaml` surface-syntax schema generated from the catalogs, scoped
 /// to one base with `--base <id>` or generic without.
 fn schema_cmd(rest: &[String]) -> i32 {
@@ -595,7 +595,7 @@ fn hooks_cmd(rest: &[String]) -> i32 {
         return 1;
     };
     use gpui_forge_runtime::forge_spec::Node;
-    // handler -> sorted (event -> count). Keep signature args of last use
+    // handler -> sorted (event -> count). Keep signature args of last use.
     let mut map: std::collections::BTreeMap<String, (Vec<String>, Vec<String>)> =
         std::collections::BTreeMap::new();
     fn walk(n: &Node, map: &mut std::collections::BTreeMap<String, (Vec<String>, Vec<String>)>) {
@@ -720,8 +720,8 @@ fn bases_cmd() -> i32 {
     0
 }
 
-/// `forge migrate --base <id> <doc>` — point a document at another base:
-/// rewrites `base:` (preserving the file when the writer can), then reports
+/// `forge migrate --base <id> <doc>` — point a document at another base. It rewrites
+/// `base:` (preserving the file when the writer can). It then reports
 /// elements missing from the target's catalog and imports the base doesn't
 /// list as compatible (#101).
 fn migrate_cmd(rest: &[String]) -> i32 {
@@ -817,7 +817,7 @@ fn migrate_cmd(rest: &[String]) -> i32 {
     0
 }
 
-/// `.forge.yaml` <-> JSON. Format is detected by extension, then content;
+/// `.forge.yaml` <-> JSON. Format is detected by extension, then content.
 /// `--from`/`--to` override. `-` as the input reads stdin.
 fn convert_cmd(rest: &[String]) -> i32 {
     let file = rest
@@ -896,9 +896,9 @@ fn convert_cmd(rest: &[String]) -> i32 {
     0
 }
 
-/// `forge package` — release-build, then wrap for the host OS: an
-/// AppDir (+AppImage when appimagetool is installed, else a tarball) on
-/// Linux; .app/.nsi scaffolding is emitted for other platforms.
+/// `forge package` — release-build, then wrap for the host OS. On Linux it emits an
+/// AppDir (+AppImage when appimagetool is installed, else a tarball).
+/// For other platforms it emits .app/.nsi scaffolding.
 fn package_cmd(rest: &[String]) -> i32 {
     let root = workspace_root()
         .canonicalize()
@@ -1582,7 +1582,7 @@ fn build_cmd(rest: &[String]) -> i32 {
         .and_then(|d| d.base.clone())
         .unwrap_or_else(|| gpui_forge_runtime::base::BASE_ID.to_string());
     // The base manifest drives the generated crate: its library pin and the
-    // runtime `base-<id>` feature fill Cargo.toml; its toolchain lands in
+    // runtime `base-<id>` feature fill Cargo.toml. Its toolchain lands in
     // rust-toolchain.toml (#100).
     let bases = gpui_forge_runtime::check::bases();
     let Some(base) = bases.iter().find(|b| b.id == doc_base) else {

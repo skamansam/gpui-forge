@@ -67,7 +67,7 @@ pub fn from_str_with_source_map(src: &str) -> Result<(Document, SourceMap), Diag
     }
 }
 
-/// Re-parses a `YNode` subtree into a model `Node`; used by the preserving
+/// Re-parses a `YNode` subtree into a model `Node`. Used by the preserving
 /// writer to detect unchanged regions.
 pub(crate) fn reparse_node(
     src: &str,
@@ -112,7 +112,7 @@ pub(crate) fn reparse_fragment(
     Some(node)
 }
 
-/// Re-parses a scalar value; `allow_two_way` matches props vs style/content rules.
+/// Re-parses a scalar value. `allow_two_way` matches props vs style/content rules.
 pub(crate) fn reparse_value(src: &str, val: YNode, allow_two_way: bool) -> Option<Value> {
     Reader {
         src,
@@ -224,8 +224,8 @@ impl Reader<'_> {
                     root = self.node(val);
                 }
                 other => {
-                    // `Dialog#name:` declares a dialog; container values are
-                    // fragment slots for `&anchor` declarations; unknown scalar
+                    // `Dialog#name:` declares a dialog. Container values are
+                    // fragment slots for `&anchor` declarations. Unknown scalar
                     // keys are likely typos.
                     let is_dialog = key.text == "Dialog"
                         || key.text.starts_with("Dialog#")
@@ -378,8 +378,8 @@ impl Reader<'_> {
         meta
     }
 
-    /// The `&name` anchor at a node's position, if the value carries one —
-    /// the anchor token sits at or just before the node's own span (saphyr
+    /// The `&name` anchor at a node's position, if the value carries one.
+    /// The anchor token sits at or just before the node's own span (saphyr
     /// starts anchored nodes' spans at the name, after `&`).
     fn anchor_at(&self, at: Pos) -> Option<String> {
         let line = self.src.lines().nth(at.line.saturating_sub(1))?;
@@ -621,8 +621,8 @@ impl Reader<'_> {
         }
     }
 
-    /// Builds the node's `Control` from its control key and pending sub-keys;
-    /// misplaced sub-keys produce targeted errors.
+    /// Builds the node's `Control` from its control key and pending sub-keys.
+    /// Misplaced sub-keys produce targeted errors.
     fn assemble(
         &mut self,
         head: &Scalar,

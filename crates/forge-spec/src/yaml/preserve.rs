@@ -15,7 +15,7 @@ use super::read;
 use super::tree::{self, Scalar, YNode};
 use super::write::{self, WriteOptions};
 
-/// Writes `doc` preserving original source for unchanged regions; `None` when
+/// Writes `doc` preserving original source for unchanged regions. `None` when
 /// the document was not read from YAML text.
 pub(crate) fn preserving(doc: &Document, options: &WriteOptions) -> Option<String> {
     let raw = doc.raw.as_ref()?;
@@ -203,10 +203,10 @@ fn anchor_name(ctx: &Ctx, node: &MarkedYamlOwned) -> Option<String> {
     (!name.is_empty()).then_some(name)
 }
 
-/// True when the node's span is an `*alias` token rather than a real subtree —
-/// the loader resolves aliases into clones whose outer span still covers the
-/// alias site. Only whole-verbatim or whole-canonical output is safe there;
-/// descending would splice text from the anchor's lines at the alias site.
+/// True when the node's span is an `*alias` token rather than a real subtree.
+/// The loader resolves aliases into clones whose outer span still covers the
+/// alias site. Only whole-verbatim or whole-canonical output is safe there.
+/// Descending would splice text from the anchor's lines at the alias site.
 fn is_alias_site(ctx: &Ctx, node: &MarkedYamlOwned) -> bool {
     let line = ctx.lines.get(node.span.start.line() - 1).unwrap_or(&"");
     line.chars()
@@ -443,7 +443,7 @@ fn baseline_for(ctx: &Ctx, k: &MarkedYamlOwned, v: &MarkedYamlOwned) -> Option<N
     reparse_node(ctx, v)
 }
 
-/// Entry-by-entry splice of a node body map against `model`; `baseline` is the
+/// Entry-by-entry splice of a node body map against `model`. `baseline` is the
 /// node this map originally produced. Explicit keys win over `<<` merges, so
 /// changed merge-derived facets are written as explicit overrides.
 fn splice_map(
@@ -692,7 +692,7 @@ fn splice_children(
     emit(out, ctx.lines, a, a);
     let item_indent = k.span.start.col() + 2;
     let YamlDataOwned::Sequence(items) = &v.data else {
-        // `children:` was already emitted; a bare key reads as an empty list.
+        // `children:` was already emitted. A bare key reads as an empty list.
         for child in &model.children {
             write::write_node(out, child, item_indent, true, ctx.options);
         }

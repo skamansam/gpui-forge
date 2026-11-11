@@ -35,7 +35,7 @@ mod pdf {
     use std::sync::OnceLock;
 
     /// `pdf.*` adapter — register with `view.register_library(Pdf::new())`.
-    /// `PdfView` entities are cached per node key; a `src` change releases the
+    /// `PdfView` entities are cached per node key. A `src` change releases the
     /// old viewer's atlas textures (`PdfView::release`) before rebuilding.
     #[derive(Default)]
     pub struct Pdf {
@@ -244,7 +244,7 @@ mod math {
     use std::sync::OnceLock;
 
     /// `math.*` adapter — register with `view.register_library(Math::new())`.
-    /// `math.Tex` rasterizes LaTeX to an image; `math.Editor` is the
+    /// `math.Tex` rasterizes LaTeX to an image. `math.Editor` is the
     /// MathQuill-style structural editor (entity-cached per node key).
     #[derive(Default)]
     pub struct Math {

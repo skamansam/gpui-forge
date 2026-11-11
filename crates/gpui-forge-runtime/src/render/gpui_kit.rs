@@ -161,7 +161,7 @@ pub trait ForgeLibrary {
     fn catalog(&self) -> Option<&Catalog> {
         None
     }
-    /// Renders `alias.<element>`; `None` falls through to the unknown-element
+    /// Renders `alias.<element>`. `None` falls through to the unknown-element
     /// placeholder. The view is read-only here — a shim builds native elements
     /// from the node + its own state and window/cx.
     fn render(
@@ -196,7 +196,7 @@ pub struct ForgeView {
     /// populated by `BoundsTracker` each paint (Studio's `frame_rect`).
     preview_bounds: HashMap<String, std::rc::Rc<std::cell::RefCell<Option<Bounds<Pixels>>>>>,
     /// Persistent `ScrollHandle`s keyed by scrollable element id — element-state
-    /// GC drops scroll offsets on every `cx.notify` re-render; an explicit
+    /// GC drops scroll offsets on every `cx.notify` re-render. An explicit
     /// `track_scroll` handle keeps them alive.
     scroll_handles: HashMap<String, ScrollHandle>,
     pub libraries: Vec<Rc<dyn ForgeLibrary>>,
@@ -222,13 +222,13 @@ pub struct ForgeView {
     /// Shown while there is no document (e.g. inside `forge.Preview`).
     empty_text: Option<String>,
     /// `for`/`with` scope vars — `(name, value)` frames pushed while control
-    /// blocks render; `$item` lookups shadow state from the innermost frame.
+    /// blocks render. `$item` lookups shadow state from the innermost frame.
     scopes: Vec<(String, Json)>,
 }
 
 /// Walks `json` down a spec `Path` — the read side of `set_path`.
-/// A `ListDelegate` that renders `List` children on demand — `render_item` is called
-/// several times per row per paint (measure then paint), so rows are rebuilt per call
+/// A `ListDelegate` that renders `List` children on demand. `render_item` is called
+/// several times per row per paint (measure then paint). Rows are rebuilt per call
 /// through the owning view rather than handed out once.
 struct ForgeListDelegate {
     view: WeakEntity<ForgeView>,
@@ -364,7 +364,7 @@ impl ForgeView {
     }
 
     /// The `forge.Preview` card's window-space bounds for `id` — populated
-    /// by `BoundsTracker` on paint; `None` before the first frame.
+    /// by `BoundsTracker` on paint. `None` before the first frame.
     pub fn preview_bounds(
         &self,
         id: &str,
@@ -404,8 +404,8 @@ impl ForgeView {
     /// `forge.Vars` — a live state inspector for the *edited document's*
     /// state: `of` names the `forge.Preview` id whose nested ForgeView
     /// supplies the vars. Scalars edit via subscribed `Input`s, objects/
-    /// arrays via a `Textarea` + `set`, and an "add" row creates new vars —
-    /// all writes go to the *preview* view's state so `{$path}` bindings in
+    /// arrays via a `Textarea` + `set`, and an "add" row creates new vars.
+    /// All writes go to the *preview* view's state, so `{$path}` bindings in
     /// the preview tab react live.
     fn vars(
         &mut self,
@@ -628,7 +628,7 @@ impl ForgeView {
         }
 
         // Add-new-var: Inputs write `vars_add.{path,value}` in the preview's
-        // state; "+" commits the new path.
+        // state.  "+" commits the new path.
         let add_path_key = format!("vars-add-path-{key}");
         let add_val_key = format!("vars-add-val-{key}");
         let preview_clone = preview.clone();
@@ -892,10 +892,10 @@ impl ForgeView {
             .into_any_element()
     }
 
-    /// `forge.Showcase` (#125) — the theme editor's live widget gallery: same
+    /// `forge.Showcase` (#125) — the theme editor's live widget gallery. Same
     /// library dropdown as `forge.Palette` (state `studio.showcase_lib`), but
     /// each element renders as a real widget under its catalog `group:` in an
-    /// accordion, so the current theme's effect is visible on every widget.
+    /// accordion. The current theme's effect is visible on every widget.
     fn showcase(
         &mut self,
         _node: &Node,
@@ -1251,7 +1251,7 @@ impl ForgeView {
     }
 
     /// One node's expansion — `if` gates, `for` repeats, `with` scopes and
-    /// `match` picks an arm; plain elements render once.
+    /// `match` picks an arm. Plain elements render once.
     fn expand(
         &mut self,
         node: &Node,
@@ -1333,7 +1333,7 @@ impl ForgeView {
         }
     }
 
-    /// The control node's payload — a bare block expands its `children`; a
+    /// The control node's payload. A bare block expands its `children`. A
     /// modified element renders once with the control consumed and scope vars
     /// baked into event args (events fire after the scope unwinds).
     fn render_target(
@@ -1532,8 +1532,8 @@ impl ForgeView {
             .collect()
     }
 
-    /// A `SettingPage` node — `title`/`text` prop or positional content names it;
-    /// children are `SettingGroup`s.
+    /// A `SettingPage` node — `title`/`text` prop or positional content names it.
+    /// Children are `SettingGroup`s.
     fn setting_page(
         &mut self,
         node: &Node,
@@ -1575,7 +1575,7 @@ impl ForgeView {
         SettingGroup::new().title(title).items(items)
     }
 
-    /// A `SettingItem` node — `title`/`text` names the row; children render as
+    /// A `SettingItem` node — `title`/`text` names the row. Children render as
     /// its field element lazily inside the dialog's render.
     fn setting_item(
         &mut self,
@@ -1638,7 +1638,7 @@ impl ForgeView {
     }
 
     /// Writes a prop on the node at `path` in this view's document — inspector edits.
-    /// `json` arrives from the bound field's state; the catalog prop type maps it to `Value`.
+    /// `json` arrives from the bound field's state. The catalog prop type maps it to `Value`.
     /// `Json::Null` removes the prop.
     pub fn set_node_prop(&mut self, path: &str, name: &str, json: &Json, cx: &mut Context<Self>) {
         let Some(node) = self.doc.as_ref().and_then(|doc| doc.node_at(path)) else {
@@ -1667,7 +1667,7 @@ impl ForgeView {
         }
     }
 
-    /// `refname_changed` write-through — `doc.set_refname`; the preserving
+    /// `refname_changed` write-through — `doc.set_refname`. The preserving
     /// writer emits `<<: *name` (or a new `name: &name` block).
     pub fn set_node_refname(&mut self, path: &str, refname: Option<String>, cx: &mut Context<Self>) {
         if let Some(doc) = self.doc.as_mut() {
@@ -1792,7 +1792,7 @@ impl ForgeView {
     }
 
     /// Renders `forge.Inspector` — a catalog-driven `Form` of the selected node's props.
-    /// Each field binds `document.edits.<prop>`; `prop_changed` writes through to the doc.
+    /// Each field binds `document.edits.<prop>`. `prop_changed` writes through to the doc.
     fn inspector(
         &mut self,
         target: &Node,
@@ -2075,7 +2075,7 @@ impl ForgeView {
             .into_any_element()
     }
 
-    /// Renders `forge.Outline` — a `Tree` of the document's nodes; rows carry a click
+    /// Renders `forge.Outline` — a `Tree` of the document's nodes. Rows carry a click
     /// handler that writes `bind selected` and fires `select` with the node index path.
     fn outline(
         &mut self,
@@ -2205,7 +2205,7 @@ impl ForgeView {
         items.push(data);
     }
 
-    /// Builds `TreeItem` data recursively; each node's row content is pre-rendered into
+    /// Builds `TreeItem` data recursively. Each node's row content is pre-rendered into
     /// `map` under its id for the `render_item` closure to hand out per paint.
     fn tree_data(&mut self, node: &Node, key: &str, nodes: &mut HashMap<String, Node>) -> TreeItem {
         let id = node.id.clone().unwrap_or_else(|| key.to_owned());
@@ -2348,7 +2348,7 @@ impl ForgeView {
                 {
                     // Adapter events — `on click:` on library elements wraps the
                     // widget in an interactive div that fires through the hook
-                    // path, so adapters get events without the render signature
+                    // path. Adapters get events without the render signature
                     // carrying mutable view state.
                     if node.events.iter().any(|e| e.event == "click") {
                         let weak = cx.entity().downgrade();
@@ -2396,7 +2396,7 @@ impl ForgeView {
                             })
                             .child(if embedded {
                                 // #120 — `mode: embedded` — the host window
-                                // floats over this slot via `frame_rect`; the
+                                // floats over this slot via `frame_rect`. The
                                 // content area is transparent so the foreign
                                 // pixels show through, chrome stays for context.
                                 div()
@@ -2519,7 +2519,7 @@ impl ForgeView {
                     cx,
                 )
             }
-            // `h_flex()` centers children on the cross axis; a Forge `HStack` is a plain
+            // `h_flex()` centers children on the cross axis. A Forge `HStack` is a plain
             // flex row, so children stretch (use `align: center` to center them).
             "HStack" => {
                 let kids = children(self, window, cx);
@@ -2656,7 +2656,7 @@ impl ForgeView {
                     }
                 };
                 // `value: bind` is controlled — external writes (theme pickers,
-                // doc loads) push into the cached state; `set_value` emits no
+                // doc loads) push into the cached state. `set_value` emits no
                 // events. A static `value:` stays a one-time default.
                 if matches!(self.prop(node, "value"), Some(Value::Binding { .. }))
                     && state.read(cx).value() != value {
@@ -2803,7 +2803,7 @@ impl ForgeView {
                     state.update(cx, |s, cx| s.set_value(value, window, cx));
                 }
                 // `diagnostics:` — squiggle markers, usually bound to state fed
-                // by `forge check` (#128). Rebuilt each render; the component
+                // by `forge check` (#128). Rebuilt each render. The component
                 // underlines the ranges and shows a hover popover.
                 if let Some(value) = self.prop(node, "diagnostics") {
                     let markers = self.markers(value);
@@ -3108,7 +3108,7 @@ impl ForgeView {
                 let src = self.prop_text(node, "src").unwrap_or_default();
                 // `img()` keeps a multicolor image's colors — `svg()` is a
                 // single-color mask tinted with `text_color` for theme icons.
-                // A `Path` source reads the file directly; a URL or a bare name
+                // A `Path` source reads the file directly. A URL or a bare name
                 // falls through as `ImageSource` (uri / embedded asset key).
                 let path = self.resolve_path(&src);
                 let element = if path.is_file() {
@@ -3183,8 +3183,8 @@ impl ForgeView {
                 format!("`{}` only renders inside `Settings`", node.element.name),
                 cx,
             ),
-            // A `Dialog` used inline renders its contents in a bordered box;
-            // top-level `Dialog#id:` declarations open via `open_dialog`.
+            // A `Dialog` used inline renders its contents in a bordered box.
+            // Top-level `Dialog#id:` declarations open via `open_dialog`.
             "Dialog" => {
                 let kids = self.slot_children(node, &format!("{key}/0"), window, cx);
                 let title = self.prop_text(node, "title");
@@ -4022,8 +4022,8 @@ impl ForgeView {
                 == Some(path.clone());
             if selected || drop_target {
                 let accent = cx.theme().accent;
-                // A leaf's drop lands as the next sibling — a bottom bar;
-                // a container's nests inside — a full frame.
+                // A leaf's drop lands as the next sibling — a bottom bar.
+                // A container's nests inside — a full frame.
                 let into = self.catalogs.iter().any(|c| {
                     c.element(&node.element.name)
                         .is_some_and(|d| !matches!(d.children, Children::None))
@@ -4327,9 +4327,9 @@ fn alert_variant(name: &str) -> AlertVariant {
     }
 }
 
-/// `forge.Showcase` sample props — a declared `default` wins; otherwise a
-/// plausible value per type so every widget shows a themed state (active
-/// for checked/pressed/selected/open, first enum variant, sample strings).
+/// `forge.Showcase` sample props — a declared `default` wins. Otherwise a
+/// plausible value per type so every widget shows a themed state. It uses
+/// active for checked/pressed/selected/open, the first enum variant, and sample strings.
 fn sample_prop_value(prop: &forge_spec::catalog::PropDef) -> Option<Value> {
     if let Some(default) = &prop.default {
         return Some(default.clone());
@@ -4550,7 +4550,7 @@ fn style<E: Styled>(element: E, entries: &Entries, cx: &App) -> E {
                 Value::Bool(b) => e.flex_shrink(if *b { 1.0 } else { 0.0 }),
                 _ => e,
             },
-            // `scroll` needs an element id; `container`/`wrap` apply it instead.
+            // `scroll` needs an element id. `container`/`wrap` apply it instead.
             ("overflow", _, _) if !matches!(word, "visible" | "scroll") => e.overflow_hidden(),
             ("opacity", _, _) => match value {
                 Value::Number { value, .. } => e.opacity(*value as f32),

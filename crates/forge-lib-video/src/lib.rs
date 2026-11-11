@@ -3,14 +3,14 @@
 //!
 //! Two build variants, selected by feature to match the runtime's base:
 //! `base-gpui-kit` (default) links the crate's `gpui-pre` feature, whose
-//! `gpui_pre =0.3.9` pin is the gpui-kit base's own; `base-gpui02` links its
+//! `gpui_pre =0.3.9` pin is the gpui-kit base's own. `base-gpui02` links its
 //! `gpui` (crates.io 0.2) feature for the Vanilla GPUI 0.2 base.
 //!
 //! GStreamer 1.14+ and its plugins must be installed — see
 //! <https://github.com/sdroege/gstreamer-rs#installation>.
 //!
 //! `Video` handles are whole GStreamer pipelines, so the adapter caches one
-//! per node key and only rebuilds it when `src` changes; control props
+//! per node key and only rebuilds it when `src` changes. Control props
 //! (`playing`/`volume`/`muted`/`looping`) are applied every render — they're
 //! cheap setter calls on the handle.
 

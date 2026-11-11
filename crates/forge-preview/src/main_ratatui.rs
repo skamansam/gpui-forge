@@ -72,8 +72,8 @@ fn main() {
     });
 
     // The TUI draws on the controlling terminal when one exists — spawned
-    // from Studio there usually isn't (stdout is the protocol channel), so
-    // fall back to headless: the TestBackend grid below still streams
+    // from Studio there usually isn't (stdout is the protocol channel).
+    // Fall back to headless: the TestBackend grid below still streams
     // `frame` events to the canvas's `preview.frame`.
     let mut tty = std::fs::OpenOptions::new()
         .write(true)
@@ -150,8 +150,8 @@ fn main() {
             }
         }
         while let Ok(key) = krx.try_recv() {
-            // Shift-Tab arrives as CSI Z (27 91 90) — handled as escape for now;
-            // plain Tab already cycles forward.
+            // Shift-Tab arrives as CSI Z (27 91 90) — handled as escape for now.
+            // Plain Tab already cycles forward.
             view.on_key(&key);
         }
         let (cols, rows) = if let Some(term) = &mut term {

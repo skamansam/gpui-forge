@@ -3,7 +3,7 @@
 //! VS Code/Zed, JetBrains schema mappings) can flag unknown elements, props,
 //! events, style keys and `use:` libraries without running `forge check`.
 //!
-//! `forge schema --yaml [--base <id>]` prints one; `cargo xtask schemas`
+//! `forge schema --yaml [--base <id>]` prints one. `cargo xtask schemas`
 //! regenerates the set published under `site/static/schema/0.1/`.
 //!
 //! The emitted schema targets draft-07 — the dialect yaml-language-server and
@@ -82,7 +82,7 @@ fn alt<'a>(names: impl IntoIterator<Item = &'a str>) -> String {
 /// The JSON Schema for one `.forge.yaml` document.
 ///
 /// `base: Some` scopes element/prop/event/`use` validation to that base's
-/// catalog plus the libraries its manifest registers; `base: None` emits the
+/// catalog plus the libraries its manifest registers. `base: None` emits the
 /// generic schema that accepts every catalog's elements, for editors that map
 /// `*.forge.yaml` without knowing a document's base.
 pub fn document_schema(base: Option<&Base>, bases: &[Base], catalogs: &[Catalog]) -> Json {
@@ -91,8 +91,8 @@ pub fn document_schema(base: Option<&Base>, bases: &[Base], catalogs: &[Catalog]
             .iter()
             .find(|c| c.library == b.catalog || c.library == b.id)
     });
-    // Catalogs importable via `use:` — those declaring support for the base;
-    // the base's own catalog joins so `use: kit: gpui-kit` aliases work.
+    // Catalogs importable via `use:` — those declaring support for the base.
+    // The base's own catalog joins so `use: kit: gpui-kit` aliases work.
     let importable: Vec<&Catalog> = match base {
         Some(b) => catalogs
             .iter()
@@ -132,8 +132,8 @@ pub fn document_schema(base: Option<&Base>, bases: &[Base], catalogs: &[Catalog]
         .collect();
 
     let mut guards = Vec::new();
-    // Unqualified elements: one guard per element when a base is selected;
-    // otherwise merge same-named elements across catalogs (the generic
+    // Unqualified elements: one guard per element when a base is selected.
+    // Otherwise merge same-named elements across catalogs (the generic
     // schema can't know which library an unqualified name means).
     if let Some(catalog) = base_catalog {
         for def in &catalog.elements {
@@ -252,7 +252,7 @@ pub fn document_schema(base: Option<&Base>, bases: &[Base], catalogs: &[Catalog]
             },
             "root": { "$ref": "#/definitions/node" },
         },
-        // `Dialog#name:` declarations; other unknown top-level keys are
+        // `Dialog#name:` declarations. Other unknown top-level keys are
         // fragment slots for `&anchor` declarations, so they stay allowed.
         "patternProperties": {
             // `Dialog#name:`, `Dialog.name:` and `Dialog .name:` are all
@@ -267,8 +267,8 @@ pub fn document_schema(base: Option<&Base>, bases: &[Base], catalogs: &[Catalog]
     })
 }
 
-/// An element's catalog contract, unioned across same-named defs: a prop or
-/// event is allowed when any def declares it and required only when every
+/// An element's catalog contract, unioned across same-named defs. A prop or
+/// event is allowed when any def declares it. It is required only when every
 /// def does (defs lacking it can't produce the element anyway).
 struct Contract<'a> {
     /// prop name → one value schema per declaring def.
@@ -422,7 +422,7 @@ fn element_guard(key_pat: &str, defs: &[&ElementDef]) -> Json {
         then.insert("required".into(), json!(contract.required));
     }
 
-    // JSON Schema can't say "has a key matching this pattern", so flip it:
+    // JSON Schema can't say "has a key matching this pattern", so flip it.
     // `if` holds when not every key avoids the element pattern — i.e. some
     // key is `Button`/`Button#id`/`alias.Button`.
     json!({
@@ -435,9 +435,9 @@ fn element_guard(key_pat: &str, defs: &[&ElementDef]) -> Json {
     })
 }
 
-/// The value of a top-level `Dialog#name:` — the reader synthesizes the
+/// The value of a top-level `Dialog#name:`. The reader synthesizes the
 /// `Dialog` element key, so the body carries only props, `style`, `on`
-/// handlers and `children` of the `Dialog` element (no element key of its
+/// handlers and `children` of the `Dialog` element. It has no element key of its
 /// own — a second one is a parse error).
 fn dialog_body_schema(defs: &[&ElementDef]) -> Json {
     if defs.is_empty() {
@@ -505,7 +505,7 @@ fn children_schema(defs: &[&Children]) -> Json {
 
 /// A prop value schema from its catalog `PropType`. Bindings are strings at
 /// YAML level (`$path`, `bind $path`), so most types accept a string spelling
-/// a binding; `bindable` controls whether two-way `bind` is allowed.
+/// a binding. `bindable` controls whether two-way `bind` is allowed.
 fn prop_schema(ty: &PropType, bindable: bool) -> Json {
     let bound = if bindable { BOUND_OR_BIND } else { BOUND };
     let dynamic = json!({ "type": "string", "pattern": bound });

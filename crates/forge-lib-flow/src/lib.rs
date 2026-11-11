@@ -3,7 +3,7 @@
 //! so it can't be confused with the gpui02 base's `flow` (ferrum-flow).
 //!
 //! `gflow.Canvas` is an `Entity<FlowGraph>` cached per node key (same shape
-//! as the ferrum adapter); its `FlowState` starts from the `graph` map prop.
+//! as the ferrum adapter). Its `FlowState` starts from the `graph` map prop.
 //! Controls/minimap overlay the canvas when their props are on.
 
 use gpui_flow::{

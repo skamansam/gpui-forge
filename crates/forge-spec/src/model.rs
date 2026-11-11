@@ -10,13 +10,13 @@ pub struct Document {
     /// JSON Schema URL for editors (`$schema`).
     pub schema: Option<String>,
     pub version: String,
-    /// Base component system; inherited from `forge.toml` when absent.
+    /// Base component system. Inherited from `forge.toml` when absent.
     pub base: Option<String>,
     pub imports: Vec<Import>,
     pub meta: Vec<(String, String)>,
     /// Top-level `state:` — declared state vars: `path -> type` (e.g.
     /// `studio.theme: string`). `forge.Vars` uses the type to pick the
-    /// editor widget; `forge check` validates bindings to undeclared paths.
+    /// editor widget. `forge check` validates bindings to undeclared paths.
     pub state: Vec<(String, String)>,
     /// Top-level `Dialog#name:` declarations, opened by `open_dialog(name)`.
     pub dialogs: Vec<Node>,
@@ -87,7 +87,7 @@ impl std::fmt::Display for PathStep {
 }
 
 /// Parses a dotted node path — `0.2.1`, `0.2.e0`, `0.2.c1.0`, `0.2.e`, `0.2.c1`.
-/// `c{n}` becomes a `Case` step only when followed by a plain index; otherwise
+/// `c{n}` becomes a `Case` step only when followed by a plain index. Otherwise
 /// it is the `CaseList` container (valid only at the end of the path).
 pub fn path_steps(path: &str) -> Option<Vec<PathStep>> {
     let mut out = Vec::new();
@@ -126,8 +126,8 @@ pub fn path_string(steps: &[PathStep]) -> String {
 }
 
 impl Document {
-    /// Finds a node by index path (`"0.2.1"` → `root.children[2].children[1]`;
-    /// `"0"` is the root; `e`/`c` steps reach `else:`/`case` branch children).
+    /// Finds a node by index path (`"0.2.1"` → `root.children[2].children[1]`.
+    /// `"0"` is the root. `e`/`c` steps reach `else:`/`case` branch children).
     /// This is the same path shape `forge.Outline` reports for `select`.
     pub fn node_at(&self, path: &str) -> Option<&Node> {
         let mut segments = path_steps(path)?.into_iter();
@@ -176,7 +176,7 @@ impl Document {
         Some(&mut node.children)
     }
 
-    /// Sets or replaces a prop on the node at `path`; `None` removes it. Returns whether
+    /// Sets or replaces a prop on the node at `path`. `None` removes it. Returns whether
     /// the path resolved — a `false` return means no change was made.
     pub fn set_prop(&mut self, path: &str, name: &str, value: Option<Value>) -> bool {
         let Some(node) = self.node_at_mut(path) else {
@@ -205,7 +205,7 @@ impl Document {
         true
     }
 
-    /// Sets or replaces a style entry on the node at `path`; `None` removes it.
+    /// Sets or replaces a style entry on the node at `path`. `None` removes it.
     /// Returns whether the path resolved.
     pub fn set_style(&mut self, path: &str, name: &str, value: Option<Value>) -> bool {
         let Some(node) = self.node_at_mut(path) else {
@@ -299,8 +299,8 @@ impl Document {
         Some(format!("{parent_path}.{}", step.at_index(at)))
     }
 
-    /// Keeps `refs` and merge sites consistent after edits: each `*name` node's
-    /// merged facets flow into the `name:` ref block, then the fragment is
+    /// Keeps `refs` and merge sites consistent after edits. Each `*name` node's
+    /// merged facets flow into the `name:` ref block. The fragment is then
     /// applied back to every merge site (a shared ref means shared content).
     /// Newly-assigned refnames get a ref block covering the node's own facets.
     pub fn sync_refs(&mut self) {
@@ -427,7 +427,7 @@ pub struct Node {
     pub children: Vec<Node>,
     /// Control flow — `if`, `for`, `with` or `match`. On a bare block
     /// (`- if: $cond`) it is the node's whole meaning and `element` is a
-    /// `forge.X` sentinel; on an element it modifies that element.
+    /// `forge.X` sentinel. On an element it modifies that element.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub control: Option<Control>,
     /// Name of the `&anchor` block this node's entries merge from
@@ -444,7 +444,7 @@ pub struct Node {
 
 impl Node {
     /// True for bare control blocks — `element` is a `forge.X` sentinel that
-    /// never renders; `control` is the node's whole meaning.
+    /// never renders. `control` is the node's whole meaning.
     pub fn is_block(&self) -> bool {
         self.control.is_some() && self.element.is_control_sentinel()
     }
@@ -604,20 +604,20 @@ impl PathStep {
 /// Control-flow modifier — `if`, `for`, `with` or `match` (`docs/format/forge-yaml.md`).
 ///
 /// `children` always holds the primary branch (the then-body, loop body or
-/// scoped body); `match` uses `cases` instead and carries no `children`.
+/// scoped body). `match` uses `cases` instead and carries no `children`.
 #[derive(serde::Serialize, serde::Deserialize, schemars::JsonSchema, Clone, Debug, PartialEq)]
 pub enum Control {
     /// `if:` — renders `children` (or the element) when `when` is truthy,
-    /// or compares equal/not-equal to the `is:`/`not:` operand; `otherwise`
+    /// or compares equal/not-equal to the `is:`/`not:` operand. `otherwise`
     /// (`else:`) renders when the condition fails.
     If {
         when: Value,
         test: Option<Compare>,
         otherwise: Vec<Node>,
     },
-    /// `for:` — repeats `children` (or the element) once per item in `source`;
-    /// a single (non-list) value repeats once. `each` names the scoped item
-    /// var, `index:` optionally names the index; `otherwise` (`else:`)
+    /// `for:` — repeats `children` (or the element) once per item in `source`.
+    /// A single (non-list) value repeats once. `each` names the scoped item
+    /// var, `index:` optionally names the index. `otherwise` (`else:`)
     /// renders when the list is empty.
     For {
         source: Value,
@@ -632,7 +632,7 @@ pub enum Control {
     /// element) — a single-value `for`.
     With { source: Value, name: String },
     /// `match:` — renders the first `case` arm whose operand equals the
-    /// resolved `source`; `otherwise` (`else:`) when none match.
+    /// resolved `source`. `otherwise` (`else:`) when none match.
     Match {
         source: Value,
         cases: Vec<Case>,
@@ -694,7 +694,7 @@ pub struct Case {
     serde::Serialize, serde::Deserialize, schemars::JsonSchema, Clone, Debug, Default, PartialEq, Eq,
 )]
 pub struct ElementRef {
-    /// Import alias; `None` is the base library.
+    /// Import alias. `None` is the base library.
     pub namespace: Option<String>,
     pub name: String,
 }
@@ -702,7 +702,7 @@ pub struct ElementRef {
 impl ElementRef {
     /// `forge.If`/`forge.For`/`forge.With`/`forge.Match` — placeholder
     /// elements the reader puts on bare control blocks. Never rendered or
-    /// catalog-validated; `control` carries the meaning.
+    /// catalog-validated. `control` carries the meaning.
     pub fn is_control_sentinel(&self) -> bool {
         self.namespace.as_deref() == Some("forge")
             && matches!(self.name.as_str(), "If" | "For" | "With" | "Match")

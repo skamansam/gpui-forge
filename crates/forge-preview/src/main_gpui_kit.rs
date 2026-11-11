@@ -85,7 +85,7 @@ fn main() {
                         // Node drags/drop targets match Studio's embedded preview.
                         view.set_dnd(true, cx);
                         // Everything the view would tell an in-process host —
-                        // fired hooks and state writes — goes out over stdout so
+                        // fired hooks and state writes — goes out over stdout.
                         // Studio sees pick/drop/doc events exactly like the
                         // embedded `forge.Preview` sinks deliver them.
                         view.set_sinks(
@@ -216,7 +216,7 @@ fn main() {
 }
 
 /// #120 Phase 1 — the X11 position escape: `PlatformWindow` has no
-/// `set_position`, but `HasWindowHandle` gives the XID; `x11rb` moves it.
+/// `set_position`, but `HasWindowHandle` gives the XID. `x11rb` moves it.
 #[cfg(target_os = "linux")]
 fn x11_move(window: &mut gpui_kit::Window, x: f64, y: f64) {
     use raw_window_handle::{HasWindowHandle, RawWindowHandle};

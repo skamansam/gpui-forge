@@ -1,7 +1,7 @@
 //! A minimal YAML tree with source positions, built from `saphyr` documents.
 //!
 //! `MarkedYamlOwned` gives us YAML-1.2-compliant parsing (anchors, aliases and
-//! every structural edge case) plus source spans; we translate it into `YNode`,
+//! every structural edge case) plus source spans. We translate it into `YNode`,
 //! which carries the quoting style the write path needs, resolves `<<` merge
 //! keys, and rejects YAML features Forge does not support (tags).
 
@@ -47,7 +47,7 @@ fn pos(span: &saphyr_parser::Span) -> Pos {
     }
 }
 
-/// Parses a single YAML document; `None` when the input is empty. Returns the
+/// Parses a single YAML document. `None` when the input is empty. Returns the
 /// `YNode` tree plus the marked root, which keeps source spans for the
 /// lossless writer.
 pub(crate) fn parse(src: &str) -> Result<Option<(YNode, MarkedYamlOwned)>, Diagnostic> {
@@ -83,7 +83,7 @@ pub(crate) fn convert_marked(node: &MarkedYamlOwned) -> Result<YNode, Diagnostic
 
 /// `<<` merge alias names by map position — `<<: *name` and `<<: [*a, *b]`.
 /// The loader resolves aliases into clones whose spans still cover the `*name`
-/// token at the merge site, so names come from the source text at those spans.
+/// token at the merge site. Names come from the source text at those spans.
 /// What a map's `<<` merges contributed — the alias names (`*name`) and the
 /// entry keys spliced in (explicit keys win, so contributed = merged minus
 /// explicit). The writer uses `keys` to avoid re-emitting merged entries.

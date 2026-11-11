@@ -104,7 +104,7 @@ pub(crate) fn write_node(
 }
 
 /// Writes the `Element#id: content` head line — or the `if:`/`for:`/`with:`/
-/// `match:` control line for bare blocks; returns the body indent.
+/// `match:` control line for bare blocks. Returns the body indent.
 pub(crate) fn write_head(
     out: &mut String,
     node: &Node,

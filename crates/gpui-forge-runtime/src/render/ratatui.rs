@@ -54,7 +54,7 @@ pub struct ForgeView {
     /// the node's area (the TUI's flat model has no `Entity`, so the map
     /// holds views directly).
     previews: HashMap<String, ForgeView>,
-    /// Focusable inputs — `(node key, binding path)` rebuilt each render;
+    /// Focusable inputs — `(node key, binding path)` rebuilt each render.
     /// `Tab`/`Shift-Tab` cycles, typed keys write the focused binding.
     focusables: Vec<(Path, FocusKind)>,
     focused: usize,
@@ -218,8 +218,8 @@ impl ForgeView {
     }
 
     /// Terminal keys — the host reads the tty and forwards them (#112).
-    /// `Tab`/`Shift-Tab` cycles focusable inputs; printable keys write into
-    /// the focused input's binding; `Enter`/`Space` fires toggle/select.
+    /// `Tab`/`Shift-Tab` cycles focusable inputs. Printable keys write into
+    /// the focused input's binding. `Enter`/`Space` fires toggle/select.
     pub fn on_key(&mut self, key: &str) {
         let kind = self.focusables.get(self.focused).map(|(_, k)| *k);
         match (kind, key) {
@@ -666,7 +666,7 @@ impl ForgeView {
     }
 
     /// Splits `area` into one chunk per child along `direction` and renders
-    /// each child — equal `Fill` shares for the scaffold; `flex`/`width`
+    /// each child — equal `Fill` shares for the scaffold. `flex`/`width`
     /// style entries refine this in the port.
     fn render_children(&mut self, node: &Node, area: Rect, frame: &mut Frame, dir: Direction) {
         let constraints: Vec<Constraint> =

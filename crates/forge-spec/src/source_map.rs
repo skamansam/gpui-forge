@@ -6,7 +6,7 @@ use crate::diagnostic::Pos;
 use crate::model::PathStep;
 
 /// A node's location: path steps from the root (`[]` is the root,
-/// `[Child(0), Child(2)]` its first child's third child; `Else`/`Case`
+/// `[Child(0), Child(2)]` its first child's third child. `Else`/`Case`
 /// steps reach `else:`/`case` branch children).
 pub type NodePath = Vec<PathStep>;
 

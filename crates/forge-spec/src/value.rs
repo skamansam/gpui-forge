@@ -71,7 +71,7 @@ fn binding_or_token(text: &str) -> Result<Value, String> {
     })
 }
 
-/// Text with optional `{$path}` placeholders; `{{` is a literal `{`.
+/// Text with optional `{$path}` placeholders. `{{` is a literal `{`.
 fn parse_text(text: &str) -> Result<Value, String> {
     let mut segments = Vec::new();
     let mut literal = String::new();

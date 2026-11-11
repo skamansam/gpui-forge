@@ -46,16 +46,16 @@ const EXAMPLE_RATATUI: &str = include_str!("../../../examples/ratatui-showcase.f
 const EXAMPLE_ICED: &str = include_str!("../../../examples/iced-showcase.forge.yaml");
 const EXAMPLE_ADABRAKA: &str = include_str!("../../../examples/adabraka-showcase.forge.yaml");
 
-/// Widget sets the Welcome tab offers in its showcase picker (#129) — the
-/// gpui-kit base, the `forge` intrinsics, every registered `forge-lib-*`,
-/// then the foreign-base showcases (they launch their preview host).
+/// Widget sets the Welcome tab offers in its showcase picker (#129): the
+/// gpui-kit base, the `forge` intrinsics, every registered `forge-lib-*`.
+/// Then the foreign-base showcases (they launch their preview host).
 const WIDGET_SETS: &[&str] = &[
     "gpui-kit", "forge", "ely", "gc", "gflow", "base", "video", "hig", "pdf", "wb", "math",
     "gpui02", "bezel", "ratatui", "iced", "adabraka",
 ];
 
 struct Shared {
-    /// The file `editor.source` was loaded from; `None` for embedded documents.
+    /// The file `editor.source` was loaded from. `None` for embedded documents.
     file: Option<PathBuf>,
     /// The directory the current document lives in — asset paths resolve
     /// here and it's forwarded to the preview host as `base_dir`.
@@ -196,9 +196,9 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     view.set_base_dir(env!("CARGO_MANIFEST_DIR"));
     let dark = Theme::global(cx).is_dark();
     // Load every vendored theme JSON — `default-theme.json` is only
-    // light+dark; the full catalog lives in the workspace `themes/` dir.
+    // light+dark. The full catalog lives in the workspace `themes/` dir.
     // Load every vendored theme JSON — `default-theme.json` is only
-    // light+dark; the full catalog lives in the workspace `themes/` dir.
+    // light+dark. The full catalog lives in the workspace `themes/` dir.
     let themes_dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../themes");
     if let Ok(entries) = std::fs::read_dir(&themes_dir) {
         for entry in entries.flatten() {
@@ -329,8 +329,8 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
                 let (name, args) = parse_call(call);
                 let weak = weak.clone();
                 let shared = shared.clone();
-                // Defer — a preview event fires while the preview entity is leased,
-                // so touching it (or the shell, which then touches the preview)
+                // Defer — a preview event fires while the preview entity is leased.
+                // Touching it (or the shell, which then touches the preview)
                 // must wait until the in-flight update releases.
                 cx.defer(move |cx| {
                     weak.update(cx, |view, cx| dispatch(view, &name, &args, &shared, cx))
@@ -464,8 +464,8 @@ fn open_dialog(
         );
         v
     });
-    // The hook runs inside the main window's own update cycle — `App::windows()`
-    // handles can't be `update`d from in here because the window is taken out of
+    // The hook runs inside the main window's own update cycle. `App::windows()`
+    // Handles can't be `update`d from in here because the window is taken out of
     // the slot map for the duration. A foreground task runs after the update
     // finishes, when the window is live again.
     let app = cx.to_async();
@@ -521,7 +521,7 @@ fn apply_theme_name(
         return;
     };
     // `apply_config` installs the config into its mode's slot, switches mode,
-    // and applies colors — `edit` sees it as already installed and skips the
+    // and applies colors. `edit` sees it as already installed and skips the
     // reload that would otherwise re-apply the OLD config.
     Theme::update(cx, |theme| theme.apply_config(&config));
     save_prefs(view);
@@ -699,7 +699,7 @@ fn dispatch(
 
 /// `start_from('welcome'|'gallery'|'blank'|<widget-set>)` — loads a starter
 /// document and shows the preview tab so the user sees the running app.
-/// Widget-set aliases resolve to their demo in `examples/` (#129); the paths
+/// Widget-set aliases resolve to their demo in `examples/` (#129). The paths
 /// are relative to the crate so doc-relative `src:` props resolve too.
 fn starter(name: &str) -> Option<(&'static str, &'static str)> {
     Some(match name {
@@ -816,7 +816,7 @@ fn open_document(shared: SharedState, cx: &mut Context<ForgeView>) {
     .detach();
 }
 
-/// `open_project()` — pick a `forge.toml`; the manifest's `forge.document`
+/// `open_project()` — pick a `forge.toml`. The manifest's `forge.document`
 /// path resolves relative to it and becomes the loaded document, while
 /// `studio.project` tracks the project directory (#49).
 fn open_project(shared: SharedState, cx: &mut Context<ForgeView>) {
@@ -841,13 +841,13 @@ fn open_project(shared: SharedState, cx: &mut Context<ForgeView>) {
     .detach();
 }
 
-/// `create_project()` — the New Project dialog's Create button (#98): reads the
+/// `create_project()` — the New Project dialog's Create button (#98). It reads the
 /// dialog's `name`/`base` fields (its state lands in `dialog.state` as JSON)
 /// and loads a fresh `app.forge.yaml`-style document into the editor.
 ///
 /// #133 — no folder prompt: a project is one YAML file, so nothing needs a
 /// path until an operation does. `save_document` → `save_as` asks where to
-/// put it; `forge.toml` scaffolding waits for `forge new`/`forge build`.
+/// put it. `forge.toml` scaffolding waits for `forge new`/`forge build`.
 fn create_project(view: &mut ForgeView, shared: SharedState, cx: &mut Context<ForgeView>) {
     let fields = get_path(view.state(), &parse_path("dialog.state").unwrap())
         .and_then(|j| j.as_str())
@@ -898,11 +898,11 @@ fn create_project(view: &mut ForgeView, shared: SharedState, cx: &mut Context<Fo
 }
 
 /// `preview_in_host()` — spawn the out-of-process preview host (#97) on the
-/// current document: the host renders its own GPUI graph, Studio feeds it
-/// the doc path over the JSON control channel and reads its events back —
+/// current document. The host renders its own GPUI graph. Studio feeds it
+/// the doc path over the JSON control channel and reads its events back.
 /// `call`/`state` lines play the same role as the embedded preview's sinks.
 fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<ForgeView>) {
-    // `load` for file-backed docs (also seeds the host's base_dir); unsaved
+    // `load` for file-backed docs (also seeds the host's base_dir). Unsaved
     // documents go over `source` — the editor buffer is the document.
     let file = shared.borrow().file.clone();
     // One host binary per base — `forge-preview-gpui02` for gpui02 docs, and
@@ -1303,7 +1303,7 @@ fn load_project(
     load_file(doc_path, view, shared, cx);
 }
 
-/// Reads `path` into the editor, updates recents + the menu, starts the
+/// Reads `path` into the editor, updates recents + the menu, launches the
 /// external-change watcher.
 fn load_file(
     path: PathBuf,
@@ -1358,7 +1358,7 @@ fn load_prefs() -> Json {
     let s = prefs_file()
         .and_then(|f| std::fs::read_to_string(f).ok())
         .unwrap_or_default();
-    // tiny TOML-ish parse: `key = value` lines; strings quoted, bool bare.
+    // tiny TOML-ish parse: `key = value` lines. Strings quoted, bool bare.
     let mut m = serde_json::Map::new();
     for line in s.lines() {
         let line = line.trim();
@@ -1741,8 +1741,8 @@ fn insert_component(
 }
 
 /// Fires when the preview reports a drop target (`studio.drop_target`) while a
-/// palette item is armed (`studio.placing`): parse the element's snippet into a
-/// node and insert it under the clicked node.
+/// palette item is armed (`studio.placing`). It parses the element's snippet into a
+/// node and inserts it under the clicked node.
 fn place_component(
     view: &mut ForgeView,
     args: &[String],
@@ -1996,7 +1996,7 @@ fn sync_source(view: &mut ForgeView, preview: &Entity<ForgeView>, cx: &mut Conte
 }
 
 /// Parses a palette `snippet` into a `Node` by wrapping it as a document
-/// children item; falls back to a bare `Element: Name` node.
+/// children item. Falls back to a bare `Element: Name` node.
 fn snippet_node(tag: &str) -> Node {
     if let Some(snippet) = snippet(tag) {
         let body: String = snippet
@@ -2074,7 +2074,7 @@ fn remove_component(view: &mut ForgeView, shared: &SharedState, cx: &mut Context
     cx.notify();
 }
 
-/// Snapshots `(document, source)` before a mutation; clears the redo stack.
+/// Snapshots `(document, source)` before a mutation. Clears the redo stack.
 fn record_undo(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView>) {
     let preview = view.preview("canvas", cx);
     let Some(doc) = preview.read(cx).document().cloned() else {
@@ -2222,7 +2222,7 @@ fn markers(diagnostics: &[Diagnostic]) -> Json {
     check::diagnostics_json(diagnostics)
 }
 
-/// `prop_changed(prop)` — an inspector field wrote `document.edits.<prop>`; push the
+/// `prop_changed(prop)` — an inspector field wrote `document.edits.<prop>`. Push the
 /// new value into the preview's document at `document.selected` and re-render.
 /// `style_changed('<style-prop>')` — the Inspector's Style tab writes the bound
 /// `document.edits.style.<name>` value back into the node's `style` entries.
@@ -2255,8 +2255,8 @@ fn style_changed(
     });
 }
 
-/// `refname_changed()` — the inspector's ref field wrote `document.edits.refname`;
-/// assign it on the selected node — `sync_refs` turns it into a `name: &name`
+/// `refname_changed()` — the inspector's ref field wrote `document.edits.refname`.
+/// Assign it on the selected node — `sync_refs` turns it into a `name: &name`
 /// block and the preserving writer emits `<<: *name` (or a new ref block).
 fn refname_changed(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView>) {
     let state = view.state();
@@ -2320,7 +2320,7 @@ fn prop_changed(
 }
 
 /// Selection in the `forge.Outline` — the row's `bind selected` write already landed
-/// the path in `document.selected`; this just surfaces it in the status bar.
+/// the path in `document.selected`. This just surfaces it in the status bar.
 fn select_node(view: &mut ForgeView, _args: &[String], cx: &mut Context<ForgeView>) {
     let path = get_path(view.state(), &parse_path("document.selected").unwrap())
         .and_then(|j| j.as_str())

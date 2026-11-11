@@ -1,7 +1,7 @@
 //! Document validation against catalog manifests.
 //!
-//! Checks that need no catalog (syntax, value micro-syntax, duplicate keys) happen while
-//! reading. This pass checks what depends on the selected base and imported libraries.
+//! Rules that need no catalog (syntax, value micro-syntax, duplicate keys) happen while
+//! reading. This pass validates what depends on the selected base and imported libraries.
 
 use std::collections::HashMap;
 
@@ -14,8 +14,8 @@ use crate::value::is_two_way;
 
 /// Validates `doc` for the project's `base` against the installed `catalogs`.
 ///
-/// `base` is the project's base (from `forge.toml`); a document that declares a different
-/// `base:` is reported and not checked further. The base library is the catalog whose `library`
+/// `base` is the project's base (from `forge.toml`). A document that declares a different
+/// `base:` is reported and not validated further. The base library is the catalog whose `library`
 /// id equals `base`. Without a source map,
 /// diagnostics point at `1:1`.
 pub fn validate(
@@ -130,7 +130,7 @@ impl<'a> Validator<'a> {
             }
         }
         // Bare control blocks carry a `forge.X` sentinel element — no catalog
-        // check; their meaning lives in `control`.
+        // validation. Their meaning lives in `control`.
         if !node.is_block()
             && let Some((catalog, def)) = self.element(node, base, at)
         {
@@ -308,14 +308,14 @@ impl<'a> Validator<'a> {
             Children::Only(allowed) => {
                 for (i, child) in node.children.iter().enumerate() {
                     // Control blocks are transparent — their own children are
-                    // checked when recursed into.
+                    // validated when recursed into.
                     if child.is_block() {
                         continue;
                     }
                     let Some(library) = self.library_of(&child.element) else {
                         continue;
                     };
-                    // Unqualified entries name the parent's own library; others are `<library-id>.Element`.
+                    // Unqualified entries name the parent's own library. Others are `<library-id>.Element`.
                     let ok = allowed.iter().any(|entry| match entry.rsplit_once('.') {
                         Some((lib, name)) => lib == library && name == child.element.name,
                         None => catalog.library == library && *entry == child.element.name,

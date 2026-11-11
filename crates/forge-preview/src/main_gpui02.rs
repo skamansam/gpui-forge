@@ -1,5 +1,5 @@
 //! `forge-preview-gpui02` — the out-of-process preview host for the gpui02 base
-//! (crates.io gpui 0.2.2 + guise). Same wire protocol as `forge-preview`;
+//! (crates.io gpui 0.2.2 + guise). Same wire protocol as `forge-preview`.
 //! Studio spawns this binary for `base: gpui02` documents (#96).
 
 use gpui::prelude::*;
@@ -121,7 +121,7 @@ fn main() {
                                     }
                                     HostMsg::FrameRect { x, y, w, h } => {
                                         // #120 Phase 1 — `PlatformWindow` only
-                                        // exposes `resize`; size the host
+                                        // exposes `resize`. Size the host
                                         // window to the canvas slot.
                                         cx.defer(move |cx| {
                                             for handle in cx.windows() {

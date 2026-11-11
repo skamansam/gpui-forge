@@ -1,7 +1,7 @@
 //! The Forge Runtime.
 //!
 //! Compiled once per base component system. Select the base with exactly one
-//! `base-*` Cargo feature; `base-gpui-kit` is the default.
+//! `base-*` Cargo feature. `base-gpui-kit` is the default.
 
 const _: () = {
     let bases = cfg!(feature = "base-gpui-kit") as usize

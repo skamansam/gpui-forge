@@ -69,7 +69,7 @@ pub struct ForgeView {
     #[allow(dead_code)]
     dnd: bool,
     /// `forge.Preview` hosts — a nested `ForgeView` per id (the Elm model
-    /// has no `Entity`; the map holds views directly and `update` routes
+    /// has no `Entity`. The map holds views directly and `update` routes
     /// `Message::Preview` to them).
     previews: HashMap<String, ForgeView>,
     empty_text: Option<String>,
@@ -407,8 +407,8 @@ impl ForgeView {
             .into();
         }
         if node.element.namespace.is_some() {
-            // `use:`/`forge` non-Preview elements — ForgeLibrary is GPUI-typed;
-            // iced shows a placeholder rather than silently rendering the
+            // `use:`/`forge` non-Preview elements — ForgeLibrary is GPUI-typed.
+            // Iced shows a placeholder rather than silently rendering the
             // base's equivalent.
             return iced::widget::container(iced::widget::text(format!(
                 "{}.{} — namespaced elements need a GPUI host",
