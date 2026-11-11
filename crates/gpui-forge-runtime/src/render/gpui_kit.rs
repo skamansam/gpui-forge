@@ -10,6 +10,7 @@ use std::rc::Rc;
 use crate::render::{get_path, set_path};
 use forge_spec::catalog::{Catalog, Children, PropType};
 use forge_spec::value::parse_path;
+use forge_spec::yaml;
 use forge_spec::{
     BindingMode, Color, Compare, Control, Document, ElementRef, Entries, EventBinding, HandlerRef,
     Node, Path, PathSegment, Segment, Unit, Value,
@@ -192,6 +193,9 @@ pub struct ForgeView {
     selects: HashMap<String, Entity<SelectState<Options>>>,
     tabs: HashMap<String, usize>,
     previews: HashMap<String, Entity<ForgeView>>,
+    /// `forge.Preview` id → the `doc:` src it has loaded — skips re-parsing
+    /// unchanged preview documents each render.
+    preview_srcs: HashMap<String, String>,
     /// `forge.Preview` bounds cells — `id` → the card's window-space rect,
     /// populated by `BoundsTracker` each paint (Studio's `frame_rect`).
     preview_bounds: HashMap<String, std::rc::Rc<std::cell::RefCell<Option<Bounds<Pixels>>>>>,
@@ -288,6 +292,7 @@ impl ForgeView {
             selects: HashMap::new(),
             tabs: HashMap::new(),
             preview_bounds: HashMap::new(),
+            preview_srcs: HashMap::new(),
             scroll_handles: HashMap::new(),
             previews: HashMap::new(),
             libraries: Vec::new(),
@@ -2430,10 +2435,12 @@ impl ForgeView {
                             .into_any_element()
                     } else {
                         let empty_text = self.prop_text(node, "placeholder");
+                        let doc_spec = self.prop_text(node, "doc").filter(|t| !t.is_empty());
                         let catalogs = self.catalogs.clone();
                         let libraries = self.libraries.clone();
-                        self.previews
-                            .entry(id)
+                        let preview = self
+                            .previews
+                            .entry(id.clone())
                             .or_insert_with(|| {
                                 cx.new(|_| {
                                     let mut view = ForgeView::new(catalogs);
@@ -2442,8 +2449,38 @@ impl ForgeView {
                                     view
                                 })
                             })
-                            .clone()
-                            .into_any_element()
+                            .clone();
+                        // `doc:` — a doc-relative `.forge.yaml` path, or a named
+                        // ref (`name: &name`) whose head-less body becomes the
+                        // preview's root. Loaded once per src string.
+                        if let Some(spec) = doc_spec {
+                            if self.preview_srcs.get(&id) != Some(&spec) {
+                                let loaded = if let Some(body) = self
+                                    .doc
+                                    .as_ref()
+                                    .and_then(|d| {
+                                        d.refs
+                                            .iter()
+                                            .find(|(n, _)| n == &spec)
+                                            .map(|(_, b)| b.clone())
+                                    })
+                                {
+                                    let mut doc = self.doc.clone().unwrap();
+                                    doc.root = body;
+                                    Some(doc)
+                                } else {
+                                    let path = self.resolve_path(&spec);
+                                    std::fs::read_to_string(&path)
+                                        .ok()
+                                        .and_then(|src| yaml::from_str(&src).ok())
+                                };
+                                if let Some(doc) = loaded {
+                                    preview.update(cx, |view, cx| view.set_document(doc, cx));
+                                    self.preview_srcs.insert(id, spec);
+                                }
+                            }
+                        }
+                        preview.into_any_element()
                     }
                 }
                 (Some("forge"), "Outline") => {

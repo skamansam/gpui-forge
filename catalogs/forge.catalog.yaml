@@ -14,6 +14,16 @@ elements:
     summary: Hosts another Forge document inside this document.
     component: gpui_forge_runtime::render::ForgeView
     props:
+      doc:
+        type: string
+        summary: "Document to preview — a doc-relative `.forge.yaml` path, or
+          a named ref (`name: &name`) holding a head-less node body. Empty →
+          the host sets the document."
+      base:
+        type: string
+        summary: "Preview host base override (`gpui-kit`, `iced`, `ratatui`, …).
+          Empty → the document's own `base:`. Each unique (doc, base) pane
+          gets its own preview host."
       placeholder:
         type: string
         summary: Shown while the host application has not set a document.
