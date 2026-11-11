@@ -71,6 +71,17 @@ fn main() {
                 move |_, cx| {
                     cx.new(move |cx| {
                         let mut view = ForgeView::new(check::catalogs());
+                        // Same adapter set as the Studio shell — `alias.Name`
+                        // elements render in the remote preview too.
+                        view.register_library(forge_lib_ely::Ely::new());
+                        view.register_library(forge_lib_gpui_component::GpuiComponent);
+                        view.register_library(forge_lib_video::VideoPlayer::new());
+                        view.register_library(forge_lib_zorite::Pdf::new());
+                        view.register_library(forge_lib_zorite::Whiteboard::new());
+                        view.register_library(forge_lib_zorite::Math::new());
+                        view.register_library(forge_lib_hig::Hig);
+                        view.register_library(forge_lib_base::Base::new());
+                        view.register_library(forge_lib_flow::Flow::new());
                         // Node drags/drop targets match Studio's embedded preview.
                         view.set_dnd(true, cx);
                         // Everything the view would tell an in-process host —

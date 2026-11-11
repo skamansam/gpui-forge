@@ -5,7 +5,9 @@ use std::collections::HashMap;
 use super::tree::{self, Scalar, YNode};
 use crate::SPEC_VERSION;
 use crate::diagnostic::{Diagnostic, Diagnostics, Pos};
-use crate::model::{Document, ElementRef, EventBinding, Import, Node, Value};
+use crate::model::{
+    Case, Compare, Control, Document, ElementRef, EventBinding, Import, Node, Value,
+};
 use crate::source_map::{NodeSpans, SourceMap};
 use crate::value::Quoting;
 use crate::value::{
@@ -31,12 +33,26 @@ pub fn from_str_with_source_map(src: &str) -> Result<(Document, SourceMap), Diag
         }
         Err(d) => return Err(Diagnostics(vec![d])),
     };
+    let lines: Vec<&str> = src.lines().collect();
     let mut reader = Reader {
         src,
         diags: Vec::new(),
         path: Vec::new(),
         map: SourceMap::default(),
+        merges: tree::merge_names(&marked, &lines),
     };
+    // Ref names must be unique — YAML spec shadowing (nearest wins) doesn't
+    // apply since refs are addressed by name, not by position.
+    let mut seen = std::collections::HashSet::new();
+    for (name, at) in tree::anchor_names(&marked, &lines) {
+        if !seen.insert(name.clone()) {
+            reader.hint(
+                at,
+                format!("duplicate ref `&{name}`"),
+                "ref names must be unique in a document",
+            );
+        }
+    }
     let doc = reader.document(tree);
     reader.diags.sort_by_key(|d| d.pos);
     match doc {
@@ -53,14 +69,47 @@ pub fn from_str_with_source_map(src: &str) -> Result<(Document, SourceMap), Diag
 
 /// Re-parses a `YNode` subtree into a model `Node`; used by the preserving
 /// writer to detect unchanged regions.
-pub(crate) fn reparse_node(src: &str, val: YNode) -> Option<Node> {
+pub(crate) fn reparse_node(
+    src: &str,
+    val: YNode,
+    merges: std::collections::HashMap<Pos, crate::yaml::tree::MergeInfo>,
+) -> Option<Node> {
     Reader {
         src,
         diags: Vec::new(),
         path: Vec::new(),
         map: SourceMap::default(),
+        merges,
     }
     .node(val)
+}
+
+/// Re-parses a ref block's entry-bag (a node body with no element head) — the
+/// preserving writer's baseline for `name: &name` fragments.
+pub(crate) fn reparse_fragment(
+    src: &str,
+    val: YNode,
+    merges: std::collections::HashMap<Pos, crate::yaml::tree::MergeInfo>,
+) -> Option<Node> {
+    let YNode::Map(entries, at) = val else {
+        return None;
+    };
+    let mut with_head = vec![(
+        Scalar {
+            text: "Ref".into(),
+            quoting: Quoting::Plain,
+            pos: at,
+        },
+        YNode::Scalar(Scalar {
+            text: String::new(),
+            quoting: Quoting::Plain,
+            pos: at,
+        }),
+    )];
+    with_head.extend(entries);
+    let mut node = reparse_node(src, YNode::Map(with_head, at), merges)?;
+    node.element.name.clear();
+    Some(node)
 }
 
 /// Re-parses a scalar value; `allow_two_way` matches props vs style/content rules.
@@ -70,6 +119,7 @@ pub(crate) fn reparse_value(src: &str, val: YNode, allow_two_way: bool) -> Optio
         diags: Vec::new(),
         path: Vec::new(),
         map: SourceMap::default(),
+        merges: Default::default(),
     }
     .typed(val, allow_two_way)
 }
@@ -81,6 +131,7 @@ pub(crate) fn reparse_text(src: &str, val: YNode) -> Option<String> {
         diags: Vec::new(),
         path: Vec::new(),
         map: SourceMap::default(),
+        merges: Default::default(),
     }
     .text(val)
 }
@@ -92,6 +143,7 @@ pub(crate) fn reparse_imports(src: &str, val: YNode) -> Vec<Import> {
         diags: Vec::new(),
         path: Vec::new(),
         map: SourceMap::default(),
+        merges: Default::default(),
     }
     .imports(val)
 }
@@ -103,6 +155,7 @@ pub(crate) fn reparse_meta(src: &str, val: YNode) -> Vec<(String, String)> {
         diags: Vec::new(),
         path: Vec::new(),
         map: SourceMap::default(),
+        merges: Default::default(),
     }
     .meta(val)
 }
@@ -110,9 +163,11 @@ pub(crate) fn reparse_meta(src: &str, val: YNode) -> Vec<(String, String)> {
 struct Reader<'a> {
     src: &'a str,
     diags: Vec<Diagnostic>,
-    /// Child indices from the root to the node being read.
-    path: Vec<usize>,
+    /// Path steps from the root to the node being read.
+    path: Vec<crate::model::PathStep>,
     map: SourceMap,
+    /// `<<` merge info by map position (`<<: *name` / `<<: [*a, *b]`).
+    merges: std::collections::HashMap<Pos, crate::yaml::tree::MergeInfo>,
 }
 
 impl Reader<'_> {
@@ -138,6 +193,7 @@ impl Reader<'_> {
         let (mut schema, mut version, mut base, mut root) = (None, None, None, None);
         let (mut imports, mut meta, mut state, mut dialogs) =
             (Vec::new(), Vec::new(), Vec::new(), Vec::new());
+        let mut refs = Vec::new();
         let (mut saw_version, mut saw_root) = (false, false);
         for (key, val) in entries {
             match key.text.as_str() {
@@ -178,6 +234,29 @@ impl Reader<'_> {
                         if let Some(node) = self.dialog_node(key, val) {
                             dialogs.push(node);
                         }
+                    } else if let YNode::Map(entries, at) = &val
+                        && let Some(name) = self.anchor_at(*at)
+                    {
+                        // `name: &name` — a ref block: a node's entry-bag with
+                        // no element head. Parse it as a node body so merges
+                        // splice `children:`/`style:`/props correctly.
+                        let mut with_head = vec![(
+                            Scalar {
+                                text: "Ref".into(),
+                                quoting: Quoting::Plain,
+                                pos: *at,
+                            },
+                            YNode::Scalar(Scalar {
+                                text: String::new(),
+                                quoting: Quoting::Plain,
+                                pos: *at,
+                            }),
+                        )];
+                        with_head.extend(entries.iter().cloned());
+                        if let Some(mut node) = self.node(YNode::Map(with_head, *at)) {
+                            node.element.name.clear();
+                            refs.push((name, node));
+                        }
                     } else if matches!(val, YNode::Scalar(_)) {
                         self.hint(
                             key.pos,
@@ -202,6 +281,7 @@ impl Reader<'_> {
             meta,
             state,
             dialogs,
+            refs,
             root: root?,
             raw: None,
         })
@@ -298,6 +378,27 @@ impl Reader<'_> {
         meta
     }
 
+    /// The `&name` anchor at a node's position, if the value carries one —
+    /// the anchor token sits at or just before the node's own span (saphyr
+    /// starts anchored nodes' spans at the name, after `&`).
+    fn anchor_at(&self, at: Pos) -> Option<String> {
+        let line = self.src.lines().nth(at.line.saturating_sub(1))?;
+        let text: String = line.chars().skip(at.col).collect();
+        let text = text.trim_start();
+        let rest = if let Some(rest) = text.strip_prefix('&') {
+            rest
+        } else if at.col > 0 && line.chars().nth(at.col - 1) == Some('&') {
+            text
+        } else {
+            return None;
+        };
+        let name: String = rest
+            .chars()
+            .take_while(|c| c.is_alphanumeric() || *c == '_' || *c == '-')
+            .collect();
+        (!name.is_empty()).then_some(name)
+    }
+
     fn node(&mut self, val: YNode) -> Option<Node> {
         let (entries, at) = match val {
             YNode::Map(entries, at) => (entries, at),
@@ -312,8 +413,14 @@ impl Reader<'_> {
         };
         self.check_duplicates(&entries);
         let mut node = Node::default();
+        if let Some(merge) = self.merges.get(&at) {
+            node.refname = merge.names.first().cloned();
+            node.merged = merge.keys.clone();
+        }
         let mut spans = NodeSpans::default();
         let mut element: Option<ElementRef> = None;
+        let mut head: Option<(Scalar, ControlHead)> = None;
+        let mut ctl = Ctl::default();
         for (key, val) in entries {
             let name = key.text.as_str();
             if name == "style" {
@@ -324,6 +431,75 @@ impl Reader<'_> {
                 if let Some(binding) = self.event(event.trim(), &key, val) {
                     spans.events.insert(binding.event.clone(), key.pos);
                     node.events.push(binding);
+                }
+            } else if matches!(name, "if" | "for" | "with" | "match") {
+                if let Some((first, _)) = &head {
+                    self.hint(
+                        key.pos,
+                        format!("node has two control keys (`{}`, `{name}`)", first.text),
+                        "only one of `if`, `for`, `with` or `match` per node",
+                    );
+                    continue;
+                }
+                let content_pos = val.pos();
+                if let Some(value) = self.control_value(name, &key, val) {
+                    let kind = match name {
+                        "if" => ControlHead::If(value),
+                        "for" => ControlHead::For(value),
+                        "with" => ControlHead::With(value),
+                        _ => ControlHead::Match(value),
+                    };
+                    spans.element = key.pos;
+                    spans.content = Some(content_pos);
+                    head = Some((key, kind));
+                }
+            } else if name == "else" {
+                ctl.otherwise = Some((
+                    key,
+                    self.branch_children(val, crate::model::PathStep::Else),
+                ));
+            } else if name == "case" {
+                self.hint(
+                    key.pos,
+                    "`case` needs a value like `case gpui:`",
+                    "`case` arms belong to `match`",
+                );
+            } else if let Some(operand) = name.strip_prefix("case ") {
+                match value::parse_arg(operand.trim()) {
+                    Ok(operand) => {
+                        let case = ctl.cases.len();
+                        let children =
+                            self.branch_children(val, move |i| {
+                                crate::model::PathStep::Case(case, i)
+                            });
+                        ctl.cases.push((key, operand, children));
+                    }
+                    Err(e) => self.error(key.pos, format!("invalid `case` operand: {e}")),
+                }
+            } else if name == "is" || name == "not" {
+                if let Some(v) = self.value(val, &key, false) {
+                    let slot = if name == "is" {
+                        &mut ctl.is
+                    } else {
+                        &mut ctl.not
+                    };
+                    *slot = Some((key, v));
+                }
+            } else if name == "key" {
+                // `key: item.id` — member path rooted in the `each` var.
+                let text = self.text(val).unwrap_or_default();
+                match crate::value::parse_path(&text) {
+                    Ok(path) => ctl.key = Some((key, path)),
+                    Err(e) => self.hint(key.pos, format!("invalid `key` path `{text}`"), &e),
+                }
+            } else if matches!(name, "each" | "index" | "as") {
+                if let Some(text) = self.ident_arg(&key, val) {
+                    let slot = match name {
+                        "each" => &mut ctl.each,
+                        "index" => &mut ctl.index,
+                        _ => &mut ctl.as_,
+                    };
+                    *slot = Some((key, text));
                 }
             } else if let Some((el, id)) = element_key(name) {
                 if let Some(first) = &element {
@@ -352,6 +528,17 @@ impl Reader<'_> {
                 );
             }
         }
+        if let Some((key, head)) = head {
+            let sentinel = head.sentinel_name();
+            node.control = self.assemble(&key, head, ctl, element.is_some(), &node);
+            if element.is_none() {
+                // A bare control block — the element slot carries a `forge.X`
+                // sentinel that renderers never reach element dispatch for.
+                element = Some(ElementRef::control_sentinel(sentinel));
+            }
+        } else {
+            self.stray_control(&ctl);
+        }
         let Some(element) = element else {
             self.hint(
                 at,
@@ -360,9 +547,292 @@ impl Reader<'_> {
             );
             return None;
         };
+        if element.is_control_sentinel() {
+            self.block_only(&node, &spans, at);
+        }
         node.element = element;
         self.map.nodes.insert(self.path.clone(), spans);
         Some(node)
+    }
+
+    /// The value a control head key carries — `if: <cond>`, `for: <list>`,
+    /// `with: <binding>` or `match: <binding>`.
+    fn control_value(&mut self, kind: &str, key: &Scalar, val: YNode) -> Option<Value> {
+        let value = self.value(val, key, false)?;
+        let ok = match kind {
+            "for" => matches!(value, Value::Binding { .. } | Value::List(_)),
+            "with" | "match" => matches!(value, Value::Binding { .. }),
+            _ => true,
+        };
+        if !ok {
+            self.hint(
+                key.pos,
+                format!("`{kind}` needs a binding like `$items`"),
+                "control keys take a one-way `$path` binding, not `bind`",
+            );
+            return None;
+        }
+        Some(value)
+    }
+
+    /// A scoped-var name for `each:`/`index:`/`as:` — a plain identifier.
+    fn ident_arg(&mut self, key: &Scalar, val: YNode) -> Option<String> {
+        let text = self.text(val)?;
+        if is_ident(&text) {
+            Some(text)
+        } else {
+            self.hint(
+                key.pos,
+                format!("`{}` must be an identifier like `item`", key.text),
+                "it names the variable children bind as `$item`",
+            );
+            None
+        }
+    }
+
+    /// A node list under `else:` or `case <v>:` — addressable via `e`/`c`
+    /// path steps (see `model::PathStep`).
+    fn branch_children(
+        &mut self,
+        val: YNode,
+        step: impl Fn(usize) -> crate::model::PathStep,
+    ) -> Vec<Node> {
+        match val {
+            YNode::Seq(items, _) => {
+                let mut nodes = Vec::new();
+                for item in items {
+                    self.path.push(step(nodes.len()));
+                    if let Some(node) = self.node(item) {
+                        nodes.push(node);
+                    }
+                    self.path.pop();
+                }
+                nodes
+            }
+            YNode::Scalar(s) if s.is_null() => Vec::new(),
+            other => {
+                self.hint(
+                    other.pos(),
+                    "`else` and `case` arms must be lists of nodes",
+                    "start each child with `- `",
+                );
+                Vec::new()
+            }
+        }
+    }
+
+    /// Builds the node's `Control` from its control key and pending sub-keys;
+    /// misplaced sub-keys produce targeted errors.
+    fn assemble(
+        &mut self,
+        head: &Scalar,
+        kind: ControlHead,
+        ctl: Ctl,
+        has_element: bool,
+        node: &Node,
+    ) -> Option<Control> {
+        let mut ctl = ctl;
+        match kind {
+            ControlHead::If(when) => {
+                self.stray(&ctl.each, "for");
+                self.stray(&ctl.index, "for");
+                self.stray(&ctl.as_, "with");
+                self.stray_cases(&ctl.cases);
+                let test = match (ctl.is, ctl.not) {
+                    (Some(_), Some((key, _))) => {
+                        self.hint(
+                            key.pos,
+                            "node has both `is` and `not`",
+                            "pick one — `is: x` renders on equality, `not: x` on inequality",
+                        );
+                        None
+                    }
+                    (Some((_, operand)), None) => Some(Compare::Is(operand)),
+                    (None, Some((_, operand))) => Some(Compare::Not(operand)),
+                    (None, None) => None,
+                };
+                Some(Control::If {
+                    when,
+                    test,
+                    otherwise: ctl
+                        .otherwise
+                        .take()
+                        .map(|(_, children)| children)
+                        .unwrap_or_default(),
+                })
+            }
+            ControlHead::For(source) => {
+                self.stray(&ctl.is, "if");
+                self.stray(&ctl.not, "if");
+                self.stray(&ctl.as_, "with");
+                self.stray_cases(&ctl.cases);
+                let Some((_, each)) = ctl.each else {
+                    self.hint(
+                        head.pos,
+                        "`for` needs `each: <name>`",
+                        "name the scoped var children bind, e.g. `each: item`",
+                    );
+                    return None;
+                };
+                if let Some((key, index)) = &ctl.index
+                    && index == &each
+                {
+                    self.error(key.pos, "`each` and `index` must name different vars");
+                }
+                // `key: item.id` must be a member path rooted in the `each` var.
+                if let Some((k, path)) = &ctl.key
+                    && !path.0.first().is_some_and(|s| {
+                        matches!(s, crate::model::PathSegment::Field(field) if field == &each)
+                    })
+                {
+                    self.hint(
+                        k.pos,
+                        format!("`key` must start with the `each` var `{each}`"),
+                        "identify items by a member path, e.g. `key: item.id`",
+                    );
+                }
+                Some(Control::For {
+                    source,
+                    each,
+                    index: ctl.index.take().map(|(_, name)| name),
+                    key: ctl.key.take().map(|(_, path)| path),
+                    otherwise: ctl
+                        .otherwise
+                        .take()
+                        .map(|(_, children)| children)
+                        .unwrap_or_default(),
+                })
+            }
+            ControlHead::With(source) => {
+                self.stray(&ctl.is, "if");
+                self.stray(&ctl.not, "if");
+                self.stray(&ctl.each, "for");
+                self.stray(&ctl.index, "for");
+                self.stray_cases(&ctl.cases);
+                if let Some((key, _)) = &ctl.otherwise {
+                    self.hint(
+                        key.pos,
+                        "`else` needs `if`, `for` or `match`",
+                        "`with` always scopes its value — test it with `if` inside",
+                    );
+                }
+                let Some((_, name)) = ctl.as_ else {
+                    self.hint(
+                        head.pos,
+                        "`with` needs `as: <name>`",
+                        "name the scoped var children bind, e.g. `as: tab`",
+                    );
+                    return None;
+                };
+                Some(Control::With { source, name })
+            }
+            ControlHead::Match(source) => {
+                self.stray(&ctl.is, "if");
+                self.stray(&ctl.not, "if");
+                self.stray(&ctl.each, "for");
+                self.stray(&ctl.index, "for");
+                self.stray(&ctl.as_, "with");
+                if has_element {
+                    self.hint(
+                        head.pos,
+                        "`match` cannot modify an element",
+                        "wrap the element in a bare `match` block",
+                    );
+                }
+                if !node.children.is_empty() {
+                    self.hint(
+                        head.pos,
+                        "`match` uses `case` arms, not `children:`",
+                        "write `case <value>:` arms, e.g. `case gpui:`",
+                    );
+                }
+                if ctl.cases.is_empty() {
+                    self.hint(
+                        head.pos,
+                        "`match` needs at least one `case`",
+                        "write `case <value>:` arms, e.g. `case gpui:`",
+                    );
+                }
+                Some(Control::Match {
+                    source,
+                    cases: ctl
+                        .cases
+                        .into_iter()
+                        .map(|(_, value, children)| Case { value, children })
+                        .collect(),
+                    otherwise: ctl
+                        .otherwise
+                        .take()
+                        .map(|(_, children)| children)
+                        .unwrap_or_default(),
+                })
+            }
+        }
+    }
+
+    /// Errors for control sub-keys found without their control head.
+    fn stray_control(&mut self, ctl: &Ctl) {
+        if let Some((key, _)) = &ctl.otherwise {
+            self.hint(
+                key.pos,
+                "`else` needs `if`, `for` or `match`",
+                "control blocks look like `- if: $cond`, `- for: $items` or `- match: $value`",
+            );
+        }
+        self.stray_cases(&ctl.cases);
+        self.stray(&ctl.is, "if");
+        self.stray(&ctl.not, "if");
+        self.stray(&ctl.each, "for");
+        self.stray(&ctl.index, "for");
+        self.stray(&ctl.as_, "with");
+    }
+
+    fn stray(&mut self, slot: &Option<(Scalar, impl std::fmt::Debug)>, needs: &str) {
+        if let Some((key, _)) = slot {
+            self.hint(
+                key.pos,
+                format!("`{}` needs `{needs}`", key.text),
+                "control sub-keys only apply to their control key",
+            );
+        }
+    }
+
+    fn stray_cases(&mut self, cases: &[(Scalar, Value, Vec<Node>)]) {
+        for (key, _, _) in cases {
+            self.hint(
+                key.pos,
+                format!("`{}` needs `match`", key.text),
+                "match blocks look like `- match: $value` with `case <v>:` arms",
+            );
+        }
+    }
+
+    /// Bare control blocks carry no element — style, props and events have
+    /// nothing to attach to.
+    fn block_only(&mut self, node: &Node, spans: &NodeSpans, at: Pos) {
+        if let Some(pos) = spans.style.values().next() {
+            self.hint(
+                *pos,
+                "`style` needs an element",
+                "control blocks are transparent — style a child or a wrapper element",
+            );
+        }
+        for (name, _) in &node.props {
+            let pos = spans.props.get(name).copied().unwrap_or(at);
+            self.hint(
+                pos,
+                format!("prop `{name}` needs an element"),
+                "control blocks are transparent — put props on a child element",
+            );
+        }
+        for event in &node.events {
+            let pos = spans.events.get(&event.event).copied().unwrap_or(at);
+            self.hint(
+                pos,
+                format!("`on {}` needs an element", event.event),
+                "control blocks emit no events — put the handler on a child element",
+            );
+        }
     }
 
     fn content(&mut self, val: YNode) -> Option<Value> {
@@ -401,7 +871,7 @@ impl Reader<'_> {
             YNode::Seq(items, _) => {
                 let mut nodes = Vec::new();
                 for item in items {
-                    self.path.push(nodes.len());
+                    self.path.push(crate::model::PathStep::Child(nodes.len()));
                     if let Some(node) = self.node(item) {
                         nodes.push(node);
                     }
@@ -502,6 +972,40 @@ impl Reader<'_> {
             }
         }
     }
+}
+
+/// A control head key's parsed value — `if: <cond>` holds the condition,
+/// `for:`/`with:`/`match:` their source binding.
+enum ControlHead {
+    If(Value),
+    For(Value),
+    With(Value),
+    Match(Value),
+}
+
+impl ControlHead {
+    fn sentinel_name(&self) -> &'static str {
+        match self {
+            ControlHead::If(_) => "If",
+            ControlHead::For(_) => "For",
+            ControlHead::With(_) => "With",
+            ControlHead::Match(_) => "Match",
+        }
+    }
+}
+
+/// Control sub-keys collected while scanning a node's entries, consumed by
+/// [`Reader::assemble`].
+#[derive(Default)]
+struct Ctl {
+    is: Option<(Scalar, Value)>,
+    not: Option<(Scalar, Value)>,
+    each: Option<(Scalar, String)>,
+    index: Option<(Scalar, String)>,
+    key: Option<(Scalar, crate::model::Path)>,
+    as_: Option<(Scalar, String)>,
+    otherwise: Option<(Scalar, Vec<Node>)>,
+    cases: Vec<(Scalar, Value, Vec<Node>)>,
 }
 
 /// Parses `[alias.]Element[#id]` or `[alias.]Element .id`.

@@ -3,7 +3,7 @@
 use std::fmt;
 
 /// A 1-based line and column in the source text.
-#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Pos {
     pub line: usize,
     pub col: usize,

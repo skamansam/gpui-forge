@@ -1,6 +1,12 @@
 # The Forge Studio shell, described in Forge YAML and rendered by gpui-forge-runtime.
 $schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
 forge: "0.1"
+base: gpui-kit
+use:
+  forge: forge
+meta:
+  title: Forge Studio
+
 state:
   studio.theme: string
   studio.dark: bool
@@ -16,6 +22,7 @@ state:
   studio.spec: string
   studio.tab: number
   studio.theme_json: multiline
+  studio.theme_preview: string
   studio.markers: list
   editor.source: multiline
   document.selected: string
@@ -29,14 +36,9 @@ state:
   vars_add.path: string
   vars_add.value: string
 
-base: gpui-kit
-use:
-  forge: forge
-meta:
-  title: Forge Studio
-
-
-# the app menu
+# ============================================================================
+# THE APP MENU
+# ============================================================================
 appMenu: &appMenu
   icon: hamburger
   size: Small
@@ -80,7 +82,9 @@ appMenu: &appMenu
       icon: alert-circle
       on click: test_error()
 
-# the title bar
+# ============================================================================
+# THE TITLE BAR
+# ============================================================================
 titleBar: &titleBar
   children:
     - HStack:
@@ -96,6 +100,379 @@ titleBar: &titleBar
         - Tag: self-hosted
           outline: true
 
+
+# ============================================================================
+# THE STATUS BAR
+# ============================================================================
+statusBar: &statusBar
+  style:
+    align: center
+    gap: 8px
+    padding: [4px, 12px]
+  children:
+    - Text: "{$status.message}"
+      style:
+        size: sm
+    - Box:
+      style:
+        grow: true
+    - Label: "{$studio.project}"
+      secondary: true
+    - Label: "{$studio.host}"
+      secondary: true
+    - Label: "{$studio.file}"
+    - Tag: "forge {$studio.spec}"
+      outline: true
+    - Tag: gpui-kit 0.8
+      outline: true
+
+# ============================================================================
+# THE MAIN LAYOUT
+# ============================================================================
+mainLayout: &mainLayout
+  style:
+    width: full
+    height: full
+    padding: 16px
+    gap: 16px
+    background: $theme.background
+
+welcomeTab: &welcomeTab
+  children:
+    - VStack:
+      style:
+        grow: true
+        padding: 48px
+        gap: 24px
+        align: center
+        overflow: scroll
+      children:
+        - VStack:
+          style: {align: center, gap: 12px}
+          children:
+            - Image#welcome-logo:
+              src: ../../gpui_forge_icon_medallion.svg
+              size: 150px
+            - Label: Forge Studio
+              style: {size: xl, weight: bold}
+            - Text: a visual builder for Forge documents
+              style: {color: $theme.muted_foreground}
+        - Text: "Forge Studio edits .forge.yaml documents live — outline a document in Structure, tune it in the Inspector, and watch the preview rebuild. To get started, choose a starter below."
+          style: {size: sm, color: $theme.muted_foreground, width: 520px}
+        - HStack:
+          style: {gap: 16px, justify: center, align: stretch}
+          children:
+            - GroupBox: Welcome
+              variant: Outline
+              style: {width: 170px}
+              children:
+                - Image#img-welcome:
+                  src: ../../gpui_forge_icon_medallion.svg
+                  size: 56px
+                - Text: A guided tour of Forge documents and the studio shell.
+                  style: {size: sm, color: $theme.muted_foreground}
+                - HStack:
+                  style: {justify: end, grow: true}
+                  children:
+                    - Button: Open
+                      size: Small
+                      variant: Primary
+                      on click: start_from('welcome')
+            - GroupBox: Gallery
+              variant: Outline
+              style: {width: 170px}
+              children:
+                - Image#img-gallery:
+                  src: ../../gpui_forge_icon_medallion.svg
+                  size: 56px
+                - Select#widget_set:
+                  options: $studio.widget_sets
+                  value: bind $studio.widget_set
+                  placeholder: widget set
+                  on change: widget_set_changed($studio.widget_set)
+                - Text: A showcase for every supported widget set.
+                  style: {size: sm, color: $theme.muted_foreground}
+                - HStack:
+                  style: {justify: end, grow: true}
+                  children:
+                    - Button: Open
+                      size: Small
+                      variant: Primary
+                      on click: start_from('gallery')
+            - GroupBox: Blank
+              variant: Outline
+              style: {width: 170px}
+              children:
+                - Image#img-blank:
+                  src: ../../gpui_forge_icon_medallion.svg
+                  size: 56px
+                - Text: An empty document — a clean canvas for something new.
+                  style: {size: sm, color: $theme.muted_foreground}
+                - HStack:
+                  style: {justify: end, grow: true}
+                  children:
+                    - Button: Open
+                      size: Small
+                      variant: Primary
+                      on click: start_from('blank')
+
+
+# ============================================================================
+# THE SOURCE TAB
+# ============================================================================
+sourceTab: &sourceTab
+  children:
+    - VStack:
+      style: {grow: true, min-height: 0, gap: 8px}
+      children:
+        - Editor#source:
+          language: yaml
+          highlighting:
+            languages: [yaml]
+            default: yaml
+            show-selection: true
+          value: bind $editor.source
+          diagnostics: $studio.markers
+          on change: source_changed()
+          style:
+            grow: true
+            min-height: 0
+            border: 1px
+        - GroupBox: Problems
+          variant: Outline
+          children:
+            - Text: "{$studio.diagnostics}"
+              style:
+                size: sm
+
+
+# ============================================================================
+# GPUI-BASE PREVIEW
+# ============================================================================
+gpuiBasePreview: &gpuiBasePreview
+  - Text: "GPUI Preview"
+    style:
+      size: lg
+      weight: semibold
+
+
+# ============================================================================
+# THEME PREVIEW SELECTOR
+# ============================================================================
+previewSelector: &previewSelector
+  children:
+    - match: $studio.theme_preview
+      case gpui-base: *gpuiBasePreview
+      case gpui-kit:
+        - Text: "GPUI Kit Preview"
+          style:
+            size: lg
+            weight: semibold
+      # iced/ratatui/web can't render inside a gpui-kit document — other-base
+      # previews would need a remote `forge.Preview` per host.
+      else:
+        - Text: "No preview active"
+          style:
+            size: sm
+            color: $theme.muted_foreground
+
+
+# ============================================================================
+# THE THEMES TAB
+# ============================================================================
+themesTab: &themesTab
+  children:
+    - HStack:
+      style: {grow: true, min-height: 0, gap: 16px, padding: 12px}
+      children:
+        - VStack:
+          style: {grow: true, min-width: 0, gap: 12px, justify: start}
+          children:
+            - HStack:
+              style: {justify: between}
+              children:
+                - Label: Theme
+                  style: {weight: semibold}
+                - Button:
+                  icon: rotate-ccw
+                  variant: Ghost
+                  size: Small
+                  tooltip: Reset to the default theme
+                  on click: reset_theme()
+            - Select#editor_theme:
+              options: $studio.all_themes
+              value: bind $studio.theme
+              placeholder: pick a theme
+              on change: apply_theme_name($studio.theme)
+            - Editor#theme_json:
+              language: json
+              value: bind $studio.theme_json
+              style:
+                grow: true
+                min-height: 0
+                border: 1px
+            - HStack:
+              style: {justify: start}
+              children:
+                - Button: Apply
+                  variant: Primary
+                  on click: apply_theme_json()
+        - VStack:
+          style: {width: 360px, height: full, min-height: 0, overflow: scroll, gap: 12px}
+          children:
+            - Text: Showcase
+              style: {weight: semibold}
+            - VStack:
+              <<: *previewSelector
+            # - forge.Showcase:
+
+
+
+varsTab: &varsTab
+  children:
+    - VStack:
+      style: {grow: true, padding: 12px, gap: 8px, overflow: scroll}
+      children:
+        - Text: State variables
+          style: {size: lg, weight: semibold}
+        - Text: Every bound `{$path}` var in the document — edit scalars, watch the app react.
+          style: {size: sm, color: $theme.muted_foreground}
+        - forge.Vars:
+          of: canvas
+
+
+
+
+previewTab: &previewTab
+  children:
+    - VStack:
+      style: {grow: true, min-height: 0}
+      children:
+        - forge.Preview#canvas:
+          remote: "{$studio.host}"
+          mode: "{$preview.mode}"
+          on click: raise_host()
+          style:
+            grow: true
+            border: 1px
+        # #120 Phase 2 — the TUI's streamed frame grid
+        # (`preview.frame` from a ratatui host's TestBackend).
+        - Text: "{$preview.frame}"
+          style:
+            size: xs
+            color: $theme.muted_foreground
+
+inspector: &inspector
+  style:
+    width: 280px
+    padding: 8px
+    gap: 8px
+    overflow: scroll
+  children:
+    - GroupBox: Structure
+      variant: Outline
+      style:
+        min-height: 120px
+      children:
+        - forge.Outline#structure:
+          of: canvas
+          selected: bind $document.selected
+          on select: select_node()
+          placeholder: no document
+          style:
+            grow: true
+            min-height: 200px
+    - GroupBox: Inspector
+      variant: Outline
+      children:
+        - HStack:
+          style: {justify: end}
+          children:
+            - Button:
+              icon: crosshair
+              variant: Ghost
+              size: Small
+              tooltip: Pick element in preview
+              on click: pick()
+            - Button:
+              icon: trash-2
+              variant: Ghost
+              size: Small
+              tooltip: Delete selected element
+              on click: remove_component()
+        - forge.Inspector#props:
+          of: canvas
+          selected: bind $document.selected
+          placeholder: nothing selected
+    - GroupBox: Diagnostics
+      variant: Outline
+      children:
+        - Text: "{$studio.diagnostics}"
+          style:
+            size: sm
+    - GroupBox: View state
+      variant: Outline
+      children:
+        - Text: "{$preview.state}"
+          style:
+            size: xs
+            color: $theme.muted_foreground
+
+# ============================================================================
+# THE MAIN BODY
+# ============================================================================
+body: &body
+  style:
+    grow: true
+    min-height: 0
+  children:
+    - VStack#palette:
+      style:
+        width: 230px
+        height: full
+        padding: 8px
+        gap: 8px
+        overflow: scroll
+      children:
+        - forge.Palette:
+    - Separator:
+      tooltip: Separator
+      orientation: Vertical
+    - HStack#workspace:
+      style:
+        grow: true
+        min-width: 0
+        gap: 8px
+        padding: 8px
+      children:
+        - Tabs#panes:
+          variant: Pill
+          style:
+            grow: true
+            min-height: 0
+            basis: 100%
+            border: 1px
+          selected: bind $studio.tab
+          children:
+            - Tab: Welcome
+              <<: *welcomeTab
+            - Tab: Source
+              <<: *sourceTab
+            - Tab: Preview
+              <<: *previewTab
+            - Tab: Vars
+              <<: *varsTab
+            - Tab: Themes
+              <<: *themesTab
+
+    - VStack#inspector:
+      <<: *inspector
+
+
+# ============================================================================
+# THE PREFERENCES DIALOG
+# ============================================================================
+# NOTE: dialogs only need IDs so they can be opened with `open_dialog("ID")`
 Dialog#preferences:
   style:
     width: 400px
@@ -126,6 +503,9 @@ Dialog#preferences:
                       placeholder: pick a theme
                       on change: apply_theme_name($studio.theme)
 
+# ============================================================================
+# THE NEW PROJECT DIALOG
+# ============================================================================
 # File → New Project… — opens a fresh document in the editor; a folder is
 # only asked for on save (#133).
 Dialog#new-project:
@@ -157,6 +537,9 @@ Dialog#new-project:
 
 
 
+# ============================================================================
+# The ROOT Element - where it all begins
+# ============================================================================
 root:
   VStack#studio:
   style:
@@ -166,284 +549,107 @@ root:
     - TitleBar:
       <<: *titleBar
     - HStack#body:
-      style:
-        grow: true
-        min-height: 0
-      children:
-        # palette: a tool grid — click an icon to insert the element
-        - VStack#palette:
-          style:
-            width: 230px
-            height: full
-            padding: 8px
-            gap: 8px
-            overflow: scroll
-          children:
-            - forge.Palette:
-        - Separator:
-          tooltip: Separator
-          orientation: Vertical
-        # workspace: source on the left, live preview on the right
-        - HStack#workspace:
-          style:
-            grow: true
-            min-width: 0
-            gap: 8px
-            padding: 8px
-          children:
-            - Tabs#panes:
-              variant: Pill
-              style:
-                grow: true
-                min-height: 0
-                basis: 100%
-                border: 1px
-              selected: bind $studio.tab
-              children:
-                - Tab: Welcome
-                  children:
-                    - VStack:
-                      style:
-                        grow: true
-                        padding: 48px
-                        gap: 24px
-                        align: center
-                        overflow: scroll
-                      children:
-                        - VStack:
-                          style: {align: center, gap: 12px}
-                          children:
-                            - Image#welcome-logo:
-                              src: ../../gpui_forge_icon_medallion.svg
-                              size: 150px
-                            - Label: Forge Studio
-                              style: {size: xl, weight: bold}
-                            - Text: a visual builder for Forge documents
-                              style: {color: $theme.muted_foreground}
-                        - Text: "Forge Studio edits .forge.yaml documents live — outline a document in Structure, tune it in the Inspector, and watch the preview rebuild. To get started, choose a starter below."
-                          style: {size: sm, color: $theme.muted_foreground, width: 520px}
-                        - HStack:
-                          style: {gap: 16px, justify: center, align: stretch}
-                          children:
-                            - GroupBox: Welcome
-                              variant: Outline
-                              style: {width: 170px}
-                              children:
-                                - Image#img-welcome:
-                                  src: ../../gpui_forge_icon_medallion.svg
-                                  size: 56px
-                                - Text: A guided tour of Forge documents and the studio shell.
-                                  style: {size: sm, color: $theme.muted_foreground}
-                                - HStack:
-                                  style: {justify: end, grow: true}
-                                  children:
-                                    - Button: Open
-                                      size: Small
-                                      variant: Primary
-                                      on click: start_from('welcome')
-                            - GroupBox: Gallery
-                              variant: Outline
-                              style: {width: 170px}
-                              children:
-                                - Image#img-gallery:
-                                  src: ../../gpui_forge_icon_medallion.svg
-                                  size: 56px
-                                - Select#widget_set:
-                                  options: $studio.widget_sets
-                                  value: bind $studio.widget_set
-                                  placeholder: widget set
-                                  on change: widget_set_changed($studio.widget_set)
-                                - Text: A showcase for every supported widget set.
-                                  style: {size: sm, color: $theme.muted_foreground}
-                                - HStack:
-                                  style: {justify: end, grow: true}
-                                  children:
-                                    - Button: Open
-                                      size: Small
-                                      variant: Primary
-                                      on click: start_from('gallery')
-                            - GroupBox: Blank
-                              variant: Outline
-                              style: {width: 170px}
-                              children:
-                                - Image#img-blank:
-                                  src: ../../gpui_forge_icon_medallion.svg
-                                  size: 56px
-                                - Text: An empty document — a clean canvas for something new.
-                                  style: {size: sm, color: $theme.muted_foreground}
-                                - HStack:
-                                  style: {justify: end, grow: true}
-                                  children:
-                                    - Button: Open
-                                      size: Small
-                                      variant: Primary
-                                      on click: start_from('blank')
-                - Tab: Source
-                  children:
-                    - VStack:
-                      style: {grow: true, gap: 8px}
-                      children:
-                        - Editor#source:
-                          language: yaml
-                          highlighting:
-                            languages: [yaml]
-                            default: yaml
-                            show-selection: true
-                          value: bind $editor.source
-                          diagnostics: $studio.markers
-                          on change: source_changed()
-                          style:
-                            grow: true
-                            border: 1px
-                        - GroupBox: Problems
-                          variant: Outline
-                          children:
-                            - Text: "{$studio.diagnostics}"
-                              style:
-                                size: sm
-                - Tab: Preview
-                  children:
-                    - VStack:
-                      style: {grow: true}
-                      children:
-                        - forge.Preview#canvas:
-                          remote: "{$studio.host}"
-                          mode: "{$preview.mode}"
-                          on click: raise_host()
-                          style:
-                            grow: true
-                            border: 1px
-                        # #120 Phase 2 — the TUI's streamed frame grid
-                        # (`preview.frame` from a ratatui host's TestBackend).
-                        - Text: "{$preview.frame}"
-                          style:
-                            size: xs
-                            color: $theme.muted_foreground
-                - Tab: Vars
-                  children:
-                    - VStack:
-                      style: {grow: true, padding: 12px, gap: 8px, overflow: scroll}
-                      children:
-                        - Text: State variables
-                          style: {size: lg, weight: semibold}
-                        - Text: Every bound `{$path}` var in the document — edit scalars, watch the app react.
-                          style: {size: sm, color: $theme.muted_foreground}
-                        - forge.Vars:
-                          of: canvas
-                - Tab: Themes
-                  children:
-                    - HStack:
-                      style: {grow: true, gap: 16px, padding: 12px}
-                      children:
-                        - VStack:
-                          style: {grow: true, gap: 12px}
-                          children:
-                            - HStack:
-                              style: {justify: end}
-                              children:
-                                - Button:
-                                  icon: rotate-ccw
-                                  variant: Ghost
-                                  size: Small
-                                  tooltip: Reset to the default theme
-                                  on click: reset_theme()
-                            - Label: Theme
-                              style: {weight: semibold}
-                            - Select#editor_theme:
-                              options: $studio.all_themes
-                              value: bind $studio.theme
-                              placeholder: pick a theme
-                              on change: apply_theme_name($studio.theme)
-                            - Editor#theme_json:
-                              language: json
-                              value: bind $studio.theme_json
-                            - HStack:
-                              style: {justify: end}
-                              children:
-                                - Button: Apply
-                                  variant: Primary
-                                  on click: apply_theme_json()
-                        - VStack:
-                          style: {width: 360px, overflow: scroll, gap: 12px}
-                          children:
-                            - Text: Showcase
-                              style: {weight: semibold}
-                            - forge.Showcase:
-        - VStack#inspector:
-          style:
-            width: 280px
-            padding: 8px
-            gap: 8px
-            overflow: scroll
-          children:
-            - GroupBox: Structure
-              variant: Outline
-              style:
-                min-height: 120px
-              children:
-                - forge.Outline#structure:
-                  of: canvas
-                  selected: bind $document.selected
-                  on select: select_node()
-                  placeholder: no document
-                  style:
-                    grow: true
-                    min-height: 200px
-            - GroupBox: Inspector
-              variant: Outline
-              children:
-                - HStack:
-                  style: {justify: end}
-                  children:
-                    - Button:
-                      icon: crosshair
-                      variant: Ghost
-                      size: Small
-                      tooltip: Pick element in preview
-                      on click: pick()
-                    - Button:
-                      icon: trash-2
-                      variant: Ghost
-                      size: Small
-                      tooltip: Delete selected element
-                      on click: remove_component()
-                - forge.Inspector#props:
-                  of: canvas
-                  selected: bind $document.selected
-                  placeholder: nothing selected
-            - GroupBox: Diagnostics
-              variant: Outline
-              children:
-                - Text: "{$studio.diagnostics}"
-                  style:
-                    size: sm
-            - GroupBox: View state
-              variant: Outline
-              children:
-                - Text: "{$preview.state}"
-                  style:
-                    size: xs
-                    color: $theme.muted_foreground
+      <<: *body
     - Separator:
-    # ── status bar ───────────────────────────────────────────────────────
-    - HStack#statusbar:
-      style:
-        align: center
-        gap: 8px
-        padding: [4px, 12px]
-      children:
-        - Text: "{$status.message}"
+    - HStack#statusbar: 
+      <<: *statusBar
+
+
+
+
+
+# ============================================================================
+# CONDITIONAL EXAMPLES
+# ============================================================================
+# `match:` switches on one binding with `case <value>:` arms and an `else:`
+# fallback. For two-way or chained tests, `if:` renders `children:` when the
+# condition holds (or equals `is:`/differs from `not:`) — `else → if` chains
+# give the elsif shape.
+preview: &preview
+  style:
+    width: full
+    height: full
+  children:
+    - match: $studio.preview
+      case gpui:
+        - Text: "GPUI Preview"
+          style:
+            size: lg
+            weight: semibold
+      case web:
+        - Text: "Web Preview"
+          style:
+            size: lg
+            weight: semibold
+      else:
+        - Text: "No preview active"
           style:
             size: sm
-        - Box:
+            color: $theme.muted_foreground
+
+ifChain: &ifChain
+  children:
+    - if: $studio.preview
+      is: gpui
+      children:
+        - Text: "GPUI Preview"
+      else:
+        - if: $studio.preview
+          is: web
+          children:
+            - Text: "Web Preview"
+          else:
+            - Text: "No preview active"
+
+
+# ============================================================================
+# FOR LOOP EXAMPLE
+# ============================================================================
+# `for:` repeats `children:` per item; `each:` names the scoped var (bound as
+# `$item`), `index:` optionally names the index, `else:` renders when the
+# list is empty.
+forLoop: &forLoop
+  style:
+    width: full
+    height: full
+  children:
+    - for: $studio.renderer_names
+      each: item
+      children:
+        - Text: "{$item}"
           style:
-            grow: true
-        - Label: "{$studio.project}"
-          secondary: true
-        - Label: "{$studio.host}"
-          secondary: true
-        - Label: "{$studio.file}"
-        - Tag: "forge {$studio.spec}"
-          outline: true
-        - Tag: gpui-kit 0.8
-          outline: true
+            size: sm
+            color: $theme.muted_foreground
+      else:
+        - Text: "No renderers"
+
+
+# ============================================================================
+# TEMPLATE EXAMPLES
+# ============================================================================
+# `for:` over object lists exposes fields via `$tab.name`; a single (non-list)
+# value iterates once. `with:`/`as:` scopes one value explicitly, and
+# `if:`/`for:`/`with:` double as modifiers on any element.
+template: &template
+  style:
+    width: full
+    height: full
+  children:
+    - for: $studio.tabs
+      each: tab
+      index: i
+      children:
+        - Text: "{$i}: {$tab.name}"
+          style:
+            size: sm
+            color: $tab.color
+    - with: $studio.selected_tab
+      as: tab
+      children:
+        - Text: "Selected: {$tab.name}"
+    # modifiers — the element repeats per tab / renders only when signed in
+    - Tab: "{$tab.name}"
+      for: $studio.tabs
+      each: tab
+    - Text: "Signed in"
+      if: $user.signed_in

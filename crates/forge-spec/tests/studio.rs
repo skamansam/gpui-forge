@@ -57,3 +57,24 @@ fn studio_documents_write_back_verbatim() {
         assert_eq!(yaml::to_string_preserving(&doc, &Default::default()), src);
     }
 }
+
+#[test]
+fn nested_merge_blocks_stay_verbatim() {
+    let src = r#"forge: "0.1"
+app: &app
+  children:
+    - MenuItem: X
+frag: &frag
+  children:
+    - DropdownMenu:
+      <<: *app
+root:
+  VStack:
+  children:
+    - TitleBar:
+      <<: *frag
+"#;
+    let doc = yaml::from_str(src).unwrap();
+    assert_eq!(yaml::to_string_preserving(&doc, &Default::default()), src);
+}
+

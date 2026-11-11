@@ -98,11 +98,25 @@ root:
   a clone of the anchored value and may appear anywhere — including as a whole node.
 - `<<` merges a mapping (or a list of mappings, earlier winning) into the current one.
   Explicit keys always override merged ones.
-- Aliases must reference anchors defined earlier in the document.
+- Aliases must reference anchors defined earlier in the document — saphyr rejects
+  unresolved aliases, so the canonical writer always emits `name: &name` blocks
+  before `root:` and dialogs.
+- Anchored top-level maps become **named refs** (`Document.refs`): a `name: &name`
+  block parses as a head-less node body — an entry-bag of props, `style:`, events
+  and `children:` — and every `<<: *name` node records `refname`. Ref names must be
+  unique; a second `&name` is a `duplicate ref` diagnostic (YAML permits shadowing,
+  but refs are addressed by name).
+- **Edits land in the ref, not the site.** When a merge-derived facet changes —
+  an Inspector edit on a `<<: *appMenu` node — `Document::sync_refs` pushes the
+  new facet into `refs.appMenu` and every other `*appMenu` site, so the preserving
+  writer splices the change into the `appMenu:` block and leaves `<<: *appMenu`
+  lines alone. Assigning a node's `refname` to a fresh name creates the block
+  (`sync_refs` fills it from the node's own facets); clearing it flattens the
+  merged entries back into the node.
 - `yaml::to_string_preserving` writes documents back with their original source
   wherever the model did not change — anchors, aliases, merge keys, comments and
   formatting all survive a save; `yaml::to_string` remains the canonical
-  formatter and expands fragments into plain YAML.
+  formatter and emits the ref blocks followed by `<<` merge keys (never flattened).
 - YAML tags (`!tag`) remain unsupported.
 
 ## Nodes
@@ -131,6 +145,8 @@ A node is a YAML mapping with exactly one **element key** plus optional reserved
 | `style` | map of style & layout properties |
 | `children` | list of nodes (order is significant, duplicates allowed) |
 | `on <event>` | handler call: `sign_in`, `sign_in()`, `go_to($wizard.id, 2)` |
+| `if`, `for`, `with`, `match` | control-flow heads — see [Control flow](#control-flow) |
+| `else`, `is`, `not`, `each`, `index`, `as`, `case <v>` | control-flow sub-keys |
 | anything else | a prop of the element (lower-case identifier) |
 
 Keys are classified by shape: the element key matches `^([a-z][\w-]*\.)?[A-Z]\w*(#[\w-]+| \.[\w-]+)?$`,
@@ -146,6 +162,79 @@ element.
 
 Binding paths also accept `-` in each segment, so style props can bind state by their catalog
 names — e.g. `document.edits.style.text-align`.
+
+### Control flow
+
+Four lower-case control keys — `if`, `for`, `with`, `match` — condition, repeat or scope
+nodes. They are reserved words, never element names (elements are PascalCase) and never
+props. As a node's only key they form a **control block**; alongside an element key they
+become a **modifier** on that element (the element repeats or conditionally renders).
+
+```yaml
+forge: "0.1"
+root:
+  VStack:
+  children:
+    # if — children render when the condition holds; else when it fails.
+    # `is:`/`not:` compare the resolved value for equality; `else → if` chains
+    # give the elsif shape.
+    - if: $studio.preview
+      is: gpui
+      children:
+        - Text: "GPUI Preview"
+      else:
+        - if: $user.admin
+          children:
+            - Text: Admin tools
+          else:
+            - Text: "No preview"
+
+    # match — switches on one binding with `case <value>:` arms.
+    - match: $studio.preview
+      case gpui:
+        - Text: "GPUI Preview"
+      case web:
+        - Text: "Web Preview"
+      else:
+        - Text: "No preview"
+
+    # for — repeats children per item; `each:` names the scoped var ($item),
+    # `index:` optionally names the index, `key:` identifies each item by a
+    # member path ($item.id → stable render state across reorders), `else:`
+    # renders when the list is empty. A single (non-list) value repeats once.
+    - for: $studio.renderer_names
+      each: item
+      key: item.id
+      children:
+        - Text: "{$item}"
+      else:
+        - Text: "No renderers"
+
+    # with — scopes one value under `as:` (the single-value template case).
+    - with: $studio.selected_tab
+      as: tab
+      children:
+        - Text: "Selected: {$tab.name}"
+
+    # modifiers — the element itself repeats or conditionally renders.
+    - Tab: "{$tab.name}"
+      for: $studio.tabs
+      each: tab
+    - Text: "Signed in"
+      if: $user.signed_in
+```
+
+- The control key carries the operand: `if:` a condition (truthy, or compared by `is:`/`not:`),
+  `for:` a list binding (also a plain `[a, b]` list), `with:`/`match:` a binding. Use one-way
+  `$path` bindings — `bind` is a write target and has no meaning here.
+- `each`/`index`/`as` names create **scope vars**: `$item`, `$tab`, `$i` bind the scoped
+  value anywhere inside the block (innermost scope wins; they shadow state paths and are
+  read-only — `bind $item` cannot write back to the list).
+- `case` operands are value literals — `case gpui:`, `case 2:`, `case 'a b':` — compared by
+  value equality against the resolved `match` source; a binding also works (`case $mode:`).
+- `else:` is valid on `if`, `for` (empty list) and `match` (no arm matched).
+- Only one control key per node — nest blocks for combined conditions (`for` + `if` inside).
+- `match` uses `case`/`else` instead of `children`, and cannot modify an element.
 
 ### File paths in `src`
 

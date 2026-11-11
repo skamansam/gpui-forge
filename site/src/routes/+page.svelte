@@ -101,6 +101,14 @@
 		<h3>Native or web</h3>
 		<p>The same document drives the native runtime, Forge Studio and this browser canvas, and later compiles to a standalone Cargo project.</p>
 	</div>
+	<div>
+		<h3>Declarative control flow</h3>
+		<p><code>if:</code>/<code>else:</code>, <code>for:</code>/<code>each:</code>/<code>key:</code>, <code>with:</code> and <code>match:</code>/<code>case</code> — UI behavior authored in the document, no backend injection.</p>
+	</div>
+	<div>
+		<h3>Named refs, edited in place</h3>
+		<p><code>&amp;name</code> blocks share structure via <code>&lt;&lt;: *name</code>; edits splice into the ref block so named refs stay intact across saves.</p>
+	</div>
 </section>
 
 <section class="ecosystem">

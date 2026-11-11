@@ -1,6 +1,8 @@
 //! Canonical Forge YAML writer (the formatter).
 
-use crate::model::{BindingMode, Document, ElementRef, HandlerRef, Node, Segment, Value};
+use crate::model::{
+    BindingMode, Case, Compare, Control, Document, ElementRef, HandlerRef, Node, Segment, Value,
+};
 use crate::value::{self, Quoting};
 
 /// How node ids are written; both forms are always accepted when reading.
@@ -67,6 +69,13 @@ pub fn to_string(doc: &Document, options: &WriteOptions) -> String {
             line(&mut out, 2, &format!("{key}: {}", text_scalar(text)));
         }
     }
+    // Ref blocks precede every `<<: *name` use — anchors must be defined
+    // before their aliases resolve (dialogs and root both live below).
+    for (name, fragment) in &doc.refs {
+        out.push('\n');
+        line(&mut out, 0, &format!("{name}: &{name}"));
+        write_entries(&mut out, fragment, 2, options);
+    }
     for dialog in &doc.dialogs {
         out.push('\n');
         write_node(&mut out, dialog, 0, false, options);
@@ -94,7 +103,8 @@ pub(crate) fn write_node(
     write_entries(out, node, indent, options);
 }
 
-/// Writes the `Element#id: content` head line; returns the body indent.
+/// Writes the `Element#id: content` head line — or the `if:`/`for:`/`with:`/
+/// `match:` control line for bare blocks; returns the body indent.
 pub(crate) fn write_head(
     out: &mut String,
     node: &Node,
@@ -102,12 +112,24 @@ pub(crate) fn write_head(
     list_item: bool,
     options: &WriteOptions,
 ) -> usize {
-    let mut head = element_key(&node.element, node.id.as_deref(), options.id_style);
-    head.push(':');
-    if let Some(content) = &node.content {
-        head.push(' ');
-        head.push_str(&inline(content, false));
+    if node.element.name.is_empty() {
+        // Ref-block fragments have no element head — `name: &name` is the line.
+        return indent;
     }
+    let head = match &node.control {
+        Some(control) if node.is_block() => {
+            format!("{}: {}", control.keyword(), inline(control.source(), false))
+        }
+        _ => {
+            let mut head = element_key(&node.element, node.id.as_deref(), options.id_style);
+            head.push(':');
+            if let Some(content) = &node.content {
+                head.push(' ');
+                head.push_str(&inline(content, false));
+            }
+            head
+        }
+    };
     if list_item {
         line(out, indent, &format!("- {head}"));
         indent + 2
@@ -117,23 +139,96 @@ pub(crate) fn write_head(
     }
 }
 
-/// Writes props, `style:`, events and `children:` below the head line.
+/// Writes control sub-keys, props, `style:`, events, `case` arms, `children:`
+/// and `else:` below the head line.
 pub(crate) fn write_entries(out: &mut String, node: &Node, indent: usize, options: &WriteOptions) {
-    for (key, value) in &node.props {
-        write_entry(out, indent, key, value);
+    // `<<` merges splice the named ref block's entries in below the head.
+    if let Some(refname) = &node.refname {
+        line(out, indent, &format!("<<: *{refname}"));
     }
-    if !node.style.is_empty() {
+    // Entries the merges contributed live in the ref block — never re-emit.
+    let merged = |key: &str| node.merged.iter().any(|k| k == key);
+    if let Some(control) = &node.control {
+        // Modifiers repeat the control key under the element head; bare
+        // blocks already wrote it as their head line.
+        if !node.is_block() {
+            line(
+                out,
+                indent,
+                &format!("{}: {}", control.keyword(), inline(control.source(), false)),
+            );
+        }
+        match control {
+            Control::If { test, .. } => {
+                if let Some(test) = test {
+                    let (key, operand) = match test {
+                        Compare::Is(v) => ("is", v),
+                        Compare::Not(v) => ("not", v),
+                    };
+                    line(out, indent, &format!("{key}: {}", inline(operand, false)));
+                }
+            }
+            Control::For { each, index, key, .. } => {
+                line(out, indent, &format!("each: {each}"));
+                if let Some(index) = index {
+                    line(out, indent, &format!("index: {index}"));
+                }
+                if let Some(key) = key {
+                    let path = key
+                        .0
+                        .iter()
+                        .map(|s| match s {
+                            crate::model::PathSegment::Field(name) => name.clone(),
+                            crate::model::PathSegment::Index(i) => format!("[{i}]"),
+                        })
+                        .collect::<Vec<_>>()
+                        .join(".");
+                    line(out, indent, &format!("key: {path}"));
+                }
+            }
+            Control::With { name, .. } => line(out, indent, &format!("as: {name}")),
+            Control::Match { .. } => {}
+        }
+    }
+    for (key, value) in &node.props {
+        if !merged(key) {
+            write_entry(out, indent, key, value);
+        }
+    }
+    if !node.style.is_empty() && !merged("style") {
         line(out, indent, "style:");
         for (key, value) in &node.style {
             write_entry(out, indent + 2, key, value);
         }
     }
     for event in &node.events {
-        write_event(out, indent, event);
+        if !merged(&format!("on {}", event.event)) {
+            write_event(out, indent, event);
+        }
     }
-    if !node.children.is_empty() {
+    if let Some(Control::Match { cases, .. }) = &node.control {
+        for Case { value, children } in cases {
+            if merged(&format!("case {}", inline(value, false))) {
+                continue;
+            }
+            line(out, indent, &format!("case {}:", inline(value, false)));
+            for child in children {
+                write_node(out, child, indent + 2, true, options);
+            }
+        }
+    }
+    if !node.children.is_empty() && !merged("children") {
         line(out, indent, "children:");
         for child in &node.children {
+            write_node(out, child, indent + 2, true, options);
+        }
+    }
+    if let Some(otherwise) = node.control.as_ref().map(|c| c.otherwise())
+        && !otherwise.is_empty()
+        && !merged("else")
+    {
+        line(out, indent, "else:");
+        for child in otherwise {
             write_node(out, child, indent + 2, true, options);
         }
     }

@@ -57,7 +57,15 @@ const PROP_KEY: &str = r"[a-z_][A-Za-z0-9_-]*";
 /// `on <event>` keys.
 const EVENT_KEY: &str = r"on [a-z_][A-Za-z0-9_-]*";
 /// Keys a node may carry that never name an element.
-const NON_ELEMENT_KEY: &str = r"([a-z_][A-Za-z0-9_-]*|on [a-z_][A-Za-z0-9_-]*|<<)";
+const NON_ELEMENT_KEY: &str =
+    r"([a-z_][A-Za-z0-9_-]*|on [a-z_][A-Za-z0-9_-]*|<<)";
+/// `NON_ELEMENT_KEY` minus the control heads — a node whose only key is
+/// `if`/`for`/`with`/`match` is a control block, not a missing element key.
+const NON_ELEMENT_KEY_NO_CONTROL: &str =
+    r"((?!(if|for|with|match)$)[a-z_][A-Za-z0-9_-]*|on [a-z_][A-Za-z0-9_-]*|<<)";
+/// Control-flow keys allowed on any node — `if`/`for`/`with`/`match` heads and
+/// modifiers, `else`, `is`/`not`, `each`/`index`/`as` and `case <v>` arms.
+const CONTROL_KEY: &str = r"(if|for|with|match|else|each|index|key|as|is|not|case .+)";
 /// A scalar holding a runtime value — `$path`, `{$path}` or `bind $path`.
 const BOUND: &str = r"^(\$|\{)";
 /// A scalar holding a runtime value or a two-way binding.
@@ -159,6 +167,7 @@ pub fn document_schema(base: Option<&Base>, bases: &[Base], catalogs: &[Catalog]
         EVENT_KEY.to_string(),
         PROP_KEY.to_string(),
         "<<".to_string(),
+        CONTROL_KEY.to_string(),
     ];
     if !namespaced.is_empty() {
         node_alternatives.insert(
@@ -169,16 +178,29 @@ pub fn document_schema(base: Option<&Base>, bases: &[Base], catalogs: &[Catalog]
     let node = json!({
         "type": "object",
         "minProperties": 1,
-        "description": "One element key plus props, `style`, `on <event>` and `children`.",
+        "description": "One element key plus props, `style`, `on <event>` and `children` — or a control block (`if`/`for`/`with`/`match`).",
         "propertyNames": { "pattern": format!("^({})$", node_alternatives.join("|")) },
-        // At least one element key: fail when every key is prop/event-shaped.
-        "not": { "propertyNames": { "pattern": format!("^{NON_ELEMENT_KEY}$") } },
+        // At least one element key: fail when every key is prop/event-shaped
+        // (control heads excepted — they make the node a control block).
+        "not": { "propertyNames": { "pattern": format!("^{NON_ELEMENT_KEY_NO_CONTROL}$") } },
         "properties": {
             "style": { "$ref": "#/definitions/style" },
             "children": { "type": "array", "items": { "$ref": "#/definitions/node" } },
+            "else": {
+                "type": "array",
+                "items": { "$ref": "#/definitions/node" },
+                "description": "Rendered when `if`/`match` fail or a `for` list is empty.",
+            },
             "tooltip": {
                 "type": ["string", "number", "boolean", "null"],
                 "description": "Universal prop — hover tooltip text.",
+            },
+        },
+        "patternProperties": {
+            "^case ": {
+                "type": "array",
+                "items": { "$ref": "#/definitions/node" },
+                "description": "A `match` arm — rendered when the source equals the operand.",
             },
         },
         "allOf": guards,
@@ -366,6 +388,8 @@ impl Contract<'_> {
         if !self.events.is_empty() {
             keys.insert(format!("on ({})", alt(self.events.iter().copied())));
         }
+        // `if:`/`for:`/`with:` modifiers and their sub-keys on any element.
+        keys.insert(CONTROL_KEY.to_string());
         keys
     }
 }

@@ -1,10 +1,10 @@
 # GPUI Forge
 
-> *While I have been doing software development since the 1990s, I lack the time necessary to put forth my ideas into reality, so I have enlisted the help of [Devin](https://devin.ai) and vibecoded this app into existence. If you notice anything wrong or see any bugs, please use the [gpui-forge GitHub issue reporting](https://github.com/skamansam/gpui-forge/issues) to do so and I will attend to it as soon as I can. Thank you — I hope this app helps you in some small way.*
+> *I have developed software since the 1990s, but I lack the time to build my ideas myself. So I enlisted the help of [Devin](https://devin.ai) and vibecoded this app into existence. If you notice a bug, please report it on the [gpui-forge issue tracker](https://github.com/skamansam/gpui-forge/issues). I will attend to it as soon as I can. Thank you — I hope this app helps you in some small way.*
 
 **GPUI Forge** is an integrated ecosystem of tools designed to bring visual prototyping and rapid UI development to the [GPUI](https://www.gpui.rs/) framework. 
 
-The goal of this project is to bridge the gap between high-level design and low-level Rust implementation, allowing developers to visually compose complex, high-performance user interfaces that can be seamlessly compiled into standalone, production-ready GPUI applications.
+The goal of this project is to close the gap between high-level design and low-level Rust implementation. Developers can visually compose complex, high-performance user interfaces, then compile them into standalone, production-ready GPUI applications.
 
 ## 📦 Current Status
 
@@ -17,13 +17,14 @@ What ships today:
   gpui-kit base: ~60 catalog elements, state/binding (`{{ path }}`), `on <event>`
   hook dispatch, dialogs, themes, drag & drop, element picking.
 - **`forge-studio`** — a self-hosted visual builder (its own UI is a Forge
-  document): palette click-to-place and drag-and-drop insertion, outline and
-  inspector panels, two-way source pane, undo/redo, reparent/delete mutations,
-  file open/save with a disk-watch reload, and a Preferences dialog.
+  document). It has palette click-to-place and drag-and-drop insertion,
+  outline and inspector panels, a two-way source pane, undo/redo, and
+  reparent/delete mutations. It also handles file open/save with a
+  disk-watch reload, plus a Preferences dialog.
 - **`forge` CLI** — `forge check|validate`, `forge fmt`, `forge new`
   (project scaffold with `forge.toml`), `forge convert` (YAML ↔ JSON),
   `forge schema` (JSON Schema from the serde model), `forge build`
-  (embeds the document + catalogs + all themes into a native app;
+  (embeds the document + catalogs + all themes into a native app.
   `--codegen` compiles the document to Rust), `forge package` (AppDir /
   .app / NSIS scaffolding), `forge preview` (build + launch).
 - **`forge-web`** — a Svelte editor/playground at `site/` backed by the
@@ -31,27 +32,26 @@ What ships today:
   inspector, undo/redo, localStorage persistence, JSON/.forge
   import-export, and schema-generated TypeScript types.
 
-Landed: six registered bases (gpui-kit, gpui02, bezel, adabraka, ratatui, iced) with per-base render twins, `forge-preview-<base>` hosts, and `forge build` app templates — plus `use:` library adapters like `forge-lib-ely`. Still on the roadmap: the `#[forge_hook]` bridge,
-and Studio packaging.
+Landed: six registered bases (gpui-kit, gpui02, bezel, adabraka, ratatui, iced) with per-base render twins, `forge-preview-<base>` hosts, and `forge build` app templates. It also ships `use:` library adapters like `forge-lib-ely`. Still on the roadmap: the `#[forge_hook]` bridge and Studio packaging.
 
 ## 🚀 The Vision
-Traditional GPUI development requires writing imperative Rust code for every layout and element. **GPUI Forge** introduces a declarative workflow: design your interface visually in a desktop or web-based editor, define logic via hooks, and compile the result into a high-performance native binary.
+Traditional GPUI development requires writing imperative Rust code for every layout and element. **GPUI Forge** introduces a declarative workflow. Design your interface visually in a desktop or web-based editor. Define logic via hooks. Compile the result into a high-performance native binary.
 
 ---
 
 ## 🛠 The Ecosystem
 
-The project is comprised of six core pillars that work in tandem:
+Six core pillars drive the project:
 
 ### 1. The Forge Schema (`forge-spec`)
-A multi-format specification for defining GPUI element trees. To ensure interoperability, we support:
-*   **Forge YAML:** Plain YAML with a JSON Schema: human-readable, one fact per line for clean Git diffs, and editable with existing YAML tooling.
-*   **JSON:** the machine interchange format between the Web Builder and the Rust Engine (YAML is a JSON superset, so conversion is a serialize, not a translate).
+A multi-format specification for defining GPUI element trees. For interoperability, we support:
+*   **Forge YAML:** Plain YAML with a JSON Schema. Human-readable, one fact per line for clean Git diffs. Editable with existing YAML tooling.
+*   **JSON:** the machine interchange format between the Web Builder and the Rust Engine. YAML is a JSON superset, so conversion is a serialize, not a translate.
 
 See the draft [Forge YAML format](docs/format/forge-yaml.md) and [document model](docs/format/document-model.md). [Writing a Forge adapter](docs/format/adapters.md) covers integrating third-party GPUI component libraries (the `forge-lib-ely` pattern).
 
 ### 2. The Forge Converter (`forge-cli`)
-A powerful command-line utility used to transform interface definitions between all supported formats (e.g., converting a JSON blob from the web editor into a `.forge` file for the desktop editor).
+A command-line utility that transforms interface definitions between all supported formats. For example, it converts a JSON blob from the web editor into a `.forge` file for the desktop editor.
 
 ### 3. The Forge Runtime (`gpui-forge-runtime`)
 The core Rust library that powers everything else. It is responsible for:
@@ -63,19 +63,19 @@ The core Rust library that powers everything else. It is responsible for:
 The flagship desktop application built natively using **GPUI**. Inspired by [Workbench](https://github.com/workbenchdev/Workbench), it provides a professional IDE experience:
 *   A visual canvas for dragging and dropping components.
 *   Property inspectors for layout, styling, and padding.
-*   Real-time preview of the UI logic. Studio itself is built with gpui-kit; projects on other bases are rendered by a separate preview process for that base (`forge-preview-<base>`), which Studio controls over IPC.
+*   Real-time preview of the UI logic. Studio itself uses gpui-kit. A separate preview process (`forge-preview-<base>`) renders projects on other bases, and Studio controls it over IPC.
 
 ### 5. The Forge Compiler (`forge-compiler`)
 A build tool that takes a `.forge` definition and a set of Rust "hooks" and bundles them into a standalone, optimized GPUI application. This allows you to ship "demos" or "prototypes" as complete, single-binary executables.
 
 ### 6. Forge Web (`forge-web`)
-A lightweight, Svelte-based web application that brings the power of visual design to the browser. The Svelte shell hosts a canvas that renders the real components of the project's base via `gpui-forge-runtime` compiled to WebAssembly (one canvas bundle per WASM-capable base), so web and native output match. It serves as a collaborative design tool, allowing designers to iterate on UI layouts and export JSON definitions that can be immediately pulled into the Rust workflow.
+A Svelte web app that brings visual design to the browser. The Svelte shell hosts a canvas rendered by `gpui-forge-runtime` compiled to WebAssembly — one bundle per WASM-capable base — so web and native output match. It works as a collaborative design tool: designers can iterate on UI layouts and export JSON definitions, which pull directly into the Rust workflow.
 
 ---
 
 ## 🧩 Base Component Systems
 
-A Rust app links exactly one `gpui`, so components built on different GPUI versions or forks can't be mixed in one window. Each Forge project therefore picks a **base** when it is created (`base:` in `forge.toml`). The base fixes the GPUI build, and Forge only offers libraries that are compatible with it. Within a base you can mix and match libraries freely.
+A Rust app links exactly one `gpui`, so components built on different GPUI versions or forks can't mix in one window. When you create a Forge project, you pick a **base** (`base:` in `forge.toml`). The base fixes the GPUI build, and Forge only offers libraries that are compatible with it. Within a base you can mix and match libraries freely.
 
 | Base | GPUI build | Base library | Compatible add-ons | Web/WASM |
 |---|---|---|---|---|
@@ -84,23 +84,23 @@ A Rust app links exactly one `gpui`, so components built on different GPUI versi
 | **adabraka-ui** | `adabraka-gpui 0.5` (fork) | [adabraka-ui](https://github.com/Augani/adabraka-ui) | none known | no (nightly Rust) |
 | **Vanilla GPUI 0.2** | crates.io `gpui 0.2.2` | [guise](https://github.com/wess/guise) | [ferrum-flow](https://github.com/tu6ge/ferrum-flow), [gpui-symbols](https://github.com/AprilNEA/gpui-symbols), [rhythm-gpui](https://github.com/P233/rhythm-gpui), gpui-video-player, … | no |
 
-*   Each library ships a catalog manifest declaring the bases it supports; validation rejects incompatible libraries.
-*   The runtime is compiled once per base, and the compiler emits a `Cargo.toml` + `rust-toolchain` for the chosen base.
+*   Each library ships a catalog manifest declaring the bases it supports. Validation rejects incompatible libraries.
+*   Forge compiles the runtime once per base, and the compiler emits a `Cargo.toml` + `rust-toolchain` for the chosen base.
 *   Changing base later is a migration (`forge migrate --base`).
 *   Libraries pinned to raw Zed git revisions fit no base and are tracked for porting ([#83](https://github.com/skamansam/gpui-forge/issues/83)).
 
 ### Non-GPUI bases (landed)
 
 Bases are not limited to GPUI builds. The document model, Forge YAML loader, catalogs and
-validation are toolkit-agnostic, so the same files drive other UI frameworks. What each
-non-GPUI base needs is a catalog, a runtime adapter, its own style profile (the style &
-layout keys map to the toolkit's equivalents) and a preview host (`forge-preview-<base>`,
-the JSON protocol is shared — ratatui draws into `/dev/tty`, iced runs `iced::application`),
-[#97](https://github.com/skamansam/gpui-forge/issues/97)).
+validation are toolkit-agnostic, so the same files drive other UI frameworks. Each
+non-GPUI base needs a catalog, a runtime adapter, its own style profile, and a
+preview host (`forge-preview-<base>`). The style & layout keys map to the toolkit's equivalents.
+The preview hosts share one JSON protocol: ratatui draws into `/dev/tty`, iced runs
+`iced::application` ([#97](https://github.com/skamansam/gpui-forge/issues/97)).
 
 | Base | Kind | Event model | Web/WASM | Tracking |
 |---|---|---|---|---|
-| **ratatui** | Terminal UI; immediate-mode, drawn from state each frame | `on <event>` fires while the node is focused (key/mouse are polled) | via a terminal-emulator backend (e.g. ratzilla) | [#112](https://github.com/skamansam/gpui-forge/issues/112) |
+| **ratatui** | Terminal UI — immediate-mode, drawn from state each frame | `on <event>` fires while a node has focus (key/mouse polled) | via a terminal-emulator backend (e.g. ratzilla) | [#112](https://github.com/skamansam/gpui-forge/issues/112) |
 | **iced** | Elm-style GUI on winit/wgpu — not a TUI | `on <event>` maps to a `Message` in `update()` | experimental | [#113](https://github.com/skamansam/gpui-forge/issues/113) |
 
 ---
@@ -140,7 +140,7 @@ graph TD
 
 ## 🗺 Roadmap
 
-- [ ] **Phase 1: The Foundation.** Define the `.forge` specification ([#1](https://github.com/skamansam/gpui-forge/issues/1)) and implement the `gpui-forge-runtime` ([#12](https://github.com/skamansam/gpui-forge/issues/12)), plus base component systems and library adapters ([#70](https://github.com/skamansam/gpui-forge/issues/70)) — GPUI bases first, then non-GPUI bases like ratatui and iced ([#112](https://github.com/skamansam/gpui-forge/issues/112), [#113](https://github.com/skamansam/gpui-forge/issues/113)).
+- [ ] **Phase 1: The Foundation.** Define the `.forge` specification ([#1](https://github.com/skamansam/gpui-forge/issues/1)) and implement the `gpui-forge-runtime` ([#12](https://github.com/skamansam/gpui-forge/issues/12)). Add base component systems and library adapters ([#70](https://github.com/skamansam/gpui-forge/issues/70)): GPUI bases first, then non-GPUI bases like ratatui and iced ([#112](https://github.com/skamansam/gpui-forge/issues/112), [#113](https://github.com/skamansam/gpui-forge/issues/113)).
 - [ ] **Phase 2: The CLI.** Build `forge-cli` for format conversion ([#22](https://github.com/skamansam/gpui-forge/issues/22)).
 - [ ] **Phase 3: The Web Canvas.** Create the Svelte editor for basic layout composition ([#29](https://github.com/skamansam/gpui-forge/issues/29)).
 - [ ] **Phase 4: The Studio.** Develop the native GPUI desktop IDE (Forge Studio) ([#41](https://github.com/skamansam/gpui-forge/issues/41)).
@@ -151,7 +151,7 @@ graph TD
 
 ## 🧑‍💻 Development
 
-The docs site, with live gpui-kit previews and a Svelte editor (palette, outline, inspector, view-state and hooks — the old playground merged in), lives in [`site/`](site/README.md) and deploys to GitHub Pages on every merge to `main`.
+The docs site lives in [`site/`](site/README.md) and deploys to GitHub Pages on every merge to `main`. It ships live gpui-kit previews and a Svelte editor (palette, outline, inspector, view-state and hooks — the old playground merged in).
 
 The Cargo workspace lives under `crates/` (`forge-spec`, `gpui-forge-runtime`, `forge-cli`, `forge-studio`, `forge-compiler`).
 
@@ -169,7 +169,7 @@ sudo apt install gcc g++ clang libfontconfig-dev libwayland-dev libwebkit2gtk-4.
   vulkan-validationlayers libvulkan1
 ```
 
-`gpui-forge-runtime` is built for one base at a time via mutually exclusive `base-*` features (`base-gpui-kit` is the default; `base-bezel`, `base-adabraka`, `base-gpui02`, `base-ratatui` and `base-iced` are reserved until their bases land). `forge-spec` must stay GPUI-free; CI enforces this.
+`gpui-forge-runtime` builds for one base at a time through mutually exclusive `base-*` features. `base-gpui-kit` is the default. `base-bezel`, `base-adabraka`, `base-gpui02`, `base-ratatui` and `base-iced` stay reserved until their bases land. `forge-spec` must stay GPUI-free. CI enforces this.
 
 ---
 
@@ -179,4 +179,4 @@ This is an experimental project at the intersection of systems programming and c
 ***
 
 ### Implementation Note: Hooks
-*The most difficult part of this architecture will be **Point 3.1 (Hooks)**. To make this work, you cannot simply "inject" code at runtime in Rust. You will likely need to implement a **Trait-based Registry** or an **Event Dispatcher** where the visual builder defines `string_id`s for events, and your Rust application maps those IDs to actual function pointers or closures during the initialization phase of the `gpui-forge-runtime`.*
+*The most difficult part of this architecture will be **Point 3.1 (Hooks)**. To make this work, you cannot simply "inject" code at runtime in Rust. You will likely need to implement a **Trait-based Registry** or an **Event Dispatcher** where the visual builder defines `string_id`s for events. Your Rust application then maps those IDs to actual function pointers or closures during the initialization phase of the `gpui-forge-runtime`.*

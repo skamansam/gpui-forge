@@ -42,11 +42,45 @@
         "maxItems": 2
       }
     },
+    "state": {
+      "description": "Top-level `state:` — declared state vars: `path -> type` (e.g.\n`studio.theme: string`). `forge.Vars` uses the type to pick the\neditor widget; `forge check` validates bindings to undeclared paths.",
+      "type": "array",
+      "items": {
+        "type": "array",
+        "prefixItems": [
+          {
+            "type": "string"
+          },
+          {
+            "type": "string"
+          }
+        ],
+        "minItems": 2,
+        "maxItems": 2
+      }
+    },
     "dialogs": {
       "description": "Top-level `Dialog#name:` declarations, opened by `open_dialog(name)`.",
       "type": "array",
       "items": {
         "$ref": "#/$defs/Node"
+      }
+    },
+    "refs": {
+      "description": "Ref blocks — `name: &name` fragments merged into nodes via `<<: *name`.\nThe fragment is a node's entry-bag (`children:`, props, `style:`…) with\nno element head — `element.name` is `\"\"` by convention.",
+      "type": "array",
+      "items": {
+        "type": "array",
+        "prefixItems": [
+          {
+            "type": "string"
+          },
+          {
+            "$ref": "#/$defs/Node"
+          }
+        ],
+        "minItems": 2,
+        "maxItems": 2
       }
     },
     "root": {
@@ -57,6 +91,7 @@
     "version",
     "imports",
     "meta",
+    "state",
     "dialogs",
     "root"
   ],
@@ -148,6 +183,24 @@
           "items": {
             "$ref": "#/$defs/Node"
           }
+        },
+        "control": {
+          "description": "Control flow — `if`, `for`, `with` or `match`. On a bare block\n(`- if: $cond`) it is the node's whole meaning and `element` is a\n`forge.X` sentinel; on an element it modifies that element.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Control"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "refname": {
+          "description": "Name of the `&anchor` block this node's entries merge from\n(`<<: *name` in YAML). Written through the preserving writer — edits\nsplice into the `name:` ref block, not the merge site.",
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "required": [
@@ -501,6 +554,209 @@
       "required": [
         "name",
         "args"
+      ]
+    },
+    "Control": {
+      "description": "Control-flow modifier — `if`, `for`, `with` or `match` (`docs/format/forge-yaml.md`).\n\n`children` always holds the primary branch (the then-body, loop body or\nscoped body); `match` uses `cases` instead and carries no `children`.",
+      "oneOf": [
+        {
+          "description": "`if:` — renders `children` (or the element) when `when` is truthy,\nor compares equal/not-equal to the `is:`/`not:` operand; `otherwise`\n(`else:`) renders when the condition fails.",
+          "type": "object",
+          "properties": {
+            "If": {
+              "type": "object",
+              "properties": {
+                "when": {
+                  "$ref": "#/$defs/Value"
+                },
+                "test": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/Compare"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "otherwise": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Node"
+                  }
+                }
+              },
+              "required": [
+                "when",
+                "otherwise"
+              ]
+            }
+          },
+          "required": [
+            "If"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "description": "`for:` — repeats `children` (or the element) once per item in `source`;\na single (non-list) value repeats once. `each` names the scoped item\nvar, `index:` optionally names the index; `otherwise` (`else:`)\nrenders when the list is empty.",
+          "type": "object",
+          "properties": {
+            "For": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "$ref": "#/$defs/Value"
+                },
+                "each": {
+                  "type": "string"
+                },
+                "index": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "key": {
+                  "description": "`key: item.id` — member path rooted in `each` giving items stable\nrender identity (per-item state survives reorders).",
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/Path"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "otherwise": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Node"
+                  }
+                }
+              },
+              "required": [
+                "source",
+                "each",
+                "otherwise"
+              ]
+            }
+          },
+          "required": [
+            "For"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "description": "`with:` — scopes `source` under `name` (`as:`) for `children` (or the\nelement) — a single-value `for`.",
+          "type": "object",
+          "properties": {
+            "With": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "$ref": "#/$defs/Value"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "source",
+                "name"
+              ]
+            }
+          },
+          "required": [
+            "With"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "description": "`match:` — renders the first `case` arm whose operand equals the\nresolved `source`; `otherwise` (`else:`) when none match.",
+          "type": "object",
+          "properties": {
+            "Match": {
+              "type": "object",
+              "properties": {
+                "source": {
+                  "$ref": "#/$defs/Value"
+                },
+                "cases": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Case"
+                  }
+                },
+                "otherwise": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Node"
+                  }
+                }
+              },
+              "required": [
+                "source",
+                "cases",
+                "otherwise"
+              ]
+            }
+          },
+          "required": [
+            "Match"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Compare": {
+      "description": "An `is:`/`not:` operand on `if` — equality tested against the resolved `when`.",
+      "oneOf": [
+        {
+          "description": "`is:` — render when `when` equals the operand.",
+          "type": "object",
+          "properties": {
+            "Is": {
+              "$ref": "#/$defs/Value"
+            }
+          },
+          "required": [
+            "Is"
+          ],
+          "additionalProperties": false
+        },
+        {
+          "description": "`not:` — render when `when` does not equal the operand.",
+          "type": "object",
+          "properties": {
+            "Not": {
+              "$ref": "#/$defs/Value"
+            }
+          },
+          "required": [
+            "Not"
+          ],
+          "additionalProperties": false
+        }
+      ]
+    },
+    "Case": {
+      "description": "One `case <value>:` arm of a `match` block.",
+      "type": "object",
+      "properties": {
+        "value": {
+          "description": "The `case` operand — compared by value equality against `match`'s source.",
+          "$ref": "#/$defs/Value"
+        },
+        "children": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Node"
+          }
+        }
+      },
+      "required": [
+        "value",
+        "children"
       ]
     }
   }

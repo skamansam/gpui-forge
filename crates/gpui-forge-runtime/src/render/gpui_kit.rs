@@ -11,8 +11,8 @@ use crate::render::{get_path, set_path};
 use forge_spec::catalog::{Catalog, Children, PropType};
 use forge_spec::value::parse_path;
 use forge_spec::{
-    BindingMode, Color, Document, ElementRef, Entries, EventBinding, HandlerRef, Node, Path,
-    PathSegment, Segment, Unit, Value,
+    BindingMode, Color, Compare, Control, Document, ElementRef, Entries, EventBinding, HandlerRef,
+    Node, Path, PathSegment, Segment, Unit, Value,
 };
 use gpui_kit::component::Colorize;
 use gpui_kit::component::TitleBar;
@@ -221,6 +221,9 @@ pub struct ForgeView {
     dnd: bool,
     /// Shown while there is no document (e.g. inside `forge.Preview`).
     empty_text: Option<String>,
+    /// `for`/`with` scope vars — `(name, value)` frames pushed while control
+    /// blocks render; `$item` lookups shadow state from the innermost frame.
+    scopes: Vec<(String, Json)>,
 }
 
 /// Walks `json` down a spec `Path` — the read side of `set_path`.
@@ -250,7 +253,7 @@ impl ListDelegate for ForgeListDelegate {
         let node = self.children.get(ix.row)?.clone();
         let key = format!("{}/{}", self.key, ix.row);
         try_update(&self.view, cx, "list render", |view, cx| {
-            ListItem::new(ix).child(view.render_node(&node, &key, window, cx))
+            ListItem::new(ix).children(view.expand(&node, &key, window, cx))
         })
         .ok()
     }
@@ -298,6 +301,7 @@ impl ForgeView {
             placing: false,
             dnd: false,
             empty_text: None,
+            scopes: Vec::new(),
         }
     }
 
@@ -1101,12 +1105,19 @@ impl ForgeView {
     }
 
     fn lookup(&self, path: &Path) -> Option<&Json> {
-        path.0
-            .iter()
-            .try_fold(&self.state, |json, segment| match segment {
-                PathSegment::Field(name) => json.get(name),
-                PathSegment::Index(i) => json.get(i),
-            })
+        let mut segments = path.0.iter();
+        let mut json = &self.state;
+        // `for`/`with` scope vars shadow state — innermost frame wins.
+        if let Some(PathSegment::Field(name)) = path.0.first()
+            && let Some((_, value)) = self.scopes.iter().rev().find(|(n, _)| n == name)
+        {
+            json = value;
+            segments.next();
+        }
+        segments.try_fold(json, |json, segment| match segment {
+            PathSegment::Field(name) => json.get(name),
+            PathSegment::Index(i) => json.get(i),
+        })
     }
 
     fn text(&self, value: &Value) -> String {
@@ -1184,6 +1195,226 @@ impl ForgeView {
             },
             other => vec![self.text(other)],
         }
+    }
+
+    /// A `Value` as state `Json` — bindings look up, literals convert.
+    fn resolve(&self, value: &Value) -> Json {
+        match value {
+            Value::Binding { path, .. } => self.lookup(path).cloned().unwrap_or(Json::Null),
+            Value::Bool(b) => Json::Bool(*b),
+            Value::Number { value, unit: None } => Json::from(*value),
+            Value::List(items) => Json::Array(items.iter().map(|i| self.resolve(i)).collect()),
+            Value::Map(entries) => Json::Object(
+                entries
+                    .iter()
+                    .map(|(k, v)| (k.clone(), self.resolve(v)))
+                    .collect(),
+            ),
+            other => Json::String(self.text(other)),
+        }
+    }
+
+    /// An `if:` condition — truthiness alone, or equality against `is:`/`not:`.
+    fn condition(&self, when: &Value, test: &Option<Compare>) -> bool {
+        let value = self.resolve(when);
+        match test {
+            None => json_truthy(&value),
+            Some(Compare::Is(operand)) => value == self.resolve(operand),
+            Some(Compare::Not(operand)) => value != self.resolve(operand),
+        }
+    }
+
+    /// `for:`'s source as items — a single (non-list) value iterates once,
+    /// which is what makes `for` double as a per-object template.
+    fn for_items(&self, source: &Value) -> Vec<Json> {
+        match self.resolve(source) {
+            Json::Array(items) => items,
+            Json::Null => Vec::new(),
+            value => vec![value],
+        }
+    }
+
+    /// Renders `nodes` as siblings — control blocks and control-modified
+    /// elements each expand to zero or more elements.
+    fn render_kids(
+        &mut self,
+        nodes: &[Node],
+        key: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Vec<AnyElement> {
+        nodes
+            .iter()
+            .enumerate()
+            .flat_map(|(i, node)| self.expand(node, &format!("{key}/{i}"), window, cx))
+            .collect()
+    }
+
+    /// One node's expansion — `if` gates, `for` repeats, `with` scopes and
+    /// `match` picks an arm; plain elements render once.
+    fn expand(
+        &mut self,
+        node: &Node,
+        key: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Vec<AnyElement> {
+        let Some(control) = &node.control else {
+            return vec![self.render_node(node, key, window, cx)];
+        };
+        match control {
+            Control::If {
+                when,
+                test,
+                otherwise,
+            } => {
+                if self.condition(when, test) {
+                    self.render_target(node, key, window, cx)
+                } else {
+                    self.render_kids(otherwise, key, window, cx)
+                }
+            }
+            Control::For {
+                source,
+                each,
+                index,
+                key: key_path,
+                otherwise,
+            } => {
+                let items = self.for_items(source);
+                if items.is_empty() {
+                    return self.render_kids(otherwise, key, window, cx);
+                }
+                let mut out = Vec::new();
+                for (i, item) in items.into_iter().enumerate() {
+                    self.scopes.push((each.clone(), item));
+                    if let Some(index) = index {
+                        self.scopes.push((index.clone(), Json::from(i)));
+                    }
+                    // `key: item.id` — resolve the member path against the
+                    // scoped item for stable identity (default: position).
+                    let item_key = key_path
+                        .as_ref()
+                        .and_then(|path| {
+                            let resolved = self.resolve(&Value::Binding {
+                                path: path.clone(),
+                                mode: BindingMode::OneWay,
+                            });
+                            resolved
+                                .as_str()
+                                .map(str::to_owned)
+                                .or_else(|| (!resolved.is_null()).then(|| resolved.to_string()))
+                        })
+                        .unwrap_or_else(|| i.to_string());
+                    out.extend(self.render_target(node, &format!("{key}/{item_key}"), window, cx));
+                    let pop = 1 + usize::from(index.is_some());
+                    self.scopes.truncate(self.scopes.len() - pop);
+                }
+                out
+            }
+            Control::With { source, name } => {
+                let value = self.resolve(source);
+                self.scopes.push((name.clone(), value));
+                let out = self.render_target(node, key, window, cx);
+                self.scopes.pop();
+                out
+            }
+            Control::Match {
+                source,
+                cases,
+                otherwise,
+            } => {
+                let value = self.resolve(source);
+                match cases.iter().find(|case| self.resolve(&case.value) == value) {
+                    Some(case) => self.render_kids(&case.children, key, window, cx),
+                    None => self.render_kids(otherwise, key, window, cx),
+                }
+            }
+        }
+    }
+
+    /// The control node's payload — a bare block expands its `children`; a
+    /// modified element renders once with the control consumed and scope vars
+    /// baked into event args (events fire after the scope unwinds).
+    fn render_target(
+        &mut self,
+        node: &Node,
+        key: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Vec<AnyElement> {
+        if node.is_block() {
+            self.render_kids(&node.children, key, window, cx)
+        } else {
+            let mut node = node.clone();
+            node.control = None;
+            self.bake_scope(&mut node);
+            vec![self.render_node(&node, key, window, cx)]
+        }
+    }
+
+    /// Rewrites event-arg bindings rooted in a `for`/`with` scope var to the
+    /// resolved literal, recursively — event handlers fire after the scope
+    /// that named `$item` has unwound.
+    fn bake_scope(&self, node: &mut Node) {
+        if self.scopes.is_empty() {
+            return;
+        }
+        for event in &mut node.events {
+            for arg in &mut event.handler.args {
+                self.bake_value(arg);
+            }
+        }
+        for child in &mut node.children {
+            self.bake_scope(child);
+        }
+        match &mut node.control {
+            Some(Control::Match {
+                cases, otherwise, ..
+            }) => {
+                for case in cases {
+                    for child in &mut case.children {
+                        self.bake_scope(child);
+                    }
+                }
+                for child in otherwise {
+                    self.bake_scope(child);
+                }
+            }
+            Some(Control::If { otherwise, .. }) | Some(Control::For { otherwise, .. }) => {
+                for child in otherwise {
+                    self.bake_scope(child);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn bake_value(&self, value: &mut Value) {
+        match value {
+            Value::Binding { path, .. } if self.scoped(path) => {
+                *value = literal(self.lookup(path).cloned().unwrap_or(Json::Null));
+            }
+            Value::Interpolated(segments)
+                if segments
+                    .iter()
+                    .any(|s| matches!(s, Segment::Binding(p) if self.scoped(p))) =>
+            {
+                *value = Value::String(self.text(&value.clone()));
+            }
+            Value::List(items) => items.iter_mut().for_each(|i| self.bake_value(i)),
+            Value::Map(entries) => entries.iter_mut().for_each(|(_, v)| self.bake_value(v)),
+            _ => {}
+        }
+    }
+
+    /// `path` is rooted in a `for`/`with` scope var.
+    fn scoped(&self, path: &Path) -> bool {
+        matches!(
+            path.0.first(),
+            Some(PathSegment::Field(name))
+                if self.scopes.iter().rev().any(|(n, _)| n == name)
+        )
     }
 
     /// An `Editor`'s `diagnostics:` prop — squiggle markers as `{line, col,
@@ -1297,7 +1528,7 @@ impl ForgeView {
         node.children
             .iter()
             .enumerate()
-            .map(|(i, child)| self.render_node(child, &format!("{key}/{i}"), window, cx))
+            .flat_map(|(i, child)| self.expand(child, &format!("{key}/{i}"), window, cx))
             .collect()
     }
 
@@ -1432,6 +1663,15 @@ impl ForgeView {
         };
         if let Some(doc) = self.doc.as_mut() {
             doc.set_prop(path, name, value);
+            cx.notify();
+        }
+    }
+
+    /// `refname_changed` write-through — `doc.set_refname`; the preserving
+    /// writer emits `<<: *name` (or a new `name: &name` block).
+    pub fn set_node_refname(&mut self, path: &str, refname: Option<String>, cx: &mut Context<Self>) {
+        if let Some(doc) = self.doc.as_mut() {
+            doc.set_refname(path, refname);
             cx.notify();
         }
     }
@@ -1594,6 +1834,13 @@ impl ForgeView {
                     Err(e) => self.report(format!("style `{name}` skipped: {e}")),
                 }
             }
+            if let Ok(p) = parse_path("document.edits.refname") {
+                self.update_state(
+                    &p,
+                    Json::String(target.refname.clone().unwrap_or_default()),
+                    cx,
+                );
+            }
         }
         let mut rows = vec![
             DescriptionItem::new("element").value(target.element.to_string()),
@@ -1601,6 +1848,9 @@ impl ForgeView {
         ];
         if let Some(id) = &target.id {
             rows.push(DescriptionItem::new("id").value(id.clone()));
+        }
+        if let Some(refname) = &target.refname {
+            rows.push(DescriptionItem::new("ref").value(format!("&{refname}")));
         }
         let header = DescriptionList::vertical().children(rows);
         // One `FormField` per catalog prop, each binding `document.edits.<prop>` and
@@ -1661,6 +1911,49 @@ impl ForgeView {
                 })
             })
             .collect();
+        // `ref` block name — editable: `refname_changed` writes `<<: *name`
+        // (or a new `name: &name` block) through the preserving writer.
+        let mut fields = fields;
+        if let Ok(bind) = parse_path("document.edits.refname") {
+            fields.insert(
+                0,
+                Node {
+                    element: ElementRef {
+                        namespace: None,
+                        name: "FormField".into(),
+                    },
+                    props: vec![("label".to_owned(), Value::String("refname".into()))],
+                    children: vec![Node {
+                        element: ElementRef {
+                            namespace: None,
+                            name: "Input".into(),
+                        },
+                        props: vec![
+                            (
+                                "value".to_owned(),
+                                Value::Binding {
+                                    path: bind,
+                                    mode: BindingMode::TwoWay,
+                                },
+                            ),
+                            (
+                                "placeholder".to_owned(),
+                                Value::String("ref block name".into()),
+                            ),
+                        ],
+                        events: vec![EventBinding {
+                            event: "change".into(),
+                            handler: HandlerRef {
+                                name: "refname_changed".into(),
+                                args: vec![],
+                            },
+                        }],
+                        ..Default::default()
+                    }],
+                    ..Default::default()
+                },
+            );
+        }
         let prop_children = if fields.is_empty() {
             vec![Node {
                 element: ElementRef {
@@ -1885,6 +2178,27 @@ impl ForgeView {
         for (i, child) in node.children.iter().enumerate() {
             self.outline_data(child, format!("{path}.{i}"), &mut subs);
         }
+        // `else:`/`case:` branch children — `e`/`c` path steps (`node_at`).
+        match &node.control {
+            Some(Control::Match {
+                cases, otherwise, ..
+            }) => {
+                for (c, case) in cases.iter().enumerate() {
+                    for (i, child) in case.children.iter().enumerate() {
+                        self.outline_data(child, format!("{path}.c{c}.{i}"), &mut subs);
+                    }
+                }
+                for (i, child) in otherwise.iter().enumerate() {
+                    self.outline_data(child, format!("{path}.e{i}"), &mut subs);
+                }
+            }
+            Some(control) if !control.otherwise().is_empty() => {
+                for (i, child) in control.otherwise().iter().enumerate() {
+                    self.outline_data(child, format!("{path}.e{i}"), &mut subs);
+                }
+            }
+            _ => {}
+        }
         if !subs.is_empty() {
             data = data.children(subs);
         }
@@ -1961,7 +2275,7 @@ impl ForgeView {
             .children
             .iter()
             .enumerate()
-            .map(|(i, child)| self.render_node(child, &format!("{key}/{i}"), window, cx))
+            .flat_map(|(i, child)| self.expand(child, &format!("{key}/{i}"), window, cx))
             .collect();
         let mut field = Field::new().children(kids);
         if let Some(label) = self.prop_text(node, "label") {
@@ -2016,6 +2330,12 @@ impl ForgeView {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> AnyElement {
+        // Control blocks expand to zero or more elements — child lists route
+        // through `expand` so this only guards stray single-node calls.
+        if node.control.is_some() {
+            let kids = self.expand(node, key, window, cx);
+            return div().children(kids).into_any_element();
+        }
         if let Some(namespace) = &node.element.namespace {
             let library = self
                 .doc
@@ -2177,7 +2497,7 @@ impl ForgeView {
             node.children
                 .iter()
                 .enumerate()
-                .map(|(i, child)| this.render_node(child, &format!("{key}.{i}"), window, cx))
+                .flat_map(|(i, child)| this.expand(child, &format!("{key}.{i}"), window, cx))
                 .collect::<Vec<_>>()
         };
         let mut styled = false;
@@ -2306,15 +2626,15 @@ impl ForgeView {
                 let placeholder = self.prop_text(node, "placeholder").unwrap_or_default();
                 let masked = self.prop_bool(node, "masked");
                 let state_key = format!("{key}|{placeholder}|{masked}");
+                let value = self.prop_text(node, "value").unwrap_or_default();
                 let state = match self.inputs.get(&state_key) {
                     Some(state) => state.clone(),
                     None => {
-                        let value = self.prop_text(node, "value").unwrap_or_default();
                         let state = cx.new(|cx| {
                             InputState::new(window, cx)
                                 .placeholder(placeholder)
                                 .masked(masked)
-                                .default_value(value)
+                                .default_value(value.clone())
                         });
                         let path = self.two_way(node, "value");
                         let changed = node.clone();
@@ -2335,6 +2655,13 @@ impl ForgeView {
                         state
                     }
                 };
+                // `value: bind` is controlled — external writes (theme pickers,
+                // doc loads) push into the cached state; `set_value` emits no
+                // events. A static `value:` stays a one-time default.
+                if matches!(self.prop(node, "value"), Some(Value::Binding { .. }))
+                    && state.read(cx).value() != value {
+                    state.update(cx, |s, cx| s.set_value(value, window, cx));
+                }
                 Input::new(&state)
                     .cleanable(self.prop_bool(node, "cleanable"))
                     .disabled(self.prop_bool(node, "disabled"))
@@ -2343,15 +2670,15 @@ impl ForgeView {
             "Textarea" => {
                 let placeholder = self.prop_text(node, "placeholder").unwrap_or_default();
                 let state_key = format!("{key}|{placeholder}");
+                let value = self.prop_text(node, "value").unwrap_or_default();
                 let state = match self.textareas.get(&state_key) {
                     Some(state) => state.clone(),
                     None => {
-                        let value = self.prop_text(node, "value").unwrap_or_default();
                         let rows = self.prop(node, "rows").and_then(|v| self.number(v));
                         let state = cx.new(|cx| {
                             let state = TextareaState::new(window, cx)
                                 .placeholder(placeholder)
-                                .default_value(value);
+                                .default_value(value.clone());
                             match rows {
                                 Some(rows) => state.rows(rows as usize),
                                 None => state,
@@ -2373,6 +2700,11 @@ impl ForgeView {
                         state
                     }
                 };
+                // Same controlled-bind sync as `Input` — see that arm.
+                if matches!(self.prop(node, "value"), Some(Value::Binding { .. }))
+                    && state.read(cx).value() != value {
+                    state.update(cx, |s, cx| s.set_value(value, window, cx));
+                }
                 let textarea = Textarea::new(&state)
                     .disabled(self.prop_bool(node, "disabled"))
                     .readonly(self.prop_bool(node, "readonly"));
@@ -2383,14 +2715,14 @@ impl ForgeView {
             }
             "NumberInput" => {
                 let placeholder = self.prop_text(node, "placeholder").unwrap_or_default();
+                let value = self.prop_text(node, "value").unwrap_or_default();
                 let state = match self.inputs.get(key) {
                     Some(state) => state.clone(),
                     None => {
-                        let value = self.prop_text(node, "value").unwrap_or_default();
                         let state = cx.new(|cx| {
                             InputState::new(window, cx)
                                 .placeholder(placeholder)
-                                .default_value(value)
+                                .default_value(value.clone())
                         });
                         let path = self.two_way(node, "value");
                         let changed = node.clone();
@@ -2408,6 +2740,11 @@ impl ForgeView {
                         state
                     }
                 };
+                // Same controlled-bind sync as `Input` — see that arm.
+                if matches!(self.prop(node, "value"), Some(Value::Binding { .. }))
+                    && state.read(cx).value() != value {
+                    state.update(cx, |s, cx| s.set_value(value, window, cx));
+                }
                 NumberInput::new(&state)
                     .with_size(size(&self.prop_text(node, "size").unwrap_or_default()))
                     .appearance(!matches!(
@@ -2430,14 +2767,14 @@ impl ForgeView {
                     }
                 }
                 let state_key = format!("{key}|{language}");
+                let value = self.prop_text(node, "value").unwrap_or_default();
                 let state = match self.editors.get(&state_key) {
                     Some(state) => state.clone(),
                     None => {
-                        let value = self.prop_text(node, "value").unwrap_or_default();
                         let state = cx.new(|cx| {
                             let state = EditorState::new(window, cx)
                                 .placeholder(placeholder)
-                                .default_value(value);
+                                .default_value(value.clone());
                             if language.is_empty() {
                                 state
                             } else {
@@ -2460,6 +2797,11 @@ impl ForgeView {
                         state
                     }
                 };
+                // Same controlled-bind sync as `Input` — see that arm.
+                if matches!(self.prop(node, "value"), Some(Value::Binding { .. }))
+                    && state.read(cx).value() != value {
+                    state.update(cx, |s, cx| s.set_value(value, window, cx));
+                }
                 // `diagnostics:` — squiggle markers, usually bound to state fed
                 // by `forge check` (#128). Rebuilt each render; the component
                 // underlines the ranges and shows a hover popover.
@@ -2561,7 +2903,8 @@ impl ForgeView {
                     None => {
                         let selected = options.iter().position(|o| *o == value).map(IndexPath::new);
                         let ix = options.iter().position(|o| *o == value).map(IndexPath::new);
-                        let state = cx.new(|cx| SelectState::new(options, selected, window, cx));
+                        let state =
+                            cx.new(|cx| SelectState::new(options.clone(), selected, window, cx));
                         // Sync the bound `value` into the state's selected index —
                         // external writes (e.g. theme reset) land here too.
                         state.update(cx, |s, cx| s.set_selected_index(ix, window, cx));
@@ -2583,6 +2926,17 @@ impl ForgeView {
                         state
                     }
                 };
+                // `value: bind` is controlled — external writes (theme reset,
+                // doc loads) re-select the matching option when it differs.
+                if matches!(self.prop(node, "value"), Some(Value::Binding { .. }))
+                    && let Some(ix) = options
+                        .iter()
+                        .position(|o| *o == value)
+                        .map(IndexPath::new)
+                    && state.read(cx).selected_index(cx).map(|p| p.row) != Some(ix.row)
+                {
+                    state.update(cx, |s, cx| s.set_selected_index(Some(ix), window, cx));
+                }
                 Select::new(&state)
                     .when_some(self.prop_text(node, "placeholder"), |s, p| s.placeholder(p))
                     .disabled(self.prop_bool(node, "disabled"))
@@ -2611,12 +2965,12 @@ impl ForgeView {
                     tab.children
                         .iter()
                         .enumerate()
-                        .map(|(i, child)| {
-                            self.render_node(child, &format!("{key}.{selected}.{i}"), window, cx)
+                        .flat_map(|(i, child)| {
+                            self.expand(child, &format!("{key}.{selected}.{i}"), window, cx)
                         })
                         .collect::<Vec<_>>()
                 });
-                let bar = TabBar::new(id)
+                let bar = TabBar::new(id.clone())
                     .with_variant(tab_variant(
                         &self.prop_text(node, "variant").unwrap_or_default(),
                     ))
@@ -2633,16 +2987,26 @@ impl ForgeView {
                             cx.notify();
                         });
                     });
-                v_flex()
-                    .gap_3()
-                    .child(bar)
-                    .child(
+                // `styled` — the `style:` entries belong on this column itself.
+                // Plain `div()` is `display: block`, so letting `wrap` carry
+                // `grow`/`basis`/`min-height` would leave this column at
+                // content height and the tab content couldn't fill the panel.
+                styled = true;
+                container(
+                    v_flex().gap_3(),
+                    &node.style,
+                    id,
+                    vec![
+                        bar.into_any_element(),
                         v_flex()
                             .flex_1()
                             .min_h_0()
-                            .children(content.unwrap_or_default()),
-                    )
-                    .into_any_element()
+                            .children(content.unwrap_or_default())
+                            .into_any_element(),
+                    ],
+                    &mut self.scroll_handles,
+                    cx,
+                )
             }
             "Separator" => {
                 let separator = match self.prop_text(node, "orientation").as_deref() {
@@ -3143,8 +3507,8 @@ impl ForgeView {
                         .children
                         .iter()
                         .enumerate()
-                        .map(|(i, kid)| {
-                            self.render_node(kid, &format!("{key}.{ci}.{i}"), window, cx)
+                        .flat_map(|(i, kid)| {
+                            self.expand(kid, &format!("{key}.{ci}.{i}"), window, cx)
                         })
                         .collect();
                     let mut item = gpui_kit::component::accordion::AccordionItem::new()
@@ -3560,7 +3924,7 @@ impl ForgeView {
                             }
                             for (i, child) in node.children.iter().enumerate() {
                                 if child.element.name.as_str() != "TreeItem" {
-                                    row = row.child(view.render_node(
+                                    row = row.children(view.expand(
                                         child,
                                         &format!("{key}/{i}"),
                                         window,
@@ -3748,6 +4112,32 @@ impl ForgeView {
 
 /// The tag a palette item inserts — the `insert_component('Tag')` arg on the
 /// node's click handler doubles as its drag payload.
+/// Truthiness of a resolved state `Json` — `if:` with no `is:`/`not:` test.
+fn json_truthy(value: &Json) -> bool {
+    match value {
+        Json::Bool(b) => *b,
+        Json::Null => false,
+        Json::String(s) => !s.is_empty(),
+        Json::Number(n) => n.as_f64().is_some_and(|v| v != 0.0),
+        _ => true,
+    }
+}
+
+/// A state `Json` as a spec `Value` literal — bakes scoped vars into event args.
+fn literal(json: Json) -> Value {
+    match json {
+        Json::Bool(b) => Value::Bool(b),
+        Json::Number(n) => Value::Number {
+            value: n.as_f64().unwrap_or_default(),
+            unit: None,
+        },
+        Json::String(s) => Value::String(s),
+        Json::Null => Value::String(String::new()),
+        Json::Array(items) => Value::List(items.into_iter().map(literal).collect()),
+        Json::Object(map) => Value::Map(map.into_iter().map(|(k, v)| (k, literal(v))).collect()),
+    }
+}
+
 fn component_tag(node: &Node) -> Option<String> {
     node.events
         .iter()
@@ -3763,10 +4153,16 @@ impl Render for ForgeView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.theme();
         let (background, foreground) = (theme.background, theme.foreground);
-        let content = self
-            .doc
-            .clone()
-            .map(|doc| self.render_node(&doc.root, "root", window, cx))
+        let content = self.doc.clone().map(|doc| {
+            if doc.root.control.is_some() {
+                div()
+                    .size_full()
+                    .children(self.expand(&doc.root, "root", window, cx))
+                    .into_any_element()
+            } else {
+                self.render_node(&doc.root, "root", window, cx)
+            }
+        })
             .or_else(|| self.empty_text.clone().map(|text| empty(text, cx)));
         for message in self.take_errors() {
             window.push_notification((NotificationType::Error, message), cx);

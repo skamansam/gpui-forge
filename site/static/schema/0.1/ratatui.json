@@ -45,7 +45,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|VStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|VStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -89,7 +89,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|HStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|HStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -157,7 +157,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Text(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip|wrap)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Text(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip|wrap)$"
             }
           }
         },
@@ -222,7 +222,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Block(#[\\w-]+| \\.[\\w-]+)?|borders|children|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Block(#[\\w-]+| \\.[\\w-]+)?|borders|children|style|title|tooltip)$"
             }
           }
         },
@@ -286,7 +286,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|List(#[\\w-]+| \\.[\\w-]+)?|children|items|on (select)|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|List(#[\\w-]+| \\.[\\w-]+)?|children|items|on (select)|style|title|tooltip)$"
             }
           }
         },
@@ -352,7 +352,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Table(#[\\w-]+| \\.[\\w-]+)?|children|header|rows|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Table(#[\\w-]+| \\.[\\w-]+)?|children|header|rows|style|title|tooltip)$"
             }
           }
         },
@@ -416,7 +416,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Gauge(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Gauge(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip|value)$"
             }
           }
         },
@@ -486,7 +486,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Tabs(#[\\w-]+| \\.[\\w-]+)?|children|on (select)|selected|style|titles|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Tabs(#[\\w-]+| \\.[\\w-]+)?|children|on (select)|selected|style|titles|tooltip)$"
             }
           }
         },
@@ -550,7 +550,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Input(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|placeholder|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Input(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|placeholder|style|tooltip|value)$"
             }
           }
         },
@@ -615,7 +615,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Block(#[\\w-]+| \\.[\\w-]+)?|borders|children|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Block(#[\\w-]+| \\.[\\w-]+)?|borders|children|style|title|tooltip)$"
             }
           }
         },
@@ -679,7 +679,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Gauge(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Gauge(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip|value)$"
             }
           }
         },
@@ -723,7 +723,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.HStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.HStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -787,7 +787,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Input(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|placeholder|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Input(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|placeholder|style|tooltip|value)$"
             }
           }
         },
@@ -851,7 +851,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.List(#[\\w-]+| \\.[\\w-]+)?|children|items|on (select)|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.List(#[\\w-]+| \\.[\\w-]+)?|children|items|on (select)|style|title|tooltip)$"
             }
           }
         },
@@ -917,7 +917,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Table(#[\\w-]+| \\.[\\w-]+)?|children|header|rows|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Table(#[\\w-]+| \\.[\\w-]+)?|children|header|rows|style|title|tooltip)$"
             }
           }
         },
@@ -987,7 +987,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Tabs(#[\\w-]+| \\.[\\w-]+)?|children|on (select)|selected|style|titles|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Tabs(#[\\w-]+| \\.[\\w-]+)?|children|on (select)|selected|style|titles|tooltip)$"
             }
           }
         },
@@ -1055,7 +1055,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Text(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip|wrap)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Text(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip|wrap)$"
             }
           }
         },
@@ -1099,20 +1099,36 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.VStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.VStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         }
       ],
-      "description": "One element key plus props, `style`, `on <event>` and `children`.",
+      "description": "One element key plus props, `style`, `on <event>` and `children` — or a control block (`if`/`for`/`with`/`match`).",
       "minProperties": 1,
       "not": {
         "propertyNames": {
-          "pattern": "^([a-z_][A-Za-z0-9_-]*|on [a-z_][A-Za-z0-9_-]*|<<)$"
+          "pattern": "^((?!(if|for|with|match)$)[a-z_][A-Za-z0-9_-]*|on [a-z_][A-Za-z0-9_-]*|<<)$"
+        }
+      },
+      "patternProperties": {
+        "^case ": {
+          "description": "A `match` arm — rendered when the source equals the operand.",
+          "items": {
+            "$ref": "#/definitions/node"
+          },
+          "type": "array"
         }
       },
       "properties": {
         "children": {
+          "items": {
+            "$ref": "#/definitions/node"
+          },
+          "type": "array"
+        },
+        "else": {
+          "description": "Rendered when `if`/`match` fail or a `for` list is empty.",
           "items": {
             "$ref": "#/definitions/node"
           },
@@ -1132,7 +1148,7 @@
         }
       },
       "propertyNames": {
-        "pattern": "^((HStack|VStack|Block|Gauge|Input|Table|List|Tabs|Text)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(HStack|VStack|Block|Gauge|Input|Table|List|Tabs|Text)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<)$"
+        "pattern": "^((HStack|VStack|Block|Gauge|Input|Table|List|Tabs|Text)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(HStack|VStack|Block|Gauge|Input|Table|List|Tabs|Text)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<|(if|for|with|match|else|each|index|key|as|is|not|case .+))$"
       },
       "type": "object"
     },

@@ -100,7 +100,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Accordion(#[\\w-]+| \\.[\\w-]+)?|bordered|children|disabled|multiple|on (change)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Accordion(#[\\w-]+| \\.[\\w-]+)?|bordered|children|disabled|multiple|on (change)|style|tooltip)$"
             }
           }
         },
@@ -199,7 +199,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Accordion(#[\\w-]+| \\.[\\w-]+)?|bordered|children|disabled|multiple|on (change)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Accordion(#[\\w-]+| \\.[\\w-]+)?|bordered|children|disabled|multiple|on (change)|style|tooltip)$"
             }
           }
         },
@@ -288,7 +288,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|AccordionItem(#[\\w-]+| \\.[\\w-]+)?|children|disabled|icon|open|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|AccordionItem(#[\\w-]+| \\.[\\w-]+)?|children|disabled|icon|open|style|title|tooltip)$"
             }
           }
         },
@@ -377,7 +377,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.AccordionItem(#[\\w-]+| \\.[\\w-]+)?|children|disabled|icon|open|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.AccordionItem(#[\\w-]+| \\.[\\w-]+)?|children|disabled|icon|open|style|title|tooltip)$"
             }
           }
         },
@@ -655,7 +655,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Alert(#[\\w-]+| \\.[\\w-]+)?|banner|body|children|color|dismissible|message|on (dismiss)|severity|style|text|title|tooltip|variant|visible)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Alert(#[\\w-]+| \\.[\\w-]+)?|banner|body|children|color|dismissible|message|on (dismiss)|severity|style|text|title|tooltip|variant|visible)$"
             }
           }
         },
@@ -933,7 +933,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Alert(#[\\w-]+| \\.[\\w-]+)?|banner|body|children|color|dismissible|message|on (dismiss)|severity|style|text|title|tooltip|variant|visible)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Alert(#[\\w-]+| \\.[\\w-]+)?|banner|body|children|color|dismissible|message|on (dismiss)|severity|style|text|title|tooltip|variant|visible)$"
             }
           }
         },
@@ -991,7 +991,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|AspectRatio(#[\\w-]+| \\.[\\w-]+)?|children|ratio|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|AspectRatio(#[\\w-]+| \\.[\\w-]+)?|children|ratio|style|tooltip)$"
             }
           }
         },
@@ -1049,7 +1049,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.AspectRatio(#[\\w-]+| \\.[\\w-]+)?|children|ratio|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.AspectRatio(#[\\w-]+| \\.[\\w-]+)?|children|ratio|style|tooltip)$"
             }
           }
         },
@@ -1182,7 +1182,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Avatar(#[\\w-]+| \\.[\\w-]+)?|children|fallback|icon|name|src|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Avatar(#[\\w-]+| \\.[\\w-]+)?|children|fallback|icon|name|src|style|tooltip)$"
             }
           }
         },
@@ -1315,7 +1315,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Avatar(#[\\w-]+| \\.[\\w-]+)?|children|fallback|icon|name|src|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Avatar(#[\\w-]+| \\.[\\w-]+)?|children|fallback|icon|name|src|style|tooltip)$"
             }
           }
         },
@@ -1396,7 +1396,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|AvatarGroup(#[\\w-]+| \\.[\\w-]+)?|children|ellipsis|limit|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|AvatarGroup(#[\\w-]+| \\.[\\w-]+)?|children|ellipsis|limit|style|tooltip)$"
             }
           }
         },
@@ -1477,7 +1477,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.AvatarGroup(#[\\w-]+| \\.[\\w-]+)?|children|ellipsis|limit|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.AvatarGroup(#[\\w-]+| \\.[\\w-]+)?|children|ellipsis|limit|style|tooltip)$"
             }
           }
         },
@@ -1725,7 +1725,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Badge(#[\\w-]+| \\.[\\w-]+)?|children|color|count|dot|label|max|style|text|tooltip|variant)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Badge(#[\\w-]+| \\.[\\w-]+)?|children|color|count|dot|label|max|style|text|tooltip|variant)$"
             }
           }
         },
@@ -1973,7 +1973,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Badge(#[\\w-]+| \\.[\\w-]+)?|children|color|count|dot|label|max|style|text|tooltip|variant)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Badge(#[\\w-]+| \\.[\\w-]+)?|children|color|count|dot|label|max|style|text|tooltip|variant)$"
             }
           }
         },
@@ -2047,7 +2047,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Banner(#[\\w-]+| \\.[\\w-]+)?|children|severity|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Banner(#[\\w-]+| \\.[\\w-]+)?|children|severity|style|text|tooltip)$"
             }
           }
         },
@@ -2121,7 +2121,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Banner(#[\\w-]+| \\.[\\w-]+)?|children|severity|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Banner(#[\\w-]+| \\.[\\w-]+)?|children|severity|style|text|tooltip)$"
             }
           }
         },
@@ -2186,7 +2186,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Block(#[\\w-]+| \\.[\\w-]+)?|borders|children|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Block(#[\\w-]+| \\.[\\w-]+)?|borders|children|style|title|tooltip)$"
             }
           }
         },
@@ -2251,7 +2251,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Block(#[\\w-]+| \\.[\\w-]+)?|borders|children|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Block(#[\\w-]+| \\.[\\w-]+)?|borders|children|style|title|tooltip)$"
             }
           }
         },
@@ -2316,7 +2316,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Board(#[\\w-]+| \\.[\\w-]+)?|children|read_only|scene|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Board(#[\\w-]+| \\.[\\w-]+)?|children|read_only|scene|style|tooltip)$"
             }
           }
         },
@@ -2381,7 +2381,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Board(#[\\w-]+| \\.[\\w-]+)?|children|read_only|scene|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Board(#[\\w-]+| \\.[\\w-]+)?|children|read_only|scene|style|tooltip)$"
             }
           }
         },
@@ -2425,7 +2425,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Box(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Box(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -2469,7 +2469,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Box(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Box(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -2522,7 +2522,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Breadcrumb(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Breadcrumb(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -2575,7 +2575,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Breadcrumb(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Breadcrumb(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -2643,7 +2643,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|BreadcrumbItem(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|BreadcrumbItem(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|style|tooltip)$"
             }
           }
         },
@@ -2711,7 +2711,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.BreadcrumbItem(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.BreadcrumbItem(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|style|tooltip)$"
             }
           }
         },
@@ -3279,7 +3279,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Button(#[\\w-]+| \\.[\\w-]+)?|borderless|children|color|compact|destructive|disabled|icon|label|loading|on (click)|outline|prominent|size|style|tooltip|variant)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Button(#[\\w-]+| \\.[\\w-]+)?|borderless|children|color|compact|destructive|disabled|icon|label|loading|on (click)|outline|prominent|size|style|tooltip|variant)$"
             }
           }
         },
@@ -3847,7 +3847,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Button(#[\\w-]+| \\.[\\w-]+)?|borderless|children|color|compact|destructive|disabled|icon|label|loading|on (click)|outline|prominent|size|style|tooltip|variant)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Button(#[\\w-]+| \\.[\\w-]+)?|borderless|children|color|compact|destructive|disabled|icon|label|loading|on (click)|outline|prominent|size|style|tooltip|variant)$"
             }
           }
         },
@@ -3902,7 +3902,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Calendar(#[\\w-]+| \\.[\\w-]+)?|children|disabled|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Calendar(#[\\w-]+| \\.[\\w-]+)?|children|disabled|style|tooltip)$"
             }
           }
         },
@@ -3957,7 +3957,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Calendar(#[\\w-]+| \\.[\\w-]+)?|children|disabled|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Calendar(#[\\w-]+| \\.[\\w-]+)?|children|disabled|style|tooltip)$"
             }
           }
         },
@@ -4031,7 +4031,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Callout(#[\\w-]+| \\.[\\w-]+)?|children|severity|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Callout(#[\\w-]+| \\.[\\w-]+)?|children|severity|style|text|tooltip)$"
             }
           }
         },
@@ -4105,7 +4105,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Callout(#[\\w-]+| \\.[\\w-]+)?|children|severity|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Callout(#[\\w-]+| \\.[\\w-]+)?|children|severity|style|text|tooltip)$"
             }
           }
         },
@@ -4254,7 +4254,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Canvas(#[\\w-]+| \\.[\\w-]+)?|children|controls|graph|minimap|pattern|read_only|scene|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Canvas(#[\\w-]+| \\.[\\w-]+)?|children|controls|graph|minimap|pattern|read_only|scene|style|tooltip)$"
             }
           }
         },
@@ -4403,7 +4403,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Canvas(#[\\w-]+| \\.[\\w-]+)?|children|controls|graph|minimap|pattern|read_only|scene|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Canvas(#[\\w-]+| \\.[\\w-]+)?|children|controls|graph|minimap|pattern|read_only|scene|style|tooltip)$"
             }
           }
         },
@@ -4458,7 +4458,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Caption(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Caption(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
             }
           }
         },
@@ -4513,7 +4513,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Caption(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Caption(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
             }
           }
         },
@@ -4563,7 +4563,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Card(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Card(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -4613,7 +4613,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Card(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Card(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -4657,7 +4657,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Center(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Center(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -4701,7 +4701,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Center(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Center(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -4807,7 +4807,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Chart(#[\\w-]+| \\.[\\w-]+)?|children|color|data|mark|style|title|tooltip|x|y)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Chart(#[\\w-]+| \\.[\\w-]+)?|children|color|data|mark|style|title|tooltip|x|y)$"
             }
           }
         },
@@ -4913,7 +4913,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Chart(#[\\w-]+| \\.[\\w-]+)?|children|color|data|mark|style|title|tooltip|x|y)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Chart(#[\\w-]+| \\.[\\w-]+)?|children|color|data|mark|style|title|tooltip|x|y)$"
             }
           }
         },
@@ -5202,7 +5202,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Checkbox(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|indeterminate|label|on (change|click)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Checkbox(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|indeterminate|label|on (change|click)|style|tooltip)$"
             }
           }
         },
@@ -5491,7 +5491,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Checkbox(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|indeterminate|label|on (change|click)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Checkbox(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|indeterminate|label|on (change|click)|style|tooltip)$"
             }
           }
         },
@@ -5548,7 +5548,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Collapsible(#[\\w-]+| \\.[\\w-]+)?|children|open|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Collapsible(#[\\w-]+| \\.[\\w-]+)?|children|open|style|tooltip)$"
             }
           }
         },
@@ -5605,7 +5605,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Collapsible(#[\\w-]+| \\.[\\w-]+)?|children|open|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Collapsible(#[\\w-]+| \\.[\\w-]+)?|children|open|style|tooltip)$"
             }
           }
         },
@@ -5672,7 +5672,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|ColorPicker(#[\\w-]+| \\.[\\w-]+)?|children|disabled|on (change)|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|ColorPicker(#[\\w-]+| \\.[\\w-]+)?|children|disabled|on (change)|style|tooltip|value)$"
             }
           }
         },
@@ -5739,7 +5739,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.ColorPicker(#[\\w-]+| \\.[\\w-]+)?|children|disabled|on (change)|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.ColorPicker(#[\\w-]+| \\.[\\w-]+)?|children|disabled|on (change)|style|tooltip|value)$"
             }
           }
         },
@@ -5809,7 +5809,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Container(#[\\w-]+| \\.[\\w-]+)?|children|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Container(#[\\w-]+| \\.[\\w-]+)?|children|size|style|tooltip)$"
             }
           }
         },
@@ -5879,7 +5879,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Container(#[\\w-]+| \\.[\\w-]+)?|children|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Container(#[\\w-]+| \\.[\\w-]+)?|children|size|style|tooltip)$"
             }
           }
         },
@@ -5937,7 +5937,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|CopyButton(#[\\w-]+| \\.[\\w-]+)?|children|label|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|CopyButton(#[\\w-]+| \\.[\\w-]+)?|children|label|style|text|tooltip)$"
             }
           }
         },
@@ -5995,7 +5995,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.CopyButton(#[\\w-]+| \\.[\\w-]+)?|children|label|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.CopyButton(#[\\w-]+| \\.[\\w-]+)?|children|label|style|text|tooltip)$"
             }
           }
         },
@@ -6065,7 +6065,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|DatePicker(#[\\w-]+| \\.[\\w-]+)?|children|disabled|on (change)|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|DatePicker(#[\\w-]+| \\.[\\w-]+)?|children|disabled|on (change)|style|tooltip|value)$"
             }
           }
         },
@@ -6135,7 +6135,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.DatePicker(#[\\w-]+| \\.[\\w-]+)?|children|disabled|on (change)|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.DatePicker(#[\\w-]+| \\.[\\w-]+)?|children|disabled|on (change)|style|tooltip|value)$"
             }
           }
         },
@@ -6212,7 +6212,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|DescriptionItem(#[\\w-]+| \\.[\\w-]+)?|children|label|span|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|DescriptionItem(#[\\w-]+| \\.[\\w-]+)?|children|label|span|style|tooltip|value)$"
             },
             "required": [
               "value"
@@ -6292,7 +6292,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.DescriptionItem(#[\\w-]+| \\.[\\w-]+)?|children|label|span|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.DescriptionItem(#[\\w-]+| \\.[\\w-]+)?|children|label|span|style|tooltip|value)$"
             },
             "required": [
               "value"
@@ -6399,7 +6399,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|DescriptionList(#[\\w-]+| \\.[\\w-]+)?|bordered|children|columns|label-width|layout|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|DescriptionList(#[\\w-]+| \\.[\\w-]+)?|bordered|children|columns|label-width|layout|style|tooltip)$"
             }
           }
         },
@@ -6503,7 +6503,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.DescriptionList(#[\\w-]+| \\.[\\w-]+)?|bordered|children|columns|label-width|layout|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.DescriptionList(#[\\w-]+| \\.[\\w-]+)?|bordered|children|columns|label-width|layout|style|tooltip)$"
             }
           }
         },
@@ -6570,7 +6570,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Dialog(#[\\w-]+| \\.[\\w-]+)?|children|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Dialog(#[\\w-]+| \\.[\\w-]+)?|children|style|title|tooltip)$"
             }
           }
         },
@@ -6637,7 +6637,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Dialog(#[\\w-]+| \\.[\\w-]+)?|children|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Dialog(#[\\w-]+| \\.[\\w-]+)?|children|style|title|tooltip)$"
             }
           }
         },
@@ -6710,7 +6710,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Divider(#[\\w-]+| \\.[\\w-]+)?|children|label|orientation|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Divider(#[\\w-]+| \\.[\\w-]+)?|children|label|orientation|style|tooltip)$"
             }
           }
         },
@@ -6783,7 +6783,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Divider(#[\\w-]+| \\.[\\w-]+)?|children|label|orientation|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Divider(#[\\w-]+| \\.[\\w-]+)?|children|label|orientation|style|tooltip)$"
             }
           }
         },
@@ -6903,7 +6903,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|DropdownMenu(#[\\w-]+| \\.[\\w-]+)?|children|disabled|icon|label|size|style|tooltip|variant)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|DropdownMenu(#[\\w-]+| \\.[\\w-]+)?|children|disabled|icon|label|size|style|tooltip|variant)$"
             }
           }
         },
@@ -7023,7 +7023,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.DropdownMenu(#[\\w-]+| \\.[\\w-]+)?|children|disabled|icon|label|size|style|tooltip|variant)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.DropdownMenu(#[\\w-]+| \\.[\\w-]+)?|children|disabled|icon|label|size|style|tooltip|variant)$"
             }
           }
         },
@@ -7263,7 +7263,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Editor(#[\\w-]+| \\.[\\w-]+)?|children|diagnostics|disabled|height|highlighting|language|languages|markdown|on (change)|placeholder|read_only|readonly|show-selection|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Editor(#[\\w-]+| \\.[\\w-]+)?|children|diagnostics|disabled|height|highlighting|language|languages|markdown|on (change)|placeholder|read_only|readonly|show-selection|style|tooltip|value)$"
             }
           }
         },
@@ -7503,7 +7503,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Editor(#[\\w-]+| \\.[\\w-]+)?|children|diagnostics|disabled|height|highlighting|language|languages|markdown|on (change)|placeholder|read_only|readonly|show-selection|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Editor(#[\\w-]+| \\.[\\w-]+)?|children|diagnostics|disabled|height|highlighting|language|languages|markdown|on (change)|placeholder|read_only|readonly|show-selection|style|tooltip|value)$"
             }
           }
         },
@@ -7574,7 +7574,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Empty(#[\\w-]+| \\.[\\w-]+)?|children|description|icon|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Empty(#[\\w-]+| \\.[\\w-]+)?|children|description|icon|style|title|tooltip)$"
             }
           }
         },
@@ -7645,7 +7645,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Empty(#[\\w-]+| \\.[\\w-]+)?|children|description|icon|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Empty(#[\\w-]+| \\.[\\w-]+)?|children|description|icon|style|title|tooltip)$"
             }
           }
         },
@@ -7703,7 +7703,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|EmptyState(#[\\w-]+| \\.[\\w-]+)?|body|children|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|EmptyState(#[\\w-]+| \\.[\\w-]+)?|body|children|style|title|tooltip)$"
             }
           }
         },
@@ -7761,7 +7761,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.EmptyState(#[\\w-]+| \\.[\\w-]+)?|body|children|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.EmptyState(#[\\w-]+| \\.[\\w-]+)?|body|children|style|title|tooltip)$"
             }
           }
         },
@@ -7834,7 +7834,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Fade(#[\\w-]+| \\.[\\w-]+)?|children|duration|hover|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Fade(#[\\w-]+| \\.[\\w-]+)?|children|duration|hover|style|tooltip)$"
             }
           }
         },
@@ -7907,7 +7907,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Fade(#[\\w-]+| \\.[\\w-]+)?|children|duration|hover|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Fade(#[\\w-]+| \\.[\\w-]+)?|children|duration|hover|style|tooltip)$"
             }
           }
         },
@@ -8017,7 +8017,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Form(#[\\w-]+| \\.[\\w-]+)?|children|columns|label-layout|label-width|layout|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Form(#[\\w-]+| \\.[\\w-]+)?|children|columns|label-layout|label-width|layout|style|tooltip)$"
             }
           }
         },
@@ -8127,7 +8127,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Form(#[\\w-]+| \\.[\\w-]+)?|children|columns|label-layout|label-width|layout|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Form(#[\\w-]+| \\.[\\w-]+)?|children|columns|label-layout|label-width|layout|style|tooltip)$"
             }
           }
         },
@@ -8278,7 +8278,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|FormField(#[\\w-]+| \\.[\\w-]+)?|align|children|col-span|col-start|description|label|label-indent|required|style|tooltip|visible)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|FormField(#[\\w-]+| \\.[\\w-]+)?|align|children|col-span|col-start|description|label|label-indent|required|style|tooltip|visible)$"
             }
           }
         },
@@ -8429,7 +8429,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.FormField(#[\\w-]+| \\.[\\w-]+)?|align|children|col-span|col-start|description|label|label-indent|required|style|tooltip|visible)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.FormField(#[\\w-]+| \\.[\\w-]+)?|align|children|col-span|col-start|description|label|label-indent|required|style|tooltip|visible)$"
             }
           }
         },
@@ -8515,7 +8515,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Frame(#[\\w-]+| \\.[\\w-]+)?|children|ratio|size|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Frame(#[\\w-]+| \\.[\\w-]+)?|children|ratio|size|style|text|tooltip)$"
             }
           }
         },
@@ -8601,7 +8601,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Frame(#[\\w-]+| \\.[\\w-]+)?|children|ratio|size|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Frame(#[\\w-]+| \\.[\\w-]+)?|children|ratio|size|style|text|tooltip)$"
             }
           }
         },
@@ -8665,7 +8665,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Gauge(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Gauge(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip|value)$"
             }
           }
         },
@@ -8729,7 +8729,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Gauge(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Gauge(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip|value)$"
             }
           }
         },
@@ -8813,7 +8813,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|GroupBox(#[\\w-]+| \\.[\\w-]+)?|children|footer|style|title|tooltip|variant)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|GroupBox(#[\\w-]+| \\.[\\w-]+)?|children|footer|style|title|tooltip|variant)$"
             }
           }
         },
@@ -8897,7 +8897,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.GroupBox(#[\\w-]+| \\.[\\w-]+)?|children|footer|style|title|tooltip|variant)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.GroupBox(#[\\w-]+| \\.[\\w-]+)?|children|footer|style|title|tooltip|variant)$"
             }
           }
         },
@@ -8956,7 +8956,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|HStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|HStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -9015,7 +9015,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.HStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.HStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -9084,7 +9084,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Heading(#[\\w-]+| \\.[\\w-]+)?|children|level|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Heading(#[\\w-]+| \\.[\\w-]+)?|children|level|style|text|tooltip)$"
             }
           }
         },
@@ -9153,7 +9153,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Heading(#[\\w-]+| \\.[\\w-]+)?|children|level|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Heading(#[\\w-]+| \\.[\\w-]+)?|children|level|style|text|tooltip)$"
             }
           }
         },
@@ -9314,7 +9314,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Icon(#[\\w-]+| \\.[\\w-]+)?|children|color|icon|name|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Icon(#[\\w-]+| \\.[\\w-]+)?|children|color|icon|name|size|style|tooltip)$"
             }
           }
         },
@@ -9475,7 +9475,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Icon(#[\\w-]+| \\.[\\w-]+)?|children|color|icon|name|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Icon(#[\\w-]+| \\.[\\w-]+)?|children|color|icon|name|size|style|tooltip)$"
             }
           }
         },
@@ -9544,7 +9544,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|IconButton(#[\\w-]+| \\.[\\w-]+)?|children|disabled|icon|on (click)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|IconButton(#[\\w-]+| \\.[\\w-]+)?|children|disabled|icon|on (click)|style|tooltip)$"
             }
           }
         },
@@ -9613,7 +9613,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.IconButton(#[\\w-]+| \\.[\\w-]+)?|children|disabled|icon|on (click)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.IconButton(#[\\w-]+| \\.[\\w-]+)?|children|disabled|icon|on (click)|style|tooltip)$"
             }
           }
         },
@@ -9689,7 +9689,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Image(#[\\w-]+| \\.[\\w-]+)?|children|object-fit|size|src|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Image(#[\\w-]+| \\.[\\w-]+)?|children|object-fit|size|src|style|tooltip)$"
             },
             "required": [
               "src"
@@ -9768,7 +9768,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Image(#[\\w-]+| \\.[\\w-]+)?|children|object-fit|size|src|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Image(#[\\w-]+| \\.[\\w-]+)?|children|object-fit|size|src|style|tooltip)$"
             },
             "required": [
               "src"
@@ -9845,7 +9845,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|InlineMessage(#[\\w-]+| \\.[\\w-]+)?|children|severity|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|InlineMessage(#[\\w-]+| \\.[\\w-]+)?|children|severity|style|text|tooltip)$"
             }
           }
         },
@@ -9919,7 +9919,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.InlineMessage(#[\\w-]+| \\.[\\w-]+)?|children|severity|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.InlineMessage(#[\\w-]+| \\.[\\w-]+)?|children|severity|style|text|tooltip)$"
             }
           }
         },
@@ -10167,7 +10167,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Input(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|disabled|masked|on (change|submit)|placeholder|readonly|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Input(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|disabled|masked|on (change|submit)|placeholder|readonly|style|tooltip|value)$"
             }
           }
         },
@@ -10415,7 +10415,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Input(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|disabled|masked|on (change|submit)|placeholder|readonly|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Input(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|disabled|masked|on (change|submit)|placeholder|readonly|style|tooltip|value)$"
             }
           }
         },
@@ -10483,7 +10483,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Inspector(#[\\w-]+| \\.[\\w-]+)?|children|of|placeholder|selected|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Inspector(#[\\w-]+| \\.[\\w-]+)?|children|of|placeholder|selected|style|tooltip)$"
             },
             "required": [
               "of"
@@ -10554,7 +10554,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Inspector(#[\\w-]+| \\.[\\w-]+)?|children|of|placeholder|selected|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Inspector(#[\\w-]+| \\.[\\w-]+)?|children|of|placeholder|selected|style|tooltip)$"
             },
             "required": [
               "of"
@@ -10638,7 +10638,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Kbd(#[\\w-]+| \\.[\\w-]+)?|appearance|children|keys|outline|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Kbd(#[\\w-]+| \\.[\\w-]+)?|appearance|children|keys|outline|style|tooltip)$"
             }
           }
         },
@@ -10719,7 +10719,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Kbd(#[\\w-]+| \\.[\\w-]+)?|appearance|children|keys|outline|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Kbd(#[\\w-]+| \\.[\\w-]+)?|appearance|children|keys|outline|style|tooltip)$"
             }
           }
         },
@@ -10777,7 +10777,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|KpiCard(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|KpiCard(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip|value)$"
             }
           }
         },
@@ -10835,7 +10835,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.KpiCard(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.KpiCard(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip|value)$"
             }
           }
         },
@@ -10942,7 +10942,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Label(#[\\w-]+| \\.[\\w-]+)?|children|label|masked|secondary|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Label(#[\\w-]+| \\.[\\w-]+)?|children|label|masked|secondary|style|text|tooltip)$"
             }
           }
         },
@@ -11049,7 +11049,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Label(#[\\w-]+| \\.[\\w-]+)?|children|label|masked|secondary|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Label(#[\\w-]+| \\.[\\w-]+)?|children|label|masked|secondary|style|text|tooltip)$"
             }
           }
         },
@@ -11131,7 +11131,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Link(#[\\w-]+| \\.[\\w-]+)?|children|disabled|href|label|on (click)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Link(#[\\w-]+| \\.[\\w-]+)?|children|disabled|href|label|on (click)|style|tooltip)$"
             }
           }
         },
@@ -11213,7 +11213,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Link(#[\\w-]+| \\.[\\w-]+)?|children|disabled|href|label|on (click)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Link(#[\\w-]+| \\.[\\w-]+)?|children|disabled|href|label|on (click)|style|tooltip)$"
             }
           }
         },
@@ -11303,7 +11303,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|List(#[\\w-]+| \\.[\\w-]+)?|children|items|on (confirm|select)|selected|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|List(#[\\w-]+| \\.[\\w-]+)?|children|items|on (confirm|select)|selected|style|title|tooltip)$"
             }
           }
         },
@@ -11393,7 +11393,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.List(#[\\w-]+| \\.[\\w-]+)?|children|items|on (confirm|select)|selected|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.List(#[\\w-]+| \\.[\\w-]+)?|children|items|on (confirm|select)|selected|style|title|tooltip)$"
             }
           }
         },
@@ -11449,7 +11449,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Markdown(#[\\w-]+| \\.[\\w-]+)?|children|src|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Markdown(#[\\w-]+| \\.[\\w-]+)?|children|src|style|tooltip)$"
             }
           }
         },
@@ -11505,7 +11505,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Markdown(#[\\w-]+| \\.[\\w-]+)?|children|src|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Markdown(#[\\w-]+| \\.[\\w-]+)?|children|src|style|tooltip)$"
             }
           }
         },
@@ -11598,7 +11598,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|MenuItem(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|icon|label|on (click)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|MenuItem(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|icon|label|on (click)|style|tooltip)$"
             }
           }
         },
@@ -11691,7 +11691,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.MenuItem(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|icon|label|on (click)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.MenuItem(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|icon|label|on (click)|style|tooltip)$"
             }
           }
         },
@@ -11733,7 +11733,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|MenuSeparator(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|MenuSeparator(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -11775,7 +11775,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.MenuSeparator(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.MenuSeparator(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -11842,7 +11842,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Message(#[\\w-]+| \\.[\\w-]+)?|alignment|avatar|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Message(#[\\w-]+| \\.[\\w-]+)?|alignment|avatar|children|style|tooltip)$"
             }
           }
         },
@@ -11909,7 +11909,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Message(#[\\w-]+| \\.[\\w-]+)?|alignment|avatar|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Message(#[\\w-]+| \\.[\\w-]+)?|alignment|avatar|children|style|tooltip)$"
             }
           }
         },
@@ -11953,7 +11953,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|MessageAvatar(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|MessageAvatar(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -11997,7 +11997,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.MessageAvatar(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.MessageAvatar(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -12041,7 +12041,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|MessageContent(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|MessageContent(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -12085,7 +12085,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.MessageContent(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.MessageContent(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -12129,7 +12129,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|MessageFooter(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|MessageFooter(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -12173,7 +12173,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.MessageFooter(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.MessageFooter(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -12217,7 +12217,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|MessageHeader(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|MessageHeader(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -12261,7 +12261,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.MessageHeader(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.MessageHeader(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -12399,7 +12399,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Meter(#[\\w-]+| \\.[\\w-]+)?|children|label|max|min|show_value|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Meter(#[\\w-]+| \\.[\\w-]+)?|children|label|max|min|show_value|style|tooltip|value)$"
             }
           }
         },
@@ -12537,7 +12537,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Meter(#[\\w-]+| \\.[\\w-]+)?|children|label|max|min|show_value|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Meter(#[\\w-]+| \\.[\\w-]+)?|children|label|max|min|show_value|style|tooltip|value)$"
             }
           }
         },
@@ -12651,7 +12651,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|NumberInput(#[\\w-]+| \\.[\\w-]+)?|appearance|children|disabled|on (change)|placeholder|size|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|NumberInput(#[\\w-]+| \\.[\\w-]+)?|appearance|children|disabled|on (change)|placeholder|size|style|tooltip|value)$"
             }
           }
         },
@@ -12765,7 +12765,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.NumberInput(#[\\w-]+| \\.[\\w-]+)?|appearance|children|disabled|on (change)|placeholder|size|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.NumberInput(#[\\w-]+| \\.[\\w-]+)?|appearance|children|disabled|on (change)|placeholder|size|style|tooltip|value)$"
             }
           }
         },
@@ -12867,7 +12867,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|OtpInput(#[\\w-]+| \\.[\\w-]+)?|children|disabled|length|masked|on (complete|change)|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|OtpInput(#[\\w-]+| \\.[\\w-]+)?|children|disabled|length|masked|on (complete|change)|style|tooltip|value)$"
             }
           }
         },
@@ -12969,7 +12969,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.OtpInput(#[\\w-]+| \\.[\\w-]+)?|children|disabled|length|masked|on (complete|change)|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.OtpInput(#[\\w-]+| \\.[\\w-]+)?|children|disabled|length|masked|on (complete|change)|style|tooltip|value)$"
             }
           }
         },
@@ -13044,7 +13044,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Outline(#[\\w-]+| \\.[\\w-]+)?|children|of|on (select)|placeholder|selected|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Outline(#[\\w-]+| \\.[\\w-]+)?|children|of|on (select)|placeholder|selected|style|tooltip)$"
             },
             "required": [
               "of"
@@ -13122,7 +13122,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Outline(#[\\w-]+| \\.[\\w-]+)?|children|of|on (select)|placeholder|selected|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Outline(#[\\w-]+| \\.[\\w-]+)?|children|of|on (select)|placeholder|selected|style|tooltip)$"
             },
             "required": [
               "of"
@@ -13180,7 +13180,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Overline(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Overline(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
             }
           }
         },
@@ -13235,7 +13235,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Overline(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Overline(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
             }
           }
         },
@@ -13341,7 +13341,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Pagination(#[\\w-]+| \\.[\\w-]+)?|children|compact|on (change)|page|style|tooltip|total|visible)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Pagination(#[\\w-]+| \\.[\\w-]+)?|children|compact|on (change)|page|style|tooltip|total|visible)$"
             },
             "required": [
               "total"
@@ -13450,7 +13450,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Pagination(#[\\w-]+| \\.[\\w-]+)?|children|compact|on (change)|page|style|tooltip|total|visible)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Pagination(#[\\w-]+| \\.[\\w-]+)?|children|compact|on (change)|page|style|tooltip|total|visible)$"
             },
             "required": [
               "total"
@@ -13495,7 +13495,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Palette(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Palette(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -13537,7 +13537,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Palette(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Palette(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -13581,7 +13581,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Paper(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Paper(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -13625,7 +13625,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Paper(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Paper(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -13680,7 +13680,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Paragraph(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Paragraph(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
             }
           }
         },
@@ -13735,7 +13735,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Paragraph(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Paragraph(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
             }
           }
         },
@@ -13870,7 +13870,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Player(#[\\w-]+| \\.[\\w-]+)?|buffer_capacity|children|height|looping|muted|playing|src|style|tooltip|volume|width)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Player(#[\\w-]+| \\.[\\w-]+)?|buffer_capacity|children|height|looping|muted|playing|src|style|tooltip|volume|width)$"
             },
             "required": [
               "src"
@@ -14008,7 +14008,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Player(#[\\w-]+| \\.[\\w-]+)?|buffer_capacity|children|height|looping|muted|playing|src|style|tooltip|volume|width)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Player(#[\\w-]+| \\.[\\w-]+)?|buffer_capacity|children|height|looping|muted|playing|src|style|tooltip|volume|width)$"
             },
             "required": [
               "src"
@@ -14087,7 +14087,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Preview(#[\\w-]+| \\.[\\w-]+)?|children|mode|on (click)|placeholder|remote|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Preview(#[\\w-]+| \\.[\\w-]+)?|children|mode|on (click)|placeholder|remote|style|tooltip)$"
             }
           }
         },
@@ -14163,7 +14163,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Preview(#[\\w-]+| \\.[\\w-]+)?|children|mode|on (click)|placeholder|remote|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Preview(#[\\w-]+| \\.[\\w-]+)?|children|mode|on (click)|placeholder|remote|style|tooltip)$"
             }
           }
         },
@@ -14425,7 +14425,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Progress(#[\\w-]+| \\.[\\w-]+)?|children|color|label|loading|max|min|show_value|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Progress(#[\\w-]+| \\.[\\w-]+)?|children|color|label|loading|max|min|show_value|style|tooltip|value)$"
             }
           }
         },
@@ -14687,7 +14687,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Progress(#[\\w-]+| \\.[\\w-]+)?|children|color|label|loading|max|min|show_value|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Progress(#[\\w-]+| \\.[\\w-]+)?|children|color|label|loading|max|min|show_value|style|tooltip|value)$"
             }
           }
         },
@@ -14763,7 +14763,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|ProgressCircle(#[\\w-]+| \\.[\\w-]+)?|children|color|loading|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|ProgressCircle(#[\\w-]+| \\.[\\w-]+)?|children|color|loading|style|tooltip|value)$"
             }
           }
         },
@@ -14839,7 +14839,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.ProgressCircle(#[\\w-]+| \\.[\\w-]+)?|children|color|loading|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.ProgressCircle(#[\\w-]+| \\.[\\w-]+)?|children|color|loading|style|tooltip|value)$"
             }
           }
         },
@@ -14889,7 +14889,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|QrCode(#[\\w-]+| \\.[\\w-]+)?|children|data|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|QrCode(#[\\w-]+| \\.[\\w-]+)?|children|data|style|tooltip)$"
             }
           }
         },
@@ -14939,7 +14939,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.QrCode(#[\\w-]+| \\.[\\w-]+)?|children|data|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.QrCode(#[\\w-]+| \\.[\\w-]+)?|children|data|style|tooltip)$"
             }
           }
         },
@@ -15007,7 +15007,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Radio(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Radio(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|style|tooltip)$"
             }
           }
         },
@@ -15075,7 +15075,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Radio(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Radio(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|style|tooltip)$"
             }
           }
         },
@@ -15179,7 +15179,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|RadioGroup(#[\\w-]+| \\.[\\w-]+)?|children|disabled|layout|on (change)|selected|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|RadioGroup(#[\\w-]+| \\.[\\w-]+)?|children|disabled|layout|on (change)|selected|style|tooltip)$"
             }
           }
         },
@@ -15283,7 +15283,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.RadioGroup(#[\\w-]+| \\.[\\w-]+)?|children|disabled|layout|on (change)|selected|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.RadioGroup(#[\\w-]+| \\.[\\w-]+)?|children|disabled|layout|on (change)|selected|style|tooltip)$"
             }
           }
         },
@@ -15436,7 +15436,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Rating(#[\\w-]+| \\.[\\w-]+)?|children|color|disabled|max|on (change)|size|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Rating(#[\\w-]+| \\.[\\w-]+)?|children|color|disabled|max|on (change)|size|style|tooltip|value)$"
             }
           }
         },
@@ -15589,7 +15589,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Rating(#[\\w-]+| \\.[\\w-]+)?|children|color|disabled|max|on (change)|size|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Rating(#[\\w-]+| \\.[\\w-]+)?|children|color|disabled|max|on (change)|size|style|tooltip|value)$"
             }
           }
         },
@@ -15659,7 +15659,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Resizable(#[\\w-]+| \\.[\\w-]+)?|children|layout|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Resizable(#[\\w-]+| \\.[\\w-]+)?|children|layout|style|tooltip)$"
             }
           }
         },
@@ -15729,7 +15729,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Resizable(#[\\w-]+| \\.[\\w-]+)?|children|layout|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Resizable(#[\\w-]+| \\.[\\w-]+)?|children|layout|style|tooltip)$"
             }
           }
         },
@@ -15842,7 +15842,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|ResizablePanel(#[\\w-]+| \\.[\\w-]+)?|children|fixed|max-size|min-size|size|style|tooltip|visible)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|ResizablePanel(#[\\w-]+| \\.[\\w-]+)?|children|fixed|max-size|min-size|size|style|tooltip|visible)$"
             }
           }
         },
@@ -15955,7 +15955,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.ResizablePanel(#[\\w-]+| \\.[\\w-]+)?|children|fixed|max-size|min-size|size|style|tooltip|visible)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.ResizablePanel(#[\\w-]+| \\.[\\w-]+)?|children|fixed|max-size|min-size|size|style|tooltip|visible)$"
             }
           }
         },
@@ -15999,7 +15999,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Scrollable(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Scrollable(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -16043,7 +16043,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Scrollable(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Scrollable(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -16087,7 +16087,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|SegmentedControl(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|SegmentedControl(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -16131,7 +16131,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.SegmentedControl(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.SegmentedControl(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -16330,7 +16330,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Select(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|disabled|label|on (change)|options|placeholder|searchable|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Select(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|disabled|label|on (change)|options|placeholder|searchable|style|tooltip|value)$"
             }
           }
         },
@@ -16529,7 +16529,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Select(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|disabled|label|on (change)|options|placeholder|searchable|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Select(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|disabled|label|on (change)|options|placeholder|searchable|style|tooltip|value)$"
             }
           }
         },
@@ -16638,7 +16638,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Separator(#[\\w-]+| \\.[\\w-]+)?|children|dashed|label|orientation|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Separator(#[\\w-]+| \\.[\\w-]+)?|children|dashed|label|orientation|style|tooltip)$"
             }
           }
         },
@@ -16747,7 +16747,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Separator(#[\\w-]+| \\.[\\w-]+)?|children|dashed|label|orientation|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Separator(#[\\w-]+| \\.[\\w-]+)?|children|dashed|label|orientation|style|tooltip)$"
             }
           }
         },
@@ -16804,7 +16804,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|SettingItem(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|SettingItem(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
             }
           }
         },
@@ -16861,7 +16861,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.SettingItem(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.SettingItem(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
             }
           }
         },
@@ -16918,7 +16918,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|SettingPage(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|SettingPage(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
             }
           }
         },
@@ -16975,7 +16975,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.SettingPage(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.SettingPage(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
             }
           }
         },
@@ -17019,7 +17019,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Settings(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Settings(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -17063,7 +17063,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Settings(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Settings(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -17120,7 +17120,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|SettingsGroup(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|SettingsGroup(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
             }
           }
         },
@@ -17177,7 +17177,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.SettingsGroup(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.SettingsGroup(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
             }
           }
         },
@@ -17219,7 +17219,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Showcase(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Showcase(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -17261,7 +17261,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Showcase(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Showcase(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -17353,7 +17353,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Sidebar(#[\\w-]+| \\.[\\w-]+)?|children|collapsed|collapsible|side|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Sidebar(#[\\w-]+| \\.[\\w-]+)?|children|collapsed|collapsible|side|style|tooltip)$"
             }
           }
         },
@@ -17445,7 +17445,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Sidebar(#[\\w-]+| \\.[\\w-]+)?|children|collapsed|collapsible|side|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Sidebar(#[\\w-]+| \\.[\\w-]+)?|children|collapsed|collapsible|side|style|tooltip)$"
             }
           }
         },
@@ -17489,7 +17489,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|SidebarFooter(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|SidebarFooter(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -17533,7 +17533,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.SidebarFooter(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.SidebarFooter(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -17577,7 +17577,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|SidebarHeader(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|SidebarHeader(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -17621,7 +17621,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.SidebarHeader(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.SidebarHeader(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -17674,7 +17674,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|SidebarMenu(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|SidebarMenu(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -17727,7 +17727,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.SidebarMenu(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.SidebarMenu(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -17845,7 +17845,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|SidebarMenuItem(#[\\w-]+| \\.[\\w-]+)?|active|children|disabled|icon|label|on (click)|open|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|SidebarMenuItem(#[\\w-]+| \\.[\\w-]+)?|active|children|disabled|icon|label|on (click)|open|style|tooltip)$"
             }
           }
         },
@@ -17963,7 +17963,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.SidebarMenuItem(#[\\w-]+| \\.[\\w-]+)?|active|children|disabled|icon|label|on (click)|open|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.SidebarMenuItem(#[\\w-]+| \\.[\\w-]+)?|active|children|disabled|icon|label|on (click)|open|style|tooltip)$"
             }
           }
         },
@@ -18018,7 +18018,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Skeleton(#[\\w-]+| \\.[\\w-]+)?|children|secondary|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Skeleton(#[\\w-]+| \\.[\\w-]+)?|children|secondary|style|tooltip)$"
             }
           }
         },
@@ -18073,7 +18073,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Skeleton(#[\\w-]+| \\.[\\w-]+)?|children|secondary|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Skeleton(#[\\w-]+| \\.[\\w-]+)?|children|secondary|style|tooltip)$"
             }
           }
         },
@@ -18412,7 +18412,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Slider(#[\\w-]+| \\.[\\w-]+)?|children|disabled|max|min|on (change)|reverse|step|style|tooltip|value|vertical)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Slider(#[\\w-]+| \\.[\\w-]+)?|children|disabled|max|min|on (change)|reverse|step|style|tooltip|value|vertical)$"
             }
           }
         },
@@ -18751,7 +18751,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Slider(#[\\w-]+| \\.[\\w-]+)?|children|disabled|max|min|on (change)|reverse|step|style|tooltip|value|vertical)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Slider(#[\\w-]+| \\.[\\w-]+)?|children|disabled|max|min|on (change)|reverse|step|style|tooltip|value|vertical)$"
             }
           }
         },
@@ -18813,7 +18813,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Space(#[\\w-]+| \\.[\\w-]+)?|children|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Space(#[\\w-]+| \\.[\\w-]+)?|children|size|style|tooltip)$"
             }
           }
         },
@@ -18875,7 +18875,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Space(#[\\w-]+| \\.[\\w-]+)?|children|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Space(#[\\w-]+| \\.[\\w-]+)?|children|size|style|tooltip)$"
             }
           }
         },
@@ -18979,7 +18979,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Spinner(#[\\w-]+| \\.[\\w-]+)?|children|color|icon|size|spinner|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Spinner(#[\\w-]+| \\.[\\w-]+)?|children|color|icon|size|spinner|style|tooltip)$"
             }
           }
         },
@@ -19083,7 +19083,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Spinner(#[\\w-]+| \\.[\\w-]+)?|children|color|icon|size|spinner|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Spinner(#[\\w-]+| \\.[\\w-]+)?|children|color|icon|size|spinner|style|tooltip)$"
             }
           }
         },
@@ -19141,7 +19141,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Statistic(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Statistic(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip|value)$"
             }
           }
         },
@@ -19199,7 +19199,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Statistic(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Statistic(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip|value)$"
             }
           }
         },
@@ -19243,7 +19243,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|StatusBar(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|StatusBar(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -19287,7 +19287,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.StatusBar(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.StatusBar(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -19350,7 +19350,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|StatusMessage(#[\\w-]+| \\.[\\w-]+)?|children|icon|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|StatusMessage(#[\\w-]+| \\.[\\w-]+)?|children|icon|style|text|tooltip)$"
             }
           }
         },
@@ -19413,7 +19413,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.StatusMessage(#[\\w-]+| \\.[\\w-]+)?|children|icon|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.StatusMessage(#[\\w-]+| \\.[\\w-]+)?|children|icon|style|text|tooltip)$"
             }
           }
         },
@@ -19575,7 +19575,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Stepper(#[\\w-]+| \\.[\\w-]+)?|children|disabled|layout|max|min|on (change)|selected|style|text-center|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Stepper(#[\\w-]+| \\.[\\w-]+)?|children|disabled|layout|max|min|on (change)|selected|style|text-center|tooltip|value)$"
             }
           }
         },
@@ -19737,7 +19737,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Stepper(#[\\w-]+| \\.[\\w-]+)?|children|disabled|layout|max|min|on (change)|selected|style|text-center|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Stepper(#[\\w-]+| \\.[\\w-]+)?|children|disabled|layout|max|min|on (change)|selected|style|text-center|tooltip|value)$"
             }
           }
         },
@@ -19811,7 +19811,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|StepperItem(#[\\w-]+| \\.[\\w-]+)?|children|disabled|icon|label|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|StepperItem(#[\\w-]+| \\.[\\w-]+)?|children|disabled|icon|label|style|tooltip)$"
             }
           }
         },
@@ -19885,7 +19885,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.StepperItem(#[\\w-]+| \\.[\\w-]+)?|children|disabled|icon|label|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.StepperItem(#[\\w-]+| \\.[\\w-]+)?|children|disabled|icon|label|style|tooltip)$"
             }
           }
         },
@@ -19940,7 +19940,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Subtitle(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Subtitle(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
             }
           }
         },
@@ -19995,7 +19995,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Subtitle(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Subtitle(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
             }
           }
         },
@@ -20256,7 +20256,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Switch(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|label|on (change|click)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Switch(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|label|on (change|click)|style|tooltip)$"
             }
           }
         },
@@ -20517,7 +20517,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Switch(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|label|on (change|click)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Switch(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|label|on (change|click)|style|tooltip)$"
             }
           }
         },
@@ -20587,7 +20587,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Tab(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Tab(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|style|tooltip)$"
             }
           }
         },
@@ -20657,7 +20657,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Tab(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Tab(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|style|tooltip)$"
             }
           }
         },
@@ -20737,7 +20737,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Table(#[\\w-]+| \\.[\\w-]+)?|children|header|rows|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Table(#[\\w-]+| \\.[\\w-]+)?|children|header|rows|style|title|tooltip)$"
             }
           }
         },
@@ -20817,7 +20817,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Table(#[\\w-]+| \\.[\\w-]+)?|children|header|rows|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Table(#[\\w-]+| \\.[\\w-]+)?|children|header|rows|style|title|tooltip)$"
             }
           }
         },
@@ -20870,7 +20870,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|TableBody(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TableBody(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -20923,7 +20923,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.TableBody(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TableBody(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -20967,7 +20967,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|TableCaption(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TableCaption(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -21011,7 +21011,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.TableCaption(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TableCaption(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -21087,7 +21087,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|TableCell(#[\\w-]+| \\.[\\w-]+)?|children|col-span|style|text-align|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TableCell(#[\\w-]+| \\.[\\w-]+)?|children|col-span|style|text-align|tooltip)$"
             }
           }
         },
@@ -21163,7 +21163,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.TableCell(#[\\w-]+| \\.[\\w-]+)?|children|col-span|style|text-align|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TableCell(#[\\w-]+| \\.[\\w-]+)?|children|col-span|style|text-align|tooltip)$"
             }
           }
         },
@@ -21216,7 +21216,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|TableFooter(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TableFooter(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -21269,7 +21269,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.TableFooter(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TableFooter(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -21345,7 +21345,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|TableHead(#[\\w-]+| \\.[\\w-]+)?|children|col-span|style|text-align|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TableHead(#[\\w-]+| \\.[\\w-]+)?|children|col-span|style|text-align|tooltip)$"
             }
           }
         },
@@ -21421,7 +21421,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.TableHead(#[\\w-]+| \\.[\\w-]+)?|children|col-span|style|text-align|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TableHead(#[\\w-]+| \\.[\\w-]+)?|children|col-span|style|text-align|tooltip)$"
             }
           }
         },
@@ -21474,7 +21474,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|TableHeader(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TableHeader(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -21527,7 +21527,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.TableHeader(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TableHeader(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -21580,7 +21580,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|TableRow(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TableRow(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -21633,7 +21633,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.TableRow(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TableRow(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -21762,7 +21762,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Tabs(#[\\w-]+| \\.[\\w-]+)?|children|on (change|select)|selected|style|titles|tooltip|variant)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Tabs(#[\\w-]+| \\.[\\w-]+)?|children|on (change|select)|selected|style|titles|tooltip|variant)$"
             }
           }
         },
@@ -21891,7 +21891,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Tabs(#[\\w-]+| \\.[\\w-]+)?|children|on (change|select)|selected|style|titles|tooltip|variant)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Tabs(#[\\w-]+| \\.[\\w-]+)?|children|on (change|select)|selected|style|titles|tooltip|variant)$"
             }
           }
         },
@@ -22000,7 +22000,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Tag(#[\\w-]+| \\.[\\w-]+)?|children|label|outline|style|tooltip|variant)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Tag(#[\\w-]+| \\.[\\w-]+)?|children|label|outline|style|tooltip|variant)$"
             }
           }
         },
@@ -22109,7 +22109,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Tag(#[\\w-]+| \\.[\\w-]+)?|children|label|outline|style|tooltip|variant)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Tag(#[\\w-]+| \\.[\\w-]+)?|children|label|outline|style|tooltip|variant)$"
             }
           }
         },
@@ -22188,7 +22188,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Terminal(#[\\w-]+| \\.[\\w-]+)?|children|cols|command|rows|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Terminal(#[\\w-]+| \\.[\\w-]+)?|children|cols|command|rows|style|tooltip)$"
             }
           }
         },
@@ -22267,7 +22267,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Terminal(#[\\w-]+| \\.[\\w-]+)?|children|cols|command|rows|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Terminal(#[\\w-]+| \\.[\\w-]+)?|children|cols|command|rows|style|tooltip)$"
             }
           }
         },
@@ -22345,7 +22345,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Tex(#[\\w-]+| \\.[\\w-]+)?|children|color|size|src|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Tex(#[\\w-]+| \\.[\\w-]+)?|children|color|size|src|style|tooltip)$"
             }
           }
         },
@@ -22423,7 +22423,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Tex(#[\\w-]+| \\.[\\w-]+)?|children|color|size|src|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Tex(#[\\w-]+| \\.[\\w-]+)?|children|color|size|src|style|tooltip)$"
             }
           }
         },
@@ -22589,7 +22589,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Text(#[\\w-]+| \\.[\\w-]+)?|children|size|style|text|tooltip|wrap)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Text(#[\\w-]+| \\.[\\w-]+)?|children|size|style|text|tooltip|wrap)$"
             }
           }
         },
@@ -22755,7 +22755,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Text(#[\\w-]+| \\.[\\w-]+)?|children|size|style|text|tooltip|wrap)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Text(#[\\w-]+| \\.[\\w-]+)?|children|size|style|text|tooltip|wrap)$"
             }
           }
         },
@@ -22843,7 +22843,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|TextInput(#[\\w-]+| \\.[\\w-]+)?|children|description|error|label|on (change)|placeholder|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TextInput(#[\\w-]+| \\.[\\w-]+)?|children|description|error|label|on (change)|placeholder|style|tooltip|value)$"
             }
           }
         },
@@ -22931,7 +22931,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.TextInput(#[\\w-]+| \\.[\\w-]+)?|children|description|error|label|on (change)|placeholder|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TextInput(#[\\w-]+| \\.[\\w-]+)?|children|description|error|label|on (change)|placeholder|style|tooltip|value)$"
             }
           }
         },
@@ -23049,7 +23049,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Textarea(#[\\w-]+| \\.[\\w-]+)?|children|disabled|height|on (change)|placeholder|readonly|rows|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Textarea(#[\\w-]+| \\.[\\w-]+)?|children|disabled|height|on (change)|placeholder|readonly|rows|style|tooltip|value)$"
             }
           }
         },
@@ -23167,7 +23167,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Textarea(#[\\w-]+| \\.[\\w-]+)?|children|disabled|height|on (change)|placeholder|readonly|rows|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Textarea(#[\\w-]+| \\.[\\w-]+)?|children|disabled|height|on (change)|placeholder|readonly|rows|style|tooltip|value)$"
             }
           }
         },
@@ -23236,7 +23236,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|TimeField(#[\\w-]+| \\.[\\w-]+)?|children|invalid|on (change)|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TimeField(#[\\w-]+| \\.[\\w-]+)?|children|invalid|on (change)|style|tooltip|value)$"
             }
           }
         },
@@ -23305,7 +23305,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.TimeField(#[\\w-]+| \\.[\\w-]+)?|children|invalid|on (change)|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TimeField(#[\\w-]+| \\.[\\w-]+)?|children|invalid|on (change)|style|tooltip|value)$"
             }
           }
         },
@@ -23360,7 +23360,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|TimelineItem(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TimelineItem(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
             }
           }
         },
@@ -23415,7 +23415,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.TimelineItem(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TimelineItem(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
             }
           }
         },
@@ -23511,7 +23511,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Title(#[\\w-]+| \\.[\\w-]+)?|children|order|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Title(#[\\w-]+| \\.[\\w-]+)?|children|order|style|text|tooltip)$"
             }
           }
         },
@@ -23607,7 +23607,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Title(#[\\w-]+| \\.[\\w-]+)?|children|order|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Title(#[\\w-]+| \\.[\\w-]+)?|children|order|style|text|tooltip)$"
             }
           }
         },
@@ -23651,7 +23651,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|TitleBar(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TitleBar(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -23695,7 +23695,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.TitleBar(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TitleBar(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -23782,7 +23782,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Toggle(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|on (click)|pressed|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Toggle(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|on (click)|pressed|style|tooltip)$"
             }
           }
         },
@@ -23869,7 +23869,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Toggle(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|on (click)|pressed|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Toggle(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|on (click)|pressed|style|tooltip)$"
             }
           }
         },
@@ -23943,7 +23943,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|ToggleButton(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|on (click)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|ToggleButton(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|on (click)|style|tooltip)$"
             }
           }
         },
@@ -24017,7 +24017,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.ToggleButton(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|on (click)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.ToggleButton(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|on (click)|style|tooltip)$"
             }
           }
         },
@@ -24074,7 +24074,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Toolbar(#[\\w-]+| \\.[\\w-]+)?|children|disabled|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Toolbar(#[\\w-]+| \\.[\\w-]+)?|children|disabled|style|tooltip)$"
             }
           }
         },
@@ -24131,7 +24131,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Toolbar(#[\\w-]+| \\.[\\w-]+)?|children|disabled|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Toolbar(#[\\w-]+| \\.[\\w-]+)?|children|disabled|style|tooltip)$"
             }
           }
         },
@@ -24184,7 +24184,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Tree(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Tree(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -24237,7 +24237,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Tree(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Tree(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -24313,7 +24313,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|TreeItem(#[\\w-]+| \\.[\\w-]+)?|children|expanded|icon|label|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TreeItem(#[\\w-]+| \\.[\\w-]+)?|children|expanded|icon|label|style|tooltip)$"
             }
           }
         },
@@ -24389,7 +24389,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.TreeItem(#[\\w-]+| \\.[\\w-]+)?|children|expanded|icon|label|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TreeItem(#[\\w-]+| \\.[\\w-]+)?|children|expanded|icon|label|style|tooltip)$"
             }
           }
         },
@@ -24445,7 +24445,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|TrendIndicator(#[\\w-]+| \\.[\\w-]+)?|change|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TrendIndicator(#[\\w-]+| \\.[\\w-]+)?|change|children|style|tooltip)$"
             }
           }
         },
@@ -24501,7 +24501,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.TrendIndicator(#[\\w-]+| \\.[\\w-]+)?|change|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TrendIndicator(#[\\w-]+| \\.[\\w-]+)?|change|children|style|tooltip)$"
             }
           }
         },
@@ -24571,7 +24571,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|UsageBar(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip|total|used)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|UsageBar(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip|total|used)$"
             }
           }
         },
@@ -24641,7 +24641,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.UsageBar(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip|total|used)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.UsageBar(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip|total|used)$"
             }
           }
         },
@@ -24700,7 +24700,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|VStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|VStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -24759,7 +24759,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.VStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.VStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -24810,7 +24810,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Vars(#[\\w-]+| \\.[\\w-]+)?|children|of|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Vars(#[\\w-]+| \\.[\\w-]+)?|children|of|style|tooltip)$"
             }
           }
         },
@@ -24861,7 +24861,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Vars(#[\\w-]+| \\.[\\w-]+)?|children|of|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Vars(#[\\w-]+| \\.[\\w-]+)?|children|of|style|tooltip)$"
             }
           }
         },
@@ -24927,7 +24927,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Viewer(#[\\w-]+| \\.[\\w-]+)?|children|quality|src|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Viewer(#[\\w-]+| \\.[\\w-]+)?|children|quality|src|style|tooltip)$"
             },
             "required": [
               "src"
@@ -24996,7 +24996,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Viewer(#[\\w-]+| \\.[\\w-]+)?|children|quality|src|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Viewer(#[\\w-]+| \\.[\\w-]+)?|children|quality|src|style|tooltip)$"
             },
             "required": [
               "src"
@@ -25043,7 +25043,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|ZStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|ZStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -25087,20 +25087,36 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.ZStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.ZStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         }
       ],
-      "description": "One element key plus props, `style`, `on <event>` and `children`.",
+      "description": "One element key plus props, `style`, `on <event>` and `children` — or a control block (`if`/`for`/`with`/`match`).",
       "minProperties": 1,
       "not": {
         "propertyNames": {
-          "pattern": "^([a-z_][A-Za-z0-9_-]*|on [a-z_][A-Za-z0-9_-]*|<<)$"
+          "pattern": "^((?!(if|for|with|match)$)[a-z_][A-Za-z0-9_-]*|on [a-z_][A-Za-z0-9_-]*|<<)$"
+        }
+      },
+      "patternProperties": {
+        "^case ": {
+          "description": "A `match` arm — rendered when the source equals the operand.",
+          "items": {
+            "$ref": "#/definitions/node"
+          },
+          "type": "array"
         }
       },
       "properties": {
         "children": {
+          "items": {
+            "$ref": "#/definitions/node"
+          },
+          "type": "array"
+        },
+        "else": {
+          "description": "Rendered when `if`/`match` fail or a `for` list is empty.",
           "items": {
             "$ref": "#/definitions/node"
           },
@@ -25120,7 +25136,7 @@
         }
       },
       "propertyNames": {
-        "pattern": "^((SegmentedControl|DescriptionItem|DescriptionList|SidebarMenuItem|BreadcrumbItem|MessageContent|ProgressCircle|ResizablePanel|TrendIndicator|AccordionItem|InlineMessage|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|SettingsGroup|SidebarFooter|SidebarHeader|StatusMessage|DropdownMenu|TableCaption|TimelineItem|ToggleButton|AspectRatio|AvatarGroup|Collapsible|ColorPicker|NumberInput|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|Breadcrumb|CopyButton|DatePicker|EmptyState|IconButton|Pagination|RadioGroup|Scrollable|Accordion|Container|FormField|Inspector|Paragraph|Resizable|Separator|Statistic|StatusBar|TableBody|TableCell|TableHead|TextInput|TimeField|Calendar|Checkbox|GroupBox|Markdown|MenuItem|OtpInput|Overline|Progress|Settings|Showcase|Skeleton|Subtitle|TableRow|Terminal|Textarea|TitleBar|TreeItem|UsageBar|Callout|Caption|Divider|Heading|KpiCard|Message|Outline|Palette|Preview|Sidebar|Spinner|Stepper|Toolbar|Avatar|Banner|Button|Canvas|Center|Dialog|Editor|HStack|Player|QrCode|Rating|Select|Slider|Switch|Toggle|VStack|Viewer|ZStack|Alert|Badge|Block|Board|Chart|Empty|Frame|Gauge|Image|Input|Label|Meter|Paper|Radio|Space|Table|Title|Card|Fade|Form|Icon|Link|List|Tabs|Text|Tree|Vars|Box|Kbd|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(SegmentedControl|DescriptionItem|DescriptionList|SidebarMenuItem|BreadcrumbItem|MessageContent|ProgressCircle|ResizablePanel|TrendIndicator|AccordionItem|InlineMessage|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|SettingsGroup|SidebarFooter|SidebarHeader|StatusMessage|DropdownMenu|TableCaption|TimelineItem|ToggleButton|AspectRatio|AvatarGroup|Collapsible|ColorPicker|NumberInput|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|Breadcrumb|CopyButton|DatePicker|EmptyState|IconButton|Pagination|RadioGroup|Scrollable|Accordion|Container|FormField|Inspector|Paragraph|Resizable|Separator|Statistic|StatusBar|TableBody|TableCell|TableHead|TextInput|TimeField|Calendar|Checkbox|GroupBox|Markdown|MenuItem|OtpInput|Overline|Progress|Settings|Showcase|Skeleton|Subtitle|TableRow|Terminal|Textarea|TitleBar|TreeItem|UsageBar|Callout|Caption|Divider|Heading|KpiCard|Message|Outline|Palette|Preview|Sidebar|Spinner|Stepper|Toolbar|Avatar|Banner|Button|Canvas|Center|Dialog|Editor|HStack|Player|QrCode|Rating|Select|Slider|Switch|Toggle|VStack|Viewer|ZStack|Alert|Badge|Block|Board|Chart|Empty|Frame|Gauge|Image|Input|Label|Meter|Paper|Radio|Space|Table|Title|Card|Fade|Form|Icon|Link|List|Tabs|Text|Tree|Vars|Box|Kbd|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<)$"
+        "pattern": "^((SegmentedControl|DescriptionItem|DescriptionList|SidebarMenuItem|BreadcrumbItem|MessageContent|ProgressCircle|ResizablePanel|TrendIndicator|AccordionItem|InlineMessage|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|SettingsGroup|SidebarFooter|SidebarHeader|StatusMessage|DropdownMenu|TableCaption|TimelineItem|ToggleButton|AspectRatio|AvatarGroup|Collapsible|ColorPicker|NumberInput|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|Breadcrumb|CopyButton|DatePicker|EmptyState|IconButton|Pagination|RadioGroup|Scrollable|Accordion|Container|FormField|Inspector|Paragraph|Resizable|Separator|Statistic|StatusBar|TableBody|TableCell|TableHead|TextInput|TimeField|Calendar|Checkbox|GroupBox|Markdown|MenuItem|OtpInput|Overline|Progress|Settings|Showcase|Skeleton|Subtitle|TableRow|Terminal|Textarea|TitleBar|TreeItem|UsageBar|Callout|Caption|Divider|Heading|KpiCard|Message|Outline|Palette|Preview|Sidebar|Spinner|Stepper|Toolbar|Avatar|Banner|Button|Canvas|Center|Dialog|Editor|HStack|Player|QrCode|Rating|Select|Slider|Switch|Toggle|VStack|Viewer|ZStack|Alert|Badge|Block|Board|Chart|Empty|Frame|Gauge|Image|Input|Label|Meter|Paper|Radio|Space|Table|Title|Card|Fade|Form|Icon|Link|List|Tabs|Text|Tree|Vars|Box|Kbd|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(SegmentedControl|DescriptionItem|DescriptionList|SidebarMenuItem|BreadcrumbItem|MessageContent|ProgressCircle|ResizablePanel|TrendIndicator|AccordionItem|InlineMessage|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|SettingsGroup|SidebarFooter|SidebarHeader|StatusMessage|DropdownMenu|TableCaption|TimelineItem|ToggleButton|AspectRatio|AvatarGroup|Collapsible|ColorPicker|NumberInput|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|Breadcrumb|CopyButton|DatePicker|EmptyState|IconButton|Pagination|RadioGroup|Scrollable|Accordion|Container|FormField|Inspector|Paragraph|Resizable|Separator|Statistic|StatusBar|TableBody|TableCell|TableHead|TextInput|TimeField|Calendar|Checkbox|GroupBox|Markdown|MenuItem|OtpInput|Overline|Progress|Settings|Showcase|Skeleton|Subtitle|TableRow|Terminal|Textarea|TitleBar|TreeItem|UsageBar|Callout|Caption|Divider|Heading|KpiCard|Message|Outline|Palette|Preview|Sidebar|Spinner|Stepper|Toolbar|Avatar|Banner|Button|Canvas|Center|Dialog|Editor|HStack|Player|QrCode|Rating|Select|Slider|Switch|Toggle|VStack|Viewer|ZStack|Alert|Badge|Block|Board|Chart|Empty|Frame|Gauge|Image|Input|Label|Meter|Paper|Radio|Space|Table|Title|Card|Fade|Form|Icon|Link|List|Tabs|Text|Tree|Vars|Box|Kbd|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<|(if|for|with|match|else|each|index|key|as|is|not|case .+))$"
       },
       "type": "object"
     },
@@ -25659,7 +25675,7 @@
         }
       },
       "propertyNames": {
-        "pattern": "^(<<|children|style|title|tooltip)$"
+        "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|children|style|title|tooltip)$"
       },
       "type": "object"
     }

@@ -36,7 +36,17 @@ required-features = ["base-iced"]
 
 [features]
 default = ["base-gpui-kit"]
-base-gpui-kit = ["dep:gpui-kit", "gpui-forge-runtime/base-gpui-kit"]
+base-gpui-kit = [
+    "dep:gpui-kit",
+    "gpui-forge-runtime/base-gpui-kit",
+    "dep:forge-lib-ely",
+    "dep:forge-lib-gpui-component",
+    "dep:forge-lib-video",
+    "dep:forge-lib-zorite",
+    "dep:forge-lib-hig",
+    "dep:forge-lib-base",
+    "dep:forge-lib-flow",
+]
 base-gpui02 = [
     "dep:gpui",
     "dep:guise-ui",
@@ -53,6 +63,15 @@ base-iced = ["dep:iced", "gpui-forge-runtime/base-iced"]
 [dependencies]
 gpui-forge-runtime = { path = "../gpui-forge-runtime", default-features = false }
 forge-lib-gpui02 = { path = "../forge-lib-gpui02", optional = true, default-features = false }
+# The gpui-kit host registers the same adapter set Studio does — same-base
+# docs preview out of process with `alias.Name` elements intact.
+forge-lib-ely = { path = "../forge-lib-ely", optional = true }
+forge-lib-gpui-component = { path = "../forge-lib-gpui-component", optional = true }
+forge-lib-video = { path = "../forge-lib-video", optional = true }
+forge-lib-zorite = { path = "../forge-lib-zorite", optional = true }
+forge-lib-hig = { path = "../forge-lib-hig", optional = true }
+forge-lib-base = { path = "../forge-lib-base", optional = true }
+forge-lib-flow = { path = "../forge-lib-flow", optional = true }
 gpui-kit = { version = "=0.8.1", optional = true }
 gpui = { version = "=0.2.2", optional = true }
 guise-ui = { version = "1.10", optional = true }

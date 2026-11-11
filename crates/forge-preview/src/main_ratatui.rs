@@ -71,15 +71,26 @@ fn main() {
         }
     });
 
-    // The TUI draws on the controlling terminal — stdout stays protocol-clean.
-    let mut out = std::fs::OpenOptions::new()
+    // The TUI draws on the controlling terminal when one exists — spawned
+    // from Studio there usually isn't (stdout is the protocol channel), so
+    // fall back to headless: the TestBackend grid below still streams
+    // `frame` events to the canvas's `preview.frame`.
+    let mut tty = std::fs::OpenOptions::new()
         .write(true)
         .open("/dev/tty")
-        .expect("forge-preview-ratatui needs a controlling terminal");
-    let _ = terminal::enable_raw_mode();
-    let _ = execute!(out, terminal::EnterAlternateScreen);
-    let backend = CrosstermBackend::new(out.try_clone().expect("tty dup"));
-    let mut term = Terminal::new(backend).expect("terminal init");
+        .ok();
+    let mut term = tty.as_mut().and_then(|out| {
+        let _ = terminal::enable_raw_mode();
+        let _ = execute!(out, terminal::EnterAlternateScreen);
+        out.try_clone()
+            .ok()
+            .and_then(|dup| Terminal::new(CrosstermBackend::new(dup)).ok())
+    });
+    if term.is_none() {
+        eprintln!("forge-preview-ratatui: no controlling terminal — headless (frame stream only)");
+    }
+    // Headless grid size — FrameRect commands refine it from the canvas slot.
+    let mut frame_size = (100u16, 30u16);
 
     let mut view = ForgeView::new(check::catalogs());
     // Everything the view would tell an in-process host goes out over stdout.
@@ -127,8 +138,13 @@ fn main() {
                 HostMsg::Raise => {
                     // The host's terminal is already focused — nothing to raise.
                 }
-                HostMsg::FrameRect { .. } => {
-                    // TODO(#120): position the window over the canvas slot
+                HostMsg::FrameRect { w, h, .. } => {
+                    // Headless mode has no window to float — but the canvas
+                    // slot's px size is a sane cols/rows hint for the grid.
+                    frame_size = (
+                        (w / 8.0).clamp(20.0, 400.0) as u16,
+                        (h / 18.0).clamp(5.0, 200.0) as u16,
+                    );
                 }
                 HostMsg::Quit => quit = true,
             }
@@ -138,36 +154,42 @@ fn main() {
             // plain Tab already cycles forward.
             view.on_key(&key);
         }
-        let _ = term.draw(|f| view.render(f));
+        let (cols, rows) = if let Some(term) = &mut term {
+            let _ = term.draw(|f| view.render(f));
+            term.size()
+                .map(|s| (s.width, s.height))
+                .unwrap_or(frame_size)
+        } else {
+            frame_size
+        };
         // #120 Phase 2 — stream the frame as a cell grid for embedded
         // canvases: `TestBackend` captures the same render the tty got.
-        if let Ok(size) = term.size() {
-            let mut test =
-                ratatui::Terminal::new(ratatui::backend::TestBackend::new(size.width, size.height))
-                    .expect("test backend");
-            let _ = test.draw(|f| view.render(f));
-            let buf = test.backend().buffer();
-            let (w, h) = (buf.area.width, buf.area.height);
-            let mut rows_s = Vec::with_capacity(h as usize);
-            for y in 0..h {
-                let mut line = String::with_capacity(w as usize);
-                for x in 0..w {
-                    if let Some(cell) = buf.cell((x, y)) {
-                        line.push_str(cell.symbol());
-                    }
+        let mut test = ratatui::Terminal::new(ratatui::backend::TestBackend::new(cols, rows))
+            .expect("test backend");
+        let _ = test.draw(|f| view.render(f));
+        let buf = test.backend().buffer();
+        let (w, h) = (buf.area.width, buf.area.height);
+        let mut rows_s = Vec::with_capacity(h as usize);
+        for y in 0..h {
+            let mut line = String::with_capacity(w as usize);
+            for x in 0..w {
+                if let Some(cell) = buf.cell((x, y)) {
+                    line.push_str(cell.symbol());
                 }
-                rows_s.push(line);
             }
-            emit(json!({
-                "event": "frame",
-                "base": "ratatui",
-                "cols": w,
-                "rows": rows_s,
-            }));
+            rows_s.push(line);
         }
+        emit(json!({
+            "event": "frame",
+            "base": "ratatui",
+            "cols": w,
+            "rows": rows_s,
+        }));
         std::thread::sleep(std::time::Duration::from_millis(50));
     }
 
-    let _ = execute!(out, terminal::LeaveAlternateScreen);
-    let _ = terminal::disable_raw_mode();
+    if let Some(mut out) = tty {
+        let _ = execute!(out, terminal::LeaveAlternateScreen);
+        let _ = terminal::disable_raw_mode();
+    }
 }

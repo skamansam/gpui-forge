@@ -3,9 +3,12 @@
 use std::collections::HashMap;
 
 use crate::diagnostic::Pos;
+use crate::model::PathStep;
 
-/// A node's location: child indices from the root (`[]` is the root, `[0, 2]` its first child's third child).
-pub type NodePath = Vec<usize>;
+/// A node's location: path steps from the root (`[]` is the root,
+/// `[Child(0), Child(2)]` its first child's third child; `Else`/`Case`
+/// steps reach `else:`/`case` branch children).
+pub type NodePath = Vec<PathStep>;
 
 #[derive(Clone, Debug, Default)]
 pub struct SourceMap {

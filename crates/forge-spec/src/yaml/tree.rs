@@ -81,6 +81,160 @@ pub(crate) fn convert_marked(node: &MarkedYamlOwned) -> Result<YNode, Diagnostic
     convert(node.clone())
 }
 
+/// `<<` merge alias names by map position — `<<: *name` and `<<: [*a, *b]`.
+/// The loader resolves aliases into clones whose spans still cover the `*name`
+/// token at the merge site, so names come from the source text at those spans.
+/// What a map's `<<` merges contributed — the alias names (`*name`) and the
+/// entry keys spliced in (explicit keys win, so contributed = merged minus
+/// explicit). The writer uses `keys` to avoid re-emitting merged entries.
+#[derive(Clone, Debug, Default)]
+pub(crate) struct MergeInfo {
+    pub names: Vec<String>,
+    pub keys: Vec<String>,
+}
+
+pub(crate) fn merge_names(
+    root: &MarkedYamlOwned,
+    lines: &[&str],
+) -> std::collections::HashMap<Pos, MergeInfo> {
+    let mut out = std::collections::HashMap::new();
+    walk_merges(root, lines, &mut out);
+    out
+}
+
+fn key_text(node: &MarkedYamlOwned) -> Option<String> {
+    match &node.data {
+        YamlDataOwned::Representation(text, _, _) => Some(text.clone()),
+        YamlDataOwned::Value(saphyr::ScalarOwned::String(text)) => Some(text.clone()),
+        _ => None,
+    }
+}
+
+fn walk_merges(
+    node: &MarkedYamlOwned,
+    lines: &[&str],
+    out: &mut std::collections::HashMap<Pos, MergeInfo>,
+) {
+    match &node.data {
+        YamlDataOwned::Mapping(map) => {
+            let mut info = MergeInfo::default();
+            let explicit: std::collections::HashSet<String> = map
+                .keys()
+                .filter_map(|k| key_text(k).filter(|t| t != "<<"))
+                .collect();
+            for (key, value) in map {
+                if key_text(key).as_deref() == Some("<<") {
+                    alias_names(value, lines, &mut info.names);
+                    merge_keys(value, &explicit, &mut info.keys);
+                }
+                walk_merges(key, lines, out);
+                walk_merges(value, lines, out);
+            }
+            if !info.names.is_empty() {
+                out.insert(pos(&node.span), info);
+            }
+        }
+        YamlDataOwned::Sequence(items) => {
+            for item in items {
+                walk_merges(item, lines, out);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Entry keys a `<<` value contributes — mapping keys not shadowed by
+/// explicit entries (and, for merge lists, not already contributed).
+fn merge_keys(
+    node: &MarkedYamlOwned,
+    explicit: &std::collections::HashSet<String>,
+    keys: &mut Vec<String>,
+) {
+    match &node.data {
+        YamlDataOwned::Mapping(map) => {
+            for key in map.keys() {
+                if let Some(text) = key_text(key)
+                    && !explicit.contains(&text)
+                    && !keys.contains(&text)
+                {
+                    keys.push(text);
+                }
+            }
+        }
+        YamlDataOwned::Sequence(items) => {
+            for item in items {
+                merge_keys(item, explicit, keys);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// `&name` anchor definitions — Forge requires unique ref names even though
+/// the YAML spec permits shadowing (nearest wins): refs are addressed by name.
+pub(crate) fn anchor_names(root: &MarkedYamlOwned, lines: &[&str]) -> Vec<(String, Pos)> {
+    let mut out = Vec::new();
+    walk_anchors(root, lines, &mut out);
+    out
+}
+
+fn walk_anchors(node: &MarkedYamlOwned, lines: &[&str], out: &mut Vec<(String, Pos)>) {
+    if let Some(name) = anchor_at(&node.span, lines) {
+        out.push((name, pos(&node.span)));
+    }
+    match &node.data {
+        YamlDataOwned::Mapping(map) => {
+            for (key, value) in map {
+                walk_anchors(key, lines, out);
+                walk_anchors(value, lines, out);
+            }
+        }
+        YamlDataOwned::Sequence(items) => {
+            for item in items {
+                walk_anchors(item, lines, out);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// The `&name` token at a node's own span, if it carries an anchor.
+fn anchor_at(span: &saphyr_parser::Span, lines: &[&str]) -> Option<String> {
+    let line = lines.get(span.start.line().saturating_sub(1))?;
+    let text: String = line.chars().skip(span.start.col()).collect();
+    let rest = text.trim_start().strip_prefix('&')?;
+    let name: String = rest
+        .chars()
+        .take_while(|c| c.is_alphanumeric() || *c == '_' || *c == '-')
+        .collect();
+    (!name.is_empty()).then_some(name)
+}
+
+/// The `*name` token at a node's own span — recursing into sequences for
+/// `<<: [*a, *b]` merge lists.
+fn alias_names(node: &MarkedYamlOwned, lines: &[&str], names: &mut Vec<String>) {
+    if let YamlDataOwned::Sequence(items) = &node.data {
+        for item in items {
+            alias_names(item, lines, names);
+        }
+        return;
+    }
+    let Some(line) = lines.get(node.span.start.line().saturating_sub(1)) else {
+        return;
+    };
+    let text: String = line.chars().skip(node.span.start.col()).collect();
+    let text = text.trim_start();
+    if let Some(rest) = text.strip_prefix('*') {
+        let name: String = rest
+            .chars()
+            .take_while(|c| c.is_alphanumeric() || *c == '_' || *c == '-')
+            .collect();
+        if !name.is_empty() {
+            names.push(name);
+        }
+    }
+}
+
 /// `---` separators and comment-only documents load as a bare scalar.
 fn is_empty_document(node: &MarkedYamlOwned) -> bool {
     match &node.data {

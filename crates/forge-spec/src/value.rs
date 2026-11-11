@@ -185,7 +185,7 @@ pub fn parse_handler(text: &str) -> Result<HandlerRef, String> {
     })
 }
 
-fn parse_arg(arg: &str) -> Result<Value, String> {
+pub(crate) fn parse_arg(arg: &str) -> Result<Value, String> {
     let value = if let Some(inner) = arg.strip_prefix('\'').and_then(|a| a.strip_suffix('\'')) {
         parse_value(&inner.replace("''", "'"), Quoting::Single)?
     } else if let Some(inner) = arg.strip_prefix('"').and_then(|a| a.strip_suffix('"')) {

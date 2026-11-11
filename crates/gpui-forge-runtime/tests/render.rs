@@ -13,7 +13,7 @@
 
 use gpui_forge_runtime::check;
 use gpui_forge_runtime::forge_spec::yaml;
-use gpui_forge_runtime::render::ForgeView;
+use gpui_forge_runtime::render::{ForgeLibrary, ForgeView};
 use gpui_kit::{self, AppContext};
 use std::cell::RefCell;
 use std::rc::Rc;
@@ -30,6 +30,27 @@ root:
     - Button: Go
       on click: go()
 "#;
+
+/// A no-op adapter — registered on the shell to prove nested previews share
+/// the parent's `libraries` (alias.Name elements render instead of the
+/// "not provided by this adapter" placeholder).
+struct Stub;
+
+impl ForgeLibrary for Stub {
+    fn alias(&self) -> &'static str {
+        "stub"
+    }
+    fn render(
+        &self,
+        _: &gpui_forge_runtime::forge_spec::Node,
+        _: &str,
+        _: &ForgeView,
+        _: &mut gpui_kit::Window,
+        _: &mut gpui_kit::Context<ForgeView>,
+    ) -> Option<gpui_kit::AnyElement> {
+        None
+    }
+}
 
 #[test]
 fn forge_view_integration() {
@@ -86,12 +107,16 @@ fn forge_view_integration() {
             Some("x")
         );
 
-        // A named preview hosts its own document.
+        // A named preview hosts its own document — and the parent's adapters.
+        view.update(cx, |view, _| {
+            view.register_library(Stub);
+        });
         let (child, _) = check::check(DOC, gpui_forge_runtime::base::BASE_ID, &check::catalogs());
         view.update(cx, |view, cx| {
             view.set_preview_document("canvas", child.unwrap(), cx);
             let preview = view.preview("canvas", cx);
             assert!(preview.read(cx).document().is_some());
+            assert_eq!(preview.read(cx).libraries.len(), 1);
         });
 
         // Style mutations land in the document and survive the write-back.

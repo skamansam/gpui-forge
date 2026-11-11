@@ -1232,8 +1232,87 @@ fn codegen_doc(doc: &gpui_forge_runtime::forge_spec::Document) -> String {
             e.event, e.handler.name, e.handler.args.iter().map(value).collect::<Vec<_>>().join(", ")
         )).collect::<Vec<_>>().join(", ");
         let kids = n.children.iter().map(node).collect::<Vec<_>>().join(", ");
+        let control = match &n.control {
+            None => "None".to_string(),
+            Some(Control::If {
+                when,
+                test,
+                otherwise,
+            }) => {
+                let test = match test {
+                    None => "None".to_string(),
+                    Some(Compare::Is(v)) => format!("Some(Compare::Is({}))", value(v)),
+                    Some(Compare::Not(v)) => format!("Some(Compare::Not({}))", value(v)),
+                };
+                let els = otherwise.iter().map(node).collect::<Vec<_>>().join(", ");
+                format!(
+                    "Some(Control::If {{ when: {}, test: {test}, otherwise: vec![{els}] }})",
+                    value(when)
+                )
+            }
+            Some(Control::For {
+                source,
+                each,
+                index,
+                key,
+                otherwise,
+            }) => {
+                let index = index
+                    .as_ref()
+                    .map(|i| format!("Some({i:?}.into())"))
+                    .unwrap_or("None".into());
+                let key = key
+                    .as_ref()
+                    .map(|p| {
+                        let segs = p
+                            .0
+                            .iter()
+                            .map(|s| match s {
+                                PathSegment::Field(f) => {
+                                    format!("PathSegment::Field({f:?}.into())")
+                                }
+                                PathSegment::Index(i) => format!("PathSegment::Index({i})"),
+                            })
+                            .collect::<Vec<_>>()
+                            .join(", ");
+                        format!("Some(Path(vec![{segs}]))")
+                    })
+                    .unwrap_or("None".into());
+                let els = otherwise.iter().map(node).collect::<Vec<_>>().join(", ");
+                format!(
+                    "Some(Control::For {{ source: {}, each: {each:?}.into(), index: {index}, key: {key}, otherwise: vec![{els}] }})",
+                    value(source)
+                )
+            }
+            Some(Control::With { source, name }) => format!(
+                "Some(Control::With {{ source: {}, name: {name:?}.into() }})",
+                value(source)
+            ),
+            Some(Control::Match {
+                source,
+                cases,
+                otherwise,
+            }) => {
+                let cases = cases
+                    .iter()
+                    .map(|c| {
+                        let kids = c.children.iter().map(node).collect::<Vec<_>>().join(", ");
+                        format!(
+                            "Case {{ value: {}, children: vec![{kids}] }}",
+                            value(&c.value)
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                let els = otherwise.iter().map(node).collect::<Vec<_>>().join(", ");
+                format!(
+                    "Some(Control::Match {{ source: {}, cases: vec![{cases}], otherwise: vec![{els}] }})",
+                    value(source)
+                )
+            }
+        };
         format!(
-            "Node {{ element: ElementRef {{ namespace: {ns}, name: {:?}.into() }}, id: {id}, content: {content}, props: {}, style: {}, events: vec![{events}], children: vec![{kids}] }}",
+            "Node {{ element: ElementRef {{ namespace: {ns}, name: {:?}.into() }}, id: {id}, content: {content}, props: {}, style: {}, events: vec![{events}], children: vec![{kids}], control: {control} }}",
             n.element.name,
             entries(&n.props),
             entries(&n.style)
@@ -1325,13 +1404,45 @@ fn codegen_doc(doc: &gpui_forge_runtime::forge_spec::Document) -> String {
                 }
             }
         }
-        for kid in &n.children {
+        match &n.control {
+            Some(Control::If {
+                when, test, ..
+            }) => {
+                from_value(when, vars);
+                if let Some(t) = test {
+                    from_value(
+                        match t {
+                            Compare::Is(v) | Compare::Not(v) => v,
+                        },
+                        vars,
+                    );
+                }
+            }
+            Some(Control::For { source, .. })
+            | Some(Control::With { source, .. })
+            | Some(Control::Match { source, .. }) => from_value(source, vars),
+            None => {}
+        }
+        for kid in n.children.iter().chain(n.control.as_ref().into_iter().flat_map(|c| {
+            c.otherwise().iter()
+        })) {
             collect(kid, vars);
+        }
+        if let Some(Control::Match { cases, .. }) = &n.control {
+            for case in cases {
+                from_value(&case.value, vars);
+                for kid in &case.children {
+                    collect(kid, vars);
+                }
+            }
         }
     }
     collect(&doc.root, &mut vars);
     for d in &doc.dialogs {
         collect(d, &mut vars);
+    }
+    for (_, fragment) in &doc.refs {
+        collect(fragment, &mut vars);
     }
     let state_vars: Vec<String> = vars.into_iter().collect();
     let set_state = if state_vars.is_empty() {

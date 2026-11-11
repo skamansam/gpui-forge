@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use crate::catalog::{Catalog, Children, ElementDef, PropDef};
 use crate::diagnostic::{Diagnostic, Pos};
-use crate::model::{Document, ElementRef, Node, Value};
+use crate::model::{Control, Document, ElementRef, Node, Value};
 use crate::source_map::{NodeSpans, SourceMap};
 use crate::style;
 use crate::value::is_two_way;
@@ -106,15 +106,19 @@ impl<'a> Validator<'a> {
         // only indexes `root` descendants, so dialogs start at an unreachable
         // path — span lookups miss and positions fall back to `1:1`.
         for (i, dialog) in doc.dialogs.iter().enumerate() {
-            self.node(dialog, base_catalog, &mut vec![usize::MAX - i]);
+            self.node(
+                dialog,
+                base_catalog,
+                &mut vec![crate::model::PathStep::Child(usize::MAX - i)],
+            );
         }
     }
 
-    fn spans(&self, path: &[usize]) -> Option<&'a NodeSpans> {
+    fn spans(&self, path: &[crate::model::PathStep]) -> Option<&'a NodeSpans> {
         self.map.and_then(|m| m.nodes.get(path))
     }
 
-    fn node(&mut self, node: &'a Node, base: &'a Catalog, path: &mut Vec<usize>) {
+    fn node(&mut self, node: &'a Node, base: &'a Catalog, path: &mut Vec<crate::model::PathStep>) {
         let spans = self.spans(path);
         let at = spans.map_or_else(Pos::start, |s| s.element);
         if let Some(id) = &node.id {
@@ -125,14 +129,46 @@ impl<'a> Validator<'a> {
                 self.ids.insert(id, at);
             }
         }
-        if let Some((catalog, def)) = self.element(node, base, at) {
+        // Bare control blocks carry a `forge.X` sentinel element — no catalog
+        // check; their meaning lives in `control`.
+        if !node.is_block()
+            && let Some((catalog, def)) = self.element(node, base, at)
+        {
             self.check(node, catalog, def, spans, at, path);
         }
         self.style(node, spans, at);
         for (i, child) in node.children.iter().enumerate() {
-            path.push(i);
+            path.push(crate::model::PathStep::Child(i));
             self.node(child, base, path);
             path.pop();
+        }
+        // `else:`/`case` children sit at `e`/`c` path steps — the same paths
+        // `node_at` and `forge.Outline` use.
+        match &node.control {
+            Some(Control::Match {
+                cases, otherwise, ..
+            }) => {
+                for (c, case) in cases.iter().enumerate() {
+                    for (i, child) in case.children.iter().enumerate() {
+                        path.push(crate::model::PathStep::Case(c, i));
+                        self.node(child, base, path);
+                        path.pop();
+                    }
+                }
+                for (i, child) in otherwise.iter().enumerate() {
+                    path.push(crate::model::PathStep::Else(i));
+                    self.node(child, base, path);
+                    path.pop();
+                }
+            }
+            Some(Control::If { otherwise, .. }) | Some(Control::For { otherwise, .. }) => {
+                for (i, child) in otherwise.iter().enumerate() {
+                    path.push(crate::model::PathStep::Else(i));
+                    self.node(child, base, path);
+                    path.pop();
+                }
+            }
+            _ => {}
         }
     }
 
@@ -178,7 +214,7 @@ impl<'a> Validator<'a> {
         def: &ElementDef,
         spans: Option<&NodeSpans>,
         at: Pos,
-        path: &[usize],
+        path: &[crate::model::PathStep],
     ) {
         let element = &node.element;
         let content_prop = def.content.as_deref().and_then(|c| def.prop(c));
@@ -247,11 +283,17 @@ impl<'a> Validator<'a> {
         catalog.map(|c| c.library.as_str())
     }
 
-    fn children(&mut self, node: &Node, catalog: &Catalog, def: &ElementDef, path: &[usize]) {
+    fn children(
+        &mut self,
+        node: &Node,
+        catalog: &Catalog,
+        def: &ElementDef,
+        path: &[crate::model::PathStep],
+    ) {
         let map = self.map;
         let child_pos = |i: usize| {
             let mut child = path.to_vec();
-            child.push(i);
+            child.push(crate::model::PathStep::Child(i));
             map.and_then(|m| m.nodes.get(&child))
                 .map_or_else(Pos::start, |s| s.element)
         };
@@ -265,6 +307,11 @@ impl<'a> Validator<'a> {
             }
             Children::Only(allowed) => {
                 for (i, child) in node.children.iter().enumerate() {
+                    // Control blocks are transparent — their own children are
+                    // checked when recursed into.
+                    if child.is_block() {
+                        continue;
+                    }
                     let Some(library) = self.library_of(&child.element) else {
                         continue;
                     };

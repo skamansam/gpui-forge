@@ -35,6 +35,12 @@ pub(crate) fn preserving(doc: &Document, options: &WriteOptions) -> Option<Strin
     let mut cursor = 1usize;
     let mut seen: HashSet<String> = HashSet::new();
     let mut covered_dialogs = vec![false; doc.dialogs.len()];
+    // Anchored `name:` blocks already in source — pending refs emit only the
+    // names the model has and the source does not (new refnames).
+    let existing_refs: HashSet<String> = top
+        .iter()
+        .filter_map(|(_, v)| anchor_name(&ctx, v))
+        .collect();
 
     for (k, v) in top {
         let a = k.span.start.line();
@@ -48,7 +54,7 @@ pub(crate) fn preserving(doc: &Document, options: &WriteOptions) -> Option<Strin
         let key = key.as_str();
         match key {
             "root" => {
-                emit_pending_top(&mut out, doc, &mut seen, &mut covered_dialogs, &ctx);
+                emit_pending_top(&mut out, doc, &mut seen, &mut covered_dialogs, &existing_refs, &ctx);
                 seen.insert("root".to_owned());
                 splice_named_node(&ctx, &mut out, k, v, &doc.root, false);
             }
@@ -68,14 +74,49 @@ pub(crate) fn preserving(doc: &Document, options: &WriteOptions) -> Option<Strin
                     }
                     // Dialog removed from the model — drop its region.
                 }
-                // Fragment slots and unknown keys are kept verbatim.
-                None => emit(&mut out, ctx.lines, a, b),
+                None => {
+                    // `name: &name` ref blocks splice against `doc.refs` so
+                    // in-place edits land in the block, not at `<<` sites.
+                    let spliced = anchor_name(&ctx, v).and_then(|name| {
+                        doc.refs
+                            .iter()
+                            .find(|(n, _)| n == &name)
+                            .map(|(_, fragment)| (name, fragment))
+                    });
+                    match spliced {
+                        Some((name, fragment)) => {
+                            seen.insert(name);
+                            emit(&mut out, ctx.lines, a, a);
+                            let baseline =
+                                reparse(v).and_then(|y| {
+                                    read::reparse_fragment(
+                                        ctx.src,
+                                        y,
+                                        tree::merge_names(v, ctx.lines),
+                                    )
+                                });
+                            if baseline.as_ref() == Some(fragment) {
+                                emit(&mut out, ctx.lines, a + 1, b);
+                            } else {
+                                splice_map(
+                                    &ctx,
+                                    &mut out,
+                                    v,
+                                    fragment,
+                                    baseline.as_ref().unwrap_or(&Node::default()),
+                                    false,
+                                );
+                            }
+                        }
+                        None => emit(&mut out, ctx.lines, a, b),
+                    }
+                }
             },
         }
         cursor = b + 1;
     }
     emit_gap(&mut out, ctx.lines, &mut cursor, usize::MAX);
-    emit_pending_top(&mut out, doc, &mut seen, &mut covered_dialogs, &ctx);
+    emit_pending_top(&mut out, doc, &mut seen, &mut covered_dialogs, &existing_refs, &ctx);
     if !seen.contains("root") {
         write::line(&mut out, 0, "root:");
         write::write_node(&mut out, &doc.root, 2, false, ctx.options);
@@ -139,6 +180,29 @@ fn scalar_text(node: &MarkedYamlOwned) -> Option<(String, Quoting)> {
     }
 }
 
+/// The `&name` anchor on a node's span — anchored spans start at or just
+/// inside the token (saphyr marks them at the name, after `&`).
+fn anchor_name(ctx: &Ctx, node: &MarkedYamlOwned) -> Option<String> {
+    let line = ctx
+        .lines
+        .get(node.span.start.line().saturating_sub(1))?;
+    let col = node.span.start.col();
+    let text: String = line.chars().skip(col).collect();
+    let text = text.trim_start();
+    let rest = if let Some(rest) = text.strip_prefix('&') {
+        rest
+    } else if col > 0 && line.chars().nth(col - 1) == Some('&') {
+        text
+    } else {
+        return None;
+    };
+    let name: String = rest
+        .chars()
+        .take_while(|c| c.is_alphanumeric() || *c == '_' || *c == '-')
+        .collect();
+    (!name.is_empty()).then_some(name)
+}
+
 /// True when the node's span is an `*alias` token rather than a real subtree —
 /// the loader resolves aliases into clones whose outer span still covers the
 /// alias site. Only whole-verbatim or whole-canonical output is safe there;
@@ -157,7 +221,7 @@ fn reparse(node: &MarkedYamlOwned) -> Option<YNode> {
 }
 
 fn reparse_node(ctx: &Ctx, node: &MarkedYamlOwned) -> Option<Node> {
-    read::reparse_node(ctx.src, reparse(node)?)
+    read::reparse_node(ctx.src, reparse(node)?, tree::merge_names(node, ctx.lines))
 }
 
 fn reparse_value(ctx: &Ctx, node: &MarkedYamlOwned, allow_two_way: bool) -> Option<Value> {
@@ -172,6 +236,7 @@ fn emit_pending_top(
     doc: &Document,
     seen: &mut HashSet<String>,
     covered_dialogs: &mut [bool],
+    existing_refs: &HashSet<String>,
     ctx: &Ctx,
 ) {
     if let Some(schema) = &doc.schema
@@ -205,6 +270,15 @@ fn emit_pending_top(
         write::line(out, 0, "meta:");
         for (key, text) in &doc.meta {
             write::line(out, 2, &format!("{key}: {}", write::text_scalar(text)));
+        }
+    }
+    // New `name: &name` ref blocks — emitted before `root:`/dialogs so every
+    // `<<: *name` resolves (aliases can't precede their anchors).
+    for (name, fragment) in &doc.refs {
+        if !existing_refs.contains(name) && seen.insert(name.clone()) {
+            out.push('\n');
+            write::line(out, 0, &format!("{name}: &{name}"));
+            write::write_entries(out, fragment, 2, ctx.options);
         }
     }
     for (dialog, covered) in doc.dialogs.iter().zip(covered_dialogs.iter_mut()) {
@@ -364,7 +438,7 @@ fn baseline_for(ctx: &Ctx, k: &MarkedYamlOwned, v: &MarkedYamlOwned) -> Option<N
             }),
         )];
         entries.extend(body);
-        return read::reparse_node(ctx.src, YNode::Map(entries, at));
+        return read::reparse_node(ctx.src, YNode::Map(entries, at), Default::default());
     }
     reparse_node(ctx, v)
 }
@@ -393,20 +467,6 @@ fn splice_map(
         .filter_map(|k| scalar_text(k).map(|(t, _)| t))
         .collect();
 
-    // A merged facet cannot be removed by an override — flatten the node.
-    let flattened = baseline
-        .props
-        .iter()
-        .any(|(k, _)| !explicit.contains(k) && !model.props.iter().any(|(mk, _)| mk == k))
-        || baseline.events.iter().any(|e| {
-            !explicit.contains(&format!("on {}", e.event))
-                && !model.events.iter().any(|me| me.event == e.event)
-        });
-    if flattened {
-        write::write_entries(out, model, indent, ctx.options);
-        return;
-    }
-
     let head_index = entries.keys().position(|k| {
         scalar_text(k)
             .and_then(|(t, _)| read::element_key(&t))
@@ -414,6 +474,32 @@ fn splice_map(
                 el == baseline.element && id.as_deref() == baseline.id.as_deref()
             })
     });
+
+    // A merged facet cannot be removed by an override — flatten the node.
+    // Control flow splices all-or-nothing too: its keys (`if`, `else`,
+    // `case`…) rewrite canonically whenever the facet differs. The head
+    // (`- Button:` / `- if: …`) lives inside this map for seq items and root
+    // nodes, so it is rewritten here; dialog heads live outside.
+    let flattened = baseline
+        .props
+        .iter()
+        .any(|(k, _)| !explicit.contains(k) && !model.props.iter().any(|(mk, _)| mk == k))
+        || baseline.events.iter().any(|e| {
+            !explicit.contains(&format!("on {}", e.event))
+                && !model.events.iter().any(|me| me.event == e.event)
+        })
+        || baseline.control != model.control
+        || baseline.refname != model.refname;
+    if flattened {
+        if seq_item {
+            write::write_node(out, model, indent.saturating_sub(2), true, ctx.options);
+        } else if head_index.is_some() || model.is_block() {
+            write::write_node(out, model, indent, false, ctx.options);
+        } else {
+            write::write_entries(out, model, indent, ctx.options);
+        }
+        return;
+    }
 
     // Head came from a merge and changed — emit an explicit head first.
     let head_differs = model.element != baseline.element
@@ -450,6 +536,10 @@ fn splice_map(
             }
         } else if key == "<<" {
             emit(out, ctx.lines, a, b);
+        } else if is_control_key(key) {
+            // Reached only when `control` is unchanged (changes flatten) —
+            // `if`/`else`/`is`/`each`/`as` lines keep their source.
+            emit(out, ctx.lines, a, b);
         } else if key == "style" {
             splice_style(ctx, out, k, v, model, baseline, a, b);
         } else if key == "children" {
@@ -482,16 +572,19 @@ fn splice_map(
 
     // Facets with no explicit entry: emit when they differ from the baseline
     // (new keys, or explicit overrides for changed merge-derived content).
+    // Merge-derived facets are owned by the `name:` ref block — they splice
+    // there in place and are never rewritten as `<<`-site overrides.
+    let merged = |key: &str| model.refname.is_some() && model.merged.iter().any(|k| k == key);
     for (key, value) in &model.props {
         let unchanged = baseline
             .props
             .iter()
             .any(|(bk, bv)| bk == key && bv == value);
-        if !explicit.contains(key) && !unchanged {
+        if !explicit.contains(key) && !unchanged && !merged(key) {
             write::write_entry(out, indent, key, value);
         }
     }
-    if model.style != baseline.style && !explicit.contains("style") {
+    if model.style != baseline.style && !explicit.contains("style") && !merged("style") {
         write::line(out, indent, "style:");
         for (key, value) in &model.style {
             write::write_entry(out, indent + 2, key, value);
@@ -503,11 +596,11 @@ fn splice_map(
             .events
             .iter()
             .any(|e| e.event == binding.event && e == binding);
-        if !explicit.contains(&key) && !same {
+        if !explicit.contains(&key) && !same && !merged(&key) {
             write::write_event(out, indent, binding);
         }
     }
-    if model.children != baseline.children && !explicit.contains("children") {
+    if model.children != baseline.children && !explicit.contains("children") && !merged("children") {
         if model.children.is_empty() {
             write::line(out, indent, "children: []");
         } else {
@@ -636,4 +729,14 @@ fn splice_children(
 
 fn fallback_indent(node: &MarkedYamlOwned) -> usize {
     node.span.start.col() + 2
+}
+
+/// Control-flow keys inside a node map — prop-shaped, so they must be
+/// intercepted before the prop branch. `case <v>` keys contain a space and
+/// never reach the prop branch anyway.
+fn is_control_key(key: &str) -> bool {
+    matches!(
+        key,
+        "if" | "for" | "with" | "match" | "else" | "is" | "not" | "each" | "index" | "as" | "key"
+    )
 }

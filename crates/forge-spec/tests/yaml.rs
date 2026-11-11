@@ -428,3 +428,267 @@ root:
     assert!(out.contains("- Input"));
     assert_eq!(read(&out), doc);
 }
+
+use forge_spec::{Case, Compare, Control};
+
+fn binding(text: &str) -> Value {
+    Value::Binding {
+        path: path(&[text]),
+        mode: BindingMode::OneWay,
+    }
+}
+
+#[test]
+fn control_blocks_read() {
+    let doc = read(
+        r#"forge: "0.1"
+root:
+  VStack:
+  children:
+    - if: $preview
+      is: gpui
+      children:
+        - Text: GPUI
+      else:
+        - Text: none
+    - for: $items
+      each: item
+      index: i
+      children:
+        - Text: "{$item}"
+      else:
+        - Text: empty
+    - with: $tab
+      as: t
+      children:
+        - Text: "{$t.name}"
+    - match: $mode
+      case gpui:
+        - Text: G
+      case 2:
+        - Text: two
+      else:
+        - Text: fallback
+"#,
+    );
+    let [if_node, for_node, with_node, match_node] = &doc.root.children[..] else {
+        unreachable!()
+    };
+    assert!(if_node.is_block());
+    assert_eq!(if_node.element.name, "If");
+    let Some(Control::If {
+        when,
+        test,
+        otherwise,
+    }) = &if_node.control
+    else {
+        unreachable!()
+    };
+    assert_eq!(*when, binding("preview"));
+    assert_eq!(*test, Some(Compare::Is(Value::Enum("gpui".into()))));
+    assert_eq!(otherwise[0].element.name, "Text");
+
+    let Some(Control::For {
+        source,
+        each,
+        index,
+        otherwise,
+        ..
+    }) = &for_node.control
+    else {
+        unreachable!()
+    };
+    assert_eq!(*source, binding("items"));
+    assert_eq!(each, "item");
+    assert_eq!(index.as_deref(), Some("i"));
+    assert_eq!(otherwise.len(), 1);
+
+    let Some(Control::With { source, name }) = &with_node.control else {
+        unreachable!()
+    };
+    assert_eq!(*source, binding("tab"));
+    assert_eq!(name, "t");
+
+    let Some(Control::Match {
+        source,
+        cases,
+        otherwise,
+    }) = &match_node.control
+    else {
+        unreachable!()
+    };
+    assert_eq!(*source, binding("mode"));
+    assert_eq!(cases[0].value, Value::Enum("gpui".into()));
+    assert_eq!(otherwise.len(), 1);
+}
+
+#[test]
+fn control_modifiers_on_elements() {
+    let doc = read(
+        "forge: \"0.1\"\nroot:\n  VStack:\n  children:\n    - Tab: \"{$tab.name}\"\n      for: $tabs\n      each: tab\n    - Text: Signed in\n      if: $user.signed_in\n",
+    );
+    let [tab, text] = &doc.root.children[..] else {
+        unreachable!()
+    };
+    assert!(!tab.is_block());
+    assert_eq!(tab.element.name, "Tab");
+    assert!(matches!(tab.control, Some(Control::For { .. })));
+    assert!(matches!(text.control, Some(Control::If { .. })));
+    assert_eq!(text.element.name, "Text");
+}
+
+#[test]
+fn control_flow_round_trip() {
+    const SRC: &str = r#"forge: "0.1"
+root:
+  VStack:
+  children:
+    - if: $preview
+      is: gpui
+      children:
+        - Text: GPUI
+      else:
+        - Text: none
+    - for: $items
+      each: item
+      index: i
+      children:
+        - Text: "{$item}"
+      else:
+        - Text: empty
+    - with: $tab
+      as: t
+      children:
+        - Text: "{$t.name}"
+    - match: $mode
+      case gpui:
+        - Text: G
+      case 'a b':
+        - Text: ab
+      else:
+        - Text: fallback
+    - Tab: "{$tab.name}"
+      for: $tabs
+      each: tab
+    - Text: Signed in
+      if: $user.signed_in
+"#;
+    let doc = read(SRC);
+    let out = write(&doc);
+    assert_eq!(read(&out), doc, "round trip changed the model:\n{out}");
+    assert_eq!(write(&read(&out)), out, "writer is not idempotent:\n{out}");
+    assert_eq!(preserve(&doc), SRC);
+}
+
+#[test]
+fn control_flow_errors() {
+    // `else` without a control head.
+    let e = errors("forge: \"0.1\"\nroot:\n  else:\n    - Text: a\n");
+    assert!(e.contains("`else` needs `if`, `for` or `match`"), "{e}");
+    // Two control keys.
+    let e = errors("forge: \"0.1\"\nroot:\n  if: $a\n  for: $b\n  each: x\n");
+    assert!(e.contains("two control keys"), "{e}");
+    // `is` without `if`.
+    let e = errors("forge: \"0.1\"\nroot:\n  Button: x\n  is: y\n");
+    assert!(e.contains("`is` needs `if`"), "{e}");
+    // `for` without `each`.
+    let e = errors("forge: \"0.1\"\nroot:\n  for: $items\n");
+    assert!(e.contains("`for` needs `each: <name>`"), "{e}");
+    // `with` without `as`.
+    let e = errors("forge: \"0.1\"\nroot:\n  with: $tab\n");
+    assert!(e.contains("`with` needs `as: <name>`"), "{e}");
+    // `match` with `children`.
+    let e = errors("forge: \"0.1\"\nroot:\n  match: $x\n  children:\n    - Text: a\n");
+    assert!(e.contains("`match` uses `case` arms"), "{e}");
+    // `match` modifying an element.
+    let e = errors("forge: \"0.1\"\nroot:\n  Button: x\n  match: $m\n  case a:\n    - Text: a\n");
+    assert!(e.contains("`match` cannot modify an element"), "{e}");
+    // Props on a bare control block.
+    let e = errors("forge: \"0.1\"\nroot:\n  if: $a\n  tooltip: t\n");
+    assert!(e.contains("prop `tooltip` needs an element"), "{e}");
+    // `case` without `match`.
+    let e = errors("forge: \"0.1\"\nroot:\n  Button: x\n  case a:\n    - Text: a\n");
+    assert!(e.contains("`case a` needs `match`"), "{e}");
+    // `else` on `with`.
+    let e = errors("forge: \"0.1\"\nroot:\n  with: $x\n  as: y\n  else:\n    - Text: a\n");
+    assert!(e.contains("`else` needs `if`, `for` or `match`"), "{e}");
+    // `bind` (two-way) is not a valid control operand.
+    let e = errors("forge: \"0.1\"\nroot:\n  for: bind $items\n  each: i\n");
+    assert!(e.contains("only allowed on props"), "{e}");
+    // A scalar that isn't a binding or list is not a `for` source.
+    let e = errors("forge: \"0.1\"\nroot:\n  for: 42\n  each: i\n");
+    assert!(e.contains("`for` needs a binding like `$items`"), "{e}");
+}
+
+#[test]
+fn refname_captured_from_merge_alias() {
+    let doc = yaml::from_str(
+        r#"
+forge: "0.1"
+frag: &frag
+  children:
+    - Text: shared
+root:
+  VStack:
+  children:
+    - Tab: One
+      <<: *frag
+    - VStack:
+      <<: *frag
+"#,
+    )
+    .unwrap();
+    assert_eq!(doc.node_at("0.0").unwrap().refname.as_deref(), Some("frag"));
+    assert_eq!(doc.node_at("0.1").unwrap().refname.as_deref(), Some("frag"));
+    assert_eq!(doc.node_at("0.0").unwrap().children.len(), 1);
+    assert!(doc.node_at("0").unwrap().refname.is_none());
+}
+
+#[test]
+fn duplicate_ref_names_are_rejected() {
+    let err = yaml::from_str(
+        r#"
+forge: "0.1"
+frag: &frag
+  children:
+    - Text: one
+dup: &frag
+  children:
+    - Text: two
+root:
+  VStack:
+  children:
+    - Tab: One
+      <<: *frag
+"#,
+    )
+    .unwrap_err();
+    assert!(
+        err.0.iter().any(|d| d.message.contains("duplicate ref `&frag`")),
+        "{:?}",
+        err.0
+    );
+}
+
+#[test]
+fn for_key_parses_and_round_trips() {
+    let src = r#"forge: "0.1"
+
+root:
+  VStack:
+  children:
+    - for: $items
+      each: item
+      index: i
+      key: item.id
+      children:
+        - Text: "{$item.name}"
+"#;
+    let doc = read(src);
+    let node = &doc.root.children[0];
+    assert!(matches!(
+        &node.control,
+        Some(Control::For { key: Some(_), .. })
+    ));
+    assert_eq!(yaml::to_string(&doc, &Default::default()), src);
+}

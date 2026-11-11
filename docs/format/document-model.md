@@ -34,6 +34,25 @@ Node
   style    : OrderedMap<Ident, Value>   // keys defined by the style & layout model
   events   : [EventBinding]        // ordered
   children : [Node]                // ordered
+  control  : Control?              // `if`/`for`/`with`/`match` — absent on plain elements
+
+// A bare control block (`- if: $cond`) stores a `forge.X` sentinel in
+// `element` (`forge.If`/`For`/`With`/`Match`) — it never renders or validates
+// as an element; `control` carries the whole meaning. An element carrying
+// `control` is a *modified* element (`- Button: …` with `if:`/`for:`/`with:`).
+
+Control
+  = If    { when: Value, test: Compare?, otherwise: [Node] }
+                                                // `if:` cond, `is:`/`not:`, `else:`
+  | For   { source: Value, each: Ident, index: Ident?, key: Path?,
+        otherwise: [Node] }                     // `for:` list, `each:`/`index:` vars,
+                                                // `key:` item-identity path, `else:` empty
+  | With  { source: Value, name: Ident }        // `with:` binding, `as:` var
+  | Match { source: Value, cases: [Case], otherwise: [Node] }
+                                                // `match:` binding, `case`/`else:` arms
+
+Compare = Is(Value) | Not(Value)
+Case    = { value: Value, children: [Node] }    // `case <value>:` arm
 
 ElementRef
   namespace : Ident?               // import alias; None = the base library's namespace
@@ -80,6 +99,9 @@ value, may a `Text` have children, is the library compatible with the base) is c
 
 - `props`, `style`, `events`, `imports` and `children` are ordered; serializers preserve order so
   hand-edited files produce minimal diffs.
+- `Node.refname` records the node's `<<: *name` merge source (and `merged`, its
+  merge-contributed entry keys); `Document.refs` holds each `name: &name` ref
+  block as a head-less node body — edits splice into the block in place.
 - Nodes without an `id` are identified by their path from the root (`root/2/0`) for tooling
   (inspector selection, error reporting). Studio assigns ids when it needs a stable reference.
 
@@ -113,6 +135,10 @@ Document {
 - `set_prop(path, name, Option<Value>)` — upsert or remove a prop.
 - `set_style(path, name, Option<Value>)` — upsert or remove a `style:` entry.
 - `insert_node(path, node, index)` / `remove_node(path)` — the palette/undo ops.
+- `set_refname(path, Option<String>)` — assigns the `<<: *name` ref; a fresh name
+  becomes a new `name: &name` block. All mutation ops end with `sync_refs()`,
+  which pushes merged-facet edits into `refs[name]` and applies them back to
+  every `*name` site (the Inspector's refname input rides this).
 
 ## Open questions
 

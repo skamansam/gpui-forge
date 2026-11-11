@@ -45,7 +45,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|VStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|VStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -89,7 +89,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|HStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|HStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -133,7 +133,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Center(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Center(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -177,7 +177,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Container(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Container(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -239,7 +239,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Space(#[\\w-]+| \\.[\\w-]+)?|children|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Space(#[\\w-]+| \\.[\\w-]+)?|children|size|style|tooltip)$"
             }
           }
         },
@@ -289,7 +289,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Divider(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Divider(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip)$"
             }
           }
         },
@@ -333,7 +333,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Paper(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Paper(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -409,7 +409,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Title(#[\\w-]+| \\.[\\w-]+)?|children|order|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Title(#[\\w-]+| \\.[\\w-]+)?|children|order|style|text|tooltip)$"
             }
           }
         },
@@ -464,7 +464,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Text(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Text(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
             }
           }
         },
@@ -549,7 +549,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Badge(#[\\w-]+| \\.[\\w-]+)?|children|color|style|text|tooltip|variant)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Badge(#[\\w-]+| \\.[\\w-]+)?|children|color|style|text|tooltip|variant)$"
             }
           }
         },
@@ -593,7 +593,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Card(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Card(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -717,7 +717,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Button(#[\\w-]+| \\.[\\w-]+)?|children|color|disabled|label|on (click)|size|style|tooltip|variant)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Button(#[\\w-]+| \\.[\\w-]+)?|children|color|disabled|label|on (click)|size|style|tooltip|variant)$"
             }
           }
         },
@@ -805,7 +805,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|TextInput(#[\\w-]+| \\.[\\w-]+)?|children|description|error|label|on (change)|placeholder|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TextInput(#[\\w-]+| \\.[\\w-]+)?|children|description|error|label|on (change)|placeholder|style|tooltip|value)$"
             }
           }
         },
@@ -879,7 +879,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Checkbox(#[\\w-]+| \\.[\\w-]+)?|checked|children|label|on (change)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Checkbox(#[\\w-]+| \\.[\\w-]+)?|checked|children|label|on (change)|style|tooltip)$"
             }
           }
         },
@@ -953,7 +953,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Switch(#[\\w-]+| \\.[\\w-]+)?|checked|children|label|on (change)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Switch(#[\\w-]+| \\.[\\w-]+)?|checked|children|label|on (change)|style|tooltip)$"
             }
           }
         },
@@ -1033,7 +1033,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Select(#[\\w-]+| \\.[\\w-]+)?|children|label|on (change)|options|placeholder|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Select(#[\\w-]+| \\.[\\w-]+)?|children|label|on (change)|options|placeholder|style|tooltip|value)$"
             }
           }
         },
@@ -1097,7 +1097,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Progress(#[\\w-]+| \\.[\\w-]+)?|children|color|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Progress(#[\\w-]+| \\.[\\w-]+)?|children|color|style|tooltip|value)$"
             }
           }
         },
@@ -1168,7 +1168,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|Alert(#[\\w-]+| \\.[\\w-]+)?|children|color|style|text|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Alert(#[\\w-]+| \\.[\\w-]+)?|children|color|style|text|title|tooltip)$"
             }
           }
         },
@@ -1239,7 +1239,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Alert(#[\\w-]+| \\.[\\w-]+)?|children|color|style|text|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Alert(#[\\w-]+| \\.[\\w-]+)?|children|color|style|text|title|tooltip)$"
             }
           }
         },
@@ -1324,7 +1324,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Badge(#[\\w-]+| \\.[\\w-]+)?|children|color|style|text|tooltip|variant)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Badge(#[\\w-]+| \\.[\\w-]+)?|children|color|style|text|tooltip|variant)$"
             }
           }
         },
@@ -1448,7 +1448,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Button(#[\\w-]+| \\.[\\w-]+)?|children|color|disabled|label|on (click)|size|style|tooltip|variant)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Button(#[\\w-]+| \\.[\\w-]+)?|children|color|disabled|label|on (click)|size|style|tooltip|variant)$"
             }
           }
         },
@@ -1490,7 +1490,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Canvas(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Canvas(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -1534,7 +1534,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Card(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Card(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -1578,7 +1578,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Center(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Center(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -1652,7 +1652,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Checkbox(#[\\w-]+| \\.[\\w-]+)?|checked|children|label|on (change)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Checkbox(#[\\w-]+| \\.[\\w-]+)?|checked|children|label|on (change)|style|tooltip)$"
             }
           }
         },
@@ -1696,7 +1696,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Container(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Container(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -1746,7 +1746,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Divider(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Divider(#[\\w-]+| \\.[\\w-]+)?|children|label|style|tooltip)$"
             }
           }
         },
@@ -1832,7 +1832,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Frame(#[\\w-]+| \\.[\\w-]+)?|children|ratio|size|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Frame(#[\\w-]+| \\.[\\w-]+)?|children|ratio|size|style|text|tooltip)$"
             }
           }
         },
@@ -1876,7 +1876,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.HStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.HStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -1927,7 +1927,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Icon(#[\\w-]+| \\.[\\w-]+)?|children|name|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Icon(#[\\w-]+| \\.[\\w-]+)?|children|name|style|tooltip)$"
             },
             "required": [
               "name"
@@ -1974,7 +1974,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Paper(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Paper(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -2109,7 +2109,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Player(#[\\w-]+| \\.[\\w-]+)?|buffer_capacity|children|height|looping|muted|playing|src|style|tooltip|volume|width)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Player(#[\\w-]+| \\.[\\w-]+)?|buffer_capacity|children|height|looping|muted|playing|src|style|tooltip|volume|width)$"
             },
             "required": [
               "src"
@@ -2176,7 +2176,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Progress(#[\\w-]+| \\.[\\w-]+)?|children|color|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Progress(#[\\w-]+| \\.[\\w-]+)?|children|color|style|tooltip|value)$"
             }
           }
         },
@@ -2256,7 +2256,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Select(#[\\w-]+| \\.[\\w-]+)?|children|label|on (change)|options|placeholder|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Select(#[\\w-]+| \\.[\\w-]+)?|children|label|on (change)|options|placeholder|style|tooltip|value)$"
             }
           }
         },
@@ -2318,7 +2318,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Space(#[\\w-]+| \\.[\\w-]+)?|children|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Space(#[\\w-]+| \\.[\\w-]+)?|children|size|style|tooltip)$"
             }
           }
         },
@@ -2392,7 +2392,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Switch(#[\\w-]+| \\.[\\w-]+)?|checked|children|label|on (change)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Switch(#[\\w-]+| \\.[\\w-]+)?|checked|children|label|on (change)|style|tooltip)$"
             }
           }
         },
@@ -2447,7 +2447,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Text(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Text(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
             }
           }
         },
@@ -2535,7 +2535,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.TextInput(#[\\w-]+| \\.[\\w-]+)?|children|description|error|label|on (change)|placeholder|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TextInput(#[\\w-]+| \\.[\\w-]+)?|children|description|error|label|on (change)|placeholder|style|tooltip|value)$"
             }
           }
         },
@@ -2611,7 +2611,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.Title(#[\\w-]+| \\.[\\w-]+)?|children|order|style|text|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Title(#[\\w-]+| \\.[\\w-]+)?|children|order|style|text|tooltip)$"
             }
           }
         },
@@ -2655,20 +2655,36 @@
               }
             },
             "propertyNames": {
-              "pattern": "^(<<|[a-z][\\w-]*\\.VStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.VStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         }
       ],
-      "description": "One element key plus props, `style`, `on <event>` and `children`.",
+      "description": "One element key plus props, `style`, `on <event>` and `children` — or a control block (`if`/`for`/`with`/`match`).",
       "minProperties": 1,
       "not": {
         "propertyNames": {
-          "pattern": "^([a-z_][A-Za-z0-9_-]*|on [a-z_][A-Za-z0-9_-]*|<<)$"
+          "pattern": "^((?!(if|for|with|match)$)[a-z_][A-Za-z0-9_-]*|on [a-z_][A-Za-z0-9_-]*|<<)$"
+        }
+      },
+      "patternProperties": {
+        "^case ": {
+          "description": "A `match` arm — rendered when the source equals the operand.",
+          "items": {
+            "$ref": "#/definitions/node"
+          },
+          "type": "array"
         }
       },
       "properties": {
         "children": {
+          "items": {
+            "$ref": "#/definitions/node"
+          },
+          "type": "array"
+        },
+        "else": {
+          "description": "Rendered when `if`/`match` fail or a `for` list is empty.",
           "items": {
             "$ref": "#/definitions/node"
           },
@@ -2688,7 +2704,7 @@
         }
       },
       "propertyNames": {
-        "pattern": "^((Container|TextInput|Checkbox|Progress|Divider|Button|Center|HStack|Select|Switch|VStack|Alert|Badge|Paper|Space|Title|Card|Text)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(Container|TextInput|Checkbox|Progress|Divider|Button|Canvas|Center|HStack|Player|Select|Switch|VStack|Alert|Badge|Frame|Paper|Space|Title|Card|Icon|Text)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<)$"
+        "pattern": "^((Container|TextInput|Checkbox|Progress|Divider|Button|Center|HStack|Select|Switch|VStack|Alert|Badge|Paper|Space|Title|Card|Text)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(Container|TextInput|Checkbox|Progress|Divider|Button|Canvas|Center|HStack|Player|Select|Switch|VStack|Alert|Badge|Frame|Paper|Space|Title|Card|Icon|Text)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<|(if|for|with|match|else|each|index|key|as|is|not|case .+))$"
       },
       "type": "object"
     },

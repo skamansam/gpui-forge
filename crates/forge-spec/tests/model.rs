@@ -123,3 +123,74 @@ fn insert_after_and_move_after_place_siblings() {
     assert!(doc.move_after("0.1", "0.1").is_none());
     assert!(doc.move_after("0.1", "0.1.0").is_none());
 }
+
+fn control_doc() -> Document {
+    yaml::from_str(
+        r#"
+forge: "0.1"
+root:
+  VStack:
+  children:
+    - if: $cond
+      children:
+        - Text: then
+      else:
+        - Text: e0
+        - Text: e1
+    - match: $mode
+      case a:
+        - Text: ca0
+      case b:
+        - Text: cb0
+"#,
+    )
+    .unwrap()
+}
+
+#[test]
+fn node_at_resolves_branch_paths() {
+    let doc = control_doc();
+    // else children — `e` steps
+    assert_eq!(doc.node_at("0.0.e0").unwrap().element.name, "Text");
+    assert_eq!(doc.node_at("0.0.e1").unwrap().element.name, "Text");
+    assert!(doc.node_at("0.0.e2").is_none());
+    // case children — `c` steps
+    assert_eq!(doc.node_at("0.1.c0.0").unwrap().element.name, "Text");
+    assert_eq!(doc.node_at("0.1.c1.0").unwrap().element.name, "Text");
+    assert!(doc.node_at("0.1.c2.0").is_none());
+    // bare `e`/`c` list paths never resolve to a node
+    assert!(doc.node_at("0.0.e").is_none());
+    assert!(doc.node_at("0.1.c0").is_none());
+}
+
+#[test]
+fn edit_ops_reach_branch_children() {
+    let mut doc = control_doc();
+    // remove an else child — e1 shifts into the e0 slot
+    assert!(doc.remove_node("0.0.e0").is_some());
+    assert_eq!(
+        doc.node_at("0.0.e0").unwrap().content,
+        Some(Value::Enum("e1".into()))
+    );
+    assert!(doc.node_at("0.0.e1").is_none());
+    // insert into the `else:` list itself via the `e` container path
+    let node = Node {
+        element: ElementRef { namespace: None, name: "Label".into() },
+        ..Default::default()
+    };
+    assert!(doc.insert_node("0.0.e", node, Some(0)));
+    assert_eq!(doc.node_at("0.0.e0").unwrap().element.name, "Label");
+    // insert into a case arm's list via `c{n}`
+    let node = Node {
+        element: ElementRef { namespace: None, name: "Badge".into() },
+        ..Default::default()
+    };
+    assert!(doc.insert_node("0.1.c1", node, None));
+    assert_eq!(doc.node_at("0.1.c1.1").unwrap().element.name, "Badge");
+    // set_prop on a branch child
+    assert!(doc.set_prop("0.1.c0.0", "size", Some(Value::Enum("lg".into()))));
+    assert_eq!(
+        doc.node_at("0.1.c0.0").unwrap().props[0].1,
+        Value::Enum("lg".into())
+    );
+}

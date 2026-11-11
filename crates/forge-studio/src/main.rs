@@ -13,7 +13,9 @@ use gpui_forge_runtime::check;
 use gpui_forge_runtime::forge_spec::Document;
 use gpui_forge_runtime::forge_spec::catalog::Catalog;
 use gpui_forge_runtime::forge_spec::value::parse_path;
-use gpui_forge_runtime::forge_spec::{Diagnostic, ElementRef, Node, Value, yaml};
+use gpui_forge_runtime::forge_spec::{
+    Diagnostic, ElementRef, Node, Value, path_steps, path_string, yaml,
+};
 use gpui_forge_runtime::render::{ForgeView, get_path, set_path};
 use gpui_kit::component::WindowExt as _;
 use gpui_kit::component::theme::ThemeSet;
@@ -37,11 +39,19 @@ const EXAMPLE_PDF: &str = include_str!("../../../examples/pdf-demo.forge.yaml");
 const EXAMPLE_WB: &str = include_str!("../../../examples/whiteboard-demo.forge.yaml");
 const EXAMPLE_MATH: &str = include_str!("../../../examples/math-demo.forge.yaml");
 const EXAMPLE_HIG: &str = include_str!("../../../examples/hig-demo.forge.yaml");
+// Foreign-base showcases — they render in the base's own preview host.
+const EXAMPLE_GPUI02: &str = include_str!("../../../examples/gpui02-showcase.forge.yaml");
+const EXAMPLE_BEZEL: &str = include_str!("../../../examples/bezel-showcase.forge.yaml");
+const EXAMPLE_RATATUI: &str = include_str!("../../../examples/ratatui-showcase.forge.yaml");
+const EXAMPLE_ICED: &str = include_str!("../../../examples/iced-showcase.forge.yaml");
+const EXAMPLE_ADABRAKA: &str = include_str!("../../../examples/adabraka-showcase.forge.yaml");
 
 /// Widget sets the Welcome tab offers in its showcase picker (#129) — the
-/// gpui-kit base, the `forge` intrinsics, then every registered `forge-lib-*`.
+/// gpui-kit base, the `forge` intrinsics, every registered `forge-lib-*`,
+/// then the foreign-base showcases (they launch their preview host).
 const WIDGET_SETS: &[&str] = &[
     "gpui-kit", "forge", "ely", "gc", "gflow", "base", "video", "hig", "pdf", "wb", "math",
+    "gpui02", "bezel", "ratatui", "iced", "adabraka",
 ];
 
 struct Shared {
@@ -225,12 +235,19 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         .map(str::to_owned)
         .unwrap_or_else(|| Theme::global(cx).theme_name().to_string());
     let dark = prefs.get("dark").and_then(|j| j.as_bool()).unwrap_or(dark);
+    let mut theme_json = String::new();
     if let Some(config) = ThemeRegistry::global(cx)
         .themes()
         .get(theme_name.as_str())
         .cloned()
     {
         Theme::update(cx, |theme| theme.apply_config(&config));
+        theme_json = serde_json::to_string_pretty(&ThemeSet {
+            name: config.name.clone(),
+            themes: vec![(*config).clone()],
+            ..Default::default()
+        })
+        .unwrap_or_default();
     }
     view.set_state(
         json!({
@@ -240,6 +257,8 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
                 "dark_themes": dark_themes,
                 "all_themes": all_themes,
                 "theme": theme_name,
+                "theme_json": theme_json,
+                "theme_preview": BASE_ID,
                 "file": "welcome.forge.yaml",
                 "diagnostics": "",
                 "widget_sets": WIDGET_SETS,
@@ -281,6 +300,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "select_node",
         "prop_changed",
         "style_changed",
+        "refname_changed",
         "start_from",
         "widget_set_changed",
         "test_error",
@@ -415,6 +435,7 @@ fn open_dialog(
                 meta: vec![],
                 state: vec![],
                 dialogs: vec![],
+                refs: vec![],
                 raw: None,
                 root: Node {
                     element: ElementRef {
@@ -660,6 +681,7 @@ fn dispatch(
         "select_node" => select_node(view, args, cx),
         "prop_changed" => prop_changed(view, args, shared, cx),
         "style_changed" => style_changed(view, args, shared, cx),
+        "refname_changed" => refname_changed(view, shared, cx),
         "quit" => {
             if let Some(mut host) = HOST.lock().unwrap().take() {
                 let _ = host.child.kill();
@@ -700,6 +722,21 @@ fn starter(name: &str) -> Option<(&'static str, &'static str)> {
         }
         "math" | "math-demo.forge.yaml" => ("../../examples/math-demo.forge.yaml", EXAMPLE_MATH),
         "hig" | "hig-demo.forge.yaml" => ("../../examples/hig-demo.forge.yaml", EXAMPLE_HIG),
+        "gpui02" | "gpui02-showcase.forge.yaml" => {
+            ("../../examples/gpui02-showcase.forge.yaml", EXAMPLE_GPUI02)
+        }
+        "bezel" | "bezel-showcase.forge.yaml" => {
+            ("../../examples/bezel-showcase.forge.yaml", EXAMPLE_BEZEL)
+        }
+        "ratatui" | "ratatui-showcase.forge.yaml" => {
+            ("../../examples/ratatui-showcase.forge.yaml", EXAMPLE_RATATUI)
+        }
+        "iced" | "iced-showcase.forge.yaml" => {
+            ("../../examples/iced-showcase.forge.yaml", EXAMPLE_ICED)
+        }
+        "adabraka" | "adabraka-showcase.forge.yaml" => {
+            ("../../examples/adabraka-showcase.forge.yaml", EXAMPLE_ADABRAKA)
+        }
         _ => return None,
     })
 }
@@ -730,6 +767,15 @@ fn start_from(
         cx,
     );
     view.update_state(&parse_path("studio.tab").unwrap(), Json::from(2), cx);
+    // A foreign-base demo can't render in the embedded (gpui-kit) canvas —
+    // spawn the base's preview host so the showcase actually shows (#97).
+    let doc_base = get_path(view.state(), &parse_path("studio.doc_base").unwrap())
+        .and_then(Json::as_str)
+        .unwrap_or(BASE_ID)
+        .to_owned();
+    if doc_base != BASE_ID {
+        preview_in_host(view, shared.clone(), cx);
+    }
 }
 
 /// `open_document()` → "open_document", `apply_theme(true)` → ("apply_theme", ["true"]).
@@ -2005,10 +2051,13 @@ fn remove_component(view: &mut ForgeView, shared: &SharedState, cx: &mut Context
         status(view, &format!("cannot remove {path}"), cx);
         return;
     }
-    // Select the parent so the inspector lands somewhere sensible.
-    let parent = path
-        .rsplit_once('.')
-        .map(|(p, _)| p.to_owned())
+    // Select the parent so the inspector lands somewhere sensible — for
+    // `e`/`c` branch paths the parent is the control node itself.
+    let parent = path_steps(&path)
+        .and_then(|steps| {
+            let parent = &steps[..steps.len().saturating_sub(1)];
+            (!parent.is_empty()).then(|| path_string(parent))
+        })
         .unwrap_or_else(|| "0".into());
     view.update_state(
         &parse_path("document.selected").unwrap(),
@@ -2204,6 +2253,34 @@ fn style_changed(
     preview.update(cx, |preview, cx| {
         preview.set_node_style(&path, name, &value, cx);
     });
+}
+
+/// `refname_changed()` — the inspector's ref field wrote `document.edits.refname`;
+/// assign it on the selected node — `sync_refs` turns it into a `name: &name`
+/// block and the preserving writer emits `<<: *name` (or a new ref block).
+fn refname_changed(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView>) {
+    let state = view.state();
+    let Some(path) = get_path(state, &parse_path("document.selected").unwrap())
+        .and_then(|j| j.as_str())
+        .map(str::to_owned)
+    else {
+        return;
+    };
+    let value = get_path(state, &parse_path("document.edits.refname").unwrap())
+        .and_then(|j| j.as_str())
+        .unwrap_or_default()
+        .trim()
+        .to_owned();
+    record_undo(view, shared, cx);
+    let preview = view.preview("canvas", cx);
+    preview.update(cx, |preview, cx| {
+        preview.set_node_refname(&path, (!value.is_empty()).then_some(value), cx);
+    });
+    if let Some(doc) = preview.read(cx).document().cloned() {
+        let src = yaml::to_string_preserving(&doc, &yaml::WriteOptions::default());
+        view.update_state(&parse_path("editor.source").unwrap(), Json::String(src), cx);
+        view.reset_inputs("source");
+    }
 }
 
 fn prop_changed(
