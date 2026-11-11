@@ -175,14 +175,20 @@ fn edit_ops_reach_branch_children() {
     assert!(doc.node_at("0.0.e1").is_none());
     // insert into the `else:` list itself via the `e` container path
     let node = Node {
-        element: ElementRef { namespace: None, name: "Label".into() },
+        element: ElementRef {
+            namespace: None,
+            name: "Label".into(),
+        },
         ..Default::default()
     };
     assert!(doc.insert_node("0.0.e", node, Some(0)));
     assert_eq!(doc.node_at("0.0.e0").unwrap().element.name, "Label");
     // insert into a case arm's list via `c{n}`
     let node = Node {
-        element: ElementRef { namespace: None, name: "Badge".into() },
+        element: ElementRef {
+            namespace: None,
+            name: "Badge".into(),
+        },
         ..Default::default()
     };
     assert!(doc.insert_node("0.1.c1", node, None));

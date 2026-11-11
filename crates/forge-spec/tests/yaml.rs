@@ -429,7 +429,7 @@ root:
     assert_eq!(read(&out), doc);
 }
 
-use forge_spec::{Case, Compare, Control};
+use forge_spec::{Compare, Control};
 
 fn binding(text: &str) -> Value {
     Value::Binding {
@@ -664,7 +664,9 @@ root:
     )
     .unwrap_err();
     assert!(
-        err.0.iter().any(|d| d.message.contains("duplicate ref `&frag`")),
+        err.0
+            .iter()
+            .any(|d| d.message.contains("duplicate ref `&frag`")),
         "{:?}",
         err.0
     );

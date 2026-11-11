@@ -333,10 +333,7 @@ impl Document {
                         visit(child, acc);
                     }
                 }
-                Some(
-                    Control::If { otherwise, .. }
-                    | Control::For { otherwise, .. },
-                ) => {
+                Some(Control::If { otherwise, .. } | Control::For { otherwise, .. }) => {
                     for child in otherwise {
                         visit(child, acc);
                     }
@@ -359,8 +356,10 @@ impl Document {
         }
         let apply = |node: &mut Node, acc: &Vec<(String, Node)>| {
             let mut visit = |node: &mut Node| {
-                if let Some((_, fragment)) =
-                    node.refname.as_ref().and_then(|n| acc.iter().find(|(k, _)| k == n))
+                if let Some((_, fragment)) = node
+                    .refname
+                    .as_ref()
+                    .and_then(|n| acc.iter().find(|(k, _)| k == n))
                 {
                     let fragment = fragment.clone();
                     node.apply_facets(&node.merged.clone(), &fragment);
@@ -454,13 +453,12 @@ impl Node {
     fn merged_facets(&self) -> Node {
         let has = |key: &str| self.merged.iter().any(|k| k == key);
         Node {
-            props: self
-                .props
-                .iter()
-                .filter(|(k, _)| has(k))
-                .cloned()
-                .collect(),
-            style: if has("style") { self.style.clone() } else { vec![] },
+            props: self.props.iter().filter(|(k, _)| has(k)).cloned().collect(),
+            style: if has("style") {
+                self.style.clone()
+            } else {
+                vec![]
+            },
             events: self
                 .events
                 .iter()
@@ -472,9 +470,10 @@ impl Node {
             } else {
                 vec![]
             },
-            control: self.control.clone().filter(|_| {
-                has("if") || has("for") || has("with") || has("match")
-            }),
+            control: self
+                .control
+                .clone()
+                .filter(|_| has("if") || has("for") || has("with") || has("match")),
             ..Default::default()
         }
     }
@@ -488,8 +487,7 @@ impl Node {
         if has("style") {
             self.style = other.style.clone();
         }
-        self.events
-            .retain(|e| !has(&format!("on {}", e.event)));
+        self.events.retain(|e| !has(&format!("on {}", e.event)));
         self.events.extend(other.events.iter().cloned());
         if has("children") {
             self.children = other.children.clone();

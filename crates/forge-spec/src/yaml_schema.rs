@@ -57,8 +57,7 @@ const PROP_KEY: &str = r"[a-z_][A-Za-z0-9_-]*";
 /// `on <event>` keys.
 const EVENT_KEY: &str = r"on [a-z_][A-Za-z0-9_-]*";
 /// Keys a node may carry that never name an element.
-const NON_ELEMENT_KEY: &str =
-    r"([a-z_][A-Za-z0-9_-]*|on [a-z_][A-Za-z0-9_-]*|<<)";
+const NON_ELEMENT_KEY: &str = r"([a-z_][A-Za-z0-9_-]*|on [a-z_][A-Za-z0-9_-]*|<<)";
 /// `NON_ELEMENT_KEY` minus the control heads — a node whose only key is
 /// `if`/`for`/`with`/`match` is a control block, not a missing element key.
 const NON_ELEMENT_KEY_NO_CONTROL: &str =

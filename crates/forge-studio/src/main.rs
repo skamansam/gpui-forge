@@ -728,15 +728,17 @@ fn starter(name: &str) -> Option<(&'static str, &'static str)> {
         "bezel" | "bezel-showcase.forge.yaml" => {
             ("../../examples/bezel-showcase.forge.yaml", EXAMPLE_BEZEL)
         }
-        "ratatui" | "ratatui-showcase.forge.yaml" => {
-            ("../../examples/ratatui-showcase.forge.yaml", EXAMPLE_RATATUI)
-        }
+        "ratatui" | "ratatui-showcase.forge.yaml" => (
+            "../../examples/ratatui-showcase.forge.yaml",
+            EXAMPLE_RATATUI,
+        ),
         "iced" | "iced-showcase.forge.yaml" => {
             ("../../examples/iced-showcase.forge.yaml", EXAMPLE_ICED)
         }
-        "adabraka" | "adabraka-showcase.forge.yaml" => {
-            ("../../examples/adabraka-showcase.forge.yaml", EXAMPLE_ADABRAKA)
-        }
+        "adabraka" | "adabraka-showcase.forge.yaml" => (
+            "../../examples/adabraka-showcase.forge.yaml",
+            EXAMPLE_ADABRAKA,
+        ),
         _ => return None,
     })
 }

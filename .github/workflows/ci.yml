@@ -87,7 +87,9 @@ jobs:
       - uses: actions-rust-lang/setup-rust-toolchain@v1
       - name: Unimplemented and conflicting base selections must fail to compile
         run: |
-          for features in "" base-bezel base-adabraka base-gpui02 base-bezel,base-gpui02; do
+          # bezel and gpui02 are implemented bases — they compile. adabraka lives in
+          # its own workspace (links conflict) and "" / two bases must still fail.
+          for features in "" base-adabraka base-bezel,base-gpui02; do
             if cargo check -p gpui-forge-runtime --locked --no-default-features --features "$features" 2>/dev/null; then
               echo "::error::'$features' unexpectedly compiled"; exit 1
             fi

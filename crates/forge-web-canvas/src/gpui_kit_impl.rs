@@ -77,7 +77,17 @@ pub fn start(dark: bool, assets: String) {
                 // elements fall back to "not provided by this adapter yet").
                 view.register_library(forge_lib_ely::Ely::new());
                 view.register_library(forge_lib_gpui_component::GpuiComponent);
-                view.register_library(forge_lib_zorite::Pdf::new());
+                view.register_library(forge_lib_zorite::Pdf::with_asset_resolver(|src| {
+                    // Doc-relative `src:` has no filesystem on wasm — bundled
+                    // demo assets resolve by basename instead.
+                    static ASSETS: &[(&str, &[u8])] =
+                        &[("sample.pdf", include_bytes!("../../../examples/sample.pdf"))];
+                    let name = src.rsplit('/').next().unwrap_or(src);
+                    ASSETS
+                        .iter()
+                        .find(|(n, _)| *n == name)
+                        .map(|(_, b)| std::sync::Arc::new(b.to_vec()))
+                }));
                 view.register_library(forge_lib_zorite::Math::new());
                 view.register_library(forge_lib_hig::Hig);
                 view.register_library(forge_lib_base::Base::new());

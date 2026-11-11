@@ -40,6 +40,7 @@ mod pdf {
     #[derive(Default)]
     pub struct Pdf {
         viewers: RefCell<HashMap<String, (std::path::PathBuf, Entity<gpui_pdf::PdfView>)>>,
+        assets: Option<std::rc::Rc<dyn Fn(&str) -> Option<std::sync::Arc<Vec<u8>>>>>,
     }
 
     impl Pdf {
@@ -47,18 +48,39 @@ mod pdf {
             Self::default()
         }
 
+        /// Resolve `src` to bundled bytes before hitting the filesystem — hosts
+        /// without one (the WASM canvas) embed their demo PDFs here.
+        pub fn with_asset_resolver(
+            f: impl Fn(&str) -> Option<std::sync::Arc<Vec<u8>>> + 'static,
+        ) -> Self {
+            Self {
+                assets: Some(std::rc::Rc::new(f)),
+                ..Self::default()
+            }
+        }
+
         fn viewer(
             &self,
             key: &str,
             path: std::path::PathBuf,
+            bytes: Option<std::sync::Arc<Vec<u8>>>,
             quality: f32,
             window: &mut Window,
             cx: &mut Context<ForgeView>,
         ) -> Entity<gpui_pdf::PdfView> {
-            let make = |path: &std::path::PathBuf, cx: &mut Context<ForgeView>| {
+            let make = |path: &std::path::PathBuf,
+                        bytes: &Option<std::sync::Arc<Vec<u8>>>,
+                        cx: &mut Context<ForgeView>| {
                 let style: gpui_pdf::PdfStyleFn = std::rc::Rc::new(gpui_pdf::PdfStyle::default);
                 let quality_fn: gpui_pdf::PdfQualityFn = std::rc::Rc::new(move || quality);
-                cx.new(|cx| gpui_pdf::PdfView::new(path.clone(), style, quality_fn, cx))
+                match bytes {
+                    Some(b) => {
+                        cx.new(|cx| gpui_pdf::PdfView::new_bytes(b.clone(), style, quality_fn, cx))
+                    }
+                    None => {
+                        cx.new(|cx| gpui_pdf::PdfView::new(path.clone(), style, quality_fn, cx))
+                    }
+                }
             };
             let mut viewers = self.viewers.borrow_mut();
             match viewers.entry(key.to_owned()) {
@@ -66,13 +88,14 @@ mod pdf {
                     if entry.get().0 != path {
                         let old = entry.get().1.clone();
                         old.update(cx, |v, cx| v.release(window, cx));
-                        entry.insert((path.clone(), make(&path, cx)));
+                        entry.insert((path.clone(), make(&path, &bytes, cx)));
                     }
                     entry.into_mut().1.clone()
                 }
-                std::collections::hash_map::Entry::Vacant(entry) => {
-                    entry.insert((path.clone(), make(&path, cx))).1.clone()
-                }
+                std::collections::hash_map::Entry::Vacant(entry) => entry
+                    .insert((path.clone(), make(&path, &bytes, cx)))
+                    .1
+                    .clone(),
             }
         }
     }
@@ -102,7 +125,12 @@ mod pdf {
                 "Viewer" => {
                     let src = prop_str(node, "src", view)?;
                     let quality = prop_num(node, "quality", view).unwrap_or(1.5) as f32;
-                    let viewer = self.viewer(key, view.resolve_path(&src), quality, window, cx);
+                    let bytes = self.assets.as_ref().and_then(|r| r(&src));
+                    let cache_key = match &bytes {
+                        Some(_) => std::path::PathBuf::from(&src),
+                        None => view.resolve_path(&src),
+                    };
+                    let viewer = self.viewer(key, cache_key, bytes, quality, window, cx);
                     Some(viewer.into_any_element())
                 }
                 _ => None,

@@ -318,13 +318,11 @@ impl ForgeView {
     pub fn preview(&mut self, id: &str) -> &mut ForgeView {
         let catalogs = self.catalogs.clone();
         let libraries = self.libraries.clone();
-        self.previews
-            .entry(id.to_owned())
-            .or_insert_with(|| {
-                let mut view = ForgeView::new(catalogs);
-                view.libraries = libraries;
-                view
-            })
+        self.previews.entry(id.to_owned()).or_insert_with(|| {
+            let mut view = ForgeView::new(catalogs);
+            view.libraries = libraries;
+            view
+        })
     }
 
     /// Sets the document a `forge.Preview` renders.

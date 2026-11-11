@@ -454,10 +454,8 @@ impl Reader<'_> {
                     head = Some((key, kind));
                 }
             } else if name == "else" {
-                ctl.otherwise = Some((
-                    key,
-                    self.branch_children(val, crate::model::PathStep::Else),
-                ));
+                ctl.otherwise =
+                    Some((key, self.branch_children(val, crate::model::PathStep::Else)));
             } else if name == "case" {
                 self.hint(
                     key.pos,
@@ -468,10 +466,8 @@ impl Reader<'_> {
                 match value::parse_arg(operand.trim()) {
                     Ok(operand) => {
                         let case = ctl.cases.len();
-                        let children =
-                            self.branch_children(val, move |i| {
-                                crate::model::PathStep::Case(case, i)
-                            });
+                        let children = self
+                            .branch_children(val, move |i| crate::model::PathStep::Case(case, i));
                         ctl.cases.push((key, operand, children));
                     }
                     Err(e) => self.error(key.pos, format!("invalid `case` operand: {e}")),
@@ -681,9 +677,9 @@ impl Reader<'_> {
                 }
                 // `key: item.id` must be a member path rooted in the `each` var.
                 if let Some((k, path)) = &ctl.key
-                    && !path.0.first().is_some_and(|s| {
-                        matches!(s, crate::model::PathSegment::Field(field) if field == &each)
-                    })
+                    && !path.0.first().is_some_and(
+                        |s| matches!(s, crate::model::PathSegment::Field(field) if field == &each),
+                    )
                 {
                     self.hint(
                         k.pos,

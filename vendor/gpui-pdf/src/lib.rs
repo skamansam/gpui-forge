@@ -659,6 +659,27 @@ impl PdfView {
         quality: PdfQualityFn,
         cx: &mut Context<Self>,
     ) -> Self {
+        Self::new_impl(path, None, style, quality, cx)
+    }
+
+    /// Like [`new`], but takes the document bytes directly — for hosts without a
+    /// filesystem (a WASM canvas embeds bundled assets, a remote host fetches).
+    pub fn new_bytes(
+        bytes: Arc<Vec<u8>>,
+        style: PdfStyleFn,
+        quality: PdfQualityFn,
+        cx: &mut Context<Self>,
+    ) -> Self {
+        Self::new_impl(PathBuf::new(), Some(bytes), style, quality, cx)
+    }
+
+    fn new_impl(
+        path: PathBuf,
+        bytes: Option<Arc<Vec<u8>>>,
+        style: PdfStyleFn,
+        quality: PdfQualityFn,
+        cx: &mut Context<Self>,
+    ) -> Self {
         let load_path = path.clone();
         cx.spawn(async move |this, cx| {
             // Read the file off-thread, keep the bytes (so an encrypted PDF can be
@@ -666,7 +687,10 @@ impl PdfView {
             let loaded = cx
                 .background_executor()
                 .spawn(async move {
-                    let bytes = Arc::new(std::fs::read(&load_path).map_err(|e| e.to_string())?);
+                    let bytes = match bytes {
+                        Some(b) => b,
+                        None => Arc::new(std::fs::read(&load_path).map_err(|e| e.to_string())?),
+                    };
                     Ok::<_, String>((bytes.clone(), prepare(bytes, "")))
                 })
                 .await;

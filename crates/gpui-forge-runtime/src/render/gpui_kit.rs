@@ -1669,7 +1669,12 @@ impl ForgeView {
 
     /// `refname_changed` write-through — `doc.set_refname`. The preserving
     /// writer emits `<<: *name` (or a new `name: &name` block).
-    pub fn set_node_refname(&mut self, path: &str, refname: Option<String>, cx: &mut Context<Self>) {
+    pub fn set_node_refname(
+        &mut self,
+        path: &str,
+        refname: Option<String>,
+        cx: &mut Context<Self>,
+    ) {
         if let Some(doc) = self.doc.as_mut() {
             doc.set_refname(path, refname);
             cx.notify();
@@ -2659,7 +2664,8 @@ impl ForgeView {
                 // doc loads) push into the cached state. `set_value` emits no
                 // events. A static `value:` stays a one-time default.
                 if matches!(self.prop(node, "value"), Some(Value::Binding { .. }))
-                    && state.read(cx).value() != value {
+                    && state.read(cx).value() != value
+                {
                     state.update(cx, |s, cx| s.set_value(value, window, cx));
                 }
                 Input::new(&state)
@@ -2702,7 +2708,8 @@ impl ForgeView {
                 };
                 // Same controlled-bind sync as `Input` — see that arm.
                 if matches!(self.prop(node, "value"), Some(Value::Binding { .. }))
-                    && state.read(cx).value() != value {
+                    && state.read(cx).value() != value
+                {
                     state.update(cx, |s, cx| s.set_value(value, window, cx));
                 }
                 let textarea = Textarea::new(&state)
@@ -2742,7 +2749,8 @@ impl ForgeView {
                 };
                 // Same controlled-bind sync as `Input` — see that arm.
                 if matches!(self.prop(node, "value"), Some(Value::Binding { .. }))
-                    && state.read(cx).value() != value {
+                    && state.read(cx).value() != value
+                {
                     state.update(cx, |s, cx| s.set_value(value, window, cx));
                 }
                 NumberInput::new(&state)
@@ -2799,7 +2807,8 @@ impl ForgeView {
                 };
                 // Same controlled-bind sync as `Input` — see that arm.
                 if matches!(self.prop(node, "value"), Some(Value::Binding { .. }))
-                    && state.read(cx).value() != value {
+                    && state.read(cx).value() != value
+                {
                     state.update(cx, |s, cx| s.set_value(value, window, cx));
                 }
                 // `diagnostics:` — squiggle markers, usually bound to state fed
@@ -2929,10 +2938,7 @@ impl ForgeView {
                 // `value: bind` is controlled — external writes (theme reset,
                 // doc loads) re-select the matching option when it differs.
                 if matches!(self.prop(node, "value"), Some(Value::Binding { .. }))
-                    && let Some(ix) = options
-                        .iter()
-                        .position(|o| *o == value)
-                        .map(IndexPath::new)
+                    && let Some(ix) = options.iter().position(|o| *o == value).map(IndexPath::new)
                     && state.read(cx).selected_index(cx).map(|p| p.row) != Some(ix.row)
                 {
                     state.update(cx, |s, cx| s.set_selected_index(Some(ix), window, cx));
@@ -4153,16 +4159,19 @@ impl Render for ForgeView {
     fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let theme = cx.theme();
         let (background, foreground) = (theme.background, theme.foreground);
-        let content = self.doc.clone().map(|doc| {
-            if doc.root.control.is_some() {
-                div()
-                    .size_full()
-                    .children(self.expand(&doc.root, "root", window, cx))
-                    .into_any_element()
-            } else {
-                self.render_node(&doc.root, "root", window, cx)
-            }
-        })
+        let content = self
+            .doc
+            .clone()
+            .map(|doc| {
+                if doc.root.control.is_some() {
+                    div()
+                        .size_full()
+                        .children(self.expand(&doc.root, "root", window, cx))
+                        .into_any_element()
+                } else {
+                    self.render_node(&doc.root, "root", window, cx)
+                }
+            })
             .or_else(|| self.empty_text.clone().map(|text| empty(text, cx)));
         for message in self.take_errors() {
             window.push_notification((NotificationType::Error, message), cx);

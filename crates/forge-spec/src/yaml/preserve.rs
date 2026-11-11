@@ -54,7 +54,14 @@ pub(crate) fn preserving(doc: &Document, options: &WriteOptions) -> Option<Strin
         let key = key.as_str();
         match key {
             "root" => {
-                emit_pending_top(&mut out, doc, &mut seen, &mut covered_dialogs, &existing_refs, &ctx);
+                emit_pending_top(
+                    &mut out,
+                    doc,
+                    &mut seen,
+                    &mut covered_dialogs,
+                    &existing_refs,
+                    &ctx,
+                );
                 seen.insert("root".to_owned());
                 splice_named_node(&ctx, &mut out, k, v, &doc.root, false);
             }
@@ -87,14 +94,9 @@ pub(crate) fn preserving(doc: &Document, options: &WriteOptions) -> Option<Strin
                         Some((name, fragment)) => {
                             seen.insert(name);
                             emit(&mut out, ctx.lines, a, a);
-                            let baseline =
-                                reparse(v).and_then(|y| {
-                                    read::reparse_fragment(
-                                        ctx.src,
-                                        y,
-                                        tree::merge_names(v, ctx.lines),
-                                    )
-                                });
+                            let baseline = reparse(v).and_then(|y| {
+                                read::reparse_fragment(ctx.src, y, tree::merge_names(v, ctx.lines))
+                            });
                             if baseline.as_ref() == Some(fragment) {
                                 emit(&mut out, ctx.lines, a + 1, b);
                             } else {
@@ -116,7 +118,14 @@ pub(crate) fn preserving(doc: &Document, options: &WriteOptions) -> Option<Strin
         cursor = b + 1;
     }
     emit_gap(&mut out, ctx.lines, &mut cursor, usize::MAX);
-    emit_pending_top(&mut out, doc, &mut seen, &mut covered_dialogs, &existing_refs, &ctx);
+    emit_pending_top(
+        &mut out,
+        doc,
+        &mut seen,
+        &mut covered_dialogs,
+        &existing_refs,
+        &ctx,
+    );
     if !seen.contains("root") {
         write::line(&mut out, 0, "root:");
         write::write_node(&mut out, &doc.root, 2, false, ctx.options);
@@ -183,9 +192,7 @@ fn scalar_text(node: &MarkedYamlOwned) -> Option<(String, Quoting)> {
 /// The `&name` anchor on a node's span — anchored spans start at or just
 /// inside the token (saphyr marks them at the name, after `&`).
 fn anchor_name(ctx: &Ctx, node: &MarkedYamlOwned) -> Option<String> {
-    let line = ctx
-        .lines
-        .get(node.span.start.line().saturating_sub(1))?;
+    let line = ctx.lines.get(node.span.start.line().saturating_sub(1))?;
     let col = node.span.start.col();
     let text: String = line.chars().skip(col).collect();
     let text = text.trim_start();
@@ -600,7 +607,8 @@ fn splice_map(
             write::write_event(out, indent, binding);
         }
     }
-    if model.children != baseline.children && !explicit.contains("children") && !merged("children") {
+    if model.children != baseline.children && !explicit.contains("children") && !merged("children")
+    {
         if model.children.is_empty() {
             write::line(out, indent, "children: []");
         } else {

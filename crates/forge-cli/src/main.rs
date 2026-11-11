@@ -1264,17 +1264,16 @@ fn codegen_doc(doc: &gpui_forge_runtime::forge_spec::Document) -> String {
                 let key = key
                     .as_ref()
                     .map(|p| {
-                        let segs = p
-                            .0
-                            .iter()
-                            .map(|s| match s {
-                                PathSegment::Field(f) => {
-                                    format!("PathSegment::Field({f:?}.into())")
-                                }
-                                PathSegment::Index(i) => format!("PathSegment::Index({i})"),
-                            })
-                            .collect::<Vec<_>>()
-                            .join(", ");
+                        let segs =
+                            p.0.iter()
+                                .map(|s| match s {
+                                    PathSegment::Field(f) => {
+                                        format!("PathSegment::Field({f:?}.into())")
+                                    }
+                                    PathSegment::Index(i) => format!("PathSegment::Index({i})"),
+                                })
+                                .collect::<Vec<_>>()
+                                .join(", ");
                         format!("Some(Path(vec![{segs}]))")
                     })
                     .unwrap_or("None".into());
@@ -1405,9 +1404,7 @@ fn codegen_doc(doc: &gpui_forge_runtime::forge_spec::Document) -> String {
             }
         }
         match &n.control {
-            Some(Control::If {
-                when, test, ..
-            }) => {
+            Some(Control::If { when, test, .. }) => {
                 from_value(when, vars);
                 if let Some(t) = test {
                     from_value(
@@ -1423,9 +1420,12 @@ fn codegen_doc(doc: &gpui_forge_runtime::forge_spec::Document) -> String {
             | Some(Control::Match { source, .. }) => from_value(source, vars),
             None => {}
         }
-        for kid in n.children.iter().chain(n.control.as_ref().into_iter().flat_map(|c| {
-            c.otherwise().iter()
-        })) {
+        for kid in n.children.iter().chain(
+            n.control
+                .as_ref()
+                .into_iter()
+                .flat_map(|c| c.otherwise().iter()),
+        ) {
             collect(kid, vars);
         }
         if let Some(Control::Match { cases, .. }) = &n.control {

@@ -77,4 +77,3 @@ root:
     let doc = yaml::from_str(src).unwrap();
     assert_eq!(yaml::to_string_preserving(&doc, &Default::default()), src);
 }
-

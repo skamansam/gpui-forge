@@ -168,7 +168,9 @@ pub(crate) fn write_entries(out: &mut String, node: &Node, indent: usize, option
                     line(out, indent, &format!("{key}: {}", inline(operand, false)));
                 }
             }
-            Control::For { each, index, key, .. } => {
+            Control::For {
+                each, index, key, ..
+            } => {
                 line(out, indent, &format!("each: {each}"));
                 if let Some(index) = index {
                     line(out, indent, &format!("index: {index}"));
