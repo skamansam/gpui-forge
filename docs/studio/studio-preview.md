@@ -35,6 +35,37 @@ the genuine platform event loop.
 The status bar's `host` label shows host attachment state. Clicking the
 preview raises the host window.
 
+## Declared preview panes — `remote:` + `id:`
+
+The canvas above is the *implicit* preview — one host, one document. A
+document can also declare its own preview panes: any `forge.Preview` with a
+non-empty `remote:` prop and an `id:` gets its own `forge-preview-{base}`
+host, spawned automatically:
+
+```yaml
+- forge.Preview:
+  id: pane-iced            # required — addresses the pane's host + slot
+  remote: iced             # non-empty → out-of-process host
+  base: iced               # which forge-preview-{base} binary
+  doc: ./login.forge.yaml  # doc-relative path, named ref, or parent doc
+  mode: embedded           # host window floats over this pane's slot
+```
+
+- `base:` empty → the document's own `base:`. Each unique `(doc, base)`
+  pane spawns one host; change either prop and the pane respawns.
+- `doc:` a doc-relative `.forge.yaml` path (sent as `load`; the file
+  re-loads on change), a named ref's head-less body (`name: &name` —
+  streamed as `source`), or nothing — the pane previews the edited
+  document itself.
+- `mode: embedded` floats the host window over the pane's tracked slot.
+  Without it the pane renders the framed "click to focus" card.
+
+Show, hide, and selection are ordinary control flow — gate the pane with
+`if:` or pick it from a `Select` + `match:`/`case:`. The host spawns when
+the pane enters the document and dies when the pane leaves it. Panes with
+`remote:` but no `id:` log a status note and spawn nothing. See
+`examples/previews-demo.forge.yaml` for a working selector.
+
 ## `base_dir`
 
 Studio forwards the open document's directory to the host so `src:` props and

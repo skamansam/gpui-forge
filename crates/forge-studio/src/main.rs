@@ -1326,26 +1326,29 @@ fn pane_prop<'a>(node: &'a Node, name: &str) -> Option<&'a str> {
 
 /// Every `forge.Preview` with a non-empty `remote:` in the tree — including
 /// `else:`/`case:` branch children so gated panes still spawn their hosts.
-fn remote_panes(node: &Node, out: &mut Vec<PaneSpec>) {
+/// Panes without `id:` can't be addressed — counted in `skipped`.
+fn remote_panes(node: &Node, out: &mut Vec<PaneSpec>, skipped: &mut usize) {
     if node.element.namespace.as_deref() == Some("forge")
         && node.element.name == "Preview"
         && pane_prop(node, "remote").is_some_and(|s| !s.is_empty())
-        && node.id.is_some()
     {
-        out.push(PaneSpec {
-            id: node.id.clone().unwrap(),
-            base: pane_prop(node, "base").unwrap_or_default().to_owned(),
-            doc: pane_prop(node, "doc").map(str::to_owned),
-            embedded: pane_prop(node, "mode") == Some("embedded"),
-        });
+        match node.id.clone() {
+            Some(id) => out.push(PaneSpec {
+                id,
+                base: pane_prop(node, "base").unwrap_or_default().to_owned(),
+                doc: pane_prop(node, "doc").map(str::to_owned),
+                embedded: pane_prop(node, "mode") == Some("embedded"),
+            }),
+            None => *skipped += 1,
+        }
     }
     for child in &node.children {
-        remote_panes(child, out);
+        remote_panes(child, out, skipped);
     }
     match &node.control {
         Some(Control::If { otherwise, .. }) | Some(Control::For { otherwise, .. }) => {
             for child in otherwise {
-                remote_panes(child, out);
+                remote_panes(child, out, skipped);
             }
         }
         Some(Control::Match {
@@ -1356,7 +1359,7 @@ fn remote_panes(node: &Node, out: &mut Vec<PaneSpec>) {
                 .flat_map(|c| c.children.iter())
                 .chain(otherwise.iter())
             {
-                remote_panes(child, out);
+                remote_panes(child, out, skipped);
             }
         }
         _ => {}
@@ -1427,14 +1430,16 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
     cx.spawn(async move |view, cx| {
         let mut fed: std::collections::HashMap<String, String> = Default::default();
         let mut rects: std::collections::HashMap<String, String> = Default::default();
+        let mut last_skipped = 0usize;
         loop {
             cx.background_executor()
                 .timer(std::time::Duration::from_millis(200))
                 .await;
             let Ok(work) = view.update(cx, |view, cx| {
                 let mut panes = Vec::new();
+                let mut skipped = 0usize;
                 if let Some(doc) = view.document() {
-                    remote_panes(&doc.root, &mut panes);
+                    remote_panes(&doc.root, &mut panes, &mut skipped);
                 }
                 let wb = cx
                     .windows()
@@ -1456,11 +1461,25 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                     .unwrap_or(BASE_ID)
                     .to_owned();
                 let dir = shared.borrow().dir.clone();
-                (panes, slots, wb, doc_base, dir)
+                (panes, slots, wb, doc_base, dir, skipped)
             }) else {
                 return;
             };
-            let (panes, slots, wb, doc_base, dir) = work;
+            let (panes, slots, wb, doc_base, dir, skipped) = work;
+            if skipped != last_skipped {
+                last_skipped = skipped;
+                if skipped > 0 {
+                    let _ = view.update(cx, |view, cx| {
+                        status(
+                            view,
+                            &format!(
+                                "{skipped} remote forge.Preview pane(s) have no `id:` — no host spawned"
+                            ),
+                            cx,
+                        )
+                    });
+                }
+            }
 
             // Kill panes no longer declared.
             let stale: Vec<String> = {
@@ -1478,6 +1497,23 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                 }
                 fed.remove(&id);
                 rects.remove(&id);
+            }
+
+            // A dead pane host respawns on the next tick — report, then drop it
+            // so the spec check below spawns a replacement.
+            let dead: Vec<String> = {
+                let mut guard = HOSTS.lock().unwrap();
+                guard
+                    .iter_mut()
+                    .filter_map(|(id, (_, h))| h.child.try_wait().ok().flatten().map(|_| id.clone()))
+                    .collect()
+            };
+            for id in dead {
+                HOSTS.lock().unwrap().remove(&id);
+                fed.remove(&id);
+                let _ = view.update(cx, |view, cx| {
+                    status(view, &format!("preview host for `{id}` exited — restarting"), cx)
+                });
             }
 
             for pane in &panes {
@@ -1510,8 +1546,12 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                             .as_ref()
                             .map(|d| d.join(rel))
                             .unwrap_or_else(|| PathBuf::from(rel));
+                        // `load` sends once per spawn AND on file change — the
+                        // mtime folds into the fed key so edits outside Studio
+                        // (and to non-buffer files) still live-reload.
+                        let mtime = std::fs::metadata(&path).and_then(|m| m.modified()).ok();
                         let cmd = json!({"cmd":"load","doc":path.display().to_string()});
-                        let key = cmd.to_string();
+                        let key = format!("{cmd}|{mtime:?}");
                         if fed.get(&pane.id) != Some(&key) {
                             pane_send(&pane.id, &cmd);
                             fed.insert(pane.id.clone(), key);
