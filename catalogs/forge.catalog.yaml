@@ -31,7 +31,9 @@ elements:
         type: string
         summary: "Non-empty → the document previews in an out-of-process host;
           the element renders a framed card with this label instead of a
-          nested view."
+          nested view. Set `id:` on the pane so its host can be addressed —
+          each declared remote pane spawns its own `forge-preview-{base}`
+          host (`base:`/empty → the document's base)."
       mode:
         type: string
         summary: "`embedded` → the host window floats over a transparent slot

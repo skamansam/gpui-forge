@@ -2377,45 +2377,57 @@ impl ForgeView {
                     return el;
                 }
             }
-            let element: AnyElement = match (library, node.element.name.as_str()) {
-                (Some("forge"), "Preview") => {
-                    let id = node.id.clone().unwrap_or_else(|| key.to_owned());
-                    // `remote:` non-empty — the document previews in an
-                    // out-of-process host (#97). The element is a framed card
-                    // instead of a nested view, and `on click:` fires through
-                    // the hook path (Studio uses it to raise the host window).
-                    if let Some(remote) = self.prop_text(node, "remote").filter(|t| !t.is_empty()) {
-                        let weak = cx.entity().downgrade();
-                        let node = node.clone();
-                        let theme = cx.theme();
-                        let embedded = self
-                            .prop_text(&node, "mode")
-                            .is_some_and(|m| m == "embedded");
-                        div()
-                            .id(format!("preview-remote-{key}"))
-                            .size_full()
-                            .flex()
-                            .items_center()
-                            .justify_center()
-                            .cursor_pointer()
-                            .on_click(move |_, _, cx| {
-                                try_update(&weak, cx, "event", |this, cx| {
-                                    this.fire(&node, "click", cx)
-                                })
-                                .ok();
-                            })
-                            .child(if embedded {
-                                // #120 — `mode: embedded` — the host window
-                                // floats over this slot via `frame_rect`. The
-                                // content area is transparent so the foreign
-                                // pixels show through, chrome stays for context.
+            let element: AnyElement =
+                match (library, node.element.name.as_str()) {
+                    (Some("forge"), "Preview") => {
+                        let id = node.id.clone().unwrap_or_else(|| key.to_owned());
+                        // `remote:` non-empty — the document previews in an
+                        // out-of-process host (#97). The element is a framed card
+                        // instead of a nested view, and `on click:` fires through
+                        // the hook path (Studio uses it to raise the host window).
+                        if let Some(remote) =
+                            self.prop_text(node, "remote").filter(|t| !t.is_empty())
+                        {
+                            let weak = cx.entity().downgrade();
+                            let node = node.clone();
+                            let theme = cx.theme();
+                            let embedded = self
+                                .prop_text(&node, "mode")
+                                .is_some_and(|m| m == "embedded");
+                            // Track the card's bounds under the pane `id` — Studio
+                            // polls `preview_bounds(id)` to `frame_rect` each pane's
+                            // host window over its slot.
+                            let cell = self
+                                .preview_bounds
+                                .entry(id.clone())
+                                .or_insert_with(|| std::rc::Rc::new(std::cell::RefCell::new(None)))
+                                .clone();
+                            BoundsTracker::new(
                                 div()
+                                    .id(format!("preview-remote-{key}"))
                                     .size_full()
-                                    .border_1()
-                                    .border_color(theme.border)
-                                    .into_any_element()
-                            } else {
-                                div()
+                                    .flex()
+                                    .items_center()
+                                    .justify_center()
+                                    .cursor_pointer()
+                                    .on_click(move |_, _, cx| {
+                                        try_update(&weak, cx, "event", |this, cx| {
+                                            this.fire(&node, "click", cx)
+                                        })
+                                        .ok();
+                                    })
+                                    .child(if embedded {
+                                        // #120 — `mode: embedded` — the host window
+                                        // floats over this slot via `frame_rect`. The
+                                        // content area is transparent so the foreign
+                                        // pixels show through, chrome stays for context.
+                                        div()
+                                            .size_full()
+                                            .border_1()
+                                            .border_color(theme.border)
+                                            .into_any_element()
+                                    } else {
+                                        div()
                                     .flex()
                                     .flex_col()
                                     .items_center()
@@ -2431,40 +2443,40 @@ impl ForgeView {
                                             .child("rendered by the preview host — click to focus"),
                                     )
                                     .into_any_element()
-                            })
-                            .into_any_element()
-                    } else {
-                        let empty_text = self.prop_text(node, "placeholder");
-                        let doc_spec = self.prop_text(node, "doc").filter(|t| !t.is_empty());
-                        let catalogs = self.catalogs.clone();
-                        let libraries = self.libraries.clone();
-                        let preview = self
-                            .previews
-                            .entry(id.clone())
-                            .or_insert_with(|| {
-                                cx.new(|_| {
-                                    let mut view = ForgeView::new(catalogs);
-                                    view.libraries = libraries;
-                                    view.empty_text = empty_text;
-                                    view
-                                })
-                            })
-                            .clone();
-                        // `doc:` — a doc-relative `.forge.yaml` path, or a named
-                        // ref (`name: &name`) whose head-less body becomes the
-                        // preview's root. Loaded once per src string.
-                        if let Some(spec) = doc_spec {
-                            if self.preview_srcs.get(&id) != Some(&spec) {
-                                let loaded = if let Some(body) = self
-                                    .doc
-                                    .as_ref()
-                                    .and_then(|d| {
-                                        d.refs
-                                            .iter()
-                                            .find(|(n, _)| n == &spec)
-                                            .map(|(_, b)| b.clone())
                                     })
-                                {
+                                    .into_any_element(),
+                                cell,
+                            )
+                            .into_any_element()
+                        } else {
+                            let empty_text = self.prop_text(node, "placeholder");
+                            let doc_spec = self.prop_text(node, "doc").filter(|t| !t.is_empty());
+                            let catalogs = self.catalogs.clone();
+                            let libraries = self.libraries.clone();
+                            let preview = self
+                                .previews
+                                .entry(id.clone())
+                                .or_insert_with(|| {
+                                    cx.new(|_| {
+                                        let mut view = ForgeView::new(catalogs);
+                                        view.libraries = libraries;
+                                        view.empty_text = empty_text;
+                                        view
+                                    })
+                                })
+                                .clone();
+                            // `doc:` — a doc-relative `.forge.yaml` path, or a named
+                            // ref (`name: &name`) whose head-less body becomes the
+                            // preview's root. Loaded once per src string.
+                            if let Some(spec) =
+                                doc_spec.filter(|s| self.preview_srcs.get(&id) != Some(s))
+                            {
+                                let loaded = if let Some(body) = self.doc.as_ref().and_then(|d| {
+                                    d.refs
+                                        .iter()
+                                        .find(|(n, _)| n == &spec)
+                                        .map(|(_, b)| b.clone())
+                                }) {
                                     let mut doc = self.doc.clone().unwrap();
                                     doc.root = body;
                                     Some(doc)
@@ -2479,51 +2491,50 @@ impl ForgeView {
                                     self.preview_srcs.insert(id, spec);
                                 }
                             }
+                            preview.into_any_element()
                         }
-                        preview.into_any_element()
                     }
-                }
-                (Some("forge"), "Outline") => {
-                    let of = self.prop_text(node, "of").unwrap_or_default();
-                    let empty_text = self
-                        .prop_text(node, "placeholder")
-                        .unwrap_or_else(|| "no document".into());
-                    let doc = self
-                        .previews
-                        .get(&of)
-                        .and_then(|preview| preview.read(cx).doc.clone());
-                    match doc {
-                        Some(doc) => self.outline(node, key, &doc, cx),
-                        None => placeholder(empty_text, cx),
+                    (Some("forge"), "Outline") => {
+                        let of = self.prop_text(node, "of").unwrap_or_default();
+                        let empty_text = self
+                            .prop_text(node, "placeholder")
+                            .unwrap_or_else(|| "no document".into());
+                        let doc = self
+                            .previews
+                            .get(&of)
+                            .and_then(|preview| preview.read(cx).doc.clone());
+                        match doc {
+                            Some(doc) => self.outline(node, key, &doc, cx),
+                            None => placeholder(empty_text, cx),
+                        }
                     }
-                }
-                (Some("forge"), "Inspector") => {
-                    let of = self.prop_text(node, "of").unwrap_or_default();
-                    let path = self.prop_text(node, "selected").unwrap_or_default();
-                    let empty_text = self
-                        .prop_text(node, "placeholder")
-                        .unwrap_or_else(|| "nothing selected".into());
-                    let target = self
-                        .previews
-                        .get(&of)
-                        .and_then(|preview| preview.read(cx).doc.clone())
-                        .and_then(|doc| doc.node_at(&path).cloned());
-                    match target {
-                        Some(target) => self.inspector(&target, &path, key, window, cx),
-                        None => placeholder(empty_text, cx),
+                    (Some("forge"), "Inspector") => {
+                        let of = self.prop_text(node, "of").unwrap_or_default();
+                        let path = self.prop_text(node, "selected").unwrap_or_default();
+                        let empty_text = self
+                            .prop_text(node, "placeholder")
+                            .unwrap_or_else(|| "nothing selected".into());
+                        let target = self
+                            .previews
+                            .get(&of)
+                            .and_then(|preview| preview.read(cx).doc.clone())
+                            .and_then(|doc| doc.node_at(&path).cloned());
+                        match target {
+                            Some(target) => self.inspector(&target, &path, key, window, cx),
+                            None => placeholder(empty_text, cx),
+                        }
                     }
-                }
-                (Some("forge"), "Palette") => self.palette(node, key, cx),
-                (Some("forge"), "Showcase") => self.showcase(node, key, window, cx),
-                (Some("forge"), "Vars") => self.vars(node, key, window, cx),
-                _ => placeholder(
-                    format!(
-                        "`{namespace}.{}` is not provided by this adapter yet",
-                        node.element.name
+                    (Some("forge"), "Palette") => self.palette(node, key, cx),
+                    (Some("forge"), "Showcase") => self.showcase(node, key, window, cx),
+                    (Some("forge"), "Vars") => self.vars(node, key, window, cx),
+                    _ => placeholder(
+                        format!(
+                            "`{namespace}.{}` is not provided by this adapter yet",
+                            node.element.name
+                        ),
+                        cx,
                     ),
-                    cx,
-                ),
-            };
+                };
             return wrap(
                 element,
                 &node.style,

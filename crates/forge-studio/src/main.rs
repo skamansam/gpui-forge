@@ -14,7 +14,7 @@ use gpui_forge_runtime::forge_spec::Document;
 use gpui_forge_runtime::forge_spec::catalog::Catalog;
 use gpui_forge_runtime::forge_spec::value::parse_path;
 use gpui_forge_runtime::forge_spec::{
-    Diagnostic, ElementRef, Node, Value, path_steps, path_string, yaml,
+    Control, Diagnostic, ElementRef, Node, Value, path_steps, path_string, yaml,
 };
 use gpui_forge_runtime::render::{ForgeView, get_path, set_path};
 use gpui_kit::component::WindowExt as _;
@@ -913,32 +913,7 @@ fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<F
         .and_then(Json::as_str)
         .unwrap_or(BASE_ID)
         .to_owned();
-    let dir = std::env::current_exe()
-        .ok()
-        .and_then(|e| e.parent().map(|p| p.to_path_buf()));
-    let named = dir
-        .as_ref()
-        .map(|d| d.join(format!("forge-preview-{base}")));
-    // Links-conflicted bases host out of a nested workspace — their binary
-    // lands in hosts/<base>/target/<profile>/ rather than ./target (#95).
-    let nested = dir.as_ref().and_then(|d| {
-        let profile = d.file_name()?;
-        let root = d.parent()?.parent()?;
-        let p = root.join(format!(
-            "hosts/{base}/target/{}/forge-preview-{base}",
-            profile.to_string_lossy()
-        ));
-        p.exists().then_some(p)
-    });
-    let binary = named.filter(|p| p.exists()).or(nested).or_else(|| {
-        if base == BASE_ID {
-            dir.map(|d| d.join("forge-preview"))
-                .or_else(|| Some(std::path::PathBuf::from("forge-preview")))
-        } else {
-            None
-        }
-    });
-    let Some(binary) = binary else {
+    let Some(binary) = find_preview_binary(&base) else {
         status(
             view,
             &format!("no preview host for base `{base}` — build `forge-preview-{base}`"),
@@ -1032,6 +1007,7 @@ fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<F
     }
     host_send(&json!({"cmd":"dnd","on":true}));
     host_send_theme(view);
+    pane_sync(shared.clone(), cx);
     cx.spawn(async move |view, cx| {
         let mut last_rect: Option<String> = None;
         loop {
@@ -1276,6 +1252,310 @@ fn manifest_value(src: &str, key: &str) -> Option<String> {
             .strip_suffix('"')
             .map(str::to_owned)
     })
+}
+
+/// The `forge-preview{,-base}` binary for `base` — next to the running
+/// executable, or in the nested `hosts/<base>` workspace for links-conflicted
+/// bases (#95). `None` when no host exists for the base.
+fn find_preview_binary(base: &str) -> Option<PathBuf> {
+    let dir = std::env::current_exe()
+        .ok()
+        .and_then(|e| e.parent().map(|p| p.to_path_buf()));
+    let named = dir
+        .as_ref()
+        .map(|d| d.join(format!("forge-preview-{base}")));
+    let nested = dir.as_ref().and_then(|d| {
+        let profile = d.file_name()?;
+        let root = d.parent()?.parent()?;
+        let p = root.join(format!(
+            "hosts/{base}/target/{}/forge-preview-{base}",
+            profile.to_string_lossy()
+        ));
+        p.exists().then_some(p)
+    });
+    named.filter(|p| p.exists()).or(nested).or_else(|| {
+        (base == BASE_ID).then(|| {
+            dir.map(|d| d.join("forge-preview"))
+                .unwrap_or_else(|| PathBuf::from("forge-preview"))
+        })
+    })
+}
+
+// ── Declared remote preview panes ────────────────────────────────────
+// A `forge.Preview` with `remote:` + `id:` declares its own preview host —
+// `base:` picks the host binary (empty → the document's base) and `doc:`
+// picks the document (a doc-relative path, a named ref's head-less body, or
+// the parent document when absent). `pane_sync` diffs declared panes against
+// running hosts, spawns/kills deltas, streams each pane's document, and
+// `frame_rect`s each host window over its tracked slot.
+
+/// A remote `forge.Preview` pane declared in the open document.
+struct PaneSpec {
+    /// The pane's `id:` — also the `preview_bounds` key its slot tracks.
+    id: String,
+    base: String,
+    /// `doc:` — doc-relative path, ref name, or none (the parent document).
+    doc: Option<String>,
+    embedded: bool,
+}
+
+static HOSTS: std::sync::LazyLock<
+    std::sync::Mutex<std::collections::HashMap<String, (String, Host)>>,
+> = std::sync::LazyLock::new(|| std::sync::Mutex::new(std::collections::HashMap::new()));
+static PANE_SYNC: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+
+fn pane_send(id: &str, value: &Json) {
+    use std::io::Write;
+    let mut guard = HOSTS.lock().unwrap();
+    if let Some((_, host)) = guard.get_mut(id) {
+        let _ = writeln!(host.stdin, "{value}");
+        let _ = host.stdin.flush();
+    }
+}
+
+/// Literal string prop — pane declarations are static metadata, not bindings.
+fn pane_prop<'a>(node: &'a Node, name: &str) -> Option<&'a str> {
+    node.props
+        .iter()
+        .find(|(k, _)| k == name)
+        .and_then(|(_, v)| match v {
+            Value::String(s) | Value::Enum(s) => Some(s.as_str()),
+            _ => None,
+        })
+}
+
+/// Every `forge.Preview` with a non-empty `remote:` in the tree — including
+/// `else:`/`case:` branch children so gated panes still spawn their hosts.
+fn remote_panes(node: &Node, out: &mut Vec<PaneSpec>) {
+    if node.element.namespace.as_deref() == Some("forge")
+        && node.element.name == "Preview"
+        && pane_prop(node, "remote").is_some_and(|s| !s.is_empty())
+        && node.id.is_some()
+    {
+        out.push(PaneSpec {
+            id: node.id.clone().unwrap(),
+            base: pane_prop(node, "base").unwrap_or_default().to_owned(),
+            doc: pane_prop(node, "doc").map(str::to_owned),
+            embedded: pane_prop(node, "mode") == Some("embedded"),
+        });
+    }
+    for child in &node.children {
+        remote_panes(child, out);
+    }
+    match &node.control {
+        Some(Control::If { otherwise, .. }) | Some(Control::For { otherwise, .. }) => {
+            for child in otherwise {
+                remote_panes(child, out);
+            }
+        }
+        Some(Control::Match {
+            cases, otherwise, ..
+        }) => {
+            for child in cases
+                .iter()
+                .flat_map(|c| c.children.iter())
+                .chain(otherwise.iter())
+            {
+                remote_panes(child, out);
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Spawns `forge-preview-{base}` for a declared pane — stdin feeds commands,
+/// stdout drains on a thread (pane events stay inside their own document).
+fn spawn_pane(base: &str) -> Option<Host> {
+    let binary = find_preview_binary(base)?;
+    let mut child = std::process::Command::new(&binary)
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::inherit())
+        .spawn()
+        .ok()?;
+    if let Some(stdout) = child.stdout.take() {
+        std::thread::spawn(move || {
+            use std::io::BufRead;
+            for _line in std::io::BufReader::new(stdout).lines() {}
+        });
+    }
+    let stdin = child.stdin.take()?;
+    Some(Host {
+        child,
+        stdin,
+        generation: HOST_GEN.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1,
+    })
+}
+
+/// The `source` command for a pane — a named ref becomes a document clone
+/// with the ref body as root; no `doc:` previews the parent buffer.
+fn pane_doc_source(view: &ForgeView, pane: &PaneSpec, dir: &str) -> Json {
+    match pane.doc.as_deref() {
+        Some(name) => {
+            let Some(mut doc) = view.document().cloned() else {
+                return json!({"cmd":"source","src":"","dir":dir});
+            };
+            doc.root = view
+                .document()
+                .and_then(|d| {
+                    d.refs
+                        .iter()
+                        .find(|(n, _)| n == name)
+                        .map(|(_, b)| b.clone())
+                })
+                .unwrap_or_default();
+            if !pane.base.is_empty() {
+                doc.base = Some(pane.base.clone());
+            }
+            json!({
+                "cmd": "source",
+                "src": yaml::to_string(&doc, &yaml::WriteOptions::default()),
+                "dir": dir,
+            })
+        }
+        None => json!({"cmd": "source", "src": source(view), "dir": dir}),
+    }
+}
+
+/// Starts the pane-sync task once — diffs declared `remote:` panes against
+/// running hosts every 200ms, spawns/kills deltas, streams each pane's doc
+/// on change, and floats each host window over its `preview_bounds(id)` slot.
+fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
+    if PANE_SYNC.swap(true, std::sync::atomic::Ordering::Relaxed) {
+        return;
+    }
+    cx.spawn(async move |view, cx| {
+        let mut fed: std::collections::HashMap<String, String> = Default::default();
+        let mut rects: std::collections::HashMap<String, String> = Default::default();
+        loop {
+            cx.background_executor()
+                .timer(std::time::Duration::from_millis(200))
+                .await;
+            let Ok(work) = view.update(cx, |view, cx| {
+                let mut panes = Vec::new();
+                if let Some(doc) = view.document() {
+                    remote_panes(&doc.root, &mut panes);
+                }
+                let wb = cx
+                    .windows()
+                    .first()
+                    .and_then(|h| h.update(cx, |_, w, _| w.window_bounds()).ok())
+                    .and_then(|b| match b {
+                        WindowBounds::Windowed(wb) => Some(wb),
+                        _ => None,
+                    });
+                let slots: std::collections::HashMap<String, Option<Bounds<Pixels>>> = panes
+                    .iter()
+                    .filter_map(|p| {
+                        view.preview_bounds(&p.id)
+                            .map(|cell| (p.id.clone(), *cell.borrow()))
+                    })
+                    .collect();
+                let doc_base = get_path(view.state(), &parse_path("studio.doc_base").unwrap())
+                    .and_then(Json::as_str)
+                    .unwrap_or(BASE_ID)
+                    .to_owned();
+                let dir = shared.borrow().dir.clone();
+                (panes, slots, wb, doc_base, dir)
+            }) else {
+                return;
+            };
+            let (panes, slots, wb, doc_base, dir) = work;
+
+            // Kill panes no longer declared.
+            let stale: Vec<String> = {
+                let guard = HOSTS.lock().unwrap();
+                guard
+                    .keys()
+                    .filter(|id| !panes.iter().any(|p| &p.id == *id))
+                    .cloned()
+                    .collect()
+            };
+            for id in stale {
+                if let Some((_, mut old)) = HOSTS.lock().unwrap().remove(&id) {
+                    let _ = old.child.kill();
+                    let _ = old.child.wait();
+                }
+                fed.remove(&id);
+                rects.remove(&id);
+            }
+
+            for pane in &panes {
+                let base = if pane.base.is_empty() {
+                    &doc_base
+                } else {
+                    &pane.base
+                };
+                let spec = format!("{base}\u{1}{}", pane.doc.as_deref().unwrap_or(""));
+                let running = HOSTS.lock().unwrap().get(&pane.id).map(|(s, _)| s.clone());
+                if running.as_deref() != Some(spec.as_str()) {
+                    if let Some((_, mut old)) = HOSTS.lock().unwrap().remove(&pane.id) {
+                        let _ = old.child.kill();
+                        let _ = old.child.wait();
+                    }
+                    match spawn_pane(base) {
+                        Some(host) => {
+                            HOSTS.lock().unwrap().insert(pane.id.clone(), (spec, host));
+                            fed.remove(&pane.id);
+                        }
+                        None => continue,
+                    }
+                }
+
+                // Feed the pane its document — `load` for real paths (sent
+                // once per spawn), `source` for refs/parent docs (on change).
+                match pane.doc.as_deref() {
+                    Some(rel) if !rel.is_empty() => {
+                        let path = dir
+                            .as_ref()
+                            .map(|d| d.join(rel))
+                            .unwrap_or_else(|| PathBuf::from(rel));
+                        let cmd = json!({"cmd":"load","doc":path.display().to_string()});
+                        let key = cmd.to_string();
+                        if fed.get(&pane.id) != Some(&key) {
+                            pane_send(&pane.id, &cmd);
+                            fed.insert(pane.id.clone(), key);
+                        }
+                    }
+                    _ => {
+                        let d = dir
+                            .as_ref()
+                            .map(|d| d.display().to_string())
+                            .unwrap_or_default();
+                        let cmd = view
+                            .update(cx, |view, _| pane_doc_source(view, pane, &d))
+                            .unwrap_or_else(|_| json!({"cmd":"source","src":"","dir":""}));
+                        let key = cmd.to_string();
+                        if fed.get(&pane.id) != Some(&key) {
+                            pane_send(&pane.id, &cmd);
+                            fed.insert(pane.id.clone(), key);
+                        }
+                    }
+                }
+
+                // Float the host window over the pane's tracked slot.
+                let slot = pane
+                    .embedded
+                    .then(|| slots.get(&pane.id).copied().flatten())
+                    .flatten();
+                if let (Some(wb), Some(b)) = (wb, slot) {
+                    let rect = json!({
+                        "cmd": "frame_rect",
+                        "x": f64::from(wb.origin.x) + f64::from(b.origin.x),
+                        "y": f64::from(wb.origin.y) + f64::from(b.origin.y),
+                        "w": f64::from(b.size.width),
+                        "h": f64::from(b.size.height),
+                    });
+                    let key = rect.to_string();
+                    if rects.get(&pane.id) != Some(&key) {
+                        pane_send(&pane.id, &rect);
+                        rects.insert(pane.id.clone(), key);
+                    }
+                }
+            }
+        }
+    })
+    .detach();
 }
 
 fn load_project(

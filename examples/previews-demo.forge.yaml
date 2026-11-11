@@ -1,0 +1,58 @@
+# Declared preview panes — each `forge.Preview` with `remote:` + `id:` gets
+# its own out-of-process preview host. `base:` picks the host binary,
+# `doc:` the document it renders (doc-relative path, named ref, or the
+# parent document when absent). Show/hide is ordinary control flow — the
+# Select below drives `match:`/`case:`; pane hosts spawn on declaration and
+# die when the pane leaves the document.
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
+forge: "0.1"
+base: gpui-kit
+
+state:
+  sel: gpui-kit
+
+root:
+  VStack:
+    style:
+      padding: 24px
+      gap: 12px
+    children:
+      - Text: declared preview panes
+        style:
+          size: xl
+          weight: semibold
+      - Text: one document, a host per pane — pick the base below
+        style:
+          size: sm
+          tone: muted
+      - Select:
+        options: "gpui-kit\ngpui02\nbezel"
+        value: bind $sel
+      - match: $sel
+        case gpui-kit:
+          children:
+            - forge.Preview:
+              id: pane-kit
+              remote: gpui-kit
+              base: gpui-kit
+              doc: ./ely-demo.forge.yaml
+              style:
+                height: 480px
+        case gpui02:
+          children:
+            - forge.Preview:
+              id: pane-02
+              remote: gpui02
+              base: gpui02
+              doc: ./gpui02-showcase.forge.yaml
+              style:
+                height: 480px
+        case bezel:
+          children:
+            - forge.Preview:
+              id: pane-bezel
+              remote: bezel
+              base: bezel
+              doc: ./base-demo.forge.yaml
+              style:
+                height: 480px
