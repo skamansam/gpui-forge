@@ -1,6 +1,6 @@
 # Previewing in Studio
 
-The Preview tab hosts `forge.Preview#canvas` — it can paint the document
+The Canvas tab hosts `forge.Preview#canvas` — it can paint the document
 itself or act as a window into a separate preview process.
 
 ## Embedded canvas
@@ -10,7 +10,7 @@ that powers the [web canvas](preview.md). Every edit repaints instantly.
 `bind` props write through to the document's `view.state`, and `on <event>`
 hooks log to the hook sink rather than running Rust.
 
-The **Vars** tab (`forge.Vars`) lists every `{$path}` variable bound in the
+The **State** tab (`forge.Vars`) lists every `{$path}` variable bound in the
 document. Edit a scalar and watch the app react — it is the same state the
 `state:` declaration seeds and `bind $path` writes. The **View state** group
 in the inspector shows the raw JSON.
@@ -68,7 +68,7 @@ the pane enters the document and dies when the pane leaves it. Panes with
 `remote:` but no `id:` log a status note and spawn nothing. See
 `examples/demos/previews-demo.forge.yaml` for a working selector.
 
-Studio's own Themes tab uses the same mechanism — `studio.forge.yaml`'s
+Studio's own Theme tab uses the same mechanism — `studio.forge.yaml`'s
 `previewSelector` binds a `Select` to `$studio.theme_preview` and each
 `case` picks one of three presentations:
 
@@ -90,7 +90,7 @@ Studio's own Themes tab uses the same mechanism — `studio.forge.yaml`'s
 
 The Rust side only maintains state and plumbing; the document decides
 which bases exist and which preview is live. Panes are also gated behind
-the Themes tab (`if: $studio.tab / is: 4`), so no host spawns before its
+the Theme tab (`if: $studio.tab / is: 4`), so no host spawns before its
 preview is on screen.
 
 ## Theme propagation

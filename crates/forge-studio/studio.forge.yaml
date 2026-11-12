@@ -266,7 +266,7 @@ previewSelector: &previewSelector
     # window over the card, `mode: stream` paints the host's frame grid
     # inside the card (ratatui sizes it from `frame_rect`), and no `mode`
     # is the `placeholder` card — a foreign window can't embed.
-    # The `if` keeps hosts from spawning before the Themes tab is shown
+    # The `if` keeps hosts from spawning before the Theme tab is shown
     # (tab index 4 — the pane's window floats over a live slot only).
     - if: $studio.tab
       is: 4
@@ -353,49 +353,57 @@ previewSelector: &previewSelector
 # ============================================================================
 themesTab: &themesTab
   children:
-    - HStack:
-      style: {grow: true, min-height: 0, gap: 16px, padding: 12px}
+    - Resizable:
+      layout: Horizontal
+      style: {grow: true, min-height: 0, padding: 12px}
       children:
-        - VStack:
-          style: {grow: true, min-width: 0, gap: 12px, justify: start}
+        - ResizablePanel:
+          min-size: 240
           children:
-            - HStack:
-              style: {justify: between}
-              children:
-                - Label: Theme
-                  style: {weight: semibold}
-                - Button:
-                  icon: rotate-ccw
-                  variant: Ghost
-                  size: Small
-                  tooltip: Reset to the default theme
-                  on click: reset_theme()
-            - Select#editor_theme:
-              options: $studio.all_themes
-              value: bind $studio.theme
-              placeholder: pick a theme
-              on change: apply_theme_name($studio.theme)
-            - Editor#theme_json:
-              language: json
-              value: bind $studio.theme_json
-              style:
-                grow: true
-                min-height: 0
-                border: 1px
-            - HStack:
-              style: {justify: start}
-              children:
-                - Button: Apply
-                  variant: Primary
-                  on click: apply_theme_json()
-        - VStack:
-          style: {width: 360px, height: full, min-height: 0, overflow: scroll, gap: 12px}
-          children:
-            - Text: Showcase
-              style: {weight: semibold}
             - VStack:
-              <<: *previewSelector
-            # - forge.Showcase:
+              style: {grow: true, height: full, min-width: 0, gap: 12px, justify: start}
+              children:
+                - HStack:
+                  style: {justify: between}
+                  children:
+                    - Label: Theme
+                      style: {weight: semibold}
+                    - Button:
+                      icon: rotate-ccw
+                      variant: Ghost
+                      size: Small
+                      tooltip: Reset to the default theme
+                      on click: reset_theme()
+                - Select#editor_theme:
+                  options: $studio.all_themes
+                  value: bind $studio.theme
+                  placeholder: pick a theme
+                  on change: apply_theme_name($studio.theme)
+                - Editor#theme_json:
+                  language: json
+                  value: bind $studio.theme_json
+                  style:
+                    grow: true
+                    min-height: 0
+                    border: 1px
+                - HStack:
+                  style: {justify: start}
+                  children:
+                    - Button: Apply
+                      variant: Primary
+                      on click: apply_theme_json()
+        - ResizablePanel:
+          size: 360
+          min-size: 240
+          children:
+            - VStack:
+              style: {width: full, height: full, min-height: 0, overflow: scroll, gap: 12px, padding: [0, 0, 0, 16px]}
+              children:
+                - Text: Showcase
+                  style: {weight: semibold}
+                - VStack:
+                  <<: *previewSelector
+                # - forge.Showcase:
 
 
 
@@ -535,15 +543,15 @@ body: &body
             border: 1px
           selected: bind $studio.tab
           children:
-            - Tab: Welcome
+            - Tab: Start
               <<: *welcomeTab
-            - Tab: Source
+            - Tab: Document
               <<: *sourceTab
-            - Tab: Preview
+            - Tab: Canvas
               <<: *previewTab
-            - Tab: Vars
+            - Tab: State
               <<: *varsTab
-            - Tab: Themes
+            - Tab: Theme
               <<: *themesTab
 
     - VStack#inspector:

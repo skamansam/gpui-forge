@@ -35,7 +35,7 @@ source immediately.
 
 ## Source pane
 
-The Source tab is the YAML itself and edits both ways. Palette/inspector
+The Document tab is the YAML itself and edits both ways. Palette/inspector
 mutations rewrite the text (preserving anchors and comments where possible).
 Typing in the source re-checks and re-renders on the fly. **File →
 Format** runs the canonical formatter over it.

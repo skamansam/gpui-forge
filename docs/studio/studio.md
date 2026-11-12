@@ -22,7 +22,7 @@ widget set like `ely`) or a `.forge.yaml` path to open.
 ```
 ┌─ menu bar ─ File: New · New Project… · Open… · Open Project… · Preview in Host… · Format · Undo · Redo · Save · Preferences…
 │
-│ palette        Tabs: Welcome | Source | Preview | Vars | Themes          inspector
+│ palette        Tabs: Start | Document | Canvas | State | Theme          inspector
 │ (230px)      ┌─────────────────────────────────────────────────────┐   (280px)
 │ click/drag   │  the document — source text, live canvas, state,    │   Structure outline
 │ to insert    │  theme editor                                        │   typed props
@@ -34,7 +34,7 @@ widget set like `ely`) or a `.forge.yaml` path to open.
 - **[Editing](studio-editing.md)** — palette, outline, inspector, source pane,
   diagnostics, undo/redo, pick mode.
 - **[Preview](studio-preview.md)** — the embedded canvas vs *Preview in Host*,
-  remote bases, the Vars tab.
+  remote bases, the State tab.
 - **[Themes & preferences](studio-themes.md)** — theme picker, the theme JSON
   editor, persisted settings.
 - **[Projects & files](studio-projects.md)** — New vs New Project, `forge.toml`,
@@ -42,7 +42,7 @@ widget set like `ely`) or a `.forge.yaml` path to open.
 
 ## Entry points
 
-The Welcome tab offers starters: the Welcome screen, the gpui-kit component
+The Start tab offers starters: the Start screen, the gpui-kit component
 gallery, and a blank document. A widget-set Select opens the showcase for
 any registered set (`ely`, `gc`, `gflow`, `base`, `video`, `hig`, `pdf`, `wb`,
 `math`). The other bases' demos (`ratatui`, `iced`, `bezel`, `gpui02`,

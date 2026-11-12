@@ -13,7 +13,7 @@ The title-bar **Select** lists every registered theme, grouped under
 The Preferences dialog (**File → Preferences…**) has a Theme page with the
 same picker, which is also where theme choice gets persisted.
 
-## The Themes tab
+## The Theme tab
 
 A live theme workbench:
 

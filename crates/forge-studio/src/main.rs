@@ -49,7 +49,7 @@ const EXAMPLE_ICED: &str = include_str!("../../../examples/showcases/iced-showca
 const EXAMPLE_ADABRAKA: &str =
     include_str!("../../../examples/showcases/adabraka-showcase.forge.yaml");
 
-/// Widget sets the Welcome tab offers in its showcase picker (#129): the
+/// Widget sets the Start tab offers in its showcase picker (#129): the
 /// gpui-kit base, the `forge` intrinsics, every registered `forge-lib-*`.
 /// Then the foreign-base showcases (they launch their preview host).
 const WIDGET_SETS: &[&str] = &[
@@ -375,7 +375,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         &shared,
         cx,
     );
-    // Declared panes in the shell document (the Themes-tab theme preview)
+    // Declared panes in the shell document (the Theme-tab theme preview)
     // spawn hosts from startup — no need to wait for a foreign-base open.
     pane_sync(shared.clone(), cx);
     view
@@ -539,7 +539,7 @@ fn apply_theme_name(
     // reload that would otherwise re-apply the OLD config.
     Theme::update(cx, |theme| theme.apply_config(&config));
     save_prefs(view);
-    // Show the theme's JSON in the Themes editor.
+    // Show the theme's JSON in the Theme editor.
     if let Ok(json) = serde_json::to_string_pretty(&ThemeSet {
         name: config.name.clone(),
         themes: vec![(*config).clone()],
@@ -554,7 +554,7 @@ fn apply_theme_name(
     host_send_theme(view, cx);
 }
 
-/// `reset_theme()` — the Themes tab's reset icon — restores the registry's
+/// `reset_theme()` — the Theme tab's reset icon — restores the registry's
 /// default light/dark theme for the current mode.
 #[forge_hooks_macros::forge_hook]
 fn reset_theme(
@@ -1329,7 +1329,7 @@ fn find_preview_binary(base: &str) -> Option<PathBuf> {
 
 /// A remote `forge.Preview` pane declared in the open document.
 struct PaneSpec {
-    /// The pane's `id:` — also the `preview_bounds` key its slot tracks.
+    /// The pane's `#id` — also the `preview_bounds` key its slot tracks.
     id: String,
     base: String,
     /// `doc:` — doc-relative path, ref name, or none (the parent document).
