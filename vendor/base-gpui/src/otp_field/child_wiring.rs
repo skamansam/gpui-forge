@@ -2,6 +2,9 @@ use crate::otp_field::{OTPFieldChild, OTPFieldContext};
 
 pub struct WiredChildren {
     pub children: Vec<OTPFieldChild>,
+    // Only read under `#[cfg(debug_assertions)]` for the length-mismatch
+    // diagnostic in `otp_field_root`; release builds would flag it dead.
+    #[cfg_attr(not(debug_assertions), allow(dead_code))]
     pub input_count: usize,
 }
 

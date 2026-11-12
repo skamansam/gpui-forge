@@ -34,6 +34,9 @@ jobs:
         with:
           target: ${{ matrix.target }}
           cache-save-if: ${{ github.ref == 'refs/heads/main' }}
+          # The action defaults to `-D warnings`; vendored path deps would
+          # fail a release on lint noise (CI clippy already gates warnings).
+          rustflags: ""
       - uses: rui314/setup-mold@v1
         if: runner.os == 'Linux'
       - name: Install Linux system dependencies
