@@ -44,7 +44,7 @@ root:
               id: pane-02
               remote: gpui02
               base: gpui02
-              doc: ./gpui02-showcase.forge.yaml
+              doc: ../showcases/gpui02-showcase.forge.yaml
               style:
                 height: 480px
         case bezel:

@@ -1,30 +1,99 @@
 $schema: https://gpui-forge.rudeboy.dev/schema/0.1/adabraka.json
 forge: "0.1"
+state:
+  q: string
+  check: bool
+  sw: bool
+  sel: string
+  dlg: bool
+
 base: adabraka
+meta:
+  title: adabraka showcase
+
 root:
   VStack:
   style: {padding: 16px, gap: 12px}
   children:
-      - Text: "adabraka showcase"
+      - Text: "adabraka showcase — every adabraka-ui widget"
+        style: {size: xl, weight: bold}
       - Card:
         children:
-          - Text: "card content"
-      - Avatar:
-        fallback: "AB"
-      - Button:
-        label: "a button"
-      - Input:
-        placeholder: "an input…"
+          - VStack:
+            children:
+              - Text: "a Card"
+                style: {weight: semibold}
+              - HStack:
+                children:
+                  - Avatar:
+                    fallback: "AL"
+                  - Badge:
+                    text: "Default"
+                  - Badge:
+                    text: "Secondary"
+                    variant: Secondary
+                  - Badge:
+                    text: "Outline"
+                    variant: Outline
+                  - Badge:
+                    text: "Destructive"
+                    variant: Destructive
+      - Card:
+        children:
+          - VStack:
+            children:
+              - Text: "Inputs"
+                style: {weight: semibold}
+              - HStack:
+                children:
+                  - Button:
+                    label: "Default"
+                  - Button:
+                    label: "Secondary"
+                    variant: Secondary
+                  - Button:
+                    label: "Outline"
+                    variant: Outline
+                  - Button:
+                    label: "Ghost"
+                    variant: Ghost
+                  - Button:
+                    label: "Destructive"
+                    variant: Destructive
+              - Input:
+                placeholder: "an Input…"
+                value: $q
+              - HStack:
+                children:
+                  - Checkbox:
+                    label: "a checkbox"
+                    checked: $check
+                  - Switch:
+                    checked: $sw
+                  - Select:
+                    options: "one\ntwo\nthree"
+                    value: $sel
+                    placeholder: "pick one"
+      - Card:
+        children:
+          - VStack:
+            children:
+              - Text: "Feedback"
+                style: {weight: semibold}
+              - Progress:
+                value: 0.65
+              - Alert:
+                title: "Heads up"
+                text: "an Alert"
+              - Alert:
+                title: "Watch out"
+                text: "a destructive Alert"
+                variant: Destructive
       - Checkbox:
-        label: "a checkbox"
-      - Switch:
-        checked: true
-      - Select:
-        options: "one"
-      - Progress:
-        value: 0.6
-      - Badge:
-        text: "a badge"
-      - Alert:
-        title: "an alert"
-        text: "an adabraka alert"
+        label: "open the Dialog"
+        checked: $dlg
+      - Dialog:
+        if: $dlg
+        title: "a Dialog"
+        children:
+          - Text: "toggled by the checkbox"

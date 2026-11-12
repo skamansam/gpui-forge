@@ -1,19 +1,34 @@
 $schema: https://gpui-forge.rudeboy.dev/schema/0.1/bezel.json
 forge: "0.1"
+state:
+  q: string
+
 base: bezel
+meta:
+  title: bezel showcase
+
 root:
   VStack:
   style: {padding: 16px, gap: 12px}
   children:
-      - Text: "bezel showcase"
+      - Text: "bezel showcase — every bezel widget"
         style: {size: xl, weight: bold}
-      - Button:
-        label: "a button"
-      - Input:
-        placeholder: "an input…"
       - Card:
         children:
-          - Text: "card content"
-          - Text: "more card"
-      - Text:
-        text: "plain text"
+          - VStack:
+            children:
+              - Text: "a Card holding the rest"
+                style: {weight: semibold}
+              - Text:
+                text: "Text"
+              - HStack:
+                children:
+                  - Button:
+                    label: "a Button"
+                  - Button:
+                    label: "disabled"
+                    disabled: true
+              - Input:
+                placeholder: "an Input…"
+                value: $q
+              - Text: "echo: {$q}"

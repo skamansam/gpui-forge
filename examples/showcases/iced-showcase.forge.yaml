@@ -1,32 +1,54 @@
 $schema: https://gpui-forge.rudeboy.dev/schema/0.1/iced.json
 forge: "0.1"
 state:
+  q: string
+  check: bool
+  sw: bool
   slider: number
 
 base: iced
+meta:
+  title: iced showcase
+
 root:
   VStack:
   style: {padding: 16px, gap: 12px}
   children:
-      - Text: "iced showcase"
-      - Button:
-        label: "a button"
-      - Input:
-        placeholder: "an input…"
-      - Checkbox:
-        label: "a checkbox"
-      - Switch:
-        label: "a switch"
-      - Slider:
-        value: $slider
-      - Progress:
-        value: 0.6
+      - Text: "iced showcase — every iced widget"
+        size: 24
+      - Container:
+        children:
+          - Text: "a Container wraps and sizes its child"
       - Scrollable:
         children:
           - VStack:
+            style: {gap: 12px}
             children:
-              - Text: "scrollable"
-              - Text: "content"
-      - Container:
-        children:
-          - Text: "container"
+              - Text: "Scrollable — everything below scrolls"
+              - HStack:
+                children:
+                  - Button:
+                    label: "a Button"
+                  - Button:
+                    label: "disabled"
+                    disabled: true
+              - Input:
+                placeholder: "an Input…"
+                value: $q
+              - HStack:
+                children:
+                  - Checkbox:
+                    label: "a checkbox"
+                    checked: $check
+                  - Switch:
+                    label: "a switch"
+                    checked: $sw
+              - Slider:
+                min: 0
+                max: 100
+                value: $slider
+              - Progress:
+                min: 0
+                max: 100
+                value: $slider
+              - Text: "slider → progress: {$slider}"

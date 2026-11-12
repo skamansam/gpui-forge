@@ -1,41 +1,580 @@
 $schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
 forge: "0.1"
 state:
-  sel: string
+  tab: number
   slider: number
+  sel: string
+  check: bool
+  sw: bool
+  radio: number
+  rating: number
+  page: number
+  q: string
+  note: string
+  code: string
+  color: string
+  date: string
+  time: string
+  otp: string
+  num: string
+  step: number
+  listsel: number
+  dlg: bool
+  open: bool
+  collapsed: bool
 
 base: gpui-kit
+meta:
+  title: gpui-kit showcase
+
 root:
-  VStack:
-  style: {padding: 16px, gap: 12px}
+  VStack#app-window:
+  style:
+    height: full
+    border: 1px
+    border-color: $theme.border
+    radius: lg
   children:
-      - Text: "gpui-kit showcase"
-        style: {size: xl, weight: bold}
-      - Button: "Primary"
-      - Button: "Secondary"
-        variant: Secondary
-      - Input:
-        placeholder: "an input…"
-      - Checkbox:
-        label: "a checkbox"
-      - Switch:
-        label: "a switch"
-      - Slider:
-        value: bind $slider
-      - Progress:
-        value: 0.6
-      - Badge:
-        count: 4
-      - Alert:
-        title: "an alert"
-        message: "a gpui-kit alert"
-      - GroupBox: a group box
-        children:
-          - Text: "group content"
-      - Select:
-        options: ["one", "two", "three"]
-        value: bind $sel
-      - Tabs:
-        children:
-          - Tab: First
-          - Tab: Second
+    # ── window chrome ──────────────────────────────────────────────
+    - TitleBar:
+      children:
+        - HStack:
+          style: {width: full, align: center, justify: between, padding: 6px}
+          children:
+            - HStack:
+              style: {gap: 8px, align: center}
+              children:
+                - Icon: gem
+                - Text: "Forge Notes — every gpui-kit widget"
+            - HStack:
+              style: {gap: 2px}
+              children:
+                - Button: "–"
+                  variant: Ghost
+                  size: XSmall
+                - Button: "□"
+                  variant: Ghost
+                  size: XSmall
+                - Button: "✕"
+                  variant: Ghost
+                  size: XSmall
+    - Toolbar:
+      children:
+        - HStack:
+          style: {gap: 4px, align: center, padding: 4px}
+          children:
+            - Button: New
+              icon: file-plus
+              size: Small
+            - Button: Open
+              icon: folder-open
+              size: Small
+              variant: Secondary
+            - Button: Save
+              icon: save
+              size: Small
+              variant: Secondary
+            - Separator:
+              orientation: Vertical
+            - Button: Share
+              icon: share-2
+              size: Small
+              variant: Ghost
+            - DropdownMenu:
+              label: Export
+              icon: download
+              size: Small
+              variant: Ghost
+              children:
+                - MenuItem: PDF
+                  icon: file-text
+                - MenuItem: HTML
+                  icon: code
+                - MenuSeparator:
+                - MenuItem: Markdown
+                  icon: file-down
+    - HStack:
+      style: {height: full, gap: 0}
+      children:
+        - Sidebar:
+          side: Left
+          collapsible: Icon
+          collapsed: $collapsed
+          children:
+            - VStack:
+              style: {gap: 0}
+              children:
+                - SidebarHeader:
+                  children:
+                    - HStack:
+                      style: {gap: 8px, align: center, padding: 8px}
+                      children:
+                        - Avatar:
+                          icon: notebook-pen
+                        - Text: Workspace
+                - SidebarMenu:
+                  children:
+                    - SidebarMenuItem: Inbox
+                      icon: inbox
+                      active: true
+                    - SidebarMenuItem: Starred
+                      icon: star
+                    - SidebarMenuItem: Archive
+                      icon: archive
+                      children:
+                        - SidebarMenuItem: "2025"
+                          icon: folder
+                        - SidebarMenuItem: "2026"
+                          icon: folder
+                    - SidebarMenuItem: Trash
+                      icon: trash-2
+                - SidebarFooter:
+                  children:
+                    - HStack:
+                      style: {gap: 8px, align: center, padding: 8px}
+                      children:
+                        - Avatar:
+                          name: Ada Lovelace
+                        - Text: Ada
+        - VStack:
+          style: {width: full, height: full, padding: 12px, gap: 8px}
+          children:
+            - Tabs:
+              selected: bind $tab
+              variant: Underline
+              children:
+                # ────────────────────────── Input ──────────────────────────
+                - Tab: Inputs
+                  children:
+                    - VStack:
+                      style: {gap: 12px, padding: 12px, overflow: scroll, height: full}
+                      children:
+                        - GroupBox: Buttons
+                          variant: Outline
+                          children:
+                            - HStack:
+                              style: {gap: 8px, wrap: true, align: center}
+                              children:
+                                - Button: Primary
+                                  variant: Primary
+                                - Button: Secondary
+                                  variant: Secondary
+                                - Button: Ghost
+                                  variant: Ghost
+                                - Button: Danger
+                                  variant: Danger
+                                - Button: Outline
+                                  variant: Secondary
+                                  outline: true
+                                - Button: Loading
+                                  loading: true
+                                - Button: Disabled
+                                  disabled: true
+                        - GroupBox: Text entry
+                          variant: Outline
+                          children:
+                            - VStack:
+                              style: {gap: 8px}
+                              children:
+                                - HStack:
+                                  style: {gap: 8px}
+                                  children:
+                                    - Input:
+                                      placeholder: "type here…"
+                                      value: bind $q
+                                      cleanable: true
+                                    - NumberInput:
+                                      value: bind $num
+                                      placeholder: "42"
+                                - Textarea:
+                                  placeholder: "multiline notes…"
+                                  rows: 3
+                                  value: bind $note
+                                - Editor:
+                                  value: bind $code
+                                  language: rust
+                                  placeholder: "// code goes here"
+                                  height: 120px
+                        - GroupBox: Toggles and pickers
+                          variant: Outline
+                          children:
+                            - VStack:
+                              style: {gap: 8px}
+                              children:
+                                - HStack:
+                                  style: {gap: 16px, wrap: true, align: center}
+                                  children:
+                                    - Checkbox: remember me
+                                      checked: bind $check
+                                    - Switch: notifications
+                                      checked: bind $sw
+                                    - Rating:
+                                      value: bind $rating
+                                      max: 5
+                                - RadioGroup:
+                                  selected: bind $radio
+                                  layout: Horizontal
+                                  children:
+                                    - Radio: hourly
+                                    - Radio: daily
+                                    - Radio: weekly
+                                - HStack:
+                                  style: {gap: 8px, wrap: true, align: center}
+                                  children:
+                                    - Select:
+                                      options: [Inbox, Starred, Archive, Trash]
+                                      value: bind $sel
+                                      placeholder: "move to…"
+                                      searchable: true
+                                      cleanable: true
+                                    - ColorPicker:
+                                      value: bind $color
+                                    - DatePicker:
+                                      value: bind $date
+                                    - TimeField:
+                                      value: bind $time
+                                    - OtpInput:
+                                      value: bind $otp
+                                      length: 6
+                                - Slider:
+                                  value: bind $slider
+                                  min: 0
+                                  max: 100
+                                  step: 1
+                                - Calendar:
+                        - GroupBox: Form
+                          variant: Outline
+                          children:
+                            - Form:
+                              layout: Vertical
+                              children:
+                                - FormField:
+                                  label: Display name
+                                  required: true
+                                  description: shown on your profile
+                                  children:
+                                    - Input:
+                                      placeholder: Ada Lovelace
+                                - FormField:
+                                  label: Bio
+                                  children:
+                                    - Textarea:
+                                      rows: 2
+                # ───────────────────────── Display ─────────────────────────
+                - Tab: Display
+                  children:
+                    - VStack:
+                      style: {gap: 12px, padding: 12px, overflow: scroll, height: full}
+                      children:
+                        - Alert:
+                          variant: Info
+                          title: "Showcase"
+                          message: "every gpui-kit widget, live under the active theme"
+                        - GroupBox: Text and media
+                          variant: Outline
+                          children:
+                            - VStack:
+                              style: {gap: 8px}
+                              children:
+                                - Text: "Text with {$q} interpolated"
+                                - Label: a Label
+                                  secondary: "with a secondary line"
+                                - HStack:
+                                  style: {gap: 8px, align: center, wrap: true}
+                                  children:
+                                    - Icon: rocket
+                                    - Icon: flame
+                                    - Icon: zap
+                                    - Kbd: Ctrl+K
+                                    - Kbd: "⌘ P"
+                                      outline: true
+                                    - Link: "Link to the repo"
+                                      href: https://github.com/skamansam/gpui-forge
+                                - HStack:
+                                  style: {gap: 8px, align: center}
+                                  children:
+                                    - Image:
+                                      src: ../forge-icon.svg
+                                      size: 48px
+                                      object-fit: Contain
+                                    - Avatar:
+                                      name: Ada Lovelace
+                                    - AvatarGroup:
+                                      children:
+                                        - Avatar:
+                                          name: Ada Lovelace
+                                        - Avatar:
+                                          name: Grace Hopper
+                                        - Avatar:
+                                          name: Alan Turing
+                        - GroupBox: Status
+                          variant: Outline
+                          children:
+                            - VStack:
+                              style: {gap: 8px}
+                              children:
+                                - HStack:
+                                  style: {gap: 8px, align: center, wrap: true}
+                                  children:
+                                    - Badge: 12
+                                      children:
+                                        - Icon: bell
+                                    - Badge:
+                                      dot: true
+                                      children:
+                                        - Icon: mail
+                                    - Tag: stable
+                                      variant: Success
+                                    - Tag: beta
+                                      variant: Warning
+                                    - Tag: deprecated
+                                      variant: Danger
+                                      outline: true
+                                    - Spinner:
+                                    - Skeleton:
+                                - HStack:
+                                  style: {gap: 16px, align: center}
+                                  children:
+                                    - Progress:
+                                      value: $slider
+                                    - ProgressCircle:
+                                      value: $slider
+                        - GroupBox: Data
+                          variant: Outline
+                          children:
+                            - VStack:
+                              style: {gap: 8px}
+                              children:
+                                - Table:
+                                  children:
+                                    - TableCaption:
+                                      children:
+                                        - Text: "three most recent events"
+                                    - TableHeader:
+                                      children:
+                                        - TableHead: 
+                                          children:
+                                            - Text: when
+                                        - TableHead:
+                                          children:
+                                            - Text: what
+                                    - TableBody:
+                                      children:
+                                        - TableRow:
+                                          children:
+                                            - TableCell:
+                                              children:
+                                                - Text: "09:12"
+                                            - TableCell:
+                                              children:
+                                                - Text: signed in
+                                        - TableRow:
+                                          children:
+                                            - TableCell:
+                                              children:
+                                                - Text: "09:41"
+                                            - TableCell:
+                                              children:
+                                                - Text: edited notes
+                                    - TableFooter:
+                                      children:
+                                        - TableRow:
+                                          children:
+                                            - TableCell:
+                                              children:
+                                                - Text: total
+                                            - TableCell:
+                                              children:
+                                                - Text: "2 events"
+                                - DescriptionList:
+                                  bordered: true
+                                  children:
+                                    - DescriptionItem:
+                                      label: author
+                                      value: Ada Lovelace
+                                    - DescriptionItem:
+                                      label: widgets
+                                      value: "86, all live"
+                        - GroupBox: Lists and chat
+                          variant: Outline
+                          children:
+                            - HStack:
+                              style: {gap: 12px, wrap: true}
+                              children:
+                                - List:
+                                  selected: bind $listsel
+                                  children:
+                                    - Text: first item
+                                    - Text: second item
+                                    - Text: third item
+                                - Message:
+                                  alignment: Start
+                                  children:
+                                    - MessageAvatar:
+                                      children:
+                                        - Avatar:
+                                          name: Ada
+                                    - VStack:
+                                      children:
+                                        - MessageHeader:
+                                          children:
+                                            - Text: "Ada · 09:41"
+                                        - MessageContent:
+                                          children:
+                                            - Text: "the showcase renders everything live"
+                                        - MessageFooter:
+                                          children:
+                                            - Text: delivered
+                        - GroupBox: Tree
+                          variant: Outline
+                          children:
+                            - Tree:
+                              children:
+                                - TreeItem: src
+                                  icon: folder
+                                  expanded: true
+                                  children:
+                                    - TreeItem: main.rs
+                                      icon: file
+                                    - TreeItem: lib.rs
+                                      icon: file
+                                - TreeItem: Cargo.toml
+                                  icon: file
+                # ─────────────────────── Navigation ────────────────────────
+                - Tab: Navigation
+                  children:
+                    - VStack:
+                      style: {gap: 12px, padding: 12px, overflow: scroll, height: full}
+                      children:
+                        - Breadcrumb:
+                          children:
+                            - BreadcrumbItem: Home
+                            - BreadcrumbItem: Library
+                            - BreadcrumbItem: Showcase
+                        - HStack:
+                          style: {gap: 16px, wrap: true, align: center}
+                          children:
+                            - Tabs:
+                              variant: Pill
+                              children:
+                                - Tab: Pill A
+                                - Tab: Pill B
+                            - Pagination:
+                              page: bind $page
+                              total: 10
+                        - Stepper:
+                          selected: bind $step
+                          children:
+                            - StepperItem: cart
+                            - StepperItem: shipping
+                            - StepperItem: payment
+                        - Accordion:
+                          multiple: true
+                          bordered: true
+                          children:
+                            - AccordionItem:
+                              title: What is Forge?
+                              children:
+                                - Text: "a declarative YAML layer over GPUI widgets"
+                            - AccordionItem:
+                              title: What is gpui-kit?
+                              children:
+                                - Text: "the component suite these widgets come from"
+                # ───────────────────────── Layout ──────────────────────────
+                - Tab: Layout
+                  children:
+                    - VStack:
+                      style: {gap: 12px, padding: 12px, overflow: scroll, height: full}
+                      children:
+                        - HStack:
+                          style: {gap: 8px}
+                          children:
+                            - Box:
+                              style: {padding: 8px, border: 1px, border-color: $theme.border, radius: md}
+                              children:
+                                - Text: a Box
+                            - GroupBox: a GroupBox
+                              variant: Fill
+                              footer: "with a footer"
+                              children:
+                                - Text: group content
+                        - HStack:
+                          style: {gap: 8px, align: center}
+                          children:
+                            - Checkbox: "open the Collapsible"
+                              checked: bind $open
+                        - Collapsible:
+                          open: $open
+                          children:
+                            - Box:
+                              style: {padding: 8px, background: $theme.muted}
+                              children:
+                                - Text: "collapsible content — bound to the checkbox"
+                        - Separator:
+                          label: resizable
+                        - Resizable:
+                          layout: Horizontal
+                          children:
+                            - ResizablePanel:
+                              size: 30
+                              children:
+                                - Text: "panel 30%"
+                            - ResizablePanel:
+                              children:
+                                - Text: "panel fills the rest"
+                        - Empty: Nothing here yet
+                          icon: ghost
+                          description: "an Empty placeholder with icon and description"
+                # ───────────────────────── Windows ─────────────────────────
+                - Tab: Windows
+                  children:
+                    - VStack:
+                      style: {gap: 12px, padding: 12px, overflow: scroll, height: full}
+                      children:
+                        - Checkbox: "show the Dialog"
+                          checked: bind $dlg
+                        - Settings:
+                          children:
+                            - SettingPage:
+                              text: General
+                              children:
+                                - SettingsGroup:
+                                  text: Appearance
+                                  children:
+                                    - SettingItem:
+                                      text: follow system theme
+                                      children:
+                                        - Switch:
+                                    - SettingItem:
+                                      text: accent color
+                                      children:
+                                        - ColorPicker:
+                                          value: bind $color
+                        - Text: "window chrome — TitleBar, Toolbar, Sidebar and StatusBar — frames this whole document"
+                          style: {color: $theme.muted_foreground}
+    - StatusBar:
+      children:
+        - HStack:
+          style: {width: full, align: center, justify: between, padding: 4px}
+          children:
+            - HStack:
+              style: {gap: 8px, align: center}
+              children:
+                - Spinner:
+                - Text: ready
+            - HStack:
+              style: {gap: 8px, align: center}
+              children:
+                - Text: "{$sel} selected"
+                - Icon: git-branch
+                - Text: main
+    - Dialog:
+      if: $dlg
+      title: "a Dialog"
+      children:
+        - VStack:
+          style: {gap: 8px}
+          children:
+            - Text: "toggled from the Windows tab checkbox"
+            - Button: Close
+              variant: Secondary

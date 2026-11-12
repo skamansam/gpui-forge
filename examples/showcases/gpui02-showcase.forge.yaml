@@ -2,38 +2,92 @@ $schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui02.json
 forge: "0.1"
 state:
   sel: string
+  check: bool
+  sw: bool
+  q: string
 
 base: gpui02
+meta:
+  title: gpui02 showcase
+
 root:
   VStack:
   style: {padding: 16px, gap: 12px}
   children:
-      - Title: "gpui02 showcase"
+      - Title: "gpui02 showcase — every guise widget"
+        order: H2
       - Paper:
         children:
-          - Text: "paper container"
-      - Button:
-        label: "a button"
-      - TextInput:
-        placeholder: "text input…"
-      - Checkbox:
-        label: "a checkbox"
-      - Switch:
-        label: "a switch"
-      - Select:
-        options: "one"
-        value: $sel
-      - Progress:
-        value: 0.6
-      - Badge:
-        text: "a badge"
-      - Alert:
-        title: "an alert"
-        text: "a guise alert"
-      - Card:
-        children:
-          - Text: "card"
+          - VStack:
+            children:
+              - Title: "a window as a Paper"
+                order: H4
+              - HStack:
+                children:
+                  - Text: "styled surface — background, radius, shadow from the theme"
+                  - Badge:
+                    text: "live"
+                    variant: Light
       - Divider:
-      - Center:
+        label: "Layout"
+      - HStack:
         children:
-          - Text: "centered"
+          - Card:
+            children:
+              - Text: "a Card"
+          - Center:
+            children:
+              - Text: "Center"
+          - Container:
+            children:
+              - Text: "Container"
+      - HStack:
+        children:
+          - Text: "Space →"
+          - Space:
+            size: Xl
+          - Text: "← Space (Xl)"
+      - Divider:
+        label: "Inputs"
+      - HStack:
+        children:
+          - Button:
+            label: "Filled"
+            variant: Filled
+          - Button:
+            label: "Light"
+            variant: Light
+          - Button:
+            label: "Outline"
+            variant: Outline
+          - Button:
+            label: "Subtle"
+            variant: Subtle
+          - Button:
+            label: "disabled"
+            disabled: true
+      - TextInput:
+        label: "a TextInput"
+        placeholder: "type here…"
+        description: "with a description line"
+        value: $q
+      - HStack:
+        children:
+          - Checkbox:
+            label: "a checkbox"
+            checked: $check
+          - Switch:
+            label: "a switch"
+            checked: $sw
+          - Select:
+            label: "a Select"
+            placeholder: "pick one"
+            options: "one\ntwo\nthree"
+            value: $sel
+      - Divider:
+        label: "Feedback"
+      - Alert:
+        title: "Heads up"
+        text: "an Alert under the guise theme"
+      - Progress:
+        value: 0.65

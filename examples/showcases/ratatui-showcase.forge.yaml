@@ -1,19 +1,62 @@
 $schema: https://gpui-forge.rudeboy.dev/schema/0.1/ratatui.json
 forge: "0.1"
+state:
+  q: string
+  tab: number
+
 base: ratatui
+meta:
+  title: ratatui showcase
+
 root:
   VStack:
   style: {gap: 1}
   children:
-      - Block:
-        title: "ratatui showcase"
-        children:
-          - Text: "a bordered block"
-      - List:
-        items: "first\nsecond\nthird"
-      - Gauge:
-        value: 60
+      - Text: "ratatui showcase — every ratatui widget"
       - Tabs:
-        titles: "one\ntwo\nthree"
-      - Input:
-        placeholder: "editable input…"
+        titles: "Widgets\nData\nForm"
+        selected: $tab
+      - HStack:
+        style: {gap: 1}
+        children:
+          - Block:
+            title: "cpu"
+            children:
+              - Gauge:
+                value: 72
+                label: "72%"
+          - Block:
+            title: "mem"
+            children:
+              - Gauge:
+                value: 41
+                label: "41%"
+          - Block:
+            title: "net"
+            children:
+              - Text:
+                text: "a Text run inside a bordered Block"
+                wrap: true
+      - HStack:
+        style: {gap: 1}
+        children:
+          - Block:
+            title: "a List"
+            children:
+              - List:
+                items: "first\nsecond\nthird\nfourth\nfifth"
+                title: "items"
+          - Block:
+            title: "an Input"
+            children:
+              - VStack:
+                style: {gap: 1}
+                children:
+                  - Input:
+                    placeholder: "type here…"
+                    value: $q
+                  - Text: "echo: {$q}"
+      - Table:
+        title: "a Table"
+        header: "name | status | load"
+        rows: "web-1 | up | 0.62\nweb-2 | up | 0.41\ndb-1 | degraded | 0.91"
