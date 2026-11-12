@@ -1447,8 +1447,17 @@ fn x11_pid_has_window(pid: u32) -> Option<bool> {
         .reply()
         .ok()?
         .atom;
+    // `_NET_WM_PID` sits on the client window — under XWayland/XWM (WSLg) a
+    // toplevel needn't be a direct child of root, so walk the whole tree
+    // rather than `query_tree(root)`'s first level alone.
     let tree = conn.query_tree(root).ok()?.reply().ok()?;
-    for win in tree.children {
+    let mut stack: Vec<u32> = tree.children.to_vec();
+    let mut visited = 0usize;
+    while let Some(win) = stack.pop() {
+        if visited >= 512 {
+            break;
+        }
+        visited += 1;
         let ours = conn
             .get_property(false, win, pid_atom, AtomEnum::CARDINAL, 0, 1)
             .ok()
@@ -1457,6 +1466,13 @@ fn x11_pid_has_window(pid: u32) -> Option<bool> {
             == Some(pid);
         if ours {
             return Some(true);
+        }
+        if let Some(children) = conn
+            .query_tree(win)
+            .ok()
+            .and_then(|c| c.reply().ok())
+        {
+            stack.extend_from_slice(&children.children);
         }
     }
     Some(false)
@@ -1887,7 +1903,7 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
             // and reported instead of sitting as a zombie.
             let unmapped: Vec<String> = pending
                 .iter()
-                .filter(|(_, (t0, _))| t0.elapsed() > std::time::Duration::from_secs(3))
+                .filter(|(_, (t0, _))| t0.elapsed() > std::time::Duration::from_secs(6))
                 .filter(|(id, (_, pid))| {
                     HOSTS
                         .lock()
@@ -1919,7 +1935,7 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
             }
             // Expired entries were probed (or couldn't be — Wayland) once;
             // drop them either way.
-            pending.retain(|_, (t0, _)| t0.elapsed() <= std::time::Duration::from_secs(3));
+            pending.retain(|_, (t0, _)| t0.elapsed() <= std::time::Duration::from_secs(6));
 
             for pane in &panes {
                 if gave_up.contains(&pane.id) {
