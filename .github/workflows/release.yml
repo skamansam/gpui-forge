@@ -1,44 +1,135 @@
 name: Release
 
+# Tag push publishes a GitHub release; a manual run just uploads build
+# artifacts — handy for testing a platform build without cutting a tag.
 on:
   push:
     tags: ["v*"]
+  workflow_dispatch:
 
-permissions:
-  contents: write
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
 
 jobs:
-  binaries:
-    name: forge binary (${{ matrix.os }})
+  build:
+    name: Build (${{ matrix.name }})
     strategy:
       fail-fast: false
       matrix:
         include:
-          - { os: ubuntu-latest, target: linux-x86_64 }
-          - { os: macos-latest, target: macos-aarch64 }
-          - { os: windows-latest, target: windows-x86_64 }
+          - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu, name: linux-x86_64 }
+          - { os: ubuntu-24.04-arm, target: aarch64-unknown-linux-gnu, name: linux-aarch64 }
+          - { os: macos-latest, target: aarch64-apple-darwin, name: macos-aarch64 }
+          - { os: macos-13, target: x86_64-apple-darwin, name: macos-x86_64 }
+          - { os: windows-latest, target: x86_64-pc-windows-msvc, name: windows-x86_64 }
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          target: ${{ matrix.target }}
+          cache-save-if: ${{ github.ref == 'refs/heads/main' }}
+      - uses: rui314/setup-mold@v1
+        if: runner.os == 'Linux'
       - name: Install Linux system dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y gcc g++ clang libfontconfig-dev libwayland-dev \
             libwebkit2gtk-4.1-dev libxkbcommon-x11-dev libx11-xcb-dev \
-            libssl-dev libzstd-dev libasound2-dev vulkan-validationlayers libvulkan1
-      - name: Build forge
-        run: cargo build --release --locked -p forge-cli
-      - name: Package artifact
+            libssl-dev libzstd-dev libasound2-dev libvulkan1 \
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+            libgstreamer-plugins-bad1.0-dev gstreamer1.0-plugins-base \
+            gstreamer1.0-plugins-good
+      - name: Install GStreamer (macOS)
+        if: runner.os == 'macOS'
+        run: brew install gstreamer
+      - name: Install GStreamer (Windows)
+        if: runner.os == 'Windows'
+        uses: blinemedical/setup-gstreamer@v1
+        with:
+          # 1.28.x ships .exe installers — the action's .msi URL scheme only
+          # works through 1.26.x; pin the newest 1.26 release.
+          version: "1.26.11"
+      - name: Install NASM (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/setup-nasm@v1
+
+      # Core trio — the binaries Studio itself spawns. `forge-preview` is the
+      # gpui-kit host; the foreign-base hosts build per-target below.
+      - name: Build forge + forge-studio + forge-preview
+        run: cargo build --release --locked -p forge-cli -p forge-studio -p forge-preview --target ${{ matrix.target }}
+
+      # Foreign-base hosts are best-effort — an old-gpui base that can't
+      # compile on this platform is skipped, not a release blocker.
+      - name: Build foreign-base preview hosts (best-effort)
         shell: bash
         run: |
-          bin=target/release/forge; [ "$RUNNER_OS" = "Windows" ] && bin=$bin.exe
-          mkdir -p dist && cp "$bin" "dist/forge-${{ matrix.target }}${bin:+${bin:+.exe} }"
-      - name: Upload binary to the release
+          for base in gpui02 bezel ratatui iced; do
+            if cargo build --release --locked -p forge-preview \
+                --no-default-features --features "base-$base" \
+                --target "${{ matrix.target }}"; then
+              echo "built forge-preview-$base"
+            else
+              echo "::warning::forge-preview-$base does not build on ${{ matrix.name }} — skipping"
+            fi
+          done
+
+      - name: Package (unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          mkdir -p dist
+          for bin in forge forge-studio forge-preview forge-preview-gpui02 \
+                     forge-preview-bezel forge-preview-ratatui forge-preview-iced; do
+            src="target/${{ matrix.target }}/release/$bin"
+            [ -f "$src" ] && cp "$src" dist/
+          done
+          strip dist/* || true
+          tar -czf "gpui-forge-${{ matrix.name }}.tar.gz" -C dist .
+
+      - name: Package (windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist | Out-Null
+          $bins = 'forge','forge-studio','forge-preview','forge-preview-gpui02',
+                  'forge-preview-bezel','forge-preview-ratatui','forge-preview-iced'
+          foreach ($bin in $bins) {
+            $src = "target/${{ matrix.target }}/release/$bin.exe"
+            if (Test-Path $src) { Copy-Item $src dist/ }
+          }
+          Compress-Archive -Path dist/* -DestinationPath "gpui-forge-${{ matrix.name }}.zip"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: gpui-forge-${{ matrix.name }}
+          path: |
+            gpui-forge-${{ matrix.name }}.tar.gz
+            gpui-forge-${{ matrix.name }}.zip
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: gpui-forge-*
+          path: artifacts
+          merge-multiple: true
+      - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/forge-${{ matrix.target }}*
+          files: artifacts/*
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
