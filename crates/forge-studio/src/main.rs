@@ -402,6 +402,12 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         &shared,
         cx,
     );
+    // `forge-studio <doc.forge.yaml>` opens straight into the document.
+    if let Some(path) = std::env::args().nth(1).map(PathBuf::from)
+        && path.is_file()
+    {
+        load_file(path, &mut view, shared.clone(), cx);
+    }
     // Declared panes in the shell document (the Theme-tab theme preview)
     // spawn hosts from startup — no need to wait for a foreign-base open.
     pane_sync(shared.clone(), cx);
@@ -1413,6 +1419,9 @@ static HOSTS: std::sync::LazyLock<
     std::sync::Mutex<std::collections::HashMap<String, (String, Host)>>,
 > = std::sync::LazyLock::new(|| std::sync::Mutex::new(std::collections::HashMap::new()));
 static PANE_SYNC: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+static PANE_STDERR: std::sync::LazyLock<
+    std::sync::Mutex<std::collections::HashMap<String, StderrTail>>,
+> = std::sync::LazyLock::new(|| std::sync::Mutex::new(Default::default()));
 
 fn pane_send(id: &str, value: &Json) {
     use std::io::Write;
@@ -1567,7 +1576,23 @@ fn preview_command(binary: &PathBuf, base: &str) -> std::process::Command {
     cmd
 }
 
-fn spawn_pane(base: &str, id: &str) -> Option<Host> {
+/// A pane's last stderr lines — pane stderr is drained rather than
+/// inherited, so a host panic would otherwise leave no trace. A short
+/// ring is kept and the tail is reported when the host exits.
+type StderrTail = std::sync::Arc<std::sync::Mutex<std::collections::VecDeque<String>>>;
+
+fn stderr_tail(map: &std::collections::HashMap<String, StderrTail>, id: &str) -> Option<String> {
+    map.get(id).and_then(|t| {
+        t.lock()
+            .unwrap()
+            .iter()
+            .rev()
+            .find(|l| !l.trim().is_empty())
+            .cloned()
+    })
+}
+
+fn spawn_pane(base: &str, id: &str) -> Option<(Host, StderrTail)> {
     let binary = find_preview_binary(base)?;
     let mut child = preview_command(&binary, base)
         .stdin(std::process::Stdio::piped())
@@ -1577,10 +1602,18 @@ fn spawn_pane(base: &str, id: &str) -> Option<Host> {
         .stderr(std::process::Stdio::piped())
         .spawn()
         .ok()?;
+    let tail: StderrTail = Default::default();
     if let Some(stderr) = child.stderr.take() {
+        let tail = tail.clone();
         std::thread::spawn(move || {
             use std::io::BufRead;
-            for _line in std::io::BufReader::new(stderr).lines() {}
+            for line in std::io::BufReader::new(stderr).lines().map_while(Result::ok) {
+                let mut ring = tail.lock().unwrap();
+                if ring.len() >= 30 {
+                    ring.pop_front();
+                }
+                ring.push_back(line);
+            }
         });
     }
     if let Some(stdout) = child.stdout.take() {
@@ -1623,11 +1656,14 @@ fn spawn_pane(base: &str, id: &str) -> Option<Host> {
         });
     }
     let stdin = child.stdin.take()?;
-    Some(Host {
-        child,
-        stdin,
-        generation: HOST_GEN.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1,
-    })
+    Some((
+        Host {
+            child,
+            stdin,
+            generation: HOST_GEN.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1,
+        },
+        tail,
+    ))
 }
 
 /// The `source` command for a pane — a named ref becomes a document clone
@@ -1799,6 +1835,7 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                 deaths.remove(&id);
                 gave_up.remove(&id);
                 pending.remove(&id);
+                PANE_STDERR.lock().unwrap().remove(&id);
             }
 
             // A dead pane host respawns on the next tick — report, then drop it
@@ -1817,19 +1854,28 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                 fed.remove(&id);
                 let tries = deaths.entry(id.clone()).or_insert(0);
                 *tries += 1;
+                let tail = stderr_tail(&PANE_STDERR.lock().unwrap(), &id)
+                    .map(|l| format!(" — {l}"))
+                    .unwrap_or_default();
                 if *tries > 1 {
                     if gave_up.insert(id.clone()) {
                         let _ = view.update(cx, |view, cx| {
                             status(
                                 view,
-                                &format!("preview host for `{id}` keeps exiting — giving up"),
+                                &format!(
+                                    "preview host for `{id}` keeps exiting — giving up{tail}"
+                                ),
                                 cx,
                             )
                         });
                     }
                 } else {
                     let _ = view.update(cx, |view, cx| {
-                        status(view, &format!("preview host for `{id}` exited — restarting"), cx)
+                        status(
+                            view,
+                            &format!("preview host for `{id}` exited — restarting{tail}"),
+                            cx,
+                        )
                     });
                 }
             }
@@ -1858,6 +1904,7 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                     let _ = h.child.wait();
                 }
                 fed.remove(&id);
+                PANE_STDERR.lock().unwrap().remove(&id);
                 if gave_up.insert(id.clone()) {
                     let _ = view.update(cx, |view, cx| {
                         status(
@@ -1894,7 +1941,7 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                     deaths.remove(&pane.id);
                     gave_up.remove(&pane.id);
                     match spawn_pane(base, &pane.id) {
-                        Some(host) => {
+                        Some((host, tail)) => {
                             if pane.mode != "stream" {
                                 pending.insert(
                                     pane.id.clone(),
@@ -1902,6 +1949,7 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                                 );
                             }
                             HOSTS.lock().unwrap().insert(pane.id.clone(), (spec, host));
+                            PANE_STDERR.lock().unwrap().insert(pane.id.clone(), tail);
                             fed.remove(&pane.id);
                         }
                         None => continue,
