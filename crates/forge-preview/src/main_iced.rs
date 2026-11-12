@@ -17,6 +17,7 @@ struct Host {
     view: ForgeView,
     rx: mpsc::Receiver<HostMsg>,
     ticks: u64,
+    theme: iced::Theme,
 }
 
 #[derive(Debug, Clone)]
@@ -39,7 +40,12 @@ impl Host {
                 emit(json!({"event":"state","state": state}));
             }),
         );
-        Self { view, rx, ticks: 0 }
+        Self {
+            view,
+            rx,
+            ticks: 0,
+            theme: iced::Theme::Dark,
+        }
     }
 
     fn update(&mut self, msg: Message) -> Task<Message> {
@@ -69,12 +75,36 @@ impl Host {
                                 .unwrap(),
                             serde_json::Value::String(path),
                         ),
-                        HostMsg::Theme { name, dark } => {
-                            if let Some(name) = &name {
-                                eprintln!(
-                                    "forge-preview-iced: named theme `{name}` not mapped (dark={dark})"
-                                );
+                        HostMsg::Theme { dark, colors, .. } => {
+                            // Forge theme names don't resolve in iced — the
+                            // wire palette does: build a custom Theme from
+                            // Studio's resolved colors over a dark/light base.
+                            let c =
+                                |k: &str| {
+                                    protocol::theme_color(&colors, k)
+                                        .map(|(r, g, b, a)| iced::Color { r, g, b, a })
+                                };
+                            let mut p = if dark {
+                                iced::theme::Palette::DARK
+                            } else {
+                                iced::theme::Palette::LIGHT
+                            };
+                            if let Some(v) = c("background") {
+                                p.background = v;
                             }
+                            if let Some(v) = c("foreground") {
+                                p.text = v;
+                            }
+                            if let Some(v) = c("accent") {
+                                p.primary = v;
+                            }
+                            if let Some(v) = c("success") {
+                                p.success = v;
+                            }
+                            if let Some(v) = c("danger") {
+                                p.danger = v;
+                            }
+                            self.theme = iced::Theme::custom("forge".to_owned(), p);
                         }
                         HostMsg::Raise => {
                             return iced::window::get_latest().then(|id| {
@@ -175,13 +205,15 @@ impl Host {
 fn main() -> iced::Result {
     let (tx, rx) = mpsc::channel::<HostMsg>();
     spawn_reader(tx);
-    iced::application("Forge Preview · iced", Host::update, Host::view).run_with(|| {
-        (
-            Host::new(rx),
-            Task::perform(
-                async { std::thread::sleep(Duration::from_millis(50)) },
-                |_| Message::Tick,
-            ),
-        )
-    })
+    iced::application("Forge Preview · iced", Host::update, Host::view)
+        .theme(|host: &Host| host.theme.clone())
+        .run_with(|| {
+            (
+                Host::new(rx),
+                Task::perform(
+                    async { std::thread::sleep(Duration::from_millis(50)) },
+                    |_| Message::Tick,
+                ),
+            )
+        })
 }

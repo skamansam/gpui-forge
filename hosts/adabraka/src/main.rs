@@ -104,15 +104,10 @@ fn main() {
                                         serde_json::Value::String(path),
                                         cx,
                                     ),
-                                    HostMsg::Theme { name, dark: _ } => {
+                                    HostMsg::Theme { .. } => {
                                         // adabraka_ui::init installs the theme —
-                                        // dark/light + named themes map when the
+                                        // dark/light + colors map when the
                                         // bridge lands (#95).
-                                        if let Some(name) = &name {
-                                            eprintln!(
-                                                "forge-preview-adabraka: named theme `{name}` not mapped"
-                                            );
-                                        }
                                     }
                                     HostMsg::Raise => {
                                         cx.defer(|cx| {

@@ -18,8 +18,16 @@ pub enum HostMsg {
     Dnd(bool),
     Select(String),
     Theme {
+        /// `dead_code`: protocol.rs compiles into every host binary — each
+        /// host reads the fields it can map.
+        #[allow(dead_code)]
         name: Option<String>,
         dark: bool,
+        /// The sender's resolved palette as `{semantic-name: "#rrggbbaa"}` —
+        /// hosts that can't resolve a Forge theme *name* can still paint with
+        /// its actual colors. Empty when the sender has no palette.
+        #[allow(dead_code)]
+        colors: serde_json::Map<String, serde_json::Value>,
     },
     Raise,
     /// #120 Phase 1 — the canvas slot's screen-space bounds. The host
@@ -32,6 +40,30 @@ pub enum HostMsg {
         h: f64,
     },
     Quit,
+}
+
+/// Parse a `#rrggbb`/`#rrggbbaa` wire color into floats — hosts convert into
+/// their own color type from here.
+#[allow(dead_code)] // protocol.rs compiles into every host binary — not all map colors.
+pub fn parse_color(s: &str) -> Option<(f32, f32, f32, f32)> {
+    let s = s.strip_prefix('#').unwrap_or(s);
+    let v = u32::from_str_radix(s, 16).ok()?;
+    let byte = |shift: u32| ((v >> shift) & 0xff) as f32 / 255.0;
+    match s.len() {
+        6 => Some((byte(16), byte(8), byte(0), 1.0)),
+        8 => Some((byte(24), byte(16), byte(8), byte(0))),
+        _ => None,
+    }
+}
+
+/// `colors` lookup by Forge semantic name, parsed — `None` when absent or
+/// not a hex string.
+#[allow(dead_code)] // protocol.rs compiles into every host binary — not all map colors.
+pub fn theme_color(
+    colors: &serde_json::Map<String, serde_json::Value>,
+    key: &str,
+) -> Option<(f32, f32, f32, f32)> {
+    colors.get(key)?.as_str().and_then(parse_color)
 }
 
 /// One JSON line on stdout — each `writeln!` locks stdout once, so lines from
@@ -89,6 +121,7 @@ pub fn spawn_reader(tx: mpsc::Sender<HostMsg>) {
                     let _ = tx.send(HostMsg::Theme {
                         name: v["name"].as_str().map(str::to_owned),
                         dark: v["dark"].as_bool().unwrap_or_default(),
+                        colors: v["colors"].as_object().cloned().unwrap_or_default(),
                     });
                 }
                 Some("raise") => {

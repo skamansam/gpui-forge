@@ -44,103 +44,100 @@ fn main() {
                             emit(json!({"event":"state","state": state}));
                         }),
                     );
-                    cx.spawn(async move |view, cx| loop {
-                        cx.background_executor()
-                            .timer(std::time::Duration::from_millis(50))
-                            .await;
-                        let mut msgs = Vec::new();
-                        while let Ok(m) = rx.try_recv() {
-                            msgs.push(m);
-                        }
-                        if msgs.is_empty() {
-                            continue;
-                        }
-                        let mut quit = false;
-                        let _ = view.update(cx, |view: &mut ForgeView, cx| {
-                            for msg in msgs.drain(..) {
-                                match msg {
-                                    HostMsg::Source { src, dir } => {
-                                        if let Some(dir) = dir {
-                                            view.set_base_dir(dir);
-                                        }
-                                        let catalogs = view.catalogs.clone();
-                                        let (doc, diags) = check::check(
-                                            &src,
-                                            gpui_forge_runtime::base::BASE_ID,
-                                            &catalogs,
-                                        );
-                                        emit(json!({"event":"diagnostics","items":
-                                            check::diagnostics_json(&diags)})
-                                        );
-                                        if let Some(doc) = doc {
-                                            view.set_document(doc, cx);
-                                        }
-                                    }
-                                    HostMsg::Pick(on) => view.set_pick(on, cx),
-                                    HostMsg::Place(on) => view.set_placing(on, cx),
-                                    HostMsg::Dnd(on) => view.set_dnd(on, cx),
-                                    HostMsg::Select(path) => view.update_state(
-                                        &gpui_forge_runtime::forge_spec::value::parse_path(
-                                            "document.selected",
-                                        )
-                                        .unwrap(),
-                                        serde_json::Value::String(path),
-                                        cx,
-                                    ),
-                                    HostMsg::Theme { name, dark } => {
-                                        // bezel's appearance is a global —
-                                        // dark/light swap now, named themes
-                                        // when the theme bridge lands (#94).
-                                        if let Some(name) = &name {
-                                            eprintln!(
-                                                "forge-preview-bezel: named theme `{name}` not mapped — using mode toggle"
+                    cx.spawn(async move |view, cx| {
+                        loop {
+                            cx.background_executor()
+                                .timer(std::time::Duration::from_millis(50))
+                                .await;
+                            let mut msgs = Vec::new();
+                            while let Ok(m) = rx.try_recv() {
+                                msgs.push(m);
+                            }
+                            if msgs.is_empty() {
+                                continue;
+                            }
+                            let mut quit = false;
+                            let _ = view.update(cx, |view: &mut ForgeView, cx| {
+                                for msg in msgs.drain(..) {
+                                    match msg {
+                                        HostMsg::Source { src, dir } => {
+                                            if let Some(dir) = dir {
+                                                view.set_base_dir(dir);
+                                            }
+                                            let catalogs = view.catalogs.clone();
+                                            let (doc, diags) = check::check(
+                                                &src,
+                                                gpui_forge_runtime::base::BASE_ID,
+                                                &catalogs,
                                             );
+                                            emit(json!({"event":"diagnostics","items":
+                                            check::diagnostics_json(&diags)}));
+                                            if let Some(doc) = doc {
+                                                view.set_document(doc, cx);
+                                            }
                                         }
-                                        if dark {
-                                            bezel::theme::appearance::init(bezel::theme::appearance::AppearanceMode::Dark, cx);
-                                        } else {
-                                            bezel::theme::appearance::init(bezel::theme::appearance::AppearanceMode::Light, cx);
-                                        }
-                                    }
-                                    HostMsg::Raise => {
-                                        cx.defer(|cx| {
-                                            for handle in cx.windows() {
-                                                let _ = handle.update(
+                                        HostMsg::Pick(on) => view.set_pick(on, cx),
+                                        HostMsg::Place(on) => view.set_placing(on, cx),
+                                        HostMsg::Dnd(on) => view.set_dnd(on, cx),
+                                        HostMsg::Select(path) => view.update_state(
+                                            &gpui_forge_runtime::forge_spec::value::parse_path(
+                                                "document.selected",
+                                            )
+                                            .unwrap(),
+                                            serde_json::Value::String(path),
+                                            cx,
+                                        ),
+                                        HostMsg::Theme { dark, .. } => {
+                                            // bezel's appearance is a global
+                                            // dark/light toggle only — it has no
+                                            // custom-color API to map the wire
+                                            // palette onto.
+                                            if dark {
+                                                bezel::theme::appearance::init(
+                                                    bezel::theme::appearance::AppearanceMode::Dark,
                                                     cx,
-                                                    |_, window, _| {
-                                                        window.activate_window()
-                                                    },
+                                                );
+                                            } else {
+                                                bezel::theme::appearance::init(
+                                                    bezel::theme::appearance::AppearanceMode::Light,
+                                                    cx,
                                                 );
                                             }
-                                        });
-                                    }
-                                    HostMsg::FrameRect { x, y, w, h } => {
-                                        // #120 Phase 1 — PlatformWindow only
-                                        // exposes `resize`. Size the host
-                                        // window to the canvas slot.
-                                        cx.defer(move |cx| {
-                                            for handle in cx.windows() {
-                                                let _ = handle.update(
-                                                    cx,
-                                                    |_, window, _| {
+                                        }
+                                        HostMsg::Raise => {
+                                            cx.defer(|cx| {
+                                                for handle in cx.windows() {
+                                                    let _ = handle.update(cx, |_, window, _| {
+                                                        window.activate_window()
+                                                    });
+                                                }
+                                            });
+                                        }
+                                        HostMsg::FrameRect { x, y, w, h } => {
+                                            // #120 Phase 1 — PlatformWindow only
+                                            // exposes `resize`. Size the host
+                                            // window to the canvas slot.
+                                            cx.defer(move |cx| {
+                                                for handle in cx.windows() {
+                                                    let _ = handle.update(cx, |_, window, _| {
                                                         window.resize(::bezel::gpui::size(
                                                             ::bezel::gpui::px(w as f32),
                                                             ::bezel::gpui::px(h as f32),
                                                         ));
                                                         #[cfg(target_os = "linux")]
                                                         x11_move(window, x, y);
-                                                    },
-                                                );
-                                            }
-                                        });
+                                                    });
+                                                }
+                                            });
+                                        }
+                                        HostMsg::Quit => quit = true,
                                     }
-                                    HostMsg::Quit => quit = true,
                                 }
+                            });
+                            if quit {
+                                let _ = cx.update(|cx| cx.quit());
+                                return;
                             }
-                        });
-                        if quit {
-                            let _ = cx.update(|cx| cx.quit());
-                            return;
                         }
                     })
                     .detach();

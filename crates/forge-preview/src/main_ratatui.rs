@@ -128,12 +128,10 @@ fn main() {
                         .unwrap(),
                     serde_json::Value::String(path),
                 ),
-                HostMsg::Theme { name, dark } => {
-                    if let Some(name) = &name {
-                        eprintln!(
-                            "forge-preview-ratatui: named theme `{name}` not mapped (dark={dark})"
-                        );
-                    }
+                HostMsg::Theme { .. } => {
+                    // ratatui widgets style themselves per-widget in the Forge
+                    // base renderer — there's no palette hook to map onto, and
+                    // the streamed frame is text-only regardless.
                 }
                 HostMsg::Raise => {
                     // The host's terminal is already focused — nothing to raise.

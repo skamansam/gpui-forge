@@ -49,103 +49,138 @@ fn main() {
                             emit(json!({"event":"state","state": state}));
                         }),
                     );
-                    cx.spawn(async move |view, cx| loop {
-                        cx.background_executor()
-                            .timer(std::time::Duration::from_millis(50))
-                            .await;
-                        let mut msgs = Vec::new();
-                        while let Ok(m) = rx.try_recv() {
-                            msgs.push(m);
-                        }
-                        if msgs.is_empty() {
-                            continue;
-                        }
-                        let mut quit = false;
-                        let _ = view.update(cx, |view: &mut ForgeView, cx| {
-                            for msg in msgs.drain(..) {
-                                match msg {
-                                    HostMsg::Source { src, dir } => {
-                                        if let Some(dir) = dir {
-                                            view.set_base_dir(dir);
-                                        }
-                                        let catalogs = view.catalogs.clone();
-                                        let (doc, diags) = check::check(
-                                            &src,
-                                            gpui_forge_runtime::base::BASE_ID,
-                                            &catalogs,
-                                        );
-                                        emit(json!({"event":"diagnostics","items":
-                                            check::diagnostics_json(&diags)})
-                                        );
-                                        if let Some(doc) = doc {
-                                            view.set_document(doc, cx);
-                                        }
-                                    }
-                                    HostMsg::Pick(on) => view.set_pick(on, cx),
-                                    HostMsg::Place(on) => view.set_placing(on, cx),
-                                    HostMsg::Dnd(on) => view.set_dnd(on, cx),
-                                    HostMsg::Select(path) => view.update_state(
-                                        &gpui_forge_runtime::forge_spec::value::parse_path(
-                                            "document.selected",
-                                        )
-                                        .unwrap(),
-                                        serde_json::Value::String(path),
-                                        cx,
-                                    ),
-                                    HostMsg::Theme { name, dark } => {
-                                        // guise installs its Theme as a global —
-                                        // dark/light swap now, named themes
-                                        // when the theme bridge lands (#96).
-                                        if let Some(name) = &name {
-                                            eprintln!(
-                                                "forge-preview-gpui02: named theme `{name}` not mapped — using mode toggle"
-                                            );
-                                        }
-                                        if dark {
-                                            guise::theme::Theme::dark().init(cx);
-                                        } else {
-                                            guise::theme::Theme::light().init(cx);
-                                        }
-                                    }
-                                    HostMsg::Raise => {
-                                        cx.defer(|cx| {
-                                            for handle in cx.windows() {
-                                                let _ = handle.update(
-                                                    cx,
-                                                    |_, window, _| {
-                                                        window.activate_window()
-                                                    },
-                                                );
+                    cx.spawn(async move |view, cx| {
+                        loop {
+                            cx.background_executor()
+                                .timer(std::time::Duration::from_millis(50))
+                                .await;
+                            let mut msgs = Vec::new();
+                            while let Ok(m) = rx.try_recv() {
+                                msgs.push(m);
+                            }
+                            if msgs.is_empty() {
+                                continue;
+                            }
+                            let mut quit = false;
+                            let _ = view.update(cx, |view: &mut ForgeView, cx| {
+                                for msg in msgs.drain(..) {
+                                    match msg {
+                                        HostMsg::Source { src, dir } => {
+                                            if let Some(dir) = dir {
+                                                view.set_base_dir(dir);
                                             }
-                                        });
-                                    }
-                                    HostMsg::FrameRect { x, y, w, h } => {
-                                        // #120 Phase 1 — `PlatformWindow` only
-                                        // exposes `resize`. Size the host
-                                        // window to the canvas slot.
-                                        cx.defer(move |cx| {
-                                            for handle in cx.windows() {
-                                                let _ = handle.update(
-                                                    cx,
-                                                    |_, window, _| {
+                                            let catalogs = view.catalogs.clone();
+                                            let (doc, diags) = check::check(
+                                                &src,
+                                                gpui_forge_runtime::base::BASE_ID,
+                                                &catalogs,
+                                            );
+                                            emit(json!({"event":"diagnostics","items":
+                                            check::diagnostics_json(&diags)}));
+                                            if let Some(doc) = doc {
+                                                view.set_document(doc, cx);
+                                            }
+                                        }
+                                        HostMsg::Pick(on) => view.set_pick(on, cx),
+                                        HostMsg::Place(on) => view.set_placing(on, cx),
+                                        HostMsg::Dnd(on) => view.set_dnd(on, cx),
+                                        HostMsg::Select(path) => view.update_state(
+                                            &gpui_forge_runtime::forge_spec::value::parse_path(
+                                                "document.selected",
+                                            )
+                                            .unwrap(),
+                                            serde_json::Value::String(path),
+                                            cx,
+                                        ),
+                                        HostMsg::Theme { dark, colors, .. } => {
+                                            // guise installs its Theme as a
+                                            // global — Forge theme names don't
+                                            // resolve here, but the wire palette
+                                            // does: map Studio's resolved colors
+                                            // onto guise's semantic overrides.
+                                            // `dark` still picks the base scheme
+                                            // for unmapped slots.
+                                            let hsla = |key: &str| {
+                                                protocol::theme_color(&colors, key).map(
+                                                    |(r, g, b, a)| {
+                                                        gpui::Hsla::from(gpui::Rgba { r, g, b, a })
+                                                    },
+                                                )
+                                            };
+                                            let mut t = if dark {
+                                                guise::theme::Theme::dark()
+                                            } else {
+                                                guise::theme::Theme::light()
+                                            };
+                                            if let Some(c) = hsla("accent") {
+                                                t = t.with_primary(c);
+                                            }
+                                            if let Some(c) = hsla("background") {
+                                                t = t.with_body(c);
+                                            }
+                                            if let Some(c) = hsla("popover") {
+                                                t = t.with_surface(c);
+                                            }
+                                            if let Some(c) = hsla("muted") {
+                                                t = t.with_surface_hover(c);
+                                            }
+                                            if let Some(c) = hsla("foreground") {
+                                                t = t.with_text(c);
+                                            }
+                                            if let Some(c) = hsla("muted_foreground") {
+                                                t = t.with_dimmed(c);
+                                            }
+                                            if let Some(c) = hsla("border") {
+                                                t = t.with_border(c);
+                                            }
+                                            if let Some(c) = hsla("success") {
+                                                t = t.with_success(c);
+                                            }
+                                            if let Some(c) = hsla("warning") {
+                                                t = t.with_warning(c);
+                                            }
+                                            if let Some(c) = hsla("danger") {
+                                                t = t.with_danger(c);
+                                            }
+                                            if let Some(c) = hsla("info") {
+                                                t = t.with_info(c);
+                                            }
+                                            t.init(cx);
+                                        }
+                                        HostMsg::Raise => {
+                                            cx.defer(|cx| {
+                                                for handle in cx.windows() {
+                                                    let _ = handle.update(cx, |_, window, _| {
+                                                        window.activate_window()
+                                                    });
+                                                }
+                                            });
+                                        }
+                                        HostMsg::FrameRect { x, y, w, h } => {
+                                            // #120 Phase 1 — `PlatformWindow` only
+                                            // exposes `resize`. Size the host
+                                            // window to the canvas slot.
+                                            cx.defer(move |cx| {
+                                                for handle in cx.windows() {
+                                                    let _ = handle.update(cx, |_, window, _| {
                                                         window.resize(gpui::size(
                                                             gpui::px(w as f32),
                                                             gpui::px(h as f32),
                                                         ));
                                                         #[cfg(target_os = "linux")]
                                                         x11_move(window, x, y);
-                                                    },
-                                                );
-                                            }
-                                        });
+                                                    });
+                                                }
+                                            });
+                                        }
+                                        HostMsg::Quit => quit = true,
                                     }
-                                    HostMsg::Quit => quit = true,
                                 }
+                            });
+                            if quit {
+                                let _ = cx.update(|cx| cx.quit());
+                                return;
                             }
-                        });
-                        if quit {
-                            let _ = cx.update(|cx| cx.quit());
-                            return;
                         }
                     })
                     .detach();

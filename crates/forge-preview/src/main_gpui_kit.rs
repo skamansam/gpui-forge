@@ -24,7 +24,7 @@
 
 use gpui_forge_runtime::check;
 use gpui_forge_runtime::render::ForgeView;
-use gpui_kit::component::theme::{Theme, ThemeMode, ThemeRegistry};
+use gpui_kit::component::theme::{Theme, ThemeColor, ThemeMode, ThemeRegistry};
 use gpui_kit::prelude::*;
 use gpui_kit::*;
 use serde_json::json;
@@ -141,7 +141,7 @@ fn main() {
                                                 serde_json::Value::String(path),
                                                 cx,
                                             ),
-                                            HostMsg::Theme { name, dark } => {
+                                            HostMsg::Theme { name, dark, colors } => {
                                                 let config = name.as_deref().and_then(|n| {
                                                     ThemeRegistry::global(cx)
                                                         .themes()
@@ -152,15 +152,30 @@ fn main() {
                                                     Some(config) => Theme::update(cx, |t| {
                                                         t.apply_config(&config)
                                                     }),
-                                                    None => Theme::change(
-                                                        if dark {
-                                                            ThemeMode::Dark
-                                                        } else {
-                                                            ThemeMode::Light
-                                                        },
-                                                        None,
-                                                        cx,
-                                                    ),
+                                                    // The wire palette *is*
+                                                    // ThemeColor's schema — an
+                                                    // exact color match even
+                                                    // when the name doesn't
+                                                    // resolve in this host's
+                                                    // registry.
+                                                    None => {
+                                                        match serde_json::from_value::<ThemeColor>(
+                                                            serde_json::Value::Object(colors),
+                                                        ) {
+                                                            Ok(colors) => Theme::update(cx, |t| {
+                                                                t.colors = colors;
+                                                            }),
+                                                            Err(_) => Theme::change(
+                                                                if dark {
+                                                                    ThemeMode::Dark
+                                                                } else {
+                                                                    ThemeMode::Light
+                                                                },
+                                                                None,
+                                                                cx,
+                                                            ),
+                                                        }
+                                                    }
                                                 }
                                             }
                                             HostMsg::Raise => {
