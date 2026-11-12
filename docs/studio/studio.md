@@ -46,4 +46,4 @@ The Welcome tab offers starters: the Welcome screen, the gpui-kit component
 gallery, and a blank document. A widget-set Select opens the showcase for
 any registered set (`ely`, `gc`, `gflow`, `base`, `video`, `hig`, `pdf`, `wb`,
 `math`). The other bases' demos (`ratatui`, `iced`, `bezel`, `gpui02`,
-`adabraka`) ship in `examples/` — open them with Open….
+`adabraka`) ship in `examples/showcases/` — open them with Open….

@@ -97,7 +97,7 @@ constructs the upstream widget:
    (see `crates/forge-lib-ely/` — ~200 lines).
 4. Add the catalog to `check::catalogs()`. Add the crate to the workspace.
 5. Register in the host app (`forge-studio` already registers `Ely`).
-6. Add a demo `examples/<lib>-demo.forge.yaml` and make `forge check` pass.
+6. Add a demo `examples/demos/<lib>-demo.forge.yaml` and make `forge check` pass.
 7. `forge license <demo>` should report the library's declared license —
    copyleft licenses (GPL/AGPL) stay opt-in, never linked into defaults.
 

@@ -14058,7 +14058,7 @@
                 ]
               },
               "mode": {
-                "description": "`embedded` → the host window floats over a transparent slot (Studio's `frame_rect` tracking); `remote` (default) → the framed 'click to focus' card.",
+                "description": "`embedded` → the host window floats over a transparent slot (Studio's `frame_rect` tracking); `stream` → the host's frame events render inside the card as a mono grid (terminal bases); default → the framed 'click to focus' card.",
                 "type": [
                   "string",
                   "number",
@@ -14152,7 +14152,7 @@
                 ]
               },
               "mode": {
-                "description": "`embedded` → the host window floats over a transparent slot (Studio's `frame_rect` tracking); `remote` (default) → the framed 'click to focus' card.",
+                "description": "`embedded` → the host window floats over a transparent slot (Studio's `frame_rect` tracking); `stream` → the host's frame events render inside the card as a mono grid (terminal bases); default → the framed 'click to focus' card.",
                 "type": [
                   "string",
                   "number",

@@ -80,8 +80,10 @@ pub fn start(dark: bool, assets: String) {
                 view.register_library(forge_lib_zorite::Pdf::with_asset_resolver(|src| {
                     // Doc-relative `src:` has no filesystem on wasm — bundled
                     // demo assets resolve by basename instead.
-                    static ASSETS: &[(&str, &[u8])] =
-                        &[("sample.pdf", include_bytes!("../../../examples/sample.pdf"))];
+                    static ASSETS: &[(&str, &[u8])] = &[(
+                        "sample.pdf",
+                        include_bytes!("../../../examples/demos/sample.pdf"),
+                    )];
                     let name = src.rsplit('/').next().unwrap_or(src);
                     ASSETS
                         .iter()

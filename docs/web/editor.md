@@ -37,7 +37,7 @@ uses, compiled to WASM.
 - **Open** imports a `.forge.yaml` file or a `.json` document model from disk.
 - **Save** (Ctrl+S) downloads the `.forge.yaml`. **JSON** downloads the parsed
   document model — `forge check`/`forge build` can consume either.
-- The **Examples…** picker loads any shipped `examples/*.forge.yaml` — curated
+- The **Examples…** picker loads any shipped `examples/*/*.forge.yaml` — curated
   examples plus every widget-set demo.
 
 ## Limits

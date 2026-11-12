@@ -39,7 +39,7 @@ cd gpui-forge
 
 cargo xtask studio                    # Forge Studio (needs a display)
 
-cargo run -p forge-cli -- check examples/gpui-kit-showcase.forge.yaml
+cargo run -p forge-cli -- check examples/showcases/gpui-kit-showcase.forge.yaml
 ```
 
 `cargo run -p forge-cli --` runs the `forge` binary from source. Add an alias

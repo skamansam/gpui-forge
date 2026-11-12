@@ -31,21 +31,23 @@ const GALLERY_FORGE: &str = include_str!("../gallery.forge.forge.yaml");
 const BLANK: &str = "$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json\nforge: \"0.1\"\nbase: gpui-kit\n\nroot:\n  VStack:\n  style:\n    padding: 16px\n  children:\n    - Text: Hello, Forge!\n";
 
 // One demo per widget set, shared with `examples/` and the docs site (#129).
-const EXAMPLE_ELY: &str = include_str!("../../../examples/ely-demo.forge.yaml");
-const EXAMPLE_GC: &str = include_str!("../../../examples/gc-showcase.forge.yaml");
-const EXAMPLE_GFLOW: &str = include_str!("../../../examples/gflow-demo.forge.yaml");
-const EXAMPLE_BASE: &str = include_str!("../../../examples/base-demo.forge.yaml");
-const EXAMPLE_VIDEO: &str = include_str!("../../../examples/video-demo.forge.yaml");
-const EXAMPLE_PDF: &str = include_str!("../../../examples/pdf-demo.forge.yaml");
-const EXAMPLE_WB: &str = include_str!("../../../examples/whiteboard-demo.forge.yaml");
-const EXAMPLE_MATH: &str = include_str!("../../../examples/math-demo.forge.yaml");
-const EXAMPLE_HIG: &str = include_str!("../../../examples/hig-demo.forge.yaml");
+const EXAMPLE_ELY: &str = include_str!("../../../examples/demos/ely-demo.forge.yaml");
+const EXAMPLE_GC: &str = include_str!("../../../examples/showcases/gc-showcase.forge.yaml");
+const EXAMPLE_GFLOW: &str = include_str!("../../../examples/demos/gflow-demo.forge.yaml");
+const EXAMPLE_BASE: &str = include_str!("../../../examples/demos/base-demo.forge.yaml");
+const EXAMPLE_VIDEO: &str = include_str!("../../../examples/demos/video-demo.forge.yaml");
+const EXAMPLE_PDF: &str = include_str!("../../../examples/demos/pdf-demo.forge.yaml");
+const EXAMPLE_WB: &str = include_str!("../../../examples/demos/whiteboard-demo.forge.yaml");
+const EXAMPLE_MATH: &str = include_str!("../../../examples/demos/math-demo.forge.yaml");
+const EXAMPLE_HIG: &str = include_str!("../../../examples/demos/hig-demo.forge.yaml");
 // Foreign-base showcases — they render in the base's own preview host.
-const EXAMPLE_GPUI02: &str = include_str!("../../../examples/gpui02-showcase.forge.yaml");
-const EXAMPLE_BEZEL: &str = include_str!("../../../examples/bezel-showcase.forge.yaml");
-const EXAMPLE_RATATUI: &str = include_str!("../../../examples/ratatui-showcase.forge.yaml");
-const EXAMPLE_ICED: &str = include_str!("../../../examples/iced-showcase.forge.yaml");
-const EXAMPLE_ADABRAKA: &str = include_str!("../../../examples/adabraka-showcase.forge.yaml");
+const EXAMPLE_GPUI02: &str = include_str!("../../../examples/showcases/gpui02-showcase.forge.yaml");
+const EXAMPLE_BEZEL: &str = include_str!("../../../examples/showcases/bezel-showcase.forge.yaml");
+const EXAMPLE_RATATUI: &str =
+    include_str!("../../../examples/showcases/ratatui-showcase.forge.yaml");
+const EXAMPLE_ICED: &str = include_str!("../../../examples/showcases/iced-showcase.forge.yaml");
+const EXAMPLE_ADABRAKA: &str =
+    include_str!("../../../examples/showcases/adabraka-showcase.forge.yaml");
 
 /// Widget sets the Welcome tab offers in its showcase picker (#129): the
 /// gpui-kit base, the `forge` intrinsics, every registered `forge-lib-*`.
@@ -708,7 +710,7 @@ fn dispatch(
 
 /// `start_from('welcome'|'gallery'|'blank'|<widget-set>)` — loads a starter
 /// document and shows the preview tab so the user sees the running app.
-/// Widget-set aliases resolve to their demo in `examples/` (#129). The paths
+/// Widget-set aliases resolve to their demo in `examples/{demos,showcases}/` (#129). The paths
 /// are relative to the crate so doc-relative `src:` props resolve too.
 fn starter(name: &str) -> Option<(&'static str, &'static str)> {
     Some(match name {
@@ -716,36 +718,47 @@ fn starter(name: &str) -> Option<(&'static str, &'static str)> {
         "gallery" | "gpui-kit" | "gallery.forge.yaml" => ("gallery.forge.yaml", GALLERY),
         "forge" | "gallery.forge.forge.yaml" => ("gallery.forge.forge.yaml", GALLERY_FORGE),
         "blank" | "blank.forge.yaml" => ("blank.forge.yaml", BLANK),
-        "ely" | "ely-demo.forge.yaml" => ("../../examples/ely-demo.forge.yaml", EXAMPLE_ELY),
-        "gc" | "gc-showcase.forge.yaml" => ("../../examples/gc-showcase.forge.yaml", EXAMPLE_GC),
+        "ely" | "ely-demo.forge.yaml" => ("../../examples/demos/ely-demo.forge.yaml", EXAMPLE_ELY),
+        "gc" | "gc-showcase.forge.yaml" => (
+            "../../examples/showcases/gc-showcase.forge.yaml",
+            EXAMPLE_GC,
+        ),
         "gflow" | "gflow-demo.forge.yaml" => {
-            ("../../examples/gflow-demo.forge.yaml", EXAMPLE_GFLOW)
+            ("../../examples/demos/gflow-demo.forge.yaml", EXAMPLE_GFLOW)
         }
-        "base" | "base-demo.forge.yaml" => ("../../examples/base-demo.forge.yaml", EXAMPLE_BASE),
+        "base" | "base-demo.forge.yaml" => {
+            ("../../examples/demos/base-demo.forge.yaml", EXAMPLE_BASE)
+        }
         "video" | "video-demo.forge.yaml" => {
-            ("../../examples/video-demo.forge.yaml", EXAMPLE_VIDEO)
+            ("../../examples/demos/video-demo.forge.yaml", EXAMPLE_VIDEO)
         }
-        "pdf" | "pdf-demo.forge.yaml" => ("../../examples/pdf-demo.forge.yaml", EXAMPLE_PDF),
-        "wb" | "whiteboard-demo.forge.yaml" => {
-            ("../../examples/whiteboard-demo.forge.yaml", EXAMPLE_WB)
+        "pdf" | "pdf-demo.forge.yaml" => ("../../examples/demos/pdf-demo.forge.yaml", EXAMPLE_PDF),
+        "wb" | "whiteboard-demo.forge.yaml" => (
+            "../../examples/demos/whiteboard-demo.forge.yaml",
+            EXAMPLE_WB,
+        ),
+        "math" | "math-demo.forge.yaml" => {
+            ("../../examples/demos/math-demo.forge.yaml", EXAMPLE_MATH)
         }
-        "math" | "math-demo.forge.yaml" => ("../../examples/math-demo.forge.yaml", EXAMPLE_MATH),
-        "hig" | "hig-demo.forge.yaml" => ("../../examples/hig-demo.forge.yaml", EXAMPLE_HIG),
-        "gpui02" | "gpui02-showcase.forge.yaml" => {
-            ("../../examples/gpui02-showcase.forge.yaml", EXAMPLE_GPUI02)
-        }
-        "bezel" | "bezel-showcase.forge.yaml" => {
-            ("../../examples/bezel-showcase.forge.yaml", EXAMPLE_BEZEL)
-        }
+        "hig" | "hig-demo.forge.yaml" => ("../../examples/demos/hig-demo.forge.yaml", EXAMPLE_HIG),
+        "gpui02" | "gpui02-showcase.forge.yaml" => (
+            "../../examples/showcases/gpui02-showcase.forge.yaml",
+            EXAMPLE_GPUI02,
+        ),
+        "bezel" | "bezel-showcase.forge.yaml" => (
+            "../../examples/showcases/bezel-showcase.forge.yaml",
+            EXAMPLE_BEZEL,
+        ),
         "ratatui" | "ratatui-showcase.forge.yaml" => (
-            "../../examples/ratatui-showcase.forge.yaml",
+            "../../examples/showcases/ratatui-showcase.forge.yaml",
             EXAMPLE_RATATUI,
         ),
-        "iced" | "iced-showcase.forge.yaml" => {
-            ("../../examples/iced-showcase.forge.yaml", EXAMPLE_ICED)
-        }
+        "iced" | "iced-showcase.forge.yaml" => (
+            "../../examples/showcases/iced-showcase.forge.yaml",
+            EXAMPLE_ICED,
+        ),
         "adabraka" | "adabraka-showcase.forge.yaml" => (
-            "../../examples/adabraka-showcase.forge.yaml",
+            "../../examples/showcases/adabraka-showcase.forge.yaml",
             EXAMPLE_ADABRAKA,
         ),
         _ => return None,

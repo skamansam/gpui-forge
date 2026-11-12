@@ -1,7 +1,7 @@
 # The examples page
 
 [/examples](https://gpui-forge.rudeboy.dev/examples) is the showcase: every
-shipped `examples/*.forge.yaml` rendered beside its source. It's the quickest
+shipped `examples/{demos,showcases}/*.forge.yaml` rendered beside its source. It's the quickest
 way to see what a document looks like — and what each widget set offers.
 
 ## Two kinds of examples

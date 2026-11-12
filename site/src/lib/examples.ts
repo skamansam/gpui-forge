@@ -9,28 +9,28 @@ export type Example = {
 	rust: string;
 };
 
-// One demo per widget set — the same `examples/*.forge.yaml` files the
+// One demo per widget set — the same `examples/{demos,showcases}/*.forge.yaml` files the
 // Welcome tab in Forge Studio opens (#129). gpui-kit docs render on the
 // web canvas (libraries the wasm build can't run degrade to a placeholder
 // element); `base: ratatui` docs draw a terminal frame via TuiCanvas, and
 // `native` bases have no web renderer, so the source stands alone.
-import elyDemo from '../../../examples/ely-demo.forge.yaml?raw';
-import gcShowcase from '../../../examples/gc-showcase.forge.yaml?raw';
-import gflowDemo from '../../../examples/gflow-demo.forge.yaml?raw';
-import baseDemo from '../../../examples/base-demo.forge.yaml?raw';
-import videoDemo from '../../../examples/video-demo.forge.yaml?raw';
-import higDemo from '../../../examples/hig-demo.forge.yaml?raw';
-import pdfDemo from '../../../examples/pdf-demo.forge.yaml?raw';
-import whiteboardDemo from '../../../examples/whiteboard-demo.forge.yaml?raw';
-import mathDemo from '../../../examples/math-demo.forge.yaml?raw';
-import ratatuiShowcase from '../../../examples/ratatui-showcase.forge.yaml?raw';
-import ratatuiDashboard from '../../../examples/ratatui-dashboard.forge.yaml?raw';
-import ratatuiForms from '../../../examples/ratatui-forms.forge.yaml?raw';
-import gpuiKitShowcase from '../../../examples/gpui-kit-showcase.forge.yaml?raw';
-import icedShowcase from '../../../examples/iced-showcase.forge.yaml?raw';
-import bezelShowcase from '../../../examples/bezel-showcase.forge.yaml?raw';
-import gpui02Showcase from '../../../examples/gpui02-showcase.forge.yaml?raw';
-import adabrakaShowcase from '../../../examples/adabraka-showcase.forge.yaml?raw';
+import elyDemo from '../../../examples/demos/ely-demo.forge.yaml?raw';
+import gcShowcase from '../../../examples/showcases/gc-showcase.forge.yaml?raw';
+import gflowDemo from '../../../examples/demos/gflow-demo.forge.yaml?raw';
+import baseDemo from '../../../examples/demos/base-demo.forge.yaml?raw';
+import videoDemo from '../../../examples/demos/video-demo.forge.yaml?raw';
+import higDemo from '../../../examples/demos/hig-demo.forge.yaml?raw';
+import pdfDemo from '../../../examples/demos/pdf-demo.forge.yaml?raw';
+import whiteboardDemo from '../../../examples/demos/whiteboard-demo.forge.yaml?raw';
+import mathDemo from '../../../examples/demos/math-demo.forge.yaml?raw';
+import ratatuiShowcase from '../../../examples/showcases/ratatui-showcase.forge.yaml?raw';
+import ratatuiDashboard from '../../../examples/demos/ratatui-dashboard.forge.yaml?raw';
+import ratatuiForms from '../../../examples/demos/ratatui-forms.forge.yaml?raw';
+import gpuiKitShowcase from '../../../examples/showcases/gpui-kit-showcase.forge.yaml?raw';
+import icedShowcase from '../../../examples/showcases/iced-showcase.forge.yaml?raw';
+import bezelShowcase from '../../../examples/showcases/bezel-showcase.forge.yaml?raw';
+import gpui02Showcase from '../../../examples/showcases/gpui02-showcase.forge.yaml?raw';
+import adabrakaShowcase from '../../../examples/showcases/adabraka-showcase.forge.yaml?raw';
 
 export type Showcase = {
 	slug: string;

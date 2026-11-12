@@ -239,7 +239,7 @@ root:
 ### File paths in `src`
 
 `Image`'s `src` resolves **relative to the document file**, not the process cwd. A `.forge.yaml`
-in `examples/` writes `src: ../shared/logo.svg` to reach the workspace root. `Image` renders
+in `examples/demos/` writes `src: ../../shared/logo.svg` to reach the workspace root. `Image` renders
 raster formats (PNG, JPEG, WebP, GIF, BMP, TIFF, ICO) and multicolor SVGs at full color via
 gpui's `img()`. URLs and asset keys pass through to the app's `HttpClient`/`AssetSource`. Theme
 icons come from `Icon` (Lucide names, tinted by `text_color`), not `Image`.
