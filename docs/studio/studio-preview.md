@@ -25,6 +25,20 @@ separately (`remote` mode) or embeds over the canvas slot (`embedded`).
 The mapping lives in the catalogs, not in render code: a new base declares
 `canvas:` on its elements and joins the canvas for free.
 
+`canvas:` also takes a map form for analogues whose prop names differ —
+`{element, props}` renames this element's props to the kit analogue's own
+names before the node renders:
+
+```yaml
+canvas:
+  element: Alert
+  props: {text: message}
+```
+
+The base's map applies even when the foreign element shares a gpui-kit
+name — `gpui02.Badge` still renders as `Tag`, not the kit `Badge` (a
+numeric count badge).
+
 The **State** tab (`forge.Vars`) lists every `{$path}` variable bound in the
 document. Edit a scalar and watch the app react — it is the same state the
 `state:` declaration seeds and `bind $path` writes. The **View state** group

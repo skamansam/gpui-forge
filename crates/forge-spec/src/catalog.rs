@@ -48,7 +48,7 @@ pub struct ElementDef {
     /// The gpui-kit element this renders as on a compat canvas (#145) — a
     /// foreign base declares its own analogue so structure/DnD work in the
     /// Studio canvas. Unset = render as a labeled box.
-    pub canvas: Option<String>,
+    pub canvas: Option<CanvasMap>,
     pub props: Vec<PropDef>,
     pub events: Vec<EventDef>,
     pub children: Children,
@@ -62,6 +62,18 @@ impl ElementDef {
     pub fn event(&self, name: &str) -> Option<&EventDef> {
         self.events.iter().find(|e| e.name == name)
     }
+}
+
+/// A compat-canvas analogue declaration (#145). `canvas: Button` is the
+/// shorthand; the map form also renames props so foreign prop names reach the
+/// gpui-kit widget's own names (`canvas: {element: Alert, props: {text:
+/// message}}` — this element's `text` prop renders as the kit `message` prop).
+#[derive(Clone, Debug, PartialEq)]
+pub struct CanvasMap {
+    /// The gpui-kit element the node renders as.
+    pub element: String,
+    /// This element's prop name → the gpui-kit analogue's prop name.
+    pub props: std::collections::BTreeMap<String, String>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -340,15 +352,59 @@ impl Loader {
                 "group" => element.group = self.text(val),
                 "canvas" => {
                     let pos = val.pos();
-                    if let Some(name) = self.text(val) {
-                        if is_element_name(&name) {
-                            element.canvas = Some(name);
-                        } else {
-                            self.error(
-                                pos,
-                                format!("`canvas` must name a PascalCase element, found `{name}`"),
-                            );
+                    match val {
+                        YNode::Scalar(_) => {
+                            if let Some(name) = self.text(val) {
+                                if is_element_name(&name) {
+                                    element.canvas = Some(CanvasMap {
+                                        element: name,
+                                        props: Default::default(),
+                                    });
+                                } else {
+                                    self.error(
+                                        pos,
+                                        format!(
+                                            "`canvas` must name a PascalCase element, found `{name}`"
+                                        ),
+                                    );
+                                }
+                            }
                         }
+                        YNode::Map(_, _) => {
+                            let mut map = CanvasMap {
+                                element: String::new(),
+                                props: Default::default(),
+                            };
+                            for (k, v) in self.mapping(val, "`canvas`") {
+                                match k.text.as_str() {
+                                    "element" => map.element = self.text(v).unwrap_or_default(),
+                                    "props" => {
+                                        for (pk, pv) in self.mapping(v, "`canvas.props`") {
+                                            if let Some(to) = self.text(pv) {
+                                                map.props.insert(pk.text, to);
+                                            }
+                                        }
+                                    }
+                                    _ => self.unknown(&k, "`element` or `props`"),
+                                }
+                            }
+                            if is_element_name(&map.element) {
+                                element.canvas = Some(map);
+                            } else {
+                                self.error(
+                                    pos,
+                                    format!(
+                                        "`canvas.element` must name a PascalCase element, found `{}`",
+                                        map.element
+                                    ),
+                                );
+                            }
+                        }
+                        _ => self.error(
+                            pos,
+                            "`canvas` must be an element name or a `{element, props}` map"
+                                .to_owned(),
+                        ),
                     }
                 }
                 "content" => {

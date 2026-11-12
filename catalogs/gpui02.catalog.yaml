@@ -70,7 +70,7 @@ elements:
     group: Layout
     summary: Elevated surface — background, radius and shadow from the theme.
     component: guise::Paper
-    canvas: Card
+    canvas: GroupBox
     children: any
 
   Title:
@@ -106,7 +106,9 @@ elements:
     group: Display
     summary: Small status/label chip.
     component: guise::Badge
-    canvas: Badge
+    canvas:
+      element: Tag
+      props: {text: label}
     content: text
     props:
       text:
@@ -123,7 +125,7 @@ elements:
     group: Display
     summary: Bordered surface grouping related content.
     component: guise::Card
-    canvas: Card
+    canvas: GroupBox
     children: any
 
   Button:
@@ -224,7 +226,9 @@ elements:
     group: Feedback
     summary: Attention banner with title and message.
     component: guise::feedback::Alert
-    canvas: Alert
+    canvas:
+      element: Alert
+      props: {text: message}
     content: text
     props:
       text:

@@ -3787,7 +3787,7 @@ checksum = "aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b"
 
 [[package]]
 name = "forge-cli"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "forge-lib-gpui-component",
  "gpui-forge-runtime",
@@ -3798,14 +3798,14 @@ dependencies = [
 
 [[package]]
 name = "forge-compiler"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "forge-spec",
 ]
 
 [[package]]
 name = "forge-hooks"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "gpui-forge-runtime",
  "inventory",
@@ -3814,7 +3814,7 @@ dependencies = [
 
 [[package]]
 name = "forge-hooks-macros"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -3823,7 +3823,7 @@ dependencies = [
 
 [[package]]
 name = "forge-lib-base"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "base-gpui",
  "gpui-forge-runtime",
@@ -3831,7 +3831,7 @@ dependencies = [
 
 [[package]]
 name = "forge-lib-ely"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "ely-core",
  "gpui-forge-runtime",
@@ -3839,7 +3839,7 @@ dependencies = [
 
 [[package]]
 name = "forge-lib-flow"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "gpui-flow",
  "gpui-forge-runtime",
@@ -3847,7 +3847,7 @@ dependencies = [
 
 [[package]]
 name = "forge-lib-gpui-component"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "gpui-component",
  "gpui-forge-runtime",
@@ -3855,7 +3855,7 @@ dependencies = [
 
 [[package]]
 name = "forge-lib-gpui02"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "ferrum-flow",
  "gpui-forge-runtime",
@@ -3866,7 +3866,7 @@ dependencies = [
 
 [[package]]
 name = "forge-lib-hig"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "gpui-apple-hig",
  "gpui-forge-runtime",
@@ -3875,14 +3875,14 @@ dependencies = [
 
 [[package]]
 name = "forge-lib-template"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "gpui-forge-runtime",
 ]
 
 [[package]]
 name = "forge-lib-video"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "gpui-forge-runtime",
  "gpui-video-player",
@@ -3892,7 +3892,7 @@ dependencies = [
 
 [[package]]
 name = "forge-lib-zorite"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "gpui-forge-runtime",
  "gpui-pdf",
@@ -3903,7 +3903,7 @@ dependencies = [
 
 [[package]]
 name = "forge-preview"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "bezel",
  "crossterm",
@@ -3929,7 +3929,7 @@ dependencies = [
 
 [[package]]
 name = "forge-spec"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "jsonschema",
  "saphyr",
@@ -3941,7 +3941,7 @@ dependencies = [
 
 [[package]]
 name = "forge-studio"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "forge-hooks",
  "forge-hooks-macros",
@@ -3960,7 +3960,7 @@ dependencies = [
 
 [[package]]
 name = "forge-term"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "alacritty_terminal",
  "gpui-pre",
@@ -3968,7 +3968,7 @@ dependencies = [
 
 [[package]]
 name = "forge-web-canvas"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "bezel",
  "bezel-gpui-web",
@@ -4935,7 +4935,7 @@ dependencies = [
 
 [[package]]
 name = "gpui-forge-runtime"
-version = "0.1.0"
+version = "0.9.1"
 dependencies = [
  "bezel",
  "forge-spec",

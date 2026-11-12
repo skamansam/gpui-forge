@@ -12405,6 +12405,15 @@
                 "maxItems": 0,
                 "type": "array"
               },
+              "compat": {
+                "description": "`true` → the pane renders the document through gpui-kit even while `remote:` is set — foreign-base elements map to the `canvas:` analogue their catalog declares (structure/DnD on every base) while the host keeps running for fidelity.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "doc": {
                 "description": "Document to preview — a doc-relative `.forge.yaml` path, or a named ref (`name: &name`) holding a head-less node body. Empty → the host sets the document.",
                 "type": [
@@ -12462,7 +12471,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Preview(#[\\w-]+| \\.[\\w-]+)?|base|children|doc|mode|on (click)|placeholder|remote|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Preview(#[\\w-]+| \\.[\\w-]+)?|base|children|compat|doc|mode|on (click)|placeholder|remote|style|tooltip)$"
             }
           }
         },

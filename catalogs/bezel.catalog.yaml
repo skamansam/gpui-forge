@@ -72,5 +72,5 @@ elements:
     group: Display
     summary: Bordered surface grouping related content.
     component: bezel::Card
-    canvas: Card
+    canvas: GroupBox
     children: any

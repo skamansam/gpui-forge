@@ -184,11 +184,16 @@ impl Host {
                     }
                     rows.push(line);
                 }
+                // The wire's stream shape — ratatui's `frame` contract — so a
+                // `mode: stream` pane or the canvas card can feed it straight
+                // to the terminal emulator (the grid is plain text, no ANSI).
                 emit(json!({
                     "event": "frame",
                     "base": "iced",
+                    "seq": self.ticks,
                     "cols": tw,
-                    "rows": rows,
+                    "rows": th,
+                    "data": rows.join("\n"),
                 }));
             }
         }

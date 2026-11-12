@@ -32,7 +32,7 @@ elements:
     group: Layout
     summary: shadcn-style card — header, content, footer sections.
     component: adabraka_ui::card::Card
-    canvas: Card
+    canvas: GroupBox
     children: any
 
   Text:
@@ -52,7 +52,9 @@ elements:
     group: Display
     summary: Small status chip.
     component: adabraka_ui::badge::Badge
-    canvas: Badge
+    canvas:
+      element: Tag
+      props: {text: label}
     content: text
     props:
       text:
@@ -163,7 +165,9 @@ elements:
     group: Feedback
     summary: shadcn alert — title + description, default/destructive.
     component: adabraka_ui::alert::Alert
-    canvas: Alert
+    canvas:
+      element: Alert
+      props: {text: message}
     content: text
     props:
       text:

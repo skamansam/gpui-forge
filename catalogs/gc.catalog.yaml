@@ -67,7 +67,9 @@ elements:
     group: Typography
     summary: "gpui-component Label — `use: gc`."
     component: gpui_component::label::Label
-    canvas: Label
+    canvas:
+      element: Label
+      props: {label: text}
     children: none
     props:
       label: string

@@ -2650,10 +2650,15 @@ impl ForgeView {
                         .and_then(|cat| cat.element(&node.element.name))
                         .and_then(|def| def.canvas.clone());
                     match analogue {
-                        Some(name) => {
+                        Some(map) => {
                             let mut mapped = node.clone();
-                            mapped.element.name = name;
+                            mapped.element.name = map.element;
                             mapped.element.namespace = None;
+                            for (k, _) in mapped.props.iter_mut() {
+                                if let Some(to) = map.props.get(k.as_str()) {
+                                    *k = to.clone();
+                                }
+                            }
                             return self.render_node(&mapped, key, window, cx);
                         }
                         None => placeholder(
@@ -2684,6 +2689,41 @@ impl ForgeView {
                 .flat_map(|(i, child)| this.expand(child, &format!("{key}.{i}"), window, cx))
                 .collect::<Vec<_>>()
         };
+        // #145 — compat canvas: a same-named foreign element (a `Badge` in a
+        // gpui02 doc) reaches the kit dispatch before the fallback lookup, so
+        // the document base's `canvas:` map applies here — retargets and prop
+        // renames included. Identity self-maps are skipped; chained maps
+        // resolve for a few hops, and the mapped clone keeps path/id/children.
+        let mut mapped: Option<Node> = None;
+        if let Some(cat) = self
+            .doc
+            .as_ref()
+            .and_then(|d| d.base.as_deref())
+            .and_then(|base| self.catalogs.iter().find(|c| c.library == base))
+        {
+            for _ in 0..4 {
+                let name = mapped
+                    .as_ref()
+                    .map_or(node.element.name.as_str(), |m| m.element.name.as_str());
+                let Some(map) = cat.element(name).and_then(|d| d.canvas.as_ref()) else {
+                    break;
+                };
+                if map.element == name && map.props.is_empty() {
+                    break;
+                }
+                let m = mapped.get_or_insert_with(|| node.clone());
+                for (k, _) in m.props.iter_mut() {
+                    if let Some(to) = map.props.get(k.as_str()) {
+                        *k = to.clone();
+                    }
+                }
+                if map.element == m.element.name {
+                    break;
+                }
+                m.element.name = map.element.clone();
+            }
+        }
+        let node = mapped.as_ref().unwrap_or(node);
         let mut styled = false;
         let element: AnyElement = match node.element.name.as_str() {
             "Box" => {
@@ -4146,9 +4186,14 @@ impl ForgeView {
                     .and_then(|cat| cat.element(other))
                     .and_then(|def| def.canvas.clone());
                 match analogue {
-                    Some(name) => {
+                    Some(map) => {
                         let mut mapped = node.clone();
-                        mapped.element.name = name;
+                        mapped.element.name = map.element;
+                        for (k, _) in mapped.props.iter_mut() {
+                            if let Some(to) = map.props.get(k.as_str()) {
+                                *k = to.clone();
+                            }
+                        }
                         return self.render_node(&mapped, key, window, cx);
                     }
                     None => {
