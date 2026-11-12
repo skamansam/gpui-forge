@@ -256,10 +256,21 @@ sourceTab: &sourceTab
 # ============================================================================
 previewSelector: &previewSelector
   children:
-    - Select:
-      options: [gpui-kit, ely, hig, gc, gflow, math, pdf, gpui-base, gpui02, bezel, adabraka, iced, ratatui]
-      value: bind $studio.theme_preview
-      placeholder: preview
+    - HStack:
+      style: {gap: 8px, align: center}
+      children:
+        - Select:
+          options: $studio.preview_bases
+          value: bind $studio.theme_preview
+          placeholder: preview
+          on change: persist_preview_base()
+          style: {grow: true}
+        - Button:
+          icon: arrow-right
+          variant: Ghost
+          size: Small
+          tooltip: preview this theme on the next base
+          on click: cycle_preview_base()
     # Same-base sets render in place — a plain `forge.Preview` nests a
     # second ForgeView in the canvas, no host. Foreign bases spawn their
     # own `forge-preview-{base}` host: `mode: embedded` floats the host's
@@ -313,6 +324,8 @@ previewSelector: &previewSelector
               doc: ../../examples/showcases/gpui02-showcase.forge.yaml
               placeholder: "rendered in a separate window — the gpui02 host can't embed"
               style: {height: 480px}
+            - Text: "theme: approximate — guise semantic overrides only"
+              style: {size: xs, color: $theme.warning}
           case bezel:
             - forge.Preview#preview-bezel:
               remote: bezel
@@ -320,6 +333,15 @@ previewSelector: &previewSelector
               doc: ../../examples/showcases/bezel-showcase.forge.yaml
               placeholder: "rendered in a separate window — the bezel host can't embed"
               style: {height: 480px}
+            - HStack:
+              style: {gap: 8px, align: center}
+              children:
+                - Text: "theme: dark/light only"
+                  style: {size: xs, color: $theme.warning}
+                - Select:
+                  options: [follow studio, dark, light]
+                  value: bind $preview.panes.preview_bezel.mode
+                  placeholder: follow studio
           case adabraka:
             - forge.Preview#preview-adabraka:
               remote: adabraka
@@ -327,6 +349,15 @@ previewSelector: &previewSelector
               doc: ../../examples/showcases/adabraka-showcase.forge.yaml
               placeholder: "rendered in a separate window — the adabraka host can't embed"
               style: {height: 480px}
+            - HStack:
+              style: {gap: 8px, align: center}
+              children:
+                - Text: "theme: dark/light only"
+                  style: {size: xs, color: $theme.warning}
+                - Select:
+                  options: [follow studio, dark, light]
+                  value: bind $preview.panes.preview_adabraka.mode
+                  placeholder: follow studio
           case iced:
             - forge.Preview#preview-iced:
               remote: iced
@@ -334,6 +365,8 @@ previewSelector: &previewSelector
               doc: ../../examples/showcases/iced-showcase.forge.yaml
               placeholder: "rendered in a separate window — the iced host can't embed"
               style: {height: 480px}
+            - Text: "theme: approximate — iced Theme::custom palette only"
+              style: {size: xs, color: $theme.warning}
           case ratatui:
             - forge.Preview#preview-ratatui:
               remote: ratatui
@@ -341,6 +374,8 @@ previewSelector: &previewSelector
               doc: ../../examples/demos/ratatui-dashboard.forge.yaml
               mode: stream
               style: {height: 480px}
+            - Text: "theme: unmapped — the card shows the raw terminal stream"
+              style: {size: xs, color: $theme.muted_foreground}
           else:
             - Text: "No preview active"
               style:

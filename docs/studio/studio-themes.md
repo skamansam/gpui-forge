@@ -21,17 +21,31 @@ A live theme workbench:
 - **JSON editor** — the theme's color/token config, editable. **Apply**
   pushes it through `Theme.apply_config` and the whole app repaints.
 - **Reset** (the `rotate-ccw` button) — back to the default theme.
-- **Showcase** — a `forge.Showcase` widget strip rendering beside the editor,
-  so you see every component in the theme as you tweak it.
+- **Showcase** — a preview of the theme across bases, split off the editor by
+  a draggable `Resizable` divider. The base `Select` picks which widget set
+  renders; the arrow button beside it cycles every base for a fast sanity
+  pass.
 
-Studio watches the `themes/` directory — save a theme JSON on disk and the
-registry reloads it without a restart.
+## Theme fidelity per base
+
+Not every base can honor a full theme — the showcase says so under each
+foreign card instead of silently degrading:
+
+- **native** — gpui-kit and the same-process libraries paint the theme
+  directly.
+- **approximate** — gpui02 and iced map the resolved palette onto their own
+  semantic slots (guise `with_*` overrides, iced `Theme::custom`).
+- **dark/light only** — bezel and adabraka accept no custom colors. Their
+  cards carry a small `follow studio / dark / light` selector — a per-pane
+  pin, sent as `{"cmd":"theme","dark":…}` to that pane only.
+- **unmapped** — ratatui's card shows the raw terminal stream; ANSI colors
+  come from the app, not the theme.
 
 ## Persisted preferences
 
-`~/.gpui-forge/settings.toml` holds per-user settings — currently the theme
-`name` and the `dark` flag. Studio loads them at startup and applies the saved
-theme over the OS light/dark default.
+`~/.gpui-forge/settings.toml` holds per-user settings — the theme `name`, the
+`dark` flag, and `theme_preview` (the last previewed base). Studio loads
+them at startup and applies the saved theme over the OS light/dark default.
 
 ## Where themes come from
 

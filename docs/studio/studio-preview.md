@@ -116,6 +116,16 @@ theme API accepts:
   colors per widget, which is honest: a real terminal shows the TUI's
   own palette, and the emulated stream displays exactly that.
 
+A pane can pin its own appearance instead of following Studio: state
+`preview.panes.<id>.mode` is `follow` (default), `dark`, or `light`, and
+a pinned pane receives a bare `{"cmd":"theme","dark":…}` — no name or
+palette, which would paint the wrong mode's colors anyway. The Theme
+tab's bezel and adabraka cards bind a small selector to that state, so
+the per-pane pin is plain document markup (`preview.panes.preview_bezel
+.mode` — pane ids sanitize `-` to `_` in state paths). The fidelity
+notes under each foreign card state what that base can honor —
+`approximate`, `dark/light only`, or `unmapped` — before you rely on it.
+
 ## Pane lifecycle
 
 Hosts spawn when a rendered `remote:` pane enters the document and are

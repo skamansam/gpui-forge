@@ -49,6 +49,24 @@ const EXAMPLE_ICED: &str = include_str!("../../../examples/showcases/iced-showca
 const EXAMPLE_ADABRAKA: &str =
     include_str!("../../../examples/showcases/adabraka-showcase.forge.yaml");
 
+/// Bases the Theme tab's preview selector offers — `studio.preview_bases`
+/// carries them to the `Select`, and `cycle_preview_base` walks the list.
+const PREVIEW_BASES: &[&str] = &[
+    "gpui-kit",
+    "ely",
+    "hig",
+    "gc",
+    "gflow",
+    "math",
+    "pdf",
+    "gpui-base",
+    "gpui02",
+    "bezel",
+    "adabraka",
+    "iced",
+    "ratatui",
+];
+
 /// Widget sets the Start tab offers in its showcase picker (#129): the
 /// gpui-kit base, the `forge` intrinsics, every registered `forge-lib-*`.
 /// Then the foreign-base showcases (they launch their preview host).
@@ -269,7 +287,14 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
                 "all_themes": all_themes,
                 "theme": theme_name,
                 "theme_json": theme_json,
-                "theme_preview": BASE_ID,
+                // #144 — the base selector's options live in state so the
+                // cycle button walks the same list; `theme_preview` persists
+                // across launches via the prefs file.
+                "preview_bases": PREVIEW_BASES,
+                "theme_preview": prefs
+                    .get("theme_preview")
+                    .and_then(|j| j.as_str())
+                    .unwrap_or(BASE_ID),
                 "file": "welcome.forge.yaml",
                 "diagnostics": "",
                 "widget_sets": WIDGET_SETS,
@@ -296,6 +321,8 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "apply_theme_name",
         "apply_theme_json",
         "reset_theme",
+        "cycle_preview_base",
+        "persist_preview_base",
         "source_changed",
         "copy_snippet",
         "insert_component",
@@ -664,6 +691,29 @@ fn dispatch(
             host_send(&json!({"cmd":"theme","dark": dark}));
         }
         // apply_theme_name/apply_theme_json/reset_theme: registry hooks
+        "cycle_preview_base" => {
+            let bases = get_path(view.state(), &parse_path("studio.preview_bases").unwrap())
+                .and_then(|j| j.as_array().cloned())
+                .unwrap_or_default();
+            if !bases.is_empty() {
+                let cur = get_path(view.state(), &parse_path("studio.theme_preview").unwrap())
+                    .and_then(|j| j.as_str())
+                    .unwrap_or_default()
+                    .to_owned();
+                let ix = bases
+                    .iter()
+                    .position(|b| b.as_str() == Some(cur.as_str()))
+                    .map(|i| (i + 1) % bases.len())
+                    .unwrap_or(0);
+                view.update_state(
+                    &parse_path("studio.theme_preview").unwrap(),
+                    bases[ix].clone(),
+                    cx,
+                );
+                save_prefs(view);
+            }
+        }
+        "persist_preview_base" => save_prefs(view),
         "source_changed" => reload(view, shared, cx),
         // copy_snippet/insert_component: registry hooks
         "place_component" => place_component(view, args, shared, cx),
@@ -1260,17 +1310,29 @@ fn host_send_source(view: &ForgeView, shared: &SharedState) {
 /// `#rrggbbaa`, so `ThemeColor`'s `Serialize` produces `{field: "#hex"}`.
 fn theme_cmd(view: &ForgeView, theme: &Theme) -> Json {
     let colors = serde_json::to_value(theme.colors).unwrap_or_default();
-    match get_path(view.state(), &parse_path("studio.theme").unwrap())
+    let dark = get_path(view.state(), &parse_path("studio.dark").unwrap())
+        .and_then(|j| j.as_bool())
+        .unwrap_or_default();
+    let mut cmd = json!({"cmd":"theme","dark": dark,"colors": colors});
+    if let Some(name) = get_path(view.state(), &parse_path("studio.theme").unwrap())
         .and_then(|j| j.as_str())
         .map(str::to_owned)
     {
-        Some(name) => json!({"cmd":"theme","name": name,"colors": colors}),
-        None => {
-            let dark = get_path(view.state(), &parse_path("studio.dark").unwrap())
-                .and_then(|j| j.as_bool())
-                .unwrap_or_default();
-            json!({"cmd":"theme","dark": dark,"colors": colors})
-        }
+        cmd["name"] = Json::from(name);
+    }
+    cmd
+}
+
+/// A pane's theme mode — `preview.panes.<id>.mode`: `follow` (default —
+/// Studio's theme), `dark`, or `light`. Dark/light-only bases pin their own
+/// appearance here instead of silently degrading (#144); a pinned pane gets
+/// a bare dark/light command — a named theme or palette would paint the
+/// *wrong* mode's colors.
+fn pane_theme_cmd(theme: &Json, view: &ForgeView, id: &str) -> Json {
+    match get_path(view.state(), &pane_state_path(id, "mode")).and_then(|j| j.as_str()) {
+        Some("dark") => json!({"cmd":"theme","dark": true,"colors":{}}),
+        Some("light") => json!({"cmd":"theme","dark": false,"colors":{}}),
+        _ => theme.clone(),
     }
 }
 
@@ -1702,7 +1764,6 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                 return;
             };
             let (panes, slots, wb, doc_base, dir, skipped, theme) = work;
-            let theme_key = theme.to_string();
             if skipped != last_skipped {
                 last_skipped = skipped;
                 if skipped > 0 {
@@ -1883,10 +1944,15 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                 }
 
                 // Theme applies to pane hosts too — a theme preview shows the
-                // same theme everywhere it can.
-                if themes.get(&pane.id) != Some(&theme_key) {
-                    pane_send(&pane.id, &theme);
-                    themes.insert(pane.id.clone(), theme_key.clone());
+                // same theme everywhere it can, except a pane pinned to
+                // dark/light via `preview.panes.<id>.mode` (#144).
+                let cmd = view
+                    .update(cx, |view, _| pane_theme_cmd(&theme, view, &pane.id))
+                    .unwrap_or_else(|_| theme.clone());
+                let key = cmd.to_string();
+                if themes.get(&pane.id) != Some(&key) {
+                    pane_send(&pane.id, &cmd);
+                    themes.insert(pane.id.clone(), key);
                 }
 
                 // Float the host window over the pane's tracked slot — or, for
@@ -2028,9 +2094,19 @@ fn save_prefs(view: &ForgeView) {
         .and_then(|s| s.get("dark"))
         .and_then(|j| j.as_bool())
         .unwrap_or(false);
+    let preview_base = view
+        .state()
+        .get("studio")
+        .and_then(|s| s.get("theme_preview"))
+        .and_then(|j| j.as_str())
+        .unwrap_or_default()
+        .to_owned();
     if let Some(f) = prefs_file() {
         let _ = std::fs::create_dir_all(f.parent().unwrap());
-        let _ = std::fs::write(f, format!("theme = \"{theme}\"\ndark = {dark}\n"));
+        let _ = std::fs::write(
+            f,
+            format!("theme = \"{theme}\"\ndark = {dark}\ntheme_preview = \"{preview_base}\"\n"),
+        );
     }
 }
 
