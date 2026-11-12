@@ -8,11 +8,32 @@ use gpui_forge_runtime::check;
 use gpui_forge_runtime::render::ForgeView;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
+use ratatui::layout::Rect;
+use ratatui::{TerminalOptions, Viewport};
 use serde_json::json;
+use std::cell::RefCell;
+use std::io::Write;
+use std::rc::Rc;
 use std::sync::mpsc;
 
 mod protocol;
 use protocol::{HostMsg, emit, spawn_reader};
+
+/// Collects the bytes a `CrosstermBackend` writes — the same ANSI stream a
+/// real terminal would get — so it can ride the `frame` event to Studio,
+/// where the card feeds it through `forge_term`'s emulator (#120).
+#[derive(Clone)]
+struct SinkWriter(Rc<RefCell<Vec<u8>>>);
+
+impl Write for SinkWriter {
+    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
+        self.0.borrow_mut().extend_from_slice(buf);
+        Ok(buf.len())
+    }
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
 
 fn main() {
     // Control channel — stdin JSON lines → the render loop.
@@ -91,6 +112,17 @@ fn main() {
     }
     // Headless grid size — FrameRect commands refine it from the canvas slot.
     let mut frame_size = (100u16, 30u16);
+    // The streaming terminal: a CrosstermBackend writing into `sink` —
+    // real escape bytes, not a TestBackend symbol dump.
+    let sink = Rc::new(RefCell::new(Vec::new()));
+    let mut stream_term = Terminal::with_options(
+        CrosstermBackend::new(SinkWriter(sink.clone())),
+        TerminalOptions {
+            viewport: Viewport::Fixed(Rect::new(0, 0, frame_size.0, frame_size.1)),
+        },
+    )
+    .expect("stream terminal");
+    let mut frame_seq = 0u64;
 
     let mut view = ForgeView::new(check::catalogs());
     // Everything the view would tell an in-process host goes out over stdout.
@@ -130,8 +162,9 @@ fn main() {
                 ),
                 HostMsg::Theme { .. } => {
                     // ratatui widgets style themselves per-widget in the Forge
-                    // base renderer — there's no palette hook to map onto, and
-                    // the streamed frame is text-only regardless.
+                    // base renderer — there's no palette hook to map onto. The
+                    // streamed ANSI frame shows the TUI's own colors as a real
+                    // terminal would, which is the honest render.
                 }
                 HostMsg::Raise => {
                     // The host's terminal is already focused — nothing to raise.
@@ -160,28 +193,23 @@ fn main() {
         } else {
             frame_size
         };
-        // #120 Phase 2 — stream the frame as a cell grid for embedded
-        // canvases: `TestBackend` captures the same render the tty got.
-        let mut test = ratatui::Terminal::new(ratatui::backend::TestBackend::new(cols, rows))
-            .expect("test backend");
-        let _ = test.draw(|f| view.render(f));
-        let buf = test.backend().buffer();
-        let (w, h) = (buf.area.width, buf.area.height);
-        let mut rows_s = Vec::with_capacity(h as usize);
-        for y in 0..h {
-            let mut line = String::with_capacity(w as usize);
-            for x in 0..w {
-                if let Some(cell) = buf.cell((x, y)) {
-                    line.push_str(cell.symbol());
-                }
-            }
-            rows_s.push(line);
+        // Stream the frame as the exact ANSI bytes a real terminal gets —
+        // Studio emulates them into styled cells in the card (#120).
+        if (cols, rows) != frame_size {
+            let _ = stream_term.resize(Rect::new(0, 0, cols, rows));
         }
+        frame_size = (cols, rows);
+        sink.borrow_mut().clear();
+        let _ = stream_term.draw(|f| view.render(f));
+        frame_seq += 1;
         emit(json!({
             "event": "frame",
             "base": "ratatui",
-            "cols": w,
-            "rows": rows_s,
+            "encoding": "ansi",
+            "seq": frame_seq,
+            "cols": cols,
+            "rows": rows,
+            "data": String::from_utf8_lossy(&sink.borrow()),
         }));
         std::thread::sleep(std::time::Duration::from_millis(50));
     }

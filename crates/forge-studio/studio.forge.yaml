@@ -30,7 +30,9 @@ state:
   bases: list
   name: string
   preview.mode: enum(remote | embedded)
-  preview.frame: string
+  # ANSI stream chunk — {seq, cols, rows, data}; the card's emulator consumes it
+  preview.frame: object
+  preview.frame_rgba: string
   preview.state: string
   status.message: string
   vars_add.path: string
@@ -430,9 +432,9 @@ previewTab: &previewTab
           style:
             grow: true
             border: 1px
-        # #120 Phase 2 — the TUI's streamed frame grid
-        # (`preview.frame` from a ratatui host's TestBackend).
-        - Text: "{$preview.frame}"
+        # #120 Phase 3 — the TUI's ANSI stream lands in `preview.frame`
+        # ({seq, cols, rows, data}); the card's terminal emulator paints it.
+        - Text: "frame {$preview.frame.seq}"
           style:
             size: xs
             color: $theme.muted_foreground

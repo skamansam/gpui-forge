@@ -199,6 +199,10 @@ pub struct ForgeView {
     /// `forge.Preview` bounds cells — `id` → the card's window-space rect,
     /// populated by `BoundsTracker` each paint (Studio's `frame_rect`).
     preview_bounds: HashMap<String, std::rc::Rc<std::cell::RefCell<Option<Bounds<Pixels>>>>>,
+    /// `forge.Preview` remote panes with `mode: stream` — the pane's
+    /// terminal emulator (fed ANSI bytes from `preview.panes.<id>.frame`
+    /// chunks, deduped by `seq`) and the seq it last consumed (#120).
+    term_panes: HashMap<String, (u64, std::rc::Rc<std::cell::RefCell<forge_term::Emulator>>)>,
     /// Persistent `ScrollHandle`s keyed by scrollable element id — element-state
     /// GC drops scroll offsets on every `cx.notify` re-render. An explicit
     /// `track_scroll` handle keeps them alive.
@@ -292,6 +296,7 @@ impl ForgeView {
             selects: HashMap::new(),
             tabs: HashMap::new(),
             preview_bounds: HashMap::new(),
+            term_panes: HashMap::new(),
             preview_srcs: HashMap::new(),
             scroll_handles: HashMap::new(),
             previews: HashMap::new(),
@@ -2419,12 +2424,39 @@ impl ForgeView {
                             .entry(id.clone())
                             .or_insert_with(|| std::rc::Rc::new(std::cell::RefCell::new(None)))
                             .clone();
-                        // A frame-streaming host's grid lands in state as
-                        // `preview.panes.<id>.frame` — the card shows it.
-                        let frame = get_path(self.state(), &pane_state_path(&id, "frame"))
-                            .and_then(|j| j.as_str())
-                            .filter(|s| !s.is_empty())
-                            .map(str::to_owned);
+                        // A frame-streaming host's ANSI bytes land in state as
+                        // `preview.panes.<id>.frame` ({seq, cols, rows, data}).
+                        // The card feeds new chunks through the pane's terminal
+                        // emulator and paints the styled grid.
+                        let term = get_path(self.state(), &pane_state_path(&id, "frame"))
+                            .and_then(|j| {
+                                Some((
+                                    j["seq"].as_u64()?,
+                                    j["data"].as_str()?.to_owned(),
+                                    j["cols"].as_u64().unwrap_or(80) as u16,
+                                    j["rows"].as_u64().unwrap_or(24) as u16,
+                                ))
+                            })
+                            .map(|(seq, data, cols, rows)| {
+                                let entry =
+                                    self.term_panes.entry(id.clone()).or_insert_with(|| {
+                                        (
+                                            0,
+                                            std::rc::Rc::new(std::cell::RefCell::new(
+                                                forge_term::Emulator::new(cols, rows),
+                                            )),
+                                        )
+                                    });
+                                if seq != entry.0 {
+                                    {
+                                        let mut emu = entry.1.borrow_mut();
+                                        emu.resize(cols, rows);
+                                        emu.feed(data.as_bytes());
+                                    }
+                                    entry.0 = seq;
+                                }
+                                entry.1.clone()
+                            });
                         BoundsTracker::new(
                             div()
                                 .id(format!("preview-remote-{key}"))
@@ -2449,18 +2481,25 @@ impl ForgeView {
                                         .border_1()
                                         .border_color(theme.border)
                                         .into_any_element()
-                                } else if let Some(frame) = frame {
-                                    // Streaming host (ratatui) — the card
-                                    // is the terminal: mono grid, no wrap.
+                                } else if let Some(term) = term {
+                                    // Streaming host (ratatui) — the card IS
+                                    // the terminal: alacritty-emulated cells,
+                                    // mono font, real colors.
                                     div()
                                         .size_full()
                                         .p_2()
                                         .overflow_hidden()
-                                        .whitespace_nowrap()
-                                        .font_family(theme.mono_font_family.clone())
-                                        .text_xs()
-                                        .text_color(theme.foreground)
-                                        .child(frame)
+                                        .bg(theme.background)
+                                        .child(forge_term::TermView::new(
+                                            term,
+                                            forge_term::TermStyle {
+                                                font_family: theme.mono_font_family.clone(),
+                                                font_size: px(12.),
+                                                default_fg: theme.foreground,
+                                                default_bg: theme.background,
+                                                cursor: theme.foreground,
+                                            },
+                                        ))
                                         .into_any_element()
                                 } else {
                                     div()

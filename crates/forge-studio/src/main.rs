@@ -92,10 +92,13 @@ enum HostEvent {
     Call(String),
     /// The host's whole view state after a write — the `on_state` sink.
     State(Json),
-    /// #120 Phase 2 — a TUI frame buffer (one line per row) from
-    /// `TestBackend` — rendered as a monospace cell grid in the card.
+    /// #120 Phase 3 — a TUI frame as the host's real ANSI byte stream;
+    /// the card feeds it through `forge_term`'s emulator into styled cells.
     Frame {
-        rows: Vec<String>,
+        seq: u64,
+        cols: u16,
+        rows: u16,
+        data: String,
     },
     /// #120 Phase 2 — an rgba screenshot from a pixel-capable host (iced).
     FrameRgba {
@@ -990,14 +993,10 @@ fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<F
                         data: v["data"].as_str().unwrap_or_default().to_owned(),
                     },
                     Some("frame") => HostEvent::Frame {
-                        rows: v["rows"]
-                            .as_array()
-                            .map(|a| {
-                                a.iter()
-                                    .filter_map(|r| r.as_str().map(str::to_owned))
-                                    .collect()
-                            })
-                            .unwrap_or_default(),
+                        seq: v["seq"].as_u64().unwrap_or(0),
+                        cols: v["cols"].as_u64().unwrap_or(80) as u16,
+                        rows: v["rows"].as_u64().unwrap_or(24) as u16,
+                        data: v["data"].as_str().unwrap_or_default().to_owned(),
                     },
                     _ => continue,
                 };
@@ -1179,12 +1178,17 @@ fn host_event(
             );
             let _ = (w, h); // dims for the image arm when it lands
         }
-        HostEvent::Frame { rows, .. } => {
-            // #120 Phase 2 — the TUI's frame grid as `preview.frame`, a
-            // `\n`-joined text the card renders monospace.
+        HostEvent::Frame {
+            seq,
+            cols,
+            rows,
+            data,
+        } => {
+            // #120 Phase 3 — the ANSI stream chunk lands in `preview.frame`;
+            // the card's emulator consumes it by `seq`.
             view.update_state(
                 &parse_path("preview.frame").unwrap(),
-                Json::String(rows.join("\n")),
+                serde_json::json!({"seq": seq, "cols": cols, "rows": rows, "data": data}),
                 cx,
             );
         }
@@ -1537,14 +1541,10 @@ fn spawn_pane(base: &str, id: &str) -> Option<Host> {
                         HostEvent::Diagnostics(v["items"].as_array().cloned().unwrap_or_default())
                     }
                     Some("frame") => HostEvent::Frame {
-                        rows: v["rows"]
-                            .as_array()
-                            .map(|a| {
-                                a.iter()
-                                    .filter_map(|r| r.as_str().map(str::to_owned))
-                                    .collect()
-                            })
-                            .unwrap_or_default(),
+                        seq: v["seq"].as_u64().unwrap_or(0),
+                        cols: v["cols"].as_u64().unwrap_or(80) as u16,
+                        rows: v["rows"].as_u64().unwrap_or(24) as u16,
+                        data: v["data"].as_str().unwrap_or_default().to_owned(),
                     },
                     Some("frame_rgba") => HostEvent::FrameRgba {
                         w: v["w"].as_u64().unwrap_or(0) as u32,
@@ -1637,10 +1637,16 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                     .collect();
                 while let Ok((pid, ev)) = PANE_EVENTS.1.lock().unwrap().try_recv() {
                     match ev {
-                        HostEvent::Frame { rows } if streams.contains(pid.as_str()) => {
+                        HostEvent::Frame {
+                            seq,
+                            cols,
+                            rows,
+                            data,
+                        } if streams.contains(pid.as_str()) =>
+                        {
                             view.update_state(
                                 &pane_state_path(&pid, "frame"),
-                                Json::String(rows.join("\n")),
+                                serde_json::json!({"seq": seq, "cols": cols, "rows": rows, "data": data}),
                                 cx,
                             );
                         }

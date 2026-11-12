@@ -27,10 +27,12 @@ document's base. Studio talks to it over a JSON channel on stdin/stdout:
   `ready`, diagnostics, fired hooks, and view-state writes back to Studio.
 
 This is how bases without an in-process twin preview from Studio. `ratatui`
-runs on a real `TestBackend` and streams its cell grid back as `preview.frame`
-(the TUI text you see under the canvas). `iced`/`gpui02`/`adabraka`/`bezel`
-open real native windows, and `gpui-kit` itself can run in-host when you want
-the genuine platform event loop.
+draws through a real `CrosstermBackend` into a byte sink and streams the ANSI
+output — the same bytes a terminal would get — back as `preview.frame`
+chunks; Studio folds them through `forge-term`'s `alacritty_terminal`
+emulator and paints styled cells in the card. `iced`/`gpui02`/`adabraka`/
+`bezel` open real native windows, and `gpui-kit` itself can run in-host when
+you want the genuine platform event loop.
 
 The status bar's `host` label shows host attachment state. Clicking the
 preview raises the host window.
@@ -77,9 +79,14 @@ Studio's own Themes tab uses the same mechanism — `studio.forge.yaml`'s
   adabraka, iced) get a plain `remote:` pane whose card says the preview
   lives in a separate window; a different GPUI generation can't
   composite into Studio's scene graph.
-- **streamed grid** — `mode: stream` routes the ratatui host's `frame`
-  events into `preview.panes.<id>.frame` and the card paints the text
-  grid in place, sized from the slot's `frame_rect`.
+- **streamed terminal** — `mode: stream` routes the ratatui host's
+  `frame` events (`{seq, cols, rows, data}` — raw ANSI bytes from the
+  real `CrosstermBackend`) into `preview.panes.<id>.frame`. The card
+  feeds new chunks into a `forge-term` `Emulator` (alacritty's `vte`
+  parser → styled cell grid) and paints it with `TermView`: per-row
+  background quads plus shaped text runs, in the theme's mono font.
+  Colors, bold, dim, inverse — whatever the TUI emits is what shows.
+  The grid is sized from the slot's `frame_rect`.
 
 The Rust side only maintains state and plumbing; the document decides
 which bases exist and which preview is live. Panes are also gated behind
@@ -106,7 +113,8 @@ theme API accepts:
 - **bezel** and **adabraka** toggle dark/light only — their theme APIs
   accept no custom colors.
 - **ratatui** ignores the command — its base renderer hardcodes ANSI
-  colors per widget and the streamed frame is text-only.
+  colors per widget, which is honest: a real terminal shows the TUI's
+  own palette, and the emulated stream displays exactly that.
 
 ## Pane lifecycle
 
