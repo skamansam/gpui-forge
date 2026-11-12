@@ -22,5 +22,8 @@ forge-lib-hig = { path = "../forge-lib-hig" }
 forge-lib-base = { path = "../forge-lib-base" }
 forge-lib-flow = { path = "../forge-lib-flow" }
 
+[target.'cfg(target_os = "linux")'.dependencies]
+x11rb = "0.14.0"
+
 [lints]
 workspace = true

@@ -68,10 +68,59 @@ the pane enters the document and dies when the pane leaves it. Panes with
 
 Studio's own Themes tab uses the same mechanism — `studio.forge.yaml`'s
 `previewSelector` binds a `Select` to `$studio.theme_preview` and each
-`case` is a `mode: embedded` pane over the matching showcase document.
+`case` picks one of three presentations:
+
+- **inline** — same-generation `gpui-kit` documents (gpui-kit itself and
+  the ely/hig/gc/gflow/math/pdf/gpui-base demos) render in a nested
+  `forge.Preview` inside the preview area, no host process at all.
+- **message card** — foreign-base windowed hosts (gpui02, bezel,
+  adabraka, iced) get a plain `remote:` pane whose card says the preview
+  lives in a separate window; a different GPUI generation can't
+  composite into Studio's scene graph.
+- **streamed grid** — `mode: stream` routes the ratatui host's `frame`
+  events into `preview.panes.<id>.frame` and the card paints the text
+  grid in place, sized from the slot's `frame_rect`.
+
 The Rust side only maintains state and plumbing; the document decides
-which bases exist and which preview is live. Theme changes reach pane
-hosts too, so a selected preview repaints in place.
+which bases exist and which preview is live. Panes are also gated behind
+the Themes tab (`if: $studio.tab / is: 4`), so no host spawns before its
+preview is on screen.
+
+## Theme propagation
+
+Every `theme` command carries three things: the theme `name`, the `dark`
+flag, and `colors` — Studio's resolved `ThemeColor` palette serialized
+to `{field: "#rrggbbaa"}` hex. Hosts that can't resolve a Forge theme
+name can still paint with its actual values. Each base maps what its
+theme API accepts:
+
+- **gpui-kit** resolves the name in its own `ThemeRegistry` (keeping
+  token gradients); when the name misses it deserializes `colors` back
+  into the same `ThemeColor` type — byte-identical values.
+- **gpui02** maps semantic overrides onto guise: `accent→primary`,
+  `background→body`, `popover→surface`, `muted→surface_hover`,
+  `foreground→text`, `muted_foreground→dimmed`, `border`, and
+  `success`/`warning`/`danger`/`info` to their named slots.
+- **iced** builds `Theme::custom` from `background`/`text`/`primary`/
+  `success`/`danger` over a dark- or light-base palette.
+- **bezel** and **adabraka** toggle dark/light only — their theme APIs
+  accept no custom colors.
+- **ratatui** ignores the command — its base renderer hardcodes ANSI
+  colors per widget and the streamed frame is text-only.
+
+## Pane lifecycle
+
+Hosts spawn when a rendered `remote:` pane enters the document and are
+killed when it leaves — including every pane host on Studio's own exit,
+so nothing orphans across runs. A host that exits is respawned, but two
+consecutive deaths mark it unusable and the status bar reports the give-
+up; switching to a different pane and back resets the count. A host that
+stays alive but never maps a window is caught the same way: three
+seconds after spawn, Studio probes X11 for a top-level window carrying
+the child's `_NET_WM_PID` and kills the zombie with a "opened no window"
+status when none exists (old-gpui's event loop keeps running even when
+window creation fails, so an alive process alone is not proof a window
+opened).
 
 ## `base_dir`
 

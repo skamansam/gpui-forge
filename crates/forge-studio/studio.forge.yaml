@@ -250,75 +250,100 @@ sourceTab: &sourceTab
 
 
 # ============================================================================
-# GPUI-BASE PREVIEW
-# ============================================================================
-gpuiBasePreview: &gpuiBasePreview
-  - Text: "GPUI Preview"
-    style:
-      size: lg
-      weight: semibold
-
-
-# ============================================================================
 # THEME PREVIEW SELECTOR
 # ============================================================================
 previewSelector: &previewSelector
   children:
     - Select:
-      options: [gpui-kit, gpui02, bezel, adabraka, iced, ratatui]
+      options: [gpui-kit, ely, hig, gc, gflow, math, pdf, gpui-base, gpui02, bezel, adabraka, iced, ratatui]
       value: bind $studio.theme_preview
-      placeholder: preview base
-    # Each case is a remote `forge.Preview` — the selected base's own
-    # `forge-preview-{base}` host renders the showcase over this slot.
-    - match: $studio.theme_preview
-      case gpui-base: *gpuiBasePreview
-      case gpui-kit:
-        - forge.Preview#preview-gpui-kit:
-          remote: gpui-kit
-          base: gpui-kit
-          doc: ../../examples/gpui-kit-showcase.forge.yaml
-          mode: embedded
-          style: {height: 480px}
-      case gpui02:
-        - forge.Preview#preview-gpui02:
-          remote: gpui02
-          base: gpui02
-          doc: ../../examples/gpui02-showcase.forge.yaml
-          mode: embedded
-          style: {height: 480px}
-      case bezel:
-        - forge.Preview#preview-bezel:
-          remote: bezel
-          base: bezel
-          doc: ../../examples/bezel-showcase.forge.yaml
-          mode: embedded
-          style: {height: 480px}
-      case adabraka:
-        - forge.Preview#preview-adabraka:
-          remote: adabraka
-          base: adabraka
-          doc: ../../examples/adabraka-showcase.forge.yaml
-          mode: embedded
-          style: {height: 480px}
-      case iced:
-        - forge.Preview#preview-iced:
-          remote: iced
-          base: iced
-          doc: ../../examples/iced-showcase.forge.yaml
-          mode: embedded
-          style: {height: 480px}
-      case ratatui:
-        - forge.Preview#preview-ratatui:
-          remote: ratatui
-          base: ratatui
-          doc: ../../examples/ratatui-dashboard.forge.yaml
-          mode: embedded
-          style: {height: 480px}
-      else:
-        - Text: "No preview active"
-          style:
-            size: sm
-            color: $theme.muted_foreground
+      placeholder: preview
+    # Same-base sets render in place — a plain `forge.Preview` nests a
+    # second ForgeView in the canvas, no host. Foreign bases spawn their
+    # own `forge-preview-{base}` host: `mode: embedded` floats the host's
+    # window over the card, `mode: stream` paints the host's frame grid
+    # inside the card (ratatui sizes it from `frame_rect`), and no `mode`
+    # is the `placeholder` card — a foreign window can't embed.
+    # The `if` keeps hosts from spawning before the Themes tab is shown
+    # (tab index 4 — the pane's window floats over a live slot only).
+    - if: $studio.tab
+      is: 4
+      children:
+        - match: $studio.theme_preview
+          case gpui-kit:
+            - forge.Preview#preview-gpui-kit:
+              doc: ../../examples/gpui-kit-showcase.forge.yaml
+              style: {height: 480px}
+          case ely:
+            - forge.Preview#preview-ely:
+              doc: ../../examples/ely-demo.forge.yaml
+              style: {height: 480px}
+          case hig:
+            - forge.Preview#preview-hig:
+              doc: ../../examples/hig-demo.forge.yaml
+              style: {height: 480px}
+          case gc:
+            - forge.Preview#preview-gc:
+              doc: ../../examples/gc-showcase.forge.yaml
+              style: {height: 480px}
+          case gflow:
+            - forge.Preview#preview-gflow:
+              doc: ../../examples/gflow-demo.forge.yaml
+              style: {height: 480px}
+          case math:
+            - forge.Preview#preview-math:
+              doc: ../../examples/math-demo.forge.yaml
+              style: {height: 480px}
+          case pdf:
+            - forge.Preview#preview-pdf:
+              doc: ../../examples/pdf-demo.forge.yaml
+              style: {height: 480px}
+          case gpui-base:
+            - forge.Preview#preview-gpui-base:
+              doc: ../../examples/base-demo.forge.yaml
+              style: {height: 480px}
+          case gpui02:
+            # Foreign bases open their own window — a different gpui
+            # generation can't composite into this canvas.
+            - forge.Preview#preview-gpui02:
+              remote: gpui02
+              base: gpui02
+              doc: ../../examples/gpui02-showcase.forge.yaml
+              placeholder: "rendered in a separate window — the gpui02 host can't embed"
+              style: {height: 480px}
+          case bezel:
+            - forge.Preview#preview-bezel:
+              remote: bezel
+              base: bezel
+              doc: ../../examples/bezel-showcase.forge.yaml
+              placeholder: "rendered in a separate window — the bezel host can't embed"
+              style: {height: 480px}
+          case adabraka:
+            - forge.Preview#preview-adabraka:
+              remote: adabraka
+              base: adabraka
+              doc: ../../examples/adabraka-showcase.forge.yaml
+              placeholder: "rendered in a separate window — the adabraka host can't embed"
+              style: {height: 480px}
+          case iced:
+            - forge.Preview#preview-iced:
+              remote: iced
+              base: iced
+              doc: ../../examples/iced-showcase.forge.yaml
+              placeholder: "rendered in a separate window — the iced host can't embed"
+              style: {height: 480px}
+          case ratatui:
+            - forge.Preview#preview-ratatui:
+              remote: ratatui
+              base: ratatui
+              doc: ../../examples/ratatui-dashboard.forge.yaml
+              mode: stream
+              style: {height: 480px}
+          else:
+            - Text: "No preview active"
+              style:
+                size: sm
+                color: $theme.muted_foreground
 
 
 # ============================================================================

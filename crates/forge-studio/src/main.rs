@@ -16,8 +16,9 @@ use gpui_forge_runtime::forge_spec::value::parse_path;
 use gpui_forge_runtime::forge_spec::{
     Control, Diagnostic, ElementRef, Node, Value, path_steps, path_string, yaml,
 };
-use gpui_forge_runtime::render::{ForgeView, get_path, set_path};
+use gpui_forge_runtime::render::{ForgeView, get_path, pane_state_path, set_path};
 use gpui_kit::component::WindowExt as _;
+use gpui_kit::component::theme::ActiveTheme as _;
 use gpui_kit::component::theme::ThemeSet;
 use gpui_kit::component::theme::{Theme, ThemeMode, ThemeRegistry};
 use gpui_kit::{prelude::*, *};
@@ -123,10 +124,15 @@ fn main() {
                 gpui_forge_runtime::render::CancelPick,
                 None,
             )]);
-            // Reap the preview host on any quit path — the `quit` hook is only
-            // one of them (window close, Cmd-Q…).
+            // Reap the preview hosts on any quit path — the `quit` hook is
+            // only one of them (window close, Cmd-Q…). Pane hosts live in
+            // HOSTS — without this they'd orphan and survive Studio's exit.
             cx.on_app_quit(|_| async move {
                 if let Some(mut host) = HOST.lock().unwrap().take() {
+                    let _ = host.child.kill();
+                    let _ = host.child.wait();
+                }
+                for (_, (_, mut host)) in HOSTS.lock().unwrap().drain() {
                     let _ = host.child.kill();
                     let _ = host.child.wait();
                 }
@@ -364,6 +370,9 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         &shared,
         cx,
     );
+    // Declared panes in the shell document (the Themes-tab theme preview)
+    // spawn hosts from startup — no need to wait for a foreign-base open.
+    pane_sync(shared.clone(), cx);
     view
 }
 
@@ -537,7 +546,7 @@ fn apply_theme_name(
             cx,
         );
     }
-    host_send_theme(view);
+    host_send_theme(view, cx);
 }
 
 /// `reset_theme()` — the Themes tab's reset icon — restores the registry's
@@ -570,7 +579,7 @@ fn reset_theme(
     let name = default.name.to_string();
     Theme::update(cx, |theme| theme.apply_config(&default));
     view.update_state(&parse_path("studio.theme").unwrap(), Json::String(name), cx);
-    host_send_theme(view);
+    host_send_theme(view, cx);
 }
 
 /// `apply_theme_json()` — parse `studio.theme_json` (a `ThemeSet`) and apply the
@@ -600,7 +609,7 @@ fn apply_theme_json(
             let name = config.name.to_string();
             Theme::update(cx, |theme| theme.apply_config(&Rc::new(config)));
             view.update_state(&parse_path("studio.theme").unwrap(), Json::String(name), cx);
-            host_send_theme(view);
+            host_send_theme(view, cx);
         }
         Err(e) => view.report(format!("theme json: {e}")),
     }
@@ -921,7 +930,7 @@ fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<F
         );
         return;
     };
-    let spawned = std::process::Command::new(&binary)
+    let spawned = preview_command(&binary, &base)
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::inherit())
@@ -1006,7 +1015,7 @@ fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<F
         host_send_source(view, &shared);
     }
     host_send(&json!({"cmd":"dnd","on":true}));
-    host_send_theme(view);
+    host_send_theme(view, cx);
     pane_sync(shared.clone(), cx);
     cx.spawn(async move |view, cx| {
         let mut last_rect: Option<String> = None;
@@ -1228,23 +1237,28 @@ fn host_send_source(view: &ForgeView, shared: &SharedState) {
 /// The `theme` command payload — registry name when `studio.theme` names a
 /// theme, else just the light/dark flag. Shared by the main host and pane
 /// hosts so a theme preview applies to every live preview.
-fn theme_cmd(view: &ForgeView) -> Json {
+/// The `theme` command: name and/or dark flag plus the resolved palette.
+/// Foreign hosts can't look Forge theme names up, but `colors` gives every
+/// host the actual hex values to paint with — `Hsla` serializes to
+/// `#rrggbbaa`, so `ThemeColor`'s `Serialize` produces `{field: "#hex"}`.
+fn theme_cmd(view: &ForgeView, theme: &Theme) -> Json {
+    let colors = serde_json::to_value(theme.colors).unwrap_or_default();
     match get_path(view.state(), &parse_path("studio.theme").unwrap())
         .and_then(|j| j.as_str())
         .map(str::to_owned)
     {
-        Some(name) => json!({"cmd":"theme","name": name}),
+        Some(name) => json!({"cmd":"theme","name": name,"colors": colors}),
         None => {
             let dark = get_path(view.state(), &parse_path("studio.dark").unwrap())
                 .and_then(|j| j.as_bool())
                 .unwrap_or_default();
-            json!({"cmd":"theme","dark": dark})
+            json!({"cmd":"theme","dark": dark,"colors": colors})
         }
     }
 }
 
-fn host_send_theme(view: &ForgeView) {
-    host_send(&theme_cmd(view));
+fn host_send_theme(view: &ForgeView, cx: &App) {
+    host_send(&theme_cmd(view, cx.theme()));
 }
 
 /// Reads `key = "value"` lines out of a manifest's `[forge]` section — the
@@ -1303,7 +1317,17 @@ struct PaneSpec {
     base: String,
     /// `doc:` — doc-relative path, ref name, or none (the parent document).
     doc: Option<String>,
-    embedded: bool,
+    /// `mode:` — `embedded` floats the host window over the slot; `stream`
+    /// routes the host's `frame` events into `preview.panes.<id>.frame`.
+    mode: String,
+}
+
+impl PaneSpec {
+    /// Panes that want the slot rect — windowed hosts float on it, streaming
+    /// hosts use it to size their headless grid.
+    fn wants_frame_rect(&self) -> bool {
+        self.mode == "embedded" || self.mode == "stream"
+    }
 }
 
 static HOSTS: std::sync::LazyLock<
@@ -1318,6 +1342,41 @@ fn pane_send(id: &str, value: &Json) {
         let _ = writeln!(host.stdin, "{value}");
         let _ = host.stdin.flush();
     }
+}
+
+/// Does any top-level X11 window carry `_NET_WM_PID == pid`? `None` when the
+/// check can't run (no X connection — e.g. Wayland-only) — the caller treats
+/// that as "can't tell", not "no window".
+#[cfg(target_os = "linux")]
+fn x11_pid_has_window(pid: u32) -> Option<bool> {
+    use x11rb::connection::Connection;
+    use x11rb::protocol::xproto::{AtomEnum, ConnectionExt as _};
+    let (conn, screen_num) = x11rb::connect(None).ok()?;
+    let root = conn.setup().roots.get(screen_num)?.root;
+    let pid_atom = conn
+        .intern_atom(false, b"_NET_WM_PID")
+        .ok()?
+        .reply()
+        .ok()?
+        .atom;
+    let tree = conn.query_tree(root).ok()?.reply().ok()?;
+    for win in tree.children {
+        let ours = conn
+            .get_property(false, win, pid_atom, AtomEnum::CARDINAL, 0, 1)
+            .ok()
+            .and_then(|c| c.reply().ok())
+            .and_then(|r| r.value32().and_then(|mut v| v.next()))
+            == Some(pid);
+        if ours {
+            return Some(true);
+        }
+    }
+    Some(false)
+}
+
+#[cfg(not(target_os = "linux"))]
+fn x11_pid_has_window(_pid: u32) -> Option<bool> {
+    None
 }
 
 /// Literal string prop — pane declarations are static metadata, not bindings.
@@ -1345,7 +1404,7 @@ fn remote_panes(view: &ForgeView, node: &Node, out: &mut Vec<PaneSpec>, skipped:
                 id,
                 base: pane_prop(node, "base").unwrap_or_default().to_owned(),
                 doc: pane_prop(node, "doc").map(str::to_owned),
-                embedded: pane_prop(node, "mode") == Some("embedded"),
+                mode: pane_prop(node, "mode").unwrap_or_default().to_owned(),
             }),
             None => *skipped += 1,
         }
@@ -1388,7 +1447,7 @@ fn remote_panes(view: &ForgeView, node: &Node, out: &mut Vec<PaneSpec>, skipped:
             let resolved = view.resolve(source);
             let arm = cases
                 .iter()
-                .find(|c| view.resolve(&c.value) == resolved)
+                .find(|c| view.value_eq(&view.resolve(&c.value), &resolved))
                 .map(|c| &c.children)
                 .unwrap_or(otherwise);
             for child in arm {
@@ -1405,18 +1464,87 @@ fn remote_panes(view: &ForgeView, node: &Node, out: &mut Vec<PaneSpec>, skipped:
 
 /// Spawns `forge-preview-{base}` for a declared pane — stdin feeds commands,
 /// stdout drains on a thread (pane events stay inside their own document).
-fn spawn_pane(base: &str) -> Option<Host> {
+/// Pane host stdout events — `(pane_id, event)` — drained each pane-sync
+/// tick so streaming bases' frames land in `preview.panes.<id>.*` state.
+type PaneEvent = (String, HostEvent);
+static PANE_EVENTS: std::sync::LazyLock<(
+    std::sync::mpsc::Sender<PaneEvent>,
+    std::sync::Mutex<std::sync::mpsc::Receiver<PaneEvent>>,
+)> = std::sync::LazyLock::new(|| {
+    let (tx, rx) = std::sync::mpsc::channel();
+    (tx, std::sync::Mutex::new(rx))
+});
+
+/// The `Command` for a preview host — older-gpui bases can't talk to newer
+/// Wayland compositors (`UnsupportedVersion`), so non-default hosts get X11
+/// via XWayland. Streaming bases (iced/ratatui) have no window — the env is
+/// inert there.
+fn preview_command(binary: &PathBuf, base: &str) -> std::process::Command {
+    let mut cmd = std::process::Command::new(binary);
+    if base != BASE_ID {
+        cmd.env("WAYLAND_DISPLAY", "")
+            .env("XDG_SESSION_TYPE", "x11");
+    }
+    cmd
+}
+
+fn spawn_pane(base: &str, id: &str) -> Option<Host> {
     let binary = find_preview_binary(base)?;
-    let mut child = std::process::Command::new(&binary)
+    let mut child = preview_command(&binary, base)
         .stdin(std::process::Stdio::piped())
         .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::inherit())
+        // Drained, not inherited — a pane's panics/debug dumps would spam
+        // Studio's own stderr (and crash-looping hosts spam it per respawn).
+        .stderr(std::process::Stdio::piped())
         .spawn()
         .ok()?;
-    if let Some(stdout) = child.stdout.take() {
+    if let Some(stderr) = child.stderr.take() {
         std::thread::spawn(move || {
             use std::io::BufRead;
-            for _line in std::io::BufReader::new(stdout).lines() {}
+            for _line in std::io::BufReader::new(stderr).lines() {}
+        });
+    }
+    if let Some(stdout) = child.stdout.take() {
+        let tx = PANE_EVENTS.0.clone();
+        let id = id.to_owned();
+        std::thread::spawn(move || {
+            use std::io::BufRead;
+            for line in std::io::BufReader::new(stdout)
+                .lines()
+                .map_while(Result::ok)
+            {
+                let Ok(v) = serde_json::from_str::<Json>(&line) else {
+                    continue;
+                };
+                let event = match v["event"].as_str() {
+                    Some("ready") => HostEvent::Ready {
+                        base: v["base"].as_str().unwrap_or_default().to_owned(),
+                    },
+                    Some("diagnostics") => {
+                        HostEvent::Diagnostics(v["items"].as_array().cloned().unwrap_or_default())
+                    }
+                    Some("frame") => HostEvent::Frame {
+                        rows: v["rows"]
+                            .as_array()
+                            .map(|a| {
+                                a.iter()
+                                    .filter_map(|r| r.as_str().map(str::to_owned))
+                                    .collect()
+                            })
+                            .unwrap_or_default(),
+                    },
+                    Some("frame_rgba") => HostEvent::FrameRgba {
+                        w: v["w"].as_u64().unwrap_or(0) as u32,
+                        h: v["h"].as_u64().unwrap_or(0) as u32,
+                        data: v["data"].as_str().unwrap_or_default().to_owned(),
+                    },
+                    _ => continue,
+                };
+                if tx.send((id.clone(), event)).is_err() {
+                    return;
+                }
+            }
+            let _ = tx.send((id, HostEvent::Closed { generation: 0 }));
         });
     }
     let stdin = child.stdin.take()?;
@@ -1468,6 +1596,13 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
         let mut fed: std::collections::HashMap<String, String> = Default::default();
         let mut rects: std::collections::HashMap<String, String> = Default::default();
         let mut themes: std::collections::HashMap<String, String> = Default::default();
+        let mut deaths: std::collections::HashMap<String, u32> = Default::default();
+        let mut gave_up: std::collections::HashSet<String> = Default::default();
+        // Pane id → (spawn time, child pid) for windowed hosts not yet seen to
+        // map a window. Probed once after a grace period — a live process with
+        // no window (e.g. old-gpui on WSLg) is as useless as a dead one.
+        let mut pending: std::collections::HashMap<String, (std::time::Instant, u32)> =
+            Default::default();
         let mut last_skipped = 0usize;
         loop {
             cx.background_executor()
@@ -1478,6 +1613,43 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                 let mut skipped = 0usize;
                 if let Some(doc) = view.document() {
                     remote_panes(view, &doc.root, &mut panes, &mut skipped);
+                }
+                // Pane host events — a `mode: stream` pane's frames land in
+                // `preview.panes.<id>.*` so its card renders the grid. Other
+                // panes' stdout (iced's debug grid) stays drained.
+                let streams: std::collections::HashSet<&str> = panes
+                    .iter()
+                    .filter(|p| p.mode == "stream")
+                    .map(|p| p.id.as_str())
+                    .collect();
+                while let Ok((pid, ev)) = PANE_EVENTS.1.lock().unwrap().try_recv() {
+                    match ev {
+                        HostEvent::Frame { rows } if streams.contains(pid.as_str()) => {
+                            view.update_state(
+                                &pane_state_path(&pid, "frame"),
+                                Json::String(rows.join("\n")),
+                                cx,
+                            );
+                        }
+                        HostEvent::FrameRgba { data, .. } if streams.contains(pid.as_str()) => {
+                            view.update_state(
+                                &pane_state_path(&pid, "frame_rgba"),
+                                Json::String(data),
+                                cx,
+                            );
+                        }
+                        HostEvent::Ready { base } => {
+                            status(view, &format!("preview pane `{pid}` ready ({base})"), cx)
+                        }
+                        HostEvent::Diagnostics(items) if !items.is_empty() => {
+                            status(
+                                view,
+                                &format!("preview pane `{pid}`: {} diagnostic(s)", items.len()),
+                                cx,
+                            )
+                        }
+                        _ => {}
+                    }
                 }
                 let wb = cx
                     .windows()
@@ -1498,7 +1670,7 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                     .and_then(Json::as_str)
                     .unwrap_or(BASE_ID)
                     .to_owned();
-                let theme = theme_cmd(view);
+                let theme = theme_cmd(view, cx.theme());
                 // No open file → pane `doc:` paths resolve against the shell
                 // doc's own directory (`studio.forge.yaml` lives in the crate).
                 let dir = shared
@@ -1544,10 +1716,15 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                 fed.remove(&id);
                 rects.remove(&id);
                 themes.remove(&id);
+                deaths.remove(&id);
+                gave_up.remove(&id);
+                pending.remove(&id);
             }
 
             // A dead pane host respawns on the next tick — report, then drop it
-            // so the spec check below spawns a replacement.
+            // so the spec check below spawns a replacement. Two deaths marks
+            // the host unusable — a host that can't window here (e.g. old-gpui
+            // on WSL2's GPU) must not flash-crash on every tick.
             let dead: Vec<String> = {
                 let mut guard = HOSTS.lock().unwrap();
                 guard
@@ -1558,12 +1735,69 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
             for id in dead {
                 HOSTS.lock().unwrap().remove(&id);
                 fed.remove(&id);
-                let _ = view.update(cx, |view, cx| {
-                    status(view, &format!("preview host for `{id}` exited — restarting"), cx)
-                });
+                let tries = deaths.entry(id.clone()).or_insert(0);
+                *tries += 1;
+                if *tries > 1 {
+                    if gave_up.insert(id.clone()) {
+                        let _ = view.update(cx, |view, cx| {
+                            status(
+                                view,
+                                &format!("preview host for `{id}` keeps exiting — giving up"),
+                                cx,
+                            )
+                        });
+                    }
+                } else {
+                    let _ = view.update(cx, |view, cx| {
+                        status(view, &format!("preview host for `{id}` exited — restarting"), cx)
+                    });
+                }
             }
 
+            // A host that stays alive but never maps a window (old-gpui keeps
+            // running even when its window creation fails) still claims the
+            // card's "separate window" is open. Probe X11 once, three seconds
+            // after spawn; a live child with no `_NET_WM_PID` window is killed
+            // and reported instead of sitting as a zombie.
+            let unmapped: Vec<String> = pending
+                .iter()
+                .filter(|(_, (t0, _))| t0.elapsed() > std::time::Duration::from_secs(3))
+                .filter(|(id, (_, pid))| {
+                    HOSTS
+                        .lock()
+                        .unwrap()
+                        .get(*id)
+                        .is_some_and(|(_, h)| h.child.id() == *pid)
+                })
+                .filter(|(_, (_, pid))| x11_pid_has_window(*pid) == Some(false))
+                .map(|(id, _)| id.clone())
+                .collect();
+            for id in unmapped {
+                if let Some((_, mut h)) = HOSTS.lock().unwrap().remove(&id) {
+                    let _ = h.child.kill();
+                    let _ = h.child.wait();
+                }
+                fed.remove(&id);
+                if gave_up.insert(id.clone()) {
+                    let _ = view.update(cx, |view, cx| {
+                        status(
+                            view,
+                            &format!(
+                                "preview host for `{id}` opened no window — can't render here"
+                            ),
+                            cx,
+                        )
+                    });
+                }
+            }
+            // Expired entries were probed (or couldn't be — Wayland) once;
+            // drop them either way.
+            pending.retain(|_, (t0, _)| t0.elapsed() <= std::time::Duration::from_secs(3));
+
             for pane in &panes {
+                if gave_up.contains(&pane.id) {
+                    continue;
+                }
                 let base = if pane.base.is_empty() {
                     &doc_base
                 } else {
@@ -1577,8 +1811,16 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                         let _ = old.child.wait();
                     }
                     themes.remove(&pane.id);
-                    match spawn_pane(base) {
+                    deaths.remove(&pane.id);
+                    gave_up.remove(&pane.id);
+                    match spawn_pane(base, &pane.id) {
                         Some(host) => {
+                            if pane.mode != "stream" {
+                                pending.insert(
+                                    pane.id.clone(),
+                                    (std::time::Instant::now(), host.child.id()),
+                                );
+                            }
                             HOSTS.lock().unwrap().insert(pane.id.clone(), (spec, host));
                             fed.remove(&pane.id);
                         }
@@ -1628,9 +1870,10 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                     themes.insert(pane.id.clone(), theme_key.clone());
                 }
 
-                // Float the host window over the pane's tracked slot.
+                // Float the host window over the pane's tracked slot — or, for
+                // a streaming host, size its headless grid to the slot.
                 let slot = pane
-                    .embedded
+                    .wants_frame_rect()
                     .then(|| slots.get(&pane.id).copied().flatten())
                     .flatten();
                 if let (Some(wb), Some(b)) = (wb, slot) {

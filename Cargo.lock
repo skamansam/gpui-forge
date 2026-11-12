@@ -3927,6 +3927,7 @@ dependencies = [
  "gpui-forge-runtime",
  "gpui-kit",
  "serde_json",
+ "x11rb 0.14.0",
 ]
 
 [[package]]
