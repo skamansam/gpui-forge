@@ -202,6 +202,8 @@ pub struct ForgeView {
     /// `forge.Preview` remote panes with `mode: stream` — the pane's
     /// terminal emulator (fed ANSI bytes from `preview.panes.<id>.frame`
     /// chunks, deduped by `seq`) and the seq it last consumed (#120).
+    /// Native-only: `forge_term`/`alacritty_terminal` don't build on wasm.
+    #[cfg(not(target_arch = "wasm32"))]
     term_panes: HashMap<String, (u64, std::rc::Rc<std::cell::RefCell<forge_term::Emulator>>)>,
     /// Persistent `ScrollHandle`s keyed by scrollable element id — element-state
     /// GC drops scroll offsets on every `cx.notify` re-render. An explicit
@@ -296,6 +298,7 @@ impl ForgeView {
             selects: HashMap::new(),
             tabs: HashMap::new(),
             preview_bounds: HashMap::new(),
+            #[cfg(not(target_arch = "wasm32"))]
             term_panes: HashMap::new(),
             preview_srcs: HashMap::new(),
             scroll_handles: HashMap::new(),
@@ -2427,8 +2430,11 @@ impl ForgeView {
                         // A frame-streaming host's ANSI bytes land in state as
                         // `preview.panes.<id>.frame` ({seq, cols, rows, data}).
                         // The card feeds new chunks through the pane's terminal
-                        // emulator and paints the styled grid.
-                        let term = get_path(self.state(), &pane_state_path(&id, "frame"))
+                        // emulator and paints the styled grid — native-only;
+                        // alacritty can't build on wasm, where the web canvas
+                        // renders ratatui through its own path.
+                        #[cfg(not(target_arch = "wasm32"))]
+                        let term_card = get_path(self.state(), &pane_state_path(&id, "frame"))
                             .and_then(|j| {
                                 Some((
                                     j["seq"].as_u64()?,
@@ -2456,7 +2462,27 @@ impl ForgeView {
                                     entry.0 = seq;
                                 }
                                 entry.1.clone()
+                            })
+                            .map(|term| {
+                                div()
+                                    .size_full()
+                                    .p_2()
+                                    .overflow_hidden()
+                                    .bg(theme.background)
+                                    .child(forge_term::TermView::new(
+                                        term,
+                                        forge_term::TermStyle {
+                                            font_family: theme.mono_font_family.clone(),
+                                            font_size: px(12.),
+                                            default_fg: theme.foreground,
+                                            default_bg: theme.background,
+                                            cursor: theme.foreground,
+                                        },
+                                    ))
+                                    .into_any_element()
                             });
+                        #[cfg(target_arch = "wasm32")]
+                        let term_card: Option<AnyElement> = None;
                         BoundsTracker::new(
                             div()
                                 .id(format!("preview-remote-{key}"))
@@ -2481,26 +2507,11 @@ impl ForgeView {
                                         .border_1()
                                         .border_color(theme.border)
                                         .into_any_element()
-                                } else if let Some(term) = term {
+                                } else if let Some(card) = term_card {
                                     // Streaming host (ratatui) — the card IS
                                     // the terminal: alacritty-emulated cells,
                                     // mono font, real colors.
-                                    div()
-                                        .size_full()
-                                        .p_2()
-                                        .overflow_hidden()
-                                        .bg(theme.background)
-                                        .child(forge_term::TermView::new(
-                                            term,
-                                            forge_term::TermStyle {
-                                                font_family: theme.mono_font_family.clone(),
-                                                font_size: px(12.),
-                                                default_fg: theme.foreground,
-                                                default_bg: theme.background,
-                                                cursor: theme.foreground,
-                                            },
-                                        ))
-                                        .into_any_element()
+                                    card
                                 } else {
                                     div()
                                         .flex()
