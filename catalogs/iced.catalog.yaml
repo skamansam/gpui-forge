@@ -16,6 +16,7 @@ elements:
     group: Layout
     summary: Vertical widget column (iced `column`).
     component: iced::widget::Column
+    canvas: VStack
     children: any
 
   HStack:
@@ -23,6 +24,7 @@ elements:
     group: Layout
     summary: Horizontal widget row (iced `row`).
     component: iced::widget::Row
+    canvas: HStack
     children: any
 
   Container:
@@ -30,6 +32,7 @@ elements:
     group: Layout
     summary: Sized/styled single-child wrapper.
     component: iced::widget::Container
+    canvas: GroupBox
     children: any
 
   Text:
@@ -37,6 +40,7 @@ elements:
     group: Display
     summary: A run of text.
     component: iced::widget::Text
+    canvas: Text
     content: text
     props:
       text:
@@ -49,6 +53,7 @@ elements:
     group: Input
     summary: Clickable button — `on click:` is the Elm message.
     component: iced::widget::Button
+    canvas: Button
     content: label
     props:
       label: string
@@ -63,6 +68,7 @@ elements:
     group: Input
     summary: Single-line text input (iced `text_input`).
     component: iced::widget::TextInput
+    canvas: Input
     props:
       placeholder: string
       value: string
@@ -74,6 +80,7 @@ elements:
     group: Input
     summary: Labelled checkbox.
     component: iced::widget::Checkbox
+    canvas: Checkbox
     content: label
     props:
       label: string
@@ -88,6 +95,7 @@ elements:
     group: Input
     summary: On/off toggler.
     component: iced::widget::Toggler
+    canvas: Switch
     content: label
     props:
       label: string
@@ -102,6 +110,7 @@ elements:
     group: Input
     summary: Numeric slider over a range.
     component: iced::widget::Slider
+    canvas: Slider
     props:
       min: number
       max: number
@@ -114,6 +123,7 @@ elements:
     group: Feedback
     summary: Progress bar over a range.
     component: iced::widget::ProgressBar
+    canvas: Progress
     props:
       min: number
       max: number
@@ -124,4 +134,5 @@ elements:
     group: Layout
     summary: Scrollable container.
     component: iced::widget::Scrollable
+    canvas: GroupBox
     children: any

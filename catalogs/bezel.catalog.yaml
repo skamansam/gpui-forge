@@ -17,6 +17,7 @@ elements:
     group: Layout
     summary: Vertical flex container.
     component: bezel::VStack
+    canvas: VStack
     children: any
 
   HStack:
@@ -24,6 +25,7 @@ elements:
     group: Layout
     summary: Horizontal flex container.
     component: bezel::HStack
+    canvas: HStack
     children: any
 
   Text:
@@ -31,6 +33,7 @@ elements:
     group: Display
     summary: A run of text.
     component: bezel::Text
+    canvas: Text
     content: text
     props:
       text:
@@ -42,6 +45,7 @@ elements:
     group: Input
     summary: Clickable button.
     component: bezel::Button
+    canvas: Button
     content: label
     props:
       label: string
@@ -56,6 +60,7 @@ elements:
     group: Input
     summary: Single-line text input.
     component: bezel::Input
+    canvas: Input
     props:
       placeholder: string
       value: string
@@ -67,4 +72,5 @@ elements:
     group: Display
     summary: Bordered surface grouping related content.
     component: bezel::Card
+    canvas: Card
     children: any

@@ -2404,11 +2404,19 @@ impl ForgeView {
             let element: AnyElement = match (library, node.element.name.as_str()) {
                 (Some("forge"), "Preview") => {
                     let id = node.id.clone().unwrap_or_else(|| key.to_owned());
+                    let remote = self.prop_text(node, "remote").filter(|t| !t.is_empty());
+                    // `compat: true` (#145) — the pane renders the document
+                    // through the gpui-kit analogue map even while a remote
+                    // host is live: mapped widgets give structure, selection
+                    // and DnD; the host keeps running separately for fidelity.
+                    let compat = self
+                        .prop_text(node, "compat")
+                        .is_some_and(|v| v == "true");
                     // `remote:` non-empty — the document previews in an
                     // out-of-process host (#97). The element is a framed card
                     // instead of a nested view, and `on click:` fires through
                     // the hook path (Studio uses it to raise the host window).
-                    if let Some(remote) = self.prop_text(node, "remote").filter(|t| !t.is_empty()) {
+                    if let Some(remote) = remote.clone().filter(|_| !compat) {
                         let weak = cx.entity().downgrade();
                         let node = node.clone();
                         let theme = cx.theme();
@@ -2577,10 +2585,24 @@ impl ForgeView {
                             };
                             if let Some(doc) = loaded {
                                 preview.update(cx, |view, cx| view.set_document(doc, cx));
-                                self.preview_srcs.insert(id, spec);
+                                self.preview_srcs.insert(id.clone(), spec);
                             }
                         }
-                        preview.into_any_element()
+                        let element = preview.into_any_element();
+                        if remote.is_some() {
+                            // Compat canvas — pane bounds stay tracked so an
+                            // `embedded` host still anchors over the slot.
+                            let cell = self
+                                .preview_bounds
+                                .entry(id)
+                                .or_insert_with(|| {
+                                    std::rc::Rc::new(std::cell::RefCell::new(None))
+                                })
+                                .clone();
+                            BoundsTracker::new(element, cell).into_any_element()
+                        } else {
+                            element
+                        }
                     }
                 }
                 (Some("forge"), "Outline") => {
@@ -2616,13 +2638,33 @@ impl ForgeView {
                 (Some("forge"), "Palette") => self.palette(node, key, cx),
                 (Some("forge"), "Showcase") => self.showcase(node, key, window, cx),
                 (Some("forge"), "Vars") => self.vars(node, key, window, cx),
-                _ => placeholder(
-                    format!(
-                        "`{namespace}.{}` is not provided by this adapter yet",
-                        node.element.name
-                    ),
-                    cx,
-                ),
+                _ => {
+                    // #145 — compat canvas: a namespaced element no adapter or
+                    // intrinsic provides renders through the gpui-kit analogue
+                    // its catalog declares via `canvas:`. The mapped node keeps
+                    // its path/id, so selection, outline and DnD edits land on
+                    // the real document node. Unmapped names get the box.
+                    let analogue = library
+                        .or(Some(namespace.as_str()))
+                        .and_then(|lib| self.catalogs.iter().find(|c| c.library == lib))
+                        .and_then(|cat| cat.element(&node.element.name))
+                        .and_then(|def| def.canvas.clone());
+                    match analogue {
+                        Some(name) => {
+                            let mut mapped = node.clone();
+                            mapped.element.name = name;
+                            mapped.element.namespace = None;
+                            return self.render_node(&mapped, key, window, cx);
+                        }
+                        None => placeholder(
+                            format!(
+                                "`{namespace}.{}` is not provided by this adapter yet",
+                                node.element.name
+                            ),
+                            cx,
+                        ),
+                    }
+                }
             };
             return wrap(
                 element,
@@ -4091,7 +4133,29 @@ impl ForgeView {
                 })
                 .into_any_element()
             }
-            other => placeholder(format!("`{other}` is not in the gpui-kit catalog"), cx),
+            other => {
+                // #145 — compat canvas: an element name the kit catalog doesn't
+                // know maps through the `canvas:` analogue the document's base
+                // catalog declares. The mapped node keeps path/id, so
+                // selection, outline and DnD edits hit the real node.
+                let analogue = self
+                    .doc
+                    .as_ref()
+                    .and_then(|d| d.base.as_deref())
+                    .and_then(|base| self.catalogs.iter().find(|c| c.library == base))
+                    .and_then(|cat| cat.element(other))
+                    .and_then(|def| def.canvas.clone());
+                match analogue {
+                    Some(name) => {
+                        let mut mapped = node.clone();
+                        mapped.element.name = name;
+                        return self.render_node(&mapped, key, window, cx);
+                    }
+                    None => {
+                        placeholder(format!("`{other}` is not in the gpui-kit catalog"), cx)
+                    }
+                }
+            }
         };
         let element = if styled {
             element

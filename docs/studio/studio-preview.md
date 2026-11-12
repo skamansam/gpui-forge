@@ -10,6 +10,21 @@ that powers the [web canvas](preview.md). Every edit repaints instantly.
 `bind` props write through to the document's `view.state`, and `on <event>`
 hooks log to the hook sink rather than running Rust.
 
+### Compat canvas — one editor for every base
+
+The canvas pane carries `compat: true`, so it keeps rendering the document
+through gpui-kit even while a remote host is attached (#145). Elements from
+a foreign base map to the gpui-kit analogue their catalog declares with
+`canvas:` — `iced.Button` renders as `Button`, `ratatui.Block` as
+`GroupBox`. Mapped nodes keep their document paths, so selection, the
+outline, and drag-and-drop edits work on every base. Elements with no
+analogue render as a dashed box that shows the element name.
+
+The remote host still runs — it owns pixel fidelity. Its window floats
+separately (`remote` mode) or embeds over the canvas slot (`embedded`).
+The mapping lives in the catalogs, not in render code: a new base declares
+`canvas:` on its elements and joins the canvas for free.
+
 The **State** tab (`forge.Vars`) lists every `{$path}` variable bound in the
 document. Edit a scalar and watch the app react — it is the same state the
 `state:` declaration seeds and `bind $path` writes. The **View state** group

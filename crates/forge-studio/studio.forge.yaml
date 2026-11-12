@@ -468,9 +468,15 @@ previewTab: &previewTab
     - VStack:
       style: {grow: true, min-height: 0}
       children:
+        # `compat` (#145) — the canvas always renders the document through
+        # gpui-kit widgets, mapping foreign-base elements to their catalog
+        # `canvas:` analogue, so structure editing/DnD works on every base.
+        # The remote host still runs for pixel fidelity — its window floats
+        # separately (`remote` mode) or embeds over this slot (`embedded`).
         - forge.Preview#canvas:
           remote: "{$studio.host}"
           mode: "{$preview.mode}"
+          compat: true
           on click: raise_host()
           style:
             grow: true

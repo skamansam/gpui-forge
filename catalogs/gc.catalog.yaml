@@ -15,6 +15,7 @@ elements:
     group: Buttons
     summary: "gpui-component Button — `use: gc`."
     component: gpui_component::button::Button
+    canvas: Button
     content: label
     children: none
     props:
@@ -24,6 +25,7 @@ elements:
     group: Display
     summary: "gpui-component Badge — `use: gc`."
     component: gpui_component::badge::Badge
+    canvas: Badge
     children: none
     props:
       count: number
@@ -32,6 +34,7 @@ elements:
     group: Feedback
     summary: "gpui-component Alert — `use: gc`."
     component: gpui_component::alert::Alert
+    canvas: Alert
     children: none
     props:
       title: string
@@ -41,12 +44,14 @@ elements:
     group: Display
     summary: "gpui-component Spinner — `use: gc`."
     component: gpui_component::spinner::Spinner
+    canvas: Spinner
     children: none
   Progress:
     icon: loader-2
     group: Feedback
     summary: "gpui-component Progress — `use: gc`."
     component: gpui_component::progress::Progress
+    canvas: Progress
     children: none
     props:
       value: number
@@ -55,12 +60,14 @@ elements:
     group: Layout
     summary: "gpui-component Separator — `use: gc`."
     component: gpui_component::separator::Separator
+    canvas: Separator
     children: none
   Label:
     icon: type
     group: Typography
     summary: "gpui-component Label — `use: gc`."
     component: gpui_component::label::Label
+    canvas: Label
     children: none
     props:
       label: string

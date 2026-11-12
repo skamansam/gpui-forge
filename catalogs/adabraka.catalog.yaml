@@ -16,6 +16,7 @@ elements:
     group: Layout
     summary: Vertical flex container.
     component: adabraka_ui::stack::VStack
+    canvas: VStack
     children: any
 
   HStack:
@@ -23,6 +24,7 @@ elements:
     group: Layout
     summary: Horizontal flex container.
     component: adabraka_ui::stack::HStack
+    canvas: HStack
     children: any
 
   Card:
@@ -30,6 +32,7 @@ elements:
     group: Layout
     summary: shadcn-style card — header, content, footer sections.
     component: adabraka_ui::card::Card
+    canvas: Card
     children: any
 
   Text:
@@ -37,6 +40,7 @@ elements:
     group: Display
     summary: A run of text.
     component: adabraka_ui::text::Text
+    canvas: Text
     content: text
     props:
       text:
@@ -48,6 +52,7 @@ elements:
     group: Display
     summary: Small status chip.
     component: adabraka_ui::badge::Badge
+    canvas: Badge
     content: text
     props:
       text:
@@ -63,6 +68,7 @@ elements:
     group: Display
     summary: User avatar with image or initials fallback.
     component: adabraka_ui::avatar::Avatar
+    canvas: Avatar
     props:
       src: string
       fallback: string
@@ -72,6 +78,7 @@ elements:
     group: Input
     summary: shadcn button variants.
     component: adabraka_ui::button::Button
+    canvas: Button
     content: label
     props:
       label: string
@@ -94,6 +101,7 @@ elements:
     group: Input
     summary: Single-line text input.
     component: adabraka_ui::input::Input
+    canvas: Input
     props:
       placeholder: string
       value: string
@@ -105,6 +113,7 @@ elements:
     group: Input
     summary: Labelled checkbox.
     component: adabraka_ui::checkbox::Checkbox
+    canvas: Checkbox
     content: label
     props:
       label: string
@@ -119,6 +128,7 @@ elements:
     group: Input
     summary: On/off toggle.
     component: adabraka_ui::switch::Switch
+    canvas: Switch
     props:
       checked:
         type: bool
@@ -131,6 +141,7 @@ elements:
     group: Input
     summary: Dropdown pick-one input.
     component: adabraka_ui::select::Select
+    canvas: Select
     props:
       options: string
       value: string
@@ -143,6 +154,7 @@ elements:
     group: Feedback
     summary: Progress bar, 0–100.
     component: adabraka_ui::progress::Progress
+    canvas: Progress
     props:
       value: number
 
@@ -151,6 +163,7 @@ elements:
     group: Feedback
     summary: shadcn alert — title + description, default/destructive.
     component: adabraka_ui::alert::Alert
+    canvas: Alert
     content: text
     props:
       text:
@@ -167,6 +180,7 @@ elements:
     group: Windows
     summary: Modal dialog.
     component: adabraka_ui::dialog::Dialog
+    canvas: Dialog
     props:
       title: string
     children: any

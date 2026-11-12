@@ -16,6 +16,7 @@ elements:
     group: Layout
     summary: Vertical layout constraint — children stack top-down.
     component: ratatui::layout::Layout
+    canvas: VStack
     children: any
 
   HStack:
@@ -23,6 +24,7 @@ elements:
     group: Layout
     summary: Horizontal layout constraint — children flow left-right.
     component: ratatui::layout::Layout
+    canvas: HStack
     children: any
 
   Text:
@@ -30,6 +32,7 @@ elements:
     group: Display
     summary: Paragraph of styled terminal text.
     component: ratatui::widgets::Paragraph
+    canvas: Text
     content: text
     props:
       text:
@@ -44,6 +47,7 @@ elements:
     group: Display
     summary: Bordered block with optional title — the TUI frame primitive.
     component: ratatui::widgets::Block
+    canvas: GroupBox
     props:
       title: string
       borders:
@@ -56,6 +60,7 @@ elements:
     group: Display
     summary: Scrollable list of text items.
     component: ratatui::widgets::List
+    canvas: List
     props:
       items: string
       title: string
@@ -67,6 +72,7 @@ elements:
     group: Display
     summary: Rows and columns of cells.
     component: ratatui::widgets::Table
+    canvas: Table
     props:
       header: string
       rows: string
@@ -77,6 +83,7 @@ elements:
     group: Feedback
     summary: Filled gauge, 0–100.
     component: ratatui::widgets::Gauge
+    canvas: Progress
     props:
       value: number
       label: string
@@ -86,6 +93,7 @@ elements:
     group: Input
     summary: Tab strip selecting a pane index.
     component: ratatui::widgets::Tabs
+    canvas: Tabs
     props:
       titles: string
       selected: number
@@ -97,6 +105,7 @@ elements:
     group: Input
     summary: Single-line terminal input.
     component: ratatui::widgets::Paragraph
+    canvas: Input
     props:
       placeholder: string
       value: string

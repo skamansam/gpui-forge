@@ -40,6 +40,12 @@ elements:
           (Studio's `frame_rect` tracking); `stream` → the host's frame events
           render inside the card as a mono grid (terminal bases); default →
           the framed 'click to focus' card."
+      compat:
+        type: string
+        summary: "`true` → the pane renders the document through gpui-kit even
+          while `remote:` is set — foreign-base elements map to the `canvas:`
+          analogue their catalog declares (structure/DnD on every base) while
+          the host keeps running for fidelity."
     events:
       click:
         summary: Fired when the remote-preview card is clicked (e.g. to focus

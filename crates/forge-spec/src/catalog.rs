@@ -45,6 +45,10 @@ pub struct ElementDef {
     /// Palette metadata: icon + accordion group (docs/tooling only).
     pub icon: Option<String>,
     pub group: Option<String>,
+    /// The gpui-kit element this renders as on a compat canvas (#145) — a
+    /// foreign base declares its own analogue so structure/DnD work in the
+    /// Studio canvas. Unset = render as a labeled box.
+    pub canvas: Option<String>,
     pub props: Vec<PropDef>,
     pub events: Vec<EventDef>,
     pub children: Children,
@@ -322,6 +326,7 @@ impl Loader {
             content: None,
             icon: None,
             group: None,
+            canvas: None,
             props: Vec::new(),
             events: Vec::new(),
             children: Children::None,
@@ -333,6 +338,19 @@ impl Loader {
                 "component" => element.component = self.text(val),
                 "icon" => element.icon = self.text(val),
                 "group" => element.group = self.text(val),
+                "canvas" => {
+                    let pos = val.pos();
+                    if let Some(name) = self.text(val) {
+                        if is_element_name(&name) {
+                            element.canvas = Some(name);
+                        } else {
+                            self.error(
+                                pos,
+                                format!("`canvas` must name a PascalCase element, found `{name}`"),
+                            );
+                        }
+                    }
+                }
                 "content" => {
                     content_pos = val.pos();
                     element.content = self.text(val);
@@ -348,7 +366,7 @@ impl Loader {
                 "children" => element.children = self.children(val),
                 _ => self.unknown(
                     &key,
-                    "`summary`, `component`, `content`, `props`, `events`, `children`, `icon` or `group`",
+                    "`summary`, `component`, `content`, `props`, `events`, `children`, `icon`, `group` or `canvas`",
                 ),
             }
         }
