@@ -1,4 +1,8 @@
-//! `cargo run -p gpui-forge-runtime --example render -- <doc.forge.yaml>`
+//! `cargo run -p gpui-forge-runtime --example render -- <doc.forge.yaml> [key=value]…`
+//!
+//! Extra `key=value` args write `studio.tab=4`-style state after the document
+//! loads — handy for forcing a selected tab. `FORGE_BOUNDS=1` logs every
+//! element's laid-out bounds to stderr for layout debugging.
 //!
 //! Renders a Forge document in a window (#21) — the smallest complete host:
 //! parse + check, `ForgeView` inside a gpui-kit window, hooks logged to stderr.
@@ -55,6 +59,24 @@ fn main() {
                         }
                         if let Some(doc) = doc {
                             view.set_document(doc, cx);
+                        }
+                        for arg in std::env::args().skip(2) {
+                            if let Some((k, v)) = arg.split_once('=') {
+                                let value = v
+                                    .parse::<f64>()
+                                    .map(serde_json::Value::from)
+                                    .unwrap_or_else(|_| serde_json::Value::from(v));
+                                let path = gpui_forge_runtime::forge_spec::model::Path(
+                                    k.split('.')
+                                        .map(|seg| {
+                                            gpui_forge_runtime::forge_spec::model::PathSegment::Field(
+                                                seg.to_string(),
+                                            )
+                                        })
+                                        .collect(),
+                                );
+                                view.update_state(&path, value, cx);
+                            }
                         }
                         if let Some(dir) = dir.clone() {
                             view.set_base_dir(dir);

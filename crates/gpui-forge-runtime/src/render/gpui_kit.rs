@@ -2952,9 +2952,14 @@ impl ForgeView {
                 let editor = Editor::new(&state)
                     .disabled(self.prop_bool(node, "disabled"))
                     .readonly(self.prop_bool(node, "readonly"));
-                match self.prop(node, "height").and_then(length) {
+                let element = match self.prop(node, "height").and_then(length) {
                     Some(height) => editor.h(height).into_any_element(),
                     None => editor.h_full().into_any_element(),
+                };
+                if std::env::var_os("FORGE_BOUNDS").is_some() {
+                    BoundsLogger::new(element, format!("editor-{key}")).into_any_element()
+                } else {
+                    element
                 }
             }
             "Checkbox" | "Switch" => {
@@ -3886,11 +3891,13 @@ impl ForgeView {
                         if let Some(n) = self.prop(child, "size").and_then(|v| self.number(v)) {
                             panel = panel.size(px(n as f32));
                         }
-                        if let (Some(min), Some(max)) = (
-                            self.prop(child, "min-size").and_then(|v| self.number(v)),
-                            self.prop(child, "max-size").and_then(|v| self.number(v)),
-                        ) {
-                            panel = panel.size_range(px(min as f32)..px(max as f32));
+                        let min = self.prop(child, "min-size").and_then(|v| self.number(v));
+                        let max = self.prop(child, "max-size").and_then(|v| self.number(v));
+                        if min.is_some() || max.is_some() {
+                            panel = panel.size_range(
+                                px(min.unwrap_or(0.0) as f32)
+                                    ..px(max.unwrap_or(f32::MAX as f64) as f32),
+                            );
                         }
                         panel
                             .when(self.prop_bool(child, "fixed"), |p| p.fixed())
@@ -4086,6 +4093,11 @@ impl ForgeView {
                 &mut self.scroll_handles,
                 cx,
             )
+        };
+        let element = if std::env::var_os("FORGE_BOUNDS").is_some() {
+            BoundsLogger::new(element, format!("el-{key}")).into_any_element()
+        } else {
+            element
         };
         let path = key.replacen("root", "0", 1).replace('/', ".");
         let element = if self.pick {
@@ -4363,9 +4375,14 @@ fn container(
             .children(kids)
             .into_any_element()
     } else {
-        style(element, entries, cx)
+        let out = style(element, entries, cx)
             .children(kids)
-            .into_any_element()
+            .into_any_element();
+        if std::env::var_os("FORGE_BOUNDS").is_some() {
+            BoundsLogger::new(out, format!("cont-{id}")).into_any_element()
+        } else {
+            out
+        }
     }
 }
 
@@ -4379,9 +4396,11 @@ fn wrap(
     handles: &mut HashMap<String, ScrollHandle>,
     cx: &App,
 ) -> AnyElement {
-    if entries.is_empty() && tooltip.is_none() {
-        element
-    } else if scrollable(entries) {
+    // Always wrap leaves in a block `div` — gpui-component roots are
+    // `size_full()` (Select, DatePicker, …). Bare in a flex column that
+    // `height: 100%` steals the column's free space from siblings; inside a
+    // block wrapper it resolves against the leaf's own slot instead.
+    if scrollable(entries) {
         let handle = handles.entry(format!("{id}-scroll")).or_default().clone();
         let mut wrapper = style(
             div()
@@ -4410,7 +4429,12 @@ fn wrap(
         .child(element)
         .into_any_element()
     } else {
-        style(div(), entries, cx).child(element).into_any_element()
+        let wrapped = style(div(), entries, cx).child(element).into_any_element();
+        if std::env::var_os("FORGE_BOUNDS").is_some() {
+            BoundsLogger::new(wrapped, format!("wrap-{id}")).into_any_element()
+        } else {
+            wrapped
+        }
     }
 }
 
@@ -4773,6 +4797,73 @@ fn edges(value: &Value) -> Option<[DefiniteLength; 4]> {
 pub struct BoundsTracker {
     child: AnyElement,
     cell: std::rc::Rc<std::cell::RefCell<Option<Bounds<Pixels>>>>,
+}
+
+/// Debug instrument — like `BoundsTracker` but logs the laid-out bounds to
+/// stderr each frame. Wrap an element to measure what layout actually gave it.
+pub struct BoundsLogger {
+    child: AnyElement,
+    label: String,
+}
+
+impl BoundsLogger {
+    pub fn new(child: AnyElement, label: impl Into<String>) -> Self {
+        Self {
+            child,
+            label: label.into(),
+        }
+    }
+}
+
+impl Element for BoundsLogger {
+    type RequestLayoutState = ();
+    type PrepaintState = ();
+    fn id(&self) -> Option<ElementId> {
+        None
+    }
+    fn source_location(&self) -> Option<&'static core::panic::Location<'static>> {
+        None
+    }
+    fn request_layout(
+        &mut self,
+        _id: Option<&GlobalElementId>,
+        _inspector_id: Option<&InspectorElementId>,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> (LayoutId, Self::RequestLayoutState) {
+        (self.child.request_layout(window, cx), ())
+    }
+    fn prepaint(
+        &mut self,
+        _id: Option<&GlobalElementId>,
+        _inspector_id: Option<&InspectorElementId>,
+        bounds: Bounds<Pixels>,
+        _request_layout: &mut Self::RequestLayoutState,
+        window: &mut Window,
+        cx: &mut App,
+    ) -> Self::PrepaintState {
+        eprintln!("[bounds] {} -> {:?}", self.label, bounds);
+        self.child.prepaint(window, cx);
+    }
+    fn paint(
+        &mut self,
+        _id: Option<&GlobalElementId>,
+        _inspector_id: Option<&InspectorElementId>,
+        _bounds: Bounds<Pixels>,
+        _request_layout: &mut Self::RequestLayoutState,
+        _prepaint: &mut Self::PrepaintState,
+        window: &mut Window,
+        cx: &mut App,
+    ) {
+        self.child.paint(window, cx)
+    }
+}
+
+impl IntoElement for BoundsLogger {
+    type Element = Self;
+    fn into_element(self) -> Self::Element {
+        self
+    }
 }
 
 impl BoundsTracker {
