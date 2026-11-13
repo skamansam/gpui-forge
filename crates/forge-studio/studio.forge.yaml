@@ -696,6 +696,38 @@ Dialog#new-project:
           variant: Primary
           on click: create_project()
 
+# ============================================================================
+# THE RENAME DIALOG
+# ============================================================================
+# #148 — the project tree's "Rename…" context action. `files_rename(path)`
+# stashes the target in `studio.rename_target` and opens this with the
+# input pre-seeded to the current name.
+Dialog#rename:
+  style:
+    width: 380px
+    padding: 16px
+    gap: 12px
+    radius: 8px
+    background: $theme.background
+    border: 1px
+    border-style: solid
+    border-color: $theme.border
+  children:
+    - Text: Rename
+      style: {size: lg, weight: semibold}
+    - Input:
+      value: bind $name
+      placeholder: new name
+    - HStack:
+      style: {justify: end, gap: 8px}
+      children:
+        - Button: Cancel
+          variant: Ghost
+          on click: close_dialog()
+        - Button: Rename
+          variant: Primary
+          on click: rename_file()
+
 
 
 # ============================================================================

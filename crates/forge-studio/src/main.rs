@@ -368,6 +368,11 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "widget_set_changed",
         "test_error",
         "open_dialog",
+        "close_dialog",
+        "files_new",
+        "files_reveal",
+        "files_rename",
+        "rename_file",
         "quit",
     ] {
         let shared = shared.clone();
@@ -522,10 +527,11 @@ fn open_dialog(
             cx,
         );
         // Seed fields dialogs bind against — the base registry for pickers,
-        // defaults for the New Project form.
+        // defaults for the New Project form. A second `open_dialog` arg
+        // prefills `name` (the rename dialog passes the current file name).
         v.set_state(
             json!({
-                "name": "app",
+                "name": args.get(1).map(String::as_str).unwrap_or("app"),
                 "base": BASE_ID,
                 "bases": check::bases()
                     .iter()
@@ -713,6 +719,12 @@ fn dispatch(
                 view.update_state(&parse_path("studio.tab").unwrap(), Json::from(1), cx);
             }
         }
+        // #148 — the project tree's right-click actions.
+        "files_new" => files_new(view, args, shared.clone(), cx),
+        "files_reveal" => files_reveal(view, args, cx),
+        "files_rename" => files_rename(view, args, shared, cx),
+        "rename_file" => rename_file(view, shared.clone(), cx),
+        "close_dialog" => close_dialog(cx),
         "save_document" => save_document(view, shared, cx),
         "format_document" => format_document(view, shared, cx),
         "apply_theme" => {
@@ -1011,6 +1023,182 @@ fn create_project(view: &mut ForgeView, shared: SharedState, cx: &mut Context<Fo
         &format!("new project `{name}` — unsaved; pick a folder on first save"),
         cx,
     );
+}
+
+/// #148 context menu — the row's path may be a dir or a file; `dir_of` picks
+/// the folder the action applies to (files act on their parent).
+fn context_dir(arg: Option<&String>, shared: &SharedState) -> Option<PathBuf> {
+    let mut dir = arg
+        .map(PathBuf::from)
+        .filter(|p| !p.as_os_str().is_empty())
+        .or_else(|| shared.borrow().dir.clone())?;
+    if !dir.is_dir() {
+        dir.pop();
+    }
+    Some(dir)
+}
+
+/// `files_new(path)` — the tree's "New document here". Creates the first free
+/// `untitled{,-N}.forge.yaml` in the folder seeded with the open document's
+/// base, then opens it in the Document tab.
+fn files_new(
+    view: &mut ForgeView,
+    args: &[String],
+    shared: SharedState,
+    cx: &mut Context<ForgeView>,
+) {
+    let Some(dir) = context_dir(args.first(), &shared) else {
+        status(view, "no project folder for the new document", cx);
+        return;
+    };
+    let mut candidate = dir.join("untitled.forge.yaml");
+    let mut n = 2;
+    while candidate.exists() {
+        candidate = dir.join(format!("untitled-{n}.forge.yaml"));
+        n += 1;
+    }
+    let base = get_path(view.state(), &parse_path("studio.doc_base").unwrap())
+        .and_then(Json::as_str)
+        .unwrap_or(BASE_ID)
+        .to_owned();
+    let doc = format!(
+        "$schema: {}\nforge: \"0.1\"\nbase: {base}\n\nroot:\n  VStack:\n  style:\n    padding: 16px\n    gap: 8px\n  children:\n    - Text: Hello, Forge!\n",
+        gpui_forge_runtime::forge_spec::yaml_schema::schema_url(&base)
+    );
+    if let Err(e) = std::fs::write(&candidate, &doc) {
+        status(
+            view,
+            &format!("cannot create {}: {e}", candidate.display()),
+            cx,
+        );
+        return;
+    }
+    status(view, &format!("created {}", candidate.display()), cx);
+    // `load_file` refreshes the tree via `load_source`; it lands on Canvas,
+    // so re-point at the Document tab like `open_path` does.
+    load_file(candidate, view, shared, cx);
+    view.update_state(&parse_path("studio.tab").unwrap(), Json::from(1), cx);
+}
+
+/// `files_reveal(path)` — show the file or folder in the OS file manager.
+fn files_reveal(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeView>) {
+    let Some(path) = args.first().map(PathBuf::from) else {
+        return;
+    };
+    let target = if path.is_dir() {
+        path.clone()
+    } else {
+        path.parent()
+            .map(PathBuf::from)
+            .unwrap_or_else(|| path.clone())
+    };
+    #[cfg(target_os = "linux")]
+    let spawned = std::process::Command::new("xdg-open").arg(&target).spawn();
+    #[cfg(target_os = "macos")]
+    let spawned = std::process::Command::new("open").arg(&target).spawn();
+    #[cfg(target_os = "windows")]
+    let spawned = std::process::Command::new("explorer").arg(&target).spawn();
+    match spawned {
+        Ok(_) => status(view, &format!("revealed {}", target.display()), cx),
+        Err(e) => status(
+            view,
+            &format!("cannot reveal {}: {e}", target.display()),
+            cx,
+        ),
+    }
+}
+
+/// `files_rename(path)` — remember the target, then open the `rename` dialog
+/// with the input pre-seeded to the current name (`open_dialog`'s second arg
+/// lands in the dialog's `name` field).
+fn files_rename(
+    view: &mut ForgeView,
+    args: &[String],
+    shared: &SharedState,
+    cx: &mut Context<ForgeView>,
+) {
+    let Some(path) = args.first().map(PathBuf::from) else {
+        return;
+    };
+    let name = path
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_else(|| path.display().to_string());
+    view.update_state(
+        &parse_path("studio.rename_target").unwrap(),
+        Json::String(path.display().to_string()),
+        cx,
+    );
+    open_dialog(view, &["rename".to_owned(), name], shared, cx);
+}
+
+/// `rename_file()` — the rename dialog's confirm. Reads `studio.rename_target`
+/// and the dialog's `name` field, then `fs::rename`s and refreshes the tree.
+/// Renaming the open document re-points `shared.file` so a later save doesn't
+/// resurrect the old name.
+fn rename_file(view: &mut ForgeView, shared: SharedState, cx: &mut Context<ForgeView>) {
+    let Some(from) = get_path(view.state(), &parse_path("studio.rename_target").unwrap())
+        .and_then(|j| j.as_str().map(str::to_owned))
+        .map(PathBuf::from)
+    else {
+        status(view, "nothing to rename", cx);
+        return;
+    };
+    let fields = get_path(view.state(), &parse_path("dialog.state").unwrap())
+        .and_then(|j| j.as_str().map(str::to_owned))
+        .and_then(|s| serde_json::from_str::<Json>(&s).ok())
+        .unwrap_or_default();
+    let name = fields["name"]
+        .as_str()
+        .unwrap_or_default()
+        .trim()
+        .to_owned();
+    if name.is_empty() || name.contains(['/', '\\']) {
+        status(view, "name required (no slashes)", cx);
+        return;
+    }
+    if from.is_file() && !name.ends_with(".forge.yaml") {
+        status(view, "file names must end in .forge.yaml", cx);
+        return;
+    }
+    let Some(parent) = from.parent().map(PathBuf::from) else {
+        return;
+    };
+    let to = parent.join(&name);
+    if to == from {
+        close_dialog(cx);
+        return;
+    }
+    if to.exists() {
+        status(view, &format!("{} already exists", to.display()), cx);
+        return;
+    }
+    if let Err(e) = std::fs::rename(&from, &to) {
+        status(view, &format!("cannot rename {}: {e}", from.display()), cx);
+        return;
+    }
+    if shared.borrow().file.as_deref() == Some(from.as_path()) {
+        shared.borrow_mut().file = Some(to.clone());
+        watch_file(to.clone(), shared.clone(), cx);
+    }
+    refresh_files(view, &parent, cx);
+    status(view, &format!("renamed to {}", to.display()), cx);
+    close_dialog(cx);
+}
+
+/// `window.close_dialog` can't run mid-update (windows are out of the slot
+/// map) — the same defer `open_dialog` uses for opening, for closing.
+fn close_dialog(cx: &mut Context<ForgeView>) {
+    let app = cx.to_async();
+    cx.foreground_executor()
+        .spawn(async move {
+            app.update(|cx| {
+                for handle in cx.windows() {
+                    let _ = handle.update(cx, |_, window, cx| window.close_dialog(cx));
+                }
+            });
+        })
+        .detach();
 }
 
 /// `preview_in_host()` — spawn the out-of-process preview host (#97) on the

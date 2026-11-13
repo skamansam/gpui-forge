@@ -29,6 +29,13 @@ loaded). It lists folders and `*.forge.yaml` files — VCS and build noise
 and entry-capped so a huge tree can't stall the UI. The panel is resizable.
 Clicking a file opens it in the **Document** tab.
 
+Right-clicking a row offers file actions: **New document here** creates the
+first free `untitled{,-N}.forge.yaml` in that folder (seeded with the open
+document's base) and opens it, **Reveal in file manager** opens the OS file
+browser at the row's folder, and **Rename…** prompts for a new name —
+`*.forge.yaml` files keep their suffix. Renaming the open document re-points
+saves at the new path.
+
 ## Saving
 
 Save writes the *preserving* writer's output — your anchors, comments, and

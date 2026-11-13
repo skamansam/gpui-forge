@@ -43,7 +43,7 @@ use gpui_kit::component::kbd::Kbd;
 use gpui_kit::component::label::Label;
 use gpui_kit::component::link::Link;
 use gpui_kit::component::list::{List, ListDelegate, ListEvent, ListItem, ListState};
-use gpui_kit::component::menu::{DropdownMenu as _, PopupMenuItem};
+use gpui_kit::component::menu::{ContextMenuExt as _, DropdownMenu as _, PopupMenuItem};
 use gpui_kit::component::message::{
     Message, MessageAvatar, MessageContent, MessageFooter, MessageHeader,
 };
@@ -951,6 +951,7 @@ impl ForgeView {
             let sel = sel.clone();
             let files_node = files_node.clone();
             let weak = weak.clone();
+            let menu_weak = weak.clone();
             let row = div()
                 .id(format!("files-row-{}", entry.item().id))
                 .flex()
@@ -966,6 +967,33 @@ impl ForgeView {
                         })
                         .ok();
                     })
+                })
+                // #148 nice-to-haves — right-click file ops. The items call
+                // shell hooks (`files_new`/`files_reveal`/`files_rename`)
+                // with the row's path; a host without those hooks sees no
+                // action (the sink no-ops unknown calls).
+                .context_menu({
+                    let weak = menu_weak.clone();
+                    let raw = entry.item().id.to_string();
+                    move |menu, _, _| {
+                        let path = raw.trim_end_matches('/').to_owned();
+                        let hook_item = |label: &'static str, hook: &'static str| {
+                            let weak = weak.clone();
+                            let path = path.clone();
+                            PopupMenuItem::new(label).on_click(move |_, _, cx| {
+                                let weak = weak.clone();
+                                let path = path.clone();
+                                try_update(&weak, cx, "files-context", move |this, cx| {
+                                    this.fire_call(hook, vec![path], cx);
+                                })
+                                .ok();
+                            })
+                        };
+                        menu.item(hook_item("New document here", "files_new"))
+                            .item(hook_item("Reveal in file manager", "files_reveal"))
+                            .separator()
+                            .item(hook_item("Rename…", "files_rename"))
+                    }
                 })
                 .child(entry.item().label.to_string());
             item = item.child(row);
