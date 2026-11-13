@@ -138,6 +138,26 @@ type SharedState = Rc<RefCell<Shared>>;
 type HookCtx = SharedState;
 
 fn main() {
+    // gpui lays the element tree out recursively on the main thread, and
+    // debug frames are fat — the shell document alone needs ~10MB, past the
+    // default 8MB Linux stack. The main stack is fixed at exec, so raise
+    // the limit and re-exec once. If the hard limit already permits 64MB
+    // this costs one fork+exec at startup.
+    #[cfg(target_os = "linux")]
+    if std::env::var_os("FORGE_STACKED").is_none() {
+        let exe = std::env::current_exe().expect("current_exe");
+        let code = std::process::Command::new("bash")
+            .arg("-c")
+            .arg("ulimit -s 65536 2>/dev/null; exec \"$0\" \"$@\"")
+            .arg(exe)
+            .args(std::env::args().skip(1))
+            .env("FORGE_STACKED", "1")
+            .status()
+            .ok()
+            .and_then(|s| s.code())
+            .unwrap_or(1);
+        std::process::exit(code);
+    }
     gpui_kit::application()
         .with_assets(gpui_kit::assets::AllAssets)
         .run(|cx| {
@@ -307,6 +327,11 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         }),
         cx,
     );
+    // #148 — the project sidebar roots at the launch cwd; opening a document
+    // re-roots it at the file's directory via `load_source`.
+    if let Ok(cwd) = std::env::current_dir() {
+        refresh_files(&mut view, &cwd, cx);
+    }
 
     for name in [
         "new_document",
@@ -678,6 +703,14 @@ fn dispatch(
         "open_recent" => {
             if let Some(path) = args.first().map(PathBuf::from) {
                 load_file(path, view, shared.clone(), cx);
+            }
+        }
+        // #148 — project tree clicks open into the Document tab (index 1),
+        // unlike recent/menu opens which land on the Canvas (index 2).
+        "open_path" => {
+            if let Some(path) = args.first().map(PathBuf::from) {
+                load_file(path, view, shared.clone(), cx);
+                view.update_state(&parse_path("studio.tab").unwrap(), Json::from(1), cx);
             }
         }
         "save_document" => save_document(view, shared, cx),
@@ -1467,11 +1500,7 @@ fn x11_pid_has_window(pid: u32) -> Option<bool> {
         if ours {
             return Some(true);
         }
-        if let Some(children) = conn
-            .query_tree(win)
-            .ok()
-            .and_then(|c| c.reply().ok())
-        {
+        if let Some(children) = conn.query_tree(win).ok().and_then(|c| c.reply().ok()) {
             stack.extend_from_slice(&children.children);
         }
     }
@@ -1623,7 +1652,10 @@ fn spawn_pane(base: &str, id: &str) -> Option<(Host, StderrTail)> {
         let tail = tail.clone();
         std::thread::spawn(move || {
             use std::io::BufRead;
-            for line in std::io::BufReader::new(stderr).lines().map_while(Result::ok) {
+            for line in std::io::BufReader::new(stderr)
+                .lines()
+                .map_while(Result::ok)
+            {
                 let mut ring = tail.lock().unwrap();
                 if ring.len() >= 30 {
                     ring.pop_front();
@@ -2378,6 +2410,68 @@ fn load_source(
         }
     }
     host_send_source(view, shared);
+    // #148 — the sidebar roots at the document's folder, falling back to the
+    // last-opened project root when the source has no file behind it.
+    let root = dir
+        .map(|d| d.to_path_buf())
+        .or_else(|| shared.borrow().dir.clone());
+    if let Some(root) = root {
+        refresh_files(view, &root, cx);
+    }
+}
+
+/// #148 — scan the project dir into `studio.files` for the sidebar's
+/// `forge.Files`: folders plus `*.forge.yaml`, dirs first, VCS and build
+/// noise skipped, depth- and entry-capped so a giant tree can't stall the UI.
+fn refresh_files(view: &mut ForgeView, dir: &std::path::Path, cx: &mut Context<ForgeView>) {
+    const SKIP: &[&str] = &["target", "node_modules", "dist", "vendor", "build"];
+    fn scan(dir: &std::path::Path, depth: usize, budget: &mut usize) -> Vec<Json> {
+        if depth > 6 || *budget == 0 {
+            return Vec::new();
+        }
+        let Ok(rd) = std::fs::read_dir(dir) else {
+            return Vec::new();
+        };
+        let mut entries: Vec<(String, PathBuf, bool)> = rd
+            .filter_map(|e| e.ok())
+            .filter_map(|e| {
+                let name = e.file_name().to_string_lossy().into_owned();
+                let path = e.path();
+                let is_dir = path.is_dir();
+                if name.starts_with('.') || SKIP.contains(&name.as_str()) {
+                    return None;
+                }
+                if !is_dir && !name.ends_with(".forge.yaml") {
+                    return None;
+                }
+                Some((name, path, is_dir))
+            })
+            .collect();
+        entries.sort_by(|a, b| b.2.cmp(&a.2).then_with(|| a.0.cmp(&b.0)));
+        entries
+            .into_iter()
+            .filter_map(|(name, path, is_dir)| {
+                if *budget == 0 {
+                    return None;
+                }
+                *budget -= 1;
+                Some(json!({
+                    "name": name,
+                    "path": path.display().to_string(),
+                    "dir": is_dir,
+                    "children": if is_dir { scan(&path, depth + 1, budget) } else { Vec::<Json>::new() },
+                }))
+            })
+            .collect()
+    }
+    let mut budget = 400usize;
+    let entries = scan(dir, 0, &mut budget);
+    view.update_state(&parse_path("studio.files").unwrap(), json!(entries), cx);
+    view.update_state(
+        &parse_path("studio.project_dir").unwrap(),
+        Json::String(dir.display().to_string()),
+        cx,
+    );
 }
 
 /// `on change: source_changed()` — re-check the source on every edit and keep the

@@ -87,6 +87,26 @@ elements:
         summary: Shown when nothing is selected.
     children: none
 
+  Files:
+    summary: Project file tree — reads a JSON listing from state (`of:`) with
+      `[{name, path, dir, children}]` entries; file rows write `selected` and
+      fire `select`, folders expand.
+    component: gpui_forge_runtime::render::ForgeView
+    props:
+      of:
+        type: string
+        summary: State path holding the file listing — default `studio.files`.
+      placeholder:
+        type: string
+        summary: Shown while the listing is empty.
+      selected:
+        type: string
+        bindable: true
+        summary: Absolute path of the clicked file.
+    events:
+      select: string
+    children: none
+
   Palette:
     summary: Catalog-driven element palette — a dropdown selects the library
       (base or a registered ForgeLibrary) and a button grid inserts its

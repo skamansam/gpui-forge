@@ -20,6 +20,15 @@ is only needed once you do something that requires one.
 Recent files live in the menu too — the list persists at
 `~/.local/share/gpui-forge/recent.txt`.
 
+## The project sidebar
+
+The left rail is a file viewer rooted at the open document's folder (the
+last-opened project root, or Studio's launch directory before anything is
+loaded). It lists folders and `*.forge.yaml` files — VCS and build noise
+(`target`, `node_modules`, dot-files) is filtered out and the scan is depth-
+and entry-capped so a huge tree can't stall the UI. The panel is resizable.
+Clicking a file opens it in the **Document** tab.
+
 ## Saving
 
 Save writes the *preserving* writer's output — your anchors, comments, and

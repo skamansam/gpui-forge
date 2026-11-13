@@ -5,8 +5,10 @@ edit is a mutation that writes back to the YAML source, with undo/redo on top.
 
 ## Palette
 
-The left rail lists every element in the base catalog (and any library the
-document imports via `use:`), grouped by section.
+The palette docks beside the canvas inside the **Canvas** tab — it only makes
+sense next to the document it inserts into. It lists every element in the
+base catalog (and any library the document imports via `use:`), grouped by
+section.
 
 - **Click** an element to insert it inside the node selected in the outline.
 - **Drag** it onto the outline or the preview to pick the exact drop point.

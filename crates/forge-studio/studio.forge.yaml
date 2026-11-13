@@ -465,28 +465,42 @@ varsTab: &varsTab
 # ============================================================================
 previewTab: &previewTab
   children:
-    - VStack:
-      style: {grow: true, min-height: 0}
+    - HStack:
+      style: {grow: true, min-height: 0, gap: 8px}
       children:
-        # `compat` (#145) — the canvas always renders the document through
-        # gpui-kit widgets, mapping foreign-base elements to their catalog
-        # `canvas:` analogue, so structure editing/DnD works on every base.
-        # The remote host still runs for pixel fidelity — its window floats
-        # separately (`remote` mode) or embeds over this slot (`embedded`).
-        - forge.Preview#canvas:
-          remote: "{$studio.host}"
-          mode: "{$preview.mode}"
-          compat: true
-          on click: raise_host()
+        # #148 — the palette lives beside the canvas it's used on, docked in a
+        # column here rather than as the app-wide sidebar.
+        - VStack#palette:
           style:
-            grow: true
-            border: 1px
-        # #120 Phase 3 — the TUI's ANSI stream lands in `preview.frame`
-        # ({seq, cols, rows, data}); the card's terminal emulator paints it.
-        - Text: "frame {$preview.frame.seq}"
-          style:
-            size: xs
-            color: $theme.muted_foreground
+            width: 200px
+            height: full
+            padding: 8px
+            gap: 8px
+            overflow: scroll
+          children:
+            - forge.Palette:
+        - VStack:
+          style: {grow: true, min-width: 0, min-height: 0}
+          children:
+            # `compat` (#145) — the canvas always renders the document through
+            # gpui-kit widgets, mapping foreign-base elements to their catalog
+            # `canvas:` analogue, so structure editing/DnD works on every base.
+            # The remote host still runs for pixel fidelity — its window floats
+            # separately (`remote` mode) or embeds over this slot (`embedded`).
+            - forge.Preview#canvas:
+              remote: "{$studio.host}"
+              mode: "{$preview.mode}"
+              compat: true
+              on click: raise_host()
+              style:
+                grow: true
+                border: 1px
+            # #120 Phase 3 — the TUI's ANSI stream lands in `preview.frame`
+            # ({seq, cols, rows, data}); the card's terminal emulator paints it.
+            - Text: "frame {$preview.frame.seq}"
+              style:
+                size: xs
+                color: $theme.muted_foreground
 
 
 # ============================================================================
@@ -556,47 +570,64 @@ body: &body
     grow: true
     min-height: 0
   children:
-    - VStack#palette:
-      style:
-        width: 230px
-        height: full
-        padding: 8px
-        gap: 8px
-        overflow: scroll
+    - Resizable:
+      layout: Horizontal
+      style: {grow: true, min-height: 0}
       children:
-        - forge.Palette:
-    - Separator:
-      tooltip: Separator
-      orientation: Vertical
-    - HStack#workspace:
-      style:
-        grow: true
-        min-width: 0
-        gap: 8px
-        padding: 8px
-      children:
-        - Tabs#panes:
-          variant: Pill
-          style:
-            grow: true
-            min-height: 0
-            basis: 100%
-            border: 1px
-          selected: bind $studio.tab
+        # #148 — project sidebar: the folder of the open document, scanned by
+        # main.rs into `studio.files`. Clicking a file opens it.
+        - ResizablePanel:
+          size: 230
+          min-size: 160
           children:
-            - Tab: Start
-              <<: *welcomeTab
-            - Tab: Document
-              <<: *sourceTab
-            - Tab: Canvas
-              <<: *previewTab
-            - Tab: State
-              <<: *varsTab
-            - Tab: Theme
-              <<: *themesTab
+            - VStack#project:
+              style:
+                grow: true
+                height: full
+                padding: 8px
+                gap: 8px
+                overflow: scroll
+              children:
+                - Label: Project
+                  style: {weight: semibold, size: sm}
+                - Text: "{$studio.project_dir}"
+                  style: {size: xs, color: $theme.muted_foreground}
+                - forge.Files#files:
+                  of: studio.files
+                  selected: bind $studio.file_selected
+                  on select: open_path($studio.file_selected)
+                  placeholder: no .forge.yaml files here
+        - ResizablePanel:
+          children:
+            - HStack#workspace:
+              style:
+                grow: true
+                min-width: 0
+                gap: 8px
+                padding: 8px
+              children:
+                - Tabs#panes:
+                  variant: Pill
+                  style:
+                    grow: true
+                    min-height: 0
+                    basis: 100%
+                    border: 1px
+                  selected: bind $studio.tab
+                  children:
+                    - Tab: Start
+                      <<: *welcomeTab
+                    - Tab: Document
+                      <<: *sourceTab
+                    - Tab: Canvas
+                      <<: *previewTab
+                    - Tab: State
+                      <<: *varsTab
+                    - Tab: Theme
+                      <<: *themesTab
 
-    - VStack#inspector:
-      <<: *inspector
+                - VStack#inspector:
+                  <<: *inspector
 
 
 # ============================================================================

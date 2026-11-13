@@ -7915,6 +7915,156 @@
           "if": {
             "not": {
               "propertyNames": {
+                "pattern": "^(?!Files(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^Files(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "of": {
+                "description": "State path holding the file listing — default `studio.files`.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on select": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "placeholder": {
+                "description": "Shown while the listing is empty.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "selected": {
+                "description": "Absolute path of the clicked file.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Files(#[\\w-]+| \\.[\\w-]+)?|children|of|on (select)|placeholder|selected|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.Files(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.Files(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "of": {
+                "description": "State path holding the file listing — default `studio.files`.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on select": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "placeholder": {
+                "description": "Shown while the listing is empty.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "selected": {
+                "description": "Absolute path of the clicked file.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Files(#[\\w-]+| \\.[\\w-]+)?|children|of|on (select)|placeholder|selected|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
                 "pattern": "^(?!Form(#[\\w-]+| \\.[\\w-]+)?$).*$"
               }
             }
@@ -25190,7 +25340,7 @@
         }
       },
       "propertyNames": {
-        "pattern": "^((SegmentedControl|DescriptionItem|DescriptionList|SidebarMenuItem|BreadcrumbItem|MessageContent|ProgressCircle|ResizablePanel|TrendIndicator|AccordionItem|InlineMessage|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|SettingsGroup|SidebarFooter|SidebarHeader|StatusMessage|DropdownMenu|TableCaption|TimelineItem|ToggleButton|AspectRatio|AvatarGroup|Collapsible|ColorPicker|NumberInput|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|Breadcrumb|CopyButton|DatePicker|EmptyState|IconButton|Pagination|RadioGroup|Scrollable|Accordion|Container|FormField|Inspector|Paragraph|Resizable|Separator|Statistic|StatusBar|TableBody|TableCell|TableHead|TextInput|TimeField|Calendar|Checkbox|GroupBox|Markdown|MenuItem|OtpInput|Overline|Progress|Settings|Showcase|Skeleton|Subtitle|TableRow|Terminal|Textarea|TitleBar|TreeItem|UsageBar|Callout|Caption|Divider|Heading|KpiCard|Message|Outline|Palette|Preview|Sidebar|Spinner|Stepper|Toolbar|Avatar|Banner|Button|Canvas|Center|Dialog|Editor|HStack|Player|QrCode|Rating|Select|Slider|Switch|Toggle|VStack|Viewer|ZStack|Alert|Badge|Block|Board|Chart|Empty|Frame|Gauge|Image|Input|Label|Meter|Paper|Radio|Space|Table|Title|Card|Fade|Form|Icon|Link|List|Tabs|Text|Tree|Vars|Box|Kbd|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(SegmentedControl|DescriptionItem|DescriptionList|SidebarMenuItem|BreadcrumbItem|MessageContent|ProgressCircle|ResizablePanel|TrendIndicator|AccordionItem|InlineMessage|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|SettingsGroup|SidebarFooter|SidebarHeader|StatusMessage|DropdownMenu|TableCaption|TimelineItem|ToggleButton|AspectRatio|AvatarGroup|Collapsible|ColorPicker|NumberInput|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|Breadcrumb|CopyButton|DatePicker|EmptyState|IconButton|Pagination|RadioGroup|Scrollable|Accordion|Container|FormField|Inspector|Paragraph|Resizable|Separator|Statistic|StatusBar|TableBody|TableCell|TableHead|TextInput|TimeField|Calendar|Checkbox|GroupBox|Markdown|MenuItem|OtpInput|Overline|Progress|Settings|Showcase|Skeleton|Subtitle|TableRow|Terminal|Textarea|TitleBar|TreeItem|UsageBar|Callout|Caption|Divider|Heading|KpiCard|Message|Outline|Palette|Preview|Sidebar|Spinner|Stepper|Toolbar|Avatar|Banner|Button|Canvas|Center|Dialog|Editor|HStack|Player|QrCode|Rating|Select|Slider|Switch|Toggle|VStack|Viewer|ZStack|Alert|Badge|Block|Board|Chart|Empty|Frame|Gauge|Image|Input|Label|Meter|Paper|Radio|Space|Table|Title|Card|Fade|Form|Icon|Link|List|Tabs|Text|Tree|Vars|Box|Kbd|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<|(if|for|with|match|else|each|index|key|as|is|not|case .+))$"
+        "pattern": "^((SegmentedControl|DescriptionItem|DescriptionList|SidebarMenuItem|BreadcrumbItem|MessageContent|ProgressCircle|ResizablePanel|TrendIndicator|AccordionItem|InlineMessage|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|SettingsGroup|SidebarFooter|SidebarHeader|StatusMessage|DropdownMenu|TableCaption|TimelineItem|ToggleButton|AspectRatio|AvatarGroup|Collapsible|ColorPicker|NumberInput|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|Breadcrumb|CopyButton|DatePicker|EmptyState|IconButton|Pagination|RadioGroup|Scrollable|Accordion|Container|FormField|Inspector|Paragraph|Resizable|Separator|Statistic|StatusBar|TableBody|TableCell|TableHead|TextInput|TimeField|Calendar|Checkbox|GroupBox|Markdown|MenuItem|OtpInput|Overline|Progress|Settings|Showcase|Skeleton|Subtitle|TableRow|Terminal|Textarea|TitleBar|TreeItem|UsageBar|Callout|Caption|Divider|Heading|KpiCard|Message|Outline|Palette|Preview|Sidebar|Spinner|Stepper|Toolbar|Avatar|Banner|Button|Canvas|Center|Dialog|Editor|HStack|Player|QrCode|Rating|Select|Slider|Switch|Toggle|VStack|Viewer|ZStack|Alert|Badge|Block|Board|Chart|Empty|Files|Frame|Gauge|Image|Input|Label|Meter|Paper|Radio|Space|Table|Title|Card|Fade|Form|Icon|Link|List|Tabs|Text|Tree|Vars|Box|Kbd|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(SegmentedControl|DescriptionItem|DescriptionList|SidebarMenuItem|BreadcrumbItem|MessageContent|ProgressCircle|ResizablePanel|TrendIndicator|AccordionItem|InlineMessage|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|SettingsGroup|SidebarFooter|SidebarHeader|StatusMessage|DropdownMenu|TableCaption|TimelineItem|ToggleButton|AspectRatio|AvatarGroup|Collapsible|ColorPicker|NumberInput|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|Breadcrumb|CopyButton|DatePicker|EmptyState|IconButton|Pagination|RadioGroup|Scrollable|Accordion|Container|FormField|Inspector|Paragraph|Resizable|Separator|Statistic|StatusBar|TableBody|TableCell|TableHead|TextInput|TimeField|Calendar|Checkbox|GroupBox|Markdown|MenuItem|OtpInput|Overline|Progress|Settings|Showcase|Skeleton|Subtitle|TableRow|Terminal|Textarea|TitleBar|TreeItem|UsageBar|Callout|Caption|Divider|Heading|KpiCard|Message|Outline|Palette|Preview|Sidebar|Spinner|Stepper|Toolbar|Avatar|Banner|Button|Canvas|Center|Dialog|Editor|HStack|Player|QrCode|Rating|Select|Slider|Switch|Toggle|VStack|Viewer|ZStack|Alert|Badge|Block|Board|Chart|Empty|Files|Frame|Gauge|Image|Input|Label|Meter|Paper|Radio|Space|Table|Title|Card|Fade|Form|Icon|Link|List|Tabs|Text|Tree|Vars|Box|Kbd|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<|(if|for|with|match|else|each|index|key|as|is|not|case .+))$"
       },
       "type": "object"
     },

@@ -905,6 +905,98 @@ impl ForgeView {
             .into_any_element()
     }
 
+    /// `forge.Files` (#148) — a project file tree. `of:` names the state path
+    /// holding Studio's JSON listing (`[{name, path, dir, children}]`); file
+    /// rows write `bind selected` and fire `select`, folders just expand.
+    /// Directory ids carry a trailing `/` so the click handler can skip them.
+    fn files(&mut self, node: &Node, key: &str, cx: &mut Context<Self>) -> AnyElement {
+        let of = self
+            .prop_text(node, "of")
+            .unwrap_or_else(|| "studio.files".into());
+        let sel = self.two_way(node, "selected");
+        let data = parse_path(&of)
+            .ok()
+            .and_then(|p| get_path(self.state(), &p).cloned())
+            .unwrap_or(Json::Null);
+        let mut items = Vec::new();
+        if let Some(entries) = data.as_array() {
+            Self::files_data(entries, &mut items);
+        }
+        if items.is_empty() {
+            return placeholder(
+                self.prop_text(node, "placeholder")
+                    .unwrap_or_else(|| "no files".into()),
+                cx,
+            );
+        }
+        let state = match self.trees.get(key) {
+            Some(state) => {
+                state.update(cx, |state, cx| {
+                    *state = std::mem::replace(state, TreeState::new(cx)).items(items.clone());
+                });
+                state.clone()
+            }
+            None => {
+                let state = cx.new(|cx| TreeState::new(cx).items(items));
+                self.trees.insert(key.to_owned(), state.clone());
+                state
+            }
+        };
+        let weak = cx.entity().downgrade();
+        let files_node = node.clone();
+        Tree::new(&state, move |ix, entry, selected, _, _cx| {
+            let mut item = ListItem::new(ix);
+            let path = entry.item().id.to_string();
+            let is_dir = path.ends_with('/');
+            let sel = sel.clone();
+            let files_node = files_node.clone();
+            let weak = weak.clone();
+            let row = div()
+                .id(format!("files-row-{}", entry.item().id))
+                .flex()
+                .flex_row()
+                .items_center()
+                .when(!is_dir, |d| {
+                    d.on_mouse_down(MouseButton::Left, move |_, _, cx| {
+                        try_update(&weak, cx, "event", |this, cx| {
+                            if let Some(p) = &sel {
+                                this.write(p, Json::String(path.clone()), cx);
+                            }
+                            this.fire(&files_node, "select", cx);
+                        })
+                        .ok();
+                    })
+                })
+                .child(entry.item().label.to_string());
+            item = item.child(row);
+            item.selected(selected)
+        })
+        .into_any_element()
+    }
+
+    /// JSON `[{name, path, dir, children}]` → `TreeItem`s — the listing Studio
+    /// writes to `studio.files`. Directories expand by default and get the `/`
+    /// marker the row handler checks.
+    fn files_data(entries: &[Json], items: &mut Vec<TreeItem>) {
+        for e in entries {
+            let name = e["name"].as_str().unwrap_or_default();
+            let mut path = e["path"].as_str().unwrap_or_default().to_owned();
+            let is_dir = e["dir"].as_bool().unwrap_or(false);
+            if is_dir {
+                path.push('/');
+            }
+            let mut data = TreeItem::new(&path, name);
+            let mut subs = Vec::new();
+            if let Some(children) = e["children"].as_array() {
+                Self::files_data(children, &mut subs);
+            }
+            if !subs.is_empty() {
+                data = data.children(subs).expanded(true);
+            }
+            items.push(data);
+        }
+    }
+
     /// `forge.Showcase` (#125) — the theme editor's live widget gallery. Same
     /// library dropdown as `forge.Palette` (state `studio.showcase_lib`), but
     /// each element renders as a real widget under its catalog `group:` in an
@@ -1261,7 +1353,10 @@ impl ForgeView {
     }
 
     /// Renders `nodes` as siblings — control blocks and control-modified
-    /// elements each expand to zero or more elements.
+    /// elements each expand to zero or more elements. A `for` loop, not
+    /// `flat_map`: iterator adaptor frames cost kilobytes of stack each, and
+    /// this recurses once per document depth — deep docs overflow the
+    /// default 8MB stack otherwise.
     fn render_kids(
         &mut self,
         nodes: &[Node],
@@ -1269,11 +1364,11 @@ impl ForgeView {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Vec<AnyElement> {
-        nodes
-            .iter()
-            .enumerate()
-            .flat_map(|(i, node)| self.expand(node, &format!("{key}/{i}"), window, cx))
-            .collect()
+        let mut out = Vec::with_capacity(nodes.len());
+        for (i, node) in nodes.iter().enumerate() {
+            out.extend(self.expand(node, &format!("{key}/{i}"), window, cx));
+        }
+        out
     }
 
     /// One node's expansion — `if` gates, `for` repeats, `with` scopes and
@@ -1554,11 +1649,11 @@ impl ForgeView {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Vec<AnyElement> {
-        node.children
-            .iter()
-            .enumerate()
-            .flat_map(|(i, child)| self.expand(child, &format!("{key}/{i}"), window, cx))
-            .collect()
+        let mut out = Vec::with_capacity(node.children.len());
+        for (i, child) in node.children.iter().enumerate() {
+            out.extend(self.expand(child, &format!("{key}/{i}"), window, cx));
+        }
+        out
     }
 
     /// A `SettingPage` node — `title`/`text` prop or positional content names it.
@@ -2305,12 +2400,10 @@ impl ForgeView {
         window: &mut Window,
         cx: &mut Context<Self>,
     ) -> Field {
-        let kids: Vec<AnyElement> = node
-            .children
-            .iter()
-            .enumerate()
-            .flat_map(|(i, child)| self.expand(child, &format!("{key}/{i}"), window, cx))
-            .collect();
+        let mut kids: Vec<AnyElement> = Vec::with_capacity(node.children.len());
+        for (i, child) in node.children.iter().enumerate() {
+            kids.extend(self.expand(child, &format!("{key}/{i}"), window, cx));
+        }
         let mut field = Field::new().children(kids);
         if let Some(label) = self.prop_text(node, "label") {
             field = field.label(label);
@@ -2409,9 +2502,7 @@ impl ForgeView {
                     // through the gpui-kit analogue map even while a remote
                     // host is live: mapped widgets give structure, selection
                     // and DnD; the host keeps running separately for fidelity.
-                    let compat = self
-                        .prop_text(node, "compat")
-                        .is_some_and(|v| v == "true");
+                    let compat = self.prop_text(node, "compat").is_some_and(|v| v == "true");
                     // `remote:` non-empty — the document previews in an
                     // out-of-process host (#97). The element is a framed card
                     // instead of a nested view, and `on click:` fires through
@@ -2595,9 +2686,7 @@ impl ForgeView {
                             let cell = self
                                 .preview_bounds
                                 .entry(id)
-                                .or_insert_with(|| {
-                                    std::rc::Rc::new(std::cell::RefCell::new(None))
-                                })
+                                .or_insert_with(|| std::rc::Rc::new(std::cell::RefCell::new(None)))
                                 .clone();
                             BoundsTracker::new(element, cell).into_any_element()
                         } else {
@@ -2636,6 +2725,7 @@ impl ForgeView {
                     }
                 }
                 (Some("forge"), "Palette") => self.palette(node, key, cx),
+                (Some("forge"), "Files") => self.files(node, key, cx),
                 (Some("forge"), "Showcase") => self.showcase(node, key, window, cx),
                 (Some("forge"), "Vars") => self.vars(node, key, window, cx),
                 _ => {
@@ -2683,11 +2773,11 @@ impl ForgeView {
         let id = SharedString::from(format!("forge-{key}"));
         let weak = cx.entity().downgrade();
         let children = |this: &mut Self, window: &mut Window, cx: &mut Context<Self>| {
-            node.children
-                .iter()
-                .enumerate()
-                .flat_map(|(i, child)| this.expand(child, &format!("{key}.{i}"), window, cx))
-                .collect::<Vec<_>>()
+            let mut out = Vec::with_capacity(node.children.len());
+            for (i, child) in node.children.iter().enumerate() {
+                out.extend(this.expand(child, &format!("{key}.{i}"), window, cx));
+            }
+            out
         };
         // #145 — compat canvas: a same-named foreign element (a `Badge` in a
         // gpui02 doc) reaches the kit dispatch before the fallback lookup, so
@@ -3192,13 +3282,16 @@ impl ForgeView {
                     })
                     .collect();
                 let content = node.children.get(selected).map(|tab| {
-                    tab.children
-                        .iter()
-                        .enumerate()
-                        .flat_map(|(i, child)| {
-                            self.expand(child, &format!("{key}.{selected}.{i}"), window, cx)
-                        })
-                        .collect::<Vec<_>>()
+                    let mut out = Vec::with_capacity(tab.children.len());
+                    for (i, child) in tab.children.iter().enumerate() {
+                        out.extend(self.expand(
+                            child,
+                            &format!("{key}.{selected}.{i}"),
+                            window,
+                            cx,
+                        ));
+                    }
+                    out
                 });
                 let bar = TabBar::new(id.clone())
                     .with_variant(tab_variant(
@@ -3733,14 +3826,10 @@ impl ForgeView {
                     });
                 for (ci, child) in node.children.iter().enumerate() {
                     let title = self.prop_text(child, "title").unwrap_or_default();
-                    let kids: Vec<AnyElement> = child
-                        .children
-                        .iter()
-                        .enumerate()
-                        .flat_map(|(i, kid)| {
-                            self.expand(kid, &format!("{key}.{ci}.{i}"), window, cx)
-                        })
-                        .collect();
+                    let mut kids: Vec<AnyElement> = Vec::with_capacity(child.children.len());
+                    for (i, kid) in child.children.iter().enumerate() {
+                        kids.extend(self.expand(kid, &format!("{key}.{ci}.{i}"), window, cx));
+                    }
                     let mut item = gpui_kit::component::accordion::AccordionItem::new()
                         .title(title)
                         .open(open_set.contains(&ci))
@@ -4196,9 +4285,7 @@ impl ForgeView {
                         }
                         return self.render_node(&mapped, key, window, cx);
                     }
-                    None => {
-                        placeholder(format!("`{other}` is not in the gpui-kit catalog"), cx)
-                    }
+                    None => placeholder(format!("`{other}` is not in the gpui-kit catalog"), cx),
                 }
             }
         };

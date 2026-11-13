@@ -22,11 +22,11 @@ widget set like `ely`) or a `.forge.yaml` path to open.
 ```
 ┌─ menu bar ─ File: New · New Project… · Open… · Open Project… · Preview in Host… · Format · Undo · Redo · Save · Preferences…
 │
-│ palette        Tabs: Start | Document | Canvas | State | Theme          inspector
-│ (230px)      ┌─────────────────────────────────────────────────────┐   (280px)
-│ click/drag   │  the document — source text, live canvas, state,    │   Structure outline
-│ to insert    │  theme editor                                        │   typed props
-│              │                                                      │   Diagnostics
+│ project      Tabs: Start | Document | Canvas | State | Theme          inspector
+│ (resizable)  ┌─────────────────────────────────────────────────────┐   (280px)
+│ .forge.yaml  │  the document — source text, live canvas, state,    │   Structure outline
+│ files, click │  theme editor                                        │   typed props
+│ to open      │  (the palette docks beside the Canvas tab now)       │   Diagnostics
 │              └─────────────────────────────────────────────────────┘   View state
 └─ status bar ── message · project dir · host · file · spec/base tags
 ```
