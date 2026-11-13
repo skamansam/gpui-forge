@@ -49,6 +49,7 @@
 - [About the Project](#star2-about-the-project)
   * [Tech Stack](#space_invader-tech-stack)
   * [Features](#dart-features)
+  * [Dogfooding](#dog-eating-our-own-dog-food)
   * [Base Component Systems](#jigsaw-base-component-systems)
   * [Architecture](#triangular_ruler-architecture-overview)
 - [Getting Started](#toolbox-getting-started)
@@ -163,6 +164,33 @@ Six core pillars drive the project:
   hosts, generated apps) re-execs under a 64 MB stack via
   `ensure_main_stack()`, because GPUI's recursive layout exceeds the default
   8 MB on deep documents.
+
+<!-- Dogfooding -->
+### :dog: Eating our own dog food
+
+> **Forge Studio's entire UI is a Forge document.**
+> [`crates/forge-studio/studio.forge.yaml`](crates/forge-studio/studio.forge.yaml)
+> — ~850 lines of declarative YAML — is bundled into the binary and rendered
+> at startup by the same `ForgeView` Studio hands to your documents.
+
+Every panel you interact with is a runtime element doing its day job:
+
+| What you see in Studio | The element | What it proves |
+|---|---|---|
+| Canvas | `forge.Preview` | embeds a live document render inside another document |
+| Palette | `forge.Palette` | serves the element catalog with drag payloads |
+| Structure outline | `forge.Outline` | renders a document's tree into state |
+| Inspector | `forge.Inspector` | two-way edits typed props on the selected node |
+| Project sidebar | `forge.Files` | lists `*.forge.yaml` with select/reveal/rename hooks |
+| State tab | `forge.Vars` | introspects live document state |
+| Showcase tabs | nested `forge.Preview` | other bases' demos render inside the shell doc |
+
+`on click: save_document()` in the menu bar dispatches to Rust hooks
+registered in `main.rs`; Preferences, New Project and Rename are `Dialog#`
+blocks declared in the same file. The shell imports `use: forge: forge` like
+any document would, passes the spec suite's validation tests, and — yes —
+opens in Studio itself. If the format can't express Studio, the format gets
+fixed.
 
 <!-- Bases -->
 ### :jigsaw: Base Component Systems
