@@ -88,6 +88,35 @@ struct Shared {
     redo: Vec<(Document, String)>,
 }
 
+/// #150 — a persisted window placement. `maximized` restores as
+/// `WindowBounds::Maximized`; fullscreen saves as windowed (restoring
+/// fullscreen on launch is hostile).
+#[derive(Clone, Copy, PartialEq)]
+struct SavedWindow {
+    x: f64,
+    y: f64,
+    w: f64,
+    h: f64,
+    maximized: bool,
+}
+
+impl SavedWindow {
+    fn new(b: Bounds<Pixels>, maximized: bool) -> Self {
+        Self {
+            x: f64::from(b.origin.x),
+            y: f64::from(b.origin.y),
+            w: f64::from(b.size.width),
+            h: f64::from(b.size.height),
+            maximized,
+        }
+    }
+}
+
+/// Last geometry the poll task observed — `save_prefs` writes it out. A
+/// static (like HOST/HOSTS) because `#[forge_hook]` call sites can't reach
+/// `Shared`.
+static LAST_WINDOW: std::sync::Mutex<Option<SavedWindow>> = std::sync::Mutex::new(None);
+
 /// The running `forge-preview` process (#97) — stdin for commands, stdout
 /// drained by a reader thread into the event channel the pump loop owns.
 struct Host {
@@ -164,10 +193,56 @@ fn main() {
                 }
             })
             .detach();
-            let bounds = Bounds::centered(None, size(px(1400.0), px(900.0)), cx);
+            // #150 — restore persisted geometry. The saved rect counts as
+            // visible when its title-bar strip still overlaps a live
+            // display (a display may have been unplugged); size floors sit
+            // at #149's eventual minimum. Anything else → centered.
+            let prefs = load_prefs();
+            let key = |k: &str| prefs.get(k).and_then(Json::as_f64);
+            let centered = |cx: &App| Bounds::centered(None, size(px(1400.0), px(900.0)), cx);
+            let bounds = match (
+                key("window_x"),
+                key("window_y"),
+                key("window_w"),
+                key("window_h"),
+            ) {
+                (Some(x), Some(y), Some(w), Some(h)) => {
+                    let w = w.max(640.0);
+                    let h = h.max(400.0);
+                    let visible = cx.displays().iter().any(|d| {
+                        let db = d.bounds();
+                        let (dx0, dy0) = (f32::from(db.origin.x), f32::from(db.origin.y));
+                        let (dx1, dy1) = (
+                            dx0 + f32::from(db.size.width),
+                            dy0 + f32::from(db.size.height),
+                        );
+                        let (x, y, w) = (x as f32, y as f32, w as f32);
+                        let iw = (x + w).min(dx1) - x.max(dx0);
+                        let ih = (y + 30.0).min(dy1) - y.max(dy0);
+                        iw >= 100.0 && ih >= 10.0
+                    });
+                    if visible {
+                        Bounds::new(
+                            point(px(x as f32), px(y as f32)),
+                            size(px(w as f32), px(h as f32)),
+                        )
+                    } else {
+                        centered(cx)
+                    }
+                }
+                _ => centered(cx),
+            };
+            let maximized = prefs
+                .get("window_maximized")
+                .and_then(Json::as_bool)
+                .unwrap_or(false);
             let options = WindowOptions {
                 app_id: Some("gpui-forge".into()),
-                window_bounds: Some(WindowBounds::Windowed(bounds)),
+                window_bounds: Some(if maximized {
+                    WindowBounds::Maximized(bounds)
+                } else {
+                    WindowBounds::Windowed(bounds)
+                }),
                 titlebar: Some(TitlebarOptions {
                     title: Some("Forge Studio".into()),
                     appears_transparent: true,
@@ -424,6 +499,36 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     // Declared panes in the shell document (the Theme-tab theme preview)
     // spawn hosts from startup — no need to wait for a foreign-base open.
     pane_sync(shared.clone(), cx);
+    // #150 — poll the window bounds and persist on change. Covers
+    // move/resize and crash-quits without platform resize-event plumbing;
+    // writes only on an actual geometry change.
+    cx.spawn(async move |view, cx| {
+        let mut last: Option<SavedWindow> = None;
+        loop {
+            cx.background_executor()
+                .timer(std::time::Duration::from_millis(500))
+                .await;
+            let cur = cx.update(|cx| {
+                cx.windows().first().and_then(|h| {
+                    h.update(cx, |_, w, _| match w.window_bounds() {
+                        WindowBounds::Windowed(b) => Some(SavedWindow::new(b, false)),
+                        WindowBounds::Maximized(b) => Some(SavedWindow::new(b, true)),
+                        WindowBounds::Fullscreen(b) => Some(SavedWindow::new(b, false)),
+                    })
+                    .ok()
+                    .flatten()
+                })
+            });
+            let Some(g) = cur else { continue };
+            if last == Some(g) {
+                continue;
+            }
+            last = Some(g);
+            *LAST_WINDOW.lock().unwrap() = Some(g);
+            view.update(cx, |view, _| save_prefs(view)).ok();
+        }
+    })
+    .detach();
     view
 }
 
@@ -2330,7 +2435,8 @@ fn load_prefs() -> Json {
     let s = prefs_file()
         .and_then(|f| std::fs::read_to_string(f).ok())
         .unwrap_or_default();
-    // tiny TOML-ish parse: `key = value` lines. Strings quoted, bool bare.
+    // tiny TOML-ish parse: `key = value` lines. Strings quoted, bools and
+    // numbers bare.
     let mut m = serde_json::Map::new();
     for line in s.lines() {
         let line = line.trim();
@@ -2340,6 +2446,8 @@ fn load_prefs() -> Json {
         let (k, v) = (k.trim(), v.trim());
         if v == "true" || v == "false" {
             m.insert(k.to_owned(), Json::Bool(v == "true"));
+        } else if let Ok(n) = v.parse::<f64>() {
+            m.insert(k.to_owned(), Json::from(n));
         } else {
             m.insert(k.to_owned(), Json::String(v.trim_matches('"').to_owned()));
         }
@@ -2370,10 +2478,16 @@ fn save_prefs(view: &ForgeView) {
         .to_owned();
     if let Some(f) = prefs_file() {
         let _ = std::fs::create_dir_all(f.parent().unwrap());
-        let _ = std::fs::write(
-            f,
-            format!("theme = \"{theme}\"\ndark = {dark}\ntheme_preview = \"{preview_base}\"\n"),
-        );
+        let mut body =
+            format!("theme = \"{theme}\"\ndark = {dark}\ntheme_preview = \"{preview_base}\"\n");
+        // #150 — last observed geometry, when the poll task has seen any.
+        if let Some(w) = *LAST_WINDOW.lock().unwrap() {
+            body += &format!(
+                "window_x = {}\nwindow_y = {}\nwindow_w = {}\nwindow_h = {}\nwindow_maximized = {}\n",
+                w.x, w.y, w.w, w.h, w.maximized
+            );
+        }
+        let _ = std::fs::write(f, body);
     }
 }
 
