@@ -27,6 +27,7 @@ up from the doc path, or from the current directory) supplies
 |---|---|
 | `forge new <name> [--base <id>]` | Scaffold `./<name>` — a `forge.toml` and a minimal `app.forge.yaml` pointing at the right `$schema` URL. `--base` defaults to `gpui-kit`, and Forge validates it against the shipped registry. |
 | `forge build [doc] [opts]` | Scaffold a minimal app crate under `<doc>/.forge-build/<name>` and compile it. `-o <path>` output binary (default `./<name>`), `--release`, `--codegen` (compile the document to Rust instead of embedding YAML), `--dir <path>` scaffold dir. |
+| `forge skeleton [--dir <path>] [--force]` | Emit a *kept* multi-doc app crate (default `<project>/app`) without compiling it — the launching pad for a real app. Every `*.forge.yaml` under the project becomes a `docs::DOCS` entry (`docs::load(name)` parses + validates at startup), every `state:` declaration across them merges into `store::seed()`/`store::VARS`, and `use:` imports wire adapter deps. Refuses to overwrite an existing `src/main.rs` without `--force`. |
 | `forge preview <doc>` | `forge build` then launch the binary — a real preview of the document as an app. |
 | `forge package` | `build --release` plus an OS bundle: an AppDir/AppImage on Linux, a `.app` on macOS, NSIS scaffolding on Windows. With `[package] binary = "<crate>"` in `forge.toml` it packages an existing workspace binary instead. |
 
