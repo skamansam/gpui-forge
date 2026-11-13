@@ -34,6 +34,7 @@ mod protocol;
 use protocol::{HostMsg, emit, spawn_reader};
 
 fn main() {
+    gpui_forge_runtime::ensure_main_stack();
     // Control channel — stdin JSON lines → the render thread.
     let (tx, rx) = mpsc::channel::<HostMsg>();
     spawn_reader(tx);

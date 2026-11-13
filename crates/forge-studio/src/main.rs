@@ -138,26 +138,9 @@ type SharedState = Rc<RefCell<Shared>>;
 type HookCtx = SharedState;
 
 fn main() {
-    // gpui lays the element tree out recursively on the main thread, and
-    // debug frames are fat — the shell document alone needs ~10MB, past the
-    // default 8MB Linux stack. The main stack is fixed at exec, so raise
-    // the limit and re-exec once. If the hard limit already permits 64MB
-    // this costs one fork+exec at startup.
-    #[cfg(target_os = "linux")]
-    if std::env::var_os("FORGE_STACKED").is_none() {
-        let exe = std::env::current_exe().expect("current_exe");
-        let code = std::process::Command::new("bash")
-            .arg("-c")
-            .arg("ulimit -s 65536 2>/dev/null; exec \"$0\" \"$@\"")
-            .arg(exe)
-            .args(std::env::args().skip(1))
-            .env("FORGE_STACKED", "1")
-            .status()
-            .ok()
-            .and_then(|s| s.code())
-            .unwrap_or(1);
-        std::process::exit(code);
-    }
+    // The shell document alone needs ~10MB of layout stack — re-exec under
+    // a raised rlimit before gpui starts.
+    gpui_forge_runtime::ensure_main_stack();
     gpui_kit::application()
         .with_assets(gpui_kit::assets::AllAssets)
         .run(|cx| {

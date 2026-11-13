@@ -208,6 +208,7 @@ impl Host {
 }
 
 fn main() -> iced::Result {
+    gpui_forge_runtime::ensure_main_stack();
     let (tx, rx) = mpsc::channel::<HostMsg>();
     spawn_reader(tx);
     iced::application("Forge Preview · iced", Host::update, Host::view)

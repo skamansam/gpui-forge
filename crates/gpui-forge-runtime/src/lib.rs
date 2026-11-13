@@ -36,3 +36,54 @@ compile_error!(
 pub mod render;
 
 pub use forge_spec;
+
+/// Rendered documents lay the element tree out recursively on the main
+/// thread — debug frames are fat enough that a ~20-deep document needs
+/// ~10MB, past the default 8MB Linux stack. The main thread's stack is
+/// fixed at exec time, so binaries that render `ForgeView` should call
+/// this as their first statement: on Linux it re-execs once under
+/// `ulimit -s 65536` — skipped when `/proc/self/limits` already reports a
+/// soft limit that high, and `FORGE_STACKED` guards against a re-exec
+/// loop if the raise failed. No-op on other platforms.
+pub fn ensure_main_stack() {
+    #[cfg(target_os = "linux")]
+    {
+        const WANT: u64 = 64 * 1024 * 1024;
+        if std::env::var_os("FORGE_STACKED").is_some() {
+            return;
+        }
+        // `Max stack size` soft column — `unlimited` counts as raised; an
+        // unreadable /proc falls through to the re-exec (harmless fork).
+        let soft = std::fs::read_to_string("/proc/self/limits")
+            .ok()
+            .and_then(|s| {
+                s.lines()
+                    .find(|l| l.starts_with("Max stack size"))?
+                    .split_whitespace()
+                    .nth(3)
+                    .map(str::to_owned)
+            });
+        match soft.as_deref() {
+            Some("unlimited") => return,
+            Some(v) if v.parse::<u64>().is_ok_and(|n| n >= WANT) => return,
+            _ => {}
+        }
+        let Ok(exe) = std::env::current_exe() else {
+            return;
+        };
+        let code = std::process::Command::new("sh")
+            .arg("-c")
+            .arg(format!(
+                "ulimit -s {} 2>/dev/null; exec \"$0\" \"$@\"",
+                WANT / 1024
+            ))
+            .arg(exe)
+            .args(std::env::args().skip(1))
+            .env("FORGE_STACKED", "1")
+            .status()
+            .ok()
+            .and_then(|s| s.code())
+            .unwrap_or(1);
+        std::process::exit(code);
+    }
+}

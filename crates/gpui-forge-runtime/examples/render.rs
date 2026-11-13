@@ -14,6 +14,7 @@ use gpui_kit::*;
 use std::rc::Rc;
 
 fn main() {
+    gpui_forge_runtime::ensure_main_stack();
     let Some(path) = std::env::args().nth(1) else {
         eprintln!("usage: render <doc.forge.yaml>");
         std::process::exit(2);

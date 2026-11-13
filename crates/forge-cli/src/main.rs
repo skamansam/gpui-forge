@@ -87,6 +87,7 @@ mod themes;
 const SRC: &str = include_str!("../app.forge.yaml");
 
 fn main() {
+    gpui_forge_runtime::ensure_main_stack();
     gpui_kit::application()
         .with_assets(gpui_kit::assets::AllAssets)
         .run(|cx| {
@@ -151,6 +152,7 @@ use gpui::*;
 const SRC: &str = include_str!("../app.forge.yaml");
 
 fn main() {
+    gpui_forge_runtime::ensure_main_stack();
     Application::new().run(|cx| {
         let catalogs = gpui_forge_runtime::check::catalogs();
         let (doc, diagnostics) = gpui_forge_runtime::check::check(
@@ -198,6 +200,7 @@ use bezel::gpui::*;
 const SRC: &str = include_str!("../app.forge.yaml");
 
 fn main() {
+    gpui_forge_runtime::ensure_main_stack();
     Application::with_platform(bezel::gpui_platform::current_platform(false))
         .run(|cx| {
         let catalogs = gpui_forge_runtime::check::catalogs();
@@ -249,6 +252,7 @@ use std::io::stdout;
 const SRC: &str = include_str!("../app.forge.yaml");
 
 fn main() {
+    gpui_forge_runtime::ensure_main_stack();
     let catalogs = gpui_forge_runtime::check::catalogs();
     let (doc, diagnostics) = gpui_forge_runtime::check::check(
         SRC, "{BASE_ID}", &catalogs);
@@ -307,6 +311,7 @@ impl App {
 }
 
 fn main() -> iced::Result {
+    gpui_forge_runtime::ensure_main_stack();
     iced::application("{TITLE}", App::update, App::view)
         .run_with(App::new)
 }
