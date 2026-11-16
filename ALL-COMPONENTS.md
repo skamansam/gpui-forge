@@ -215,9 +215,9 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Accordion
 - [ ] AccordionItem
 - [ ] ActionBar
-- [x] `Activity`
+- [x] Activity
 - [ ] ActivityBar
-- [x] `ActivityFeed`
+- [x] ActivityFeed
 - [ ] ActivityItem
 - [ ] Aggregate
 - [x] Alert
@@ -229,11 +229,12 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] AspectRatio
 - [ ] AsyncView
 - [x] Avatar
-- [x] `AvatarGroup`
+- [x] AvatarGroup
 - [ ] Backdrop
 - [x] Badge
 - [x] Banner
-- [x] `Barcode`
+- [x] Barcode
+- [x] BeforeAfter
 - [ ] Blink
 - [ ] Blockquote
 - [ ] Breadcrumb
@@ -246,12 +247,13 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] Caption
 - [ ] Card
 - [ ] CardHeader
+- [x] Carousel
 - [ ] Cascade
 - [ ] Cascader
 - [ ] Cell
 - [ ] Change
 - [ ] Changeable
-- [x] `Changelog`
+- [x] Changelog
 - [x] Checkbox
 - [ ] CheckboxCard
 - [ ] CheckboxGroup
@@ -262,6 +264,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Column
 - [ ] ColumnShell
 - [ ] Command
+- [x] Comparison
 - [ ] Confetti
 - [ ] ConfirmButton
 - [ ] ConfirmDialog
@@ -271,7 +274,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] ContextMenu
 - [ ] Copy
 - [ ] Corner
-- [x] `CountBadge`
+- [x] CountBadge
 - [ ] Countdown
 - [ ] Crumb
 - [ ] Cut
@@ -280,7 +283,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] DatePicker
 - [ ] DateRangePicker
 - [ ] DateTimePicker
-- [x] `DescriptionList`
+- [x] DescriptionList
 - [ ] Dialog
 - [ ] DirectoryListing
 - [ ] Disableable
@@ -288,7 +291,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] DockLayout
 - [ ] DockPanel
 - [ ] DockSide
-- [x] `DotBadge`
+- [x] DotBadge
 - [ ] Drawer
 - [ ] Drawing
 - [ ] DropAt
@@ -319,7 +322,8 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Folder
 - [ ] FontPicker
 - [ ] Frame
-- [x] `Gauge`
+- [x] Gallery
+- [x] Gauge
 - [ ] Glow
 - [ ] GradientEditor
 - [ ] GradientText
@@ -400,8 +404,8 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] ProgressBar
 - [ ] ProgressRing
 - [ ] PromptDialog
-- [x] `PropertyGrid`
-- [x] `PropertyGroup`
+- [x] PropertyGrid
+- [x] PropertyGroup
 - [ ] Pulse
 - [x] QrCode
 - [ ] QuarterPicker
@@ -416,7 +420,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] RefreshIndicator
 - [ ] RegexInput
 - [ ] RelativeDatePicker
-- [x] `Release`
+- [x] Release
 - [ ] Ripple
 - [ ] Row
 - [ ] SavingIndicator
@@ -446,6 +450,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] SkeletonText
 - [x] Slider
 - [ ] SortKey
+- [x] Sparkline
 - [x] Spinner
 - [ ] SplashScreen
 - [ ] SplitButton
@@ -454,6 +459,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Spotlight
 - [ ] Spreadsheet
 - [ ] Stagger
+- [x] Stars
 - [x] Statistic
 - [ ] StatusBar
 - [ ] StatusBarItem
@@ -475,7 +481,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Test
 - [ ] TextInput
 - [ ] TimePicker
-- [x] `Timeline`
+- [x] Timeline
 - [x] TimelineItem
 - [x] Title
 - [ ] TitleBar
@@ -506,10 +512,11 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] UploadList
 - [ ] UrlInput
 - [x] UsageBar
-- [x] `UserChip`
+- [x] UserChip
 - [ ] Viewport
 - [ ] VirtualList
 - [ ] WORKSPACE_VERSION
+- [x] Watermark
 - [ ] Well
 - [ ] WindowControls
 - [ ] WindowManager
