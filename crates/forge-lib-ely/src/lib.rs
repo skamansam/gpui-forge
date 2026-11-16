@@ -43,9 +43,17 @@ use ely_core::lists::{
     Outline, Sections, SelectableList, SortableList, SwipeAction, SwipeableListItem, Tree,
     TreeNode, TreeSelect, VirtualList,
 };
+use ely_core::menus::{
+    ContextMenu, DropdownMenu, Menu, MenuItem, OverflowMenu, PieItem, PieMenu, SearchableMenu,
+    SplitButton,
+};
 use ely_core::motion::{ProgressBar, Reorder, Skeleton};
 use ely_core::motion::{Spinner, SpinnerStyle};
-use ely_core::navigation::{NavItem, Pagination};
+use ely_core::navigation::{
+    Anchor, BackForwardNavigation, Breadcrumb, Crumb, EditorTab, EditorTabs, GoToLine, LoadMore,
+    NavGroup, NavItem, NavigationMenu, Pagination, Sections as TocSections, Steps, TabOverflowMenu,
+    TabPlacement, TableOfContents, Tabs, Wizard,
+};
 use ely_core::overlays::Slide;
 use ely_core::primitives::Disclosure;
 use ely_core::primitives::{Divider, Icon, IconName, Place, Severity};
@@ -81,6 +89,7 @@ pub struct Ely {
     /// state in the entity, so it must persist across renders; the view's own
     /// entity maps are private to the base.
     texts: RefCell<HashMap<String, Entity<ely_core::forms::TextInput>>>,
+    tocs: RefCell<HashMap<String, Entity<TocSections>>>,
     /// Lazy child-content proxies keyed `{key}/{i}` — children render in the
     /// proxy's own pass, not inside ForgeView's (which would double-borrow).
     views: RefCell<HashMap<String, AnyView>>,
@@ -118,6 +127,7 @@ impl Ely {
         Self {
             inited: Cell::new(false),
             texts: RefCell::new(HashMap::new()),
+            tocs: RefCell::new(HashMap::new()),
             views: RefCell::new(HashMap::new()),
             toasters: RefCell::new(HashMap::new()),
             handles: RefCell::new(HashMap::new()),
@@ -140,6 +150,18 @@ impl Ely {
         }
         let t = cx.new(|cx| TextInput::new(window, cx));
         texts.insert(key.to_owned(), t.clone());
+        t
+    }
+
+    /// The shared `navigation::Sections` entity behind TableOfContents/Anchor —
+    /// `toc` props name which one siblings share (default: the node's own key).
+    fn toc(&self, name: &str, cx: &mut Context<ForgeView>) -> Entity<TocSections> {
+        let mut tocs = self.tocs.borrow_mut();
+        if let Some(t) = tocs.get(name) {
+            return t.clone();
+        }
+        let t = cx.new(|_| TocSections::new(ScrollHandle::new()));
+        tocs.insert(name.to_owned(), t.clone());
         t
     }
 
@@ -456,6 +478,55 @@ fn tree_nodes(paths: &[String]) -> Vec<TreeNode> {
         })
         .collect();
     into_nodes(parts.iter().map(Vec::as_slice))
+}
+
+/// Build a `Menu` from an `items` list: `label`, `label|icon`, `label|icon|keys`,
+/// `check:label`, `radio:label`, `@heading`, `-` separator. Each row fires an
+/// `item:<label>` event when picked.
+fn menu_of(node: &Node, view: &ForgeView, cx: &mut Context<ForgeView>) -> Menu {
+    let mut menu = Menu::new();
+    for entry in prop_list(node, "items") {
+        let e = entry.trim();
+        if e == "-" || e == "---" {
+            menu = menu.separator();
+            continue;
+        }
+        if let Some(title) = e.strip_prefix('@') {
+            menu = menu.group(title.trim(), Vec::<MenuItem>::new());
+            continue;
+        }
+        let (kind, rest) = match e.split_once(':') {
+            Some(("check", rest)) => (Some(Kind::Check), rest),
+            Some(("radio", rest)) => (Some(Kind::Radio), rest),
+            _ => (None, e),
+        };
+        let mut p = rest.splitn(3, '|');
+        let label = p.next().unwrap_or("").trim().to_owned();
+        let mut item = match kind {
+            Some(Kind::Check) => MenuItem::check(label.clone(), true),
+            Some(Kind::Radio) => MenuItem::radio(label.clone(), true),
+            _ => MenuItem::new(label.clone()),
+        };
+        if let Some(icon) = p.next().and_then(|n| icon_named(n.trim())) {
+            item = item.icon(icon);
+        }
+        if let Some(keys) = p.next() {
+            let keys = keys.trim();
+            if !keys.is_empty() {
+                item = item.keys(keys);
+            }
+        }
+        if let Some(run) = fire_str(view, node, &format!("item:{label}"), cx) {
+            item = item.on_click(move |w, cx| run(String::new(), w, cx));
+        }
+        menu = menu.item(item);
+    }
+    menu
+}
+
+enum Kind {
+    Check,
+    Radio,
 }
 
 fn icon_named(name: &str) -> Option<IconName> {
@@ -784,10 +855,6 @@ impl ForgeLibrary for Ely {
             "InlineEdit" => {
                 Some(InlineEdit::new(key.to_string(), prop_str(node, "value")).into_any_element())
             }
-            "NavItem" => Some(
-                NavItem::new(key.to_string(), icon_of(node), prop_str(node, "label"))
-                    .into_any_element(),
-            ),
             "Notification" => Some(
                 Notification::new(key.to_string(), icon_of(node), prop_str(node, "title"))
                     .into_any_element(),
@@ -2717,6 +2784,310 @@ impl ForgeLibrary for Ely {
                     t = t.on_change(move |v, w, cx| h(v.to_string(), w, cx));
                 }
                 Some(t.into_any_element())
+            }
+            "DropdownMenu" => {
+                let mut d = DropdownMenu::new(
+                    key.to_string(),
+                    prop_str(node, "label"),
+                    menu_of(node, view, cx),
+                );
+                if let Some(i) = prop_str_opt(node, "icon").and_then(|n| icon_named(&n)) {
+                    d = d.icon(i);
+                }
+                Some(d.into_any_element())
+            }
+            "OverflowMenu" => {
+                Some(OverflowMenu::new(key.to_string(), menu_of(node, view, cx)).into_any_element())
+            }
+            "ContextMenu" => {
+                let mut c = ContextMenu::new(key.to_string(), menu_of(node, view, cx));
+                c.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(c.into_any_element())
+            }
+            "SearchableMenu" => Some(
+                SearchableMenu::new(
+                    key.to_string(),
+                    prop_str(node, "label"),
+                    menu_of(node, view, cx),
+                )
+                .into_any_element(),
+            ),
+            "SplitButton" => {
+                let mut b = SplitButton::new(
+                    key.to_string(),
+                    prop_str(node, "label"),
+                    menu_of(node, view, cx),
+                );
+                if let Some(h) = handler(view, node, "click", cx) {
+                    b = b.on_click(move |_e: &ClickEvent, w, cx| h(w, cx));
+                }
+                Some(b.into_any_element())
+            }
+            "PieMenu" => {
+                let items = prop_list(node, "items").into_iter().filter_map(|e| {
+                    let mut p = e.splitn(2, '|');
+                    let label = p.next()?.trim().to_owned();
+                    let icon = p
+                        .next()
+                        .and_then(|n| icon_named(n.trim()))
+                        .unwrap_or(IconName::Circle);
+                    let run = fire_str(view, node, &format!("item:{label}"), cx);
+                    Some(PieItem::new(icon, label).on_click(move |w, cx| {
+                        if let Some(run) = &run {
+                            run(String::new(), w, cx);
+                        }
+                    }))
+                });
+                Some(PieMenu::new(key.to_string(), items).into_any_element())
+            }
+            "Breadcrumb" => {
+                let crumbs = prop_list(node, "crumbs").into_iter().filter_map(|e| {
+                    let mut p = e.splitn(3, '|');
+                    let (value, label) = (p.next()?.trim(), p.next().unwrap_or("").trim());
+                    let mut c = Crumb::new(value, label);
+                    if let Some(i) = p.next().and_then(|n| icon_named(n.trim())) {
+                        c = c.icon(i);
+                    }
+                    Some(c)
+                });
+                let mut b = Breadcrumb::new(key.to_string(), crumbs);
+                if let Some(h) = change_str(view, node, "select", cx) {
+                    b = b.on_select(move |i, v, w, cx| h(format!("{i}|{v}"), w, cx));
+                }
+                Some(b.into_any_element())
+            }
+            "EditorTabs" => {
+                let tabs = prop_list(node, "tabs").into_iter().filter_map(|e| {
+                    let mut p = e.splitn(3, '|');
+                    let (id, title) = (p.next()?.trim(), p.next().unwrap_or("").trim());
+                    let mut t = EditorTab::new(id, title);
+                    for flag in p.next().unwrap_or("").split(',') {
+                        match flag.trim() {
+                            "dirty" => t = t.dirty(true),
+                            "pinned" => t = t.pinned(true),
+                            "preview" => t = t.preview(true),
+                            i if icon_named(i).is_some() => t = t.icon(icon_named(i).unwrap()),
+                            _ => {}
+                        }
+                    }
+                    Some(t)
+                });
+                let mut t = EditorTabs::new(key.to_string(), tabs);
+                if let Some(sel) = prop_str_opt(node, "selected") {
+                    t = t.selected(sel);
+                }
+                if let Some(h) = change_str(view, node, "select", cx) {
+                    t = t.on_select(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                if let Some(h) = fire_str(view, node, "close", cx) {
+                    t = t.on_close(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                if let Some(h) = fire_str(view, node, "pin", cx) {
+                    t = t.on_pin(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                if let Some(h) = fire_str(view, node, "keep", cx) {
+                    t = t.on_keep(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                if let Some(h) = fire_str(view, node, "context", cx) {
+                    t = t.on_context(move |v, _pt, w, cx| h(v.to_string(), w, cx));
+                }
+                if let Some(h) = fire_str(view, node, "reorder", cx) {
+                    t = t.on_reorder(move |a, b, w, cx| h(format!("{a}|{b}"), w, cx));
+                }
+                Some(t.into_any_element())
+            }
+            "NavigationMenu" => {
+                let mut n = NavigationMenu::new(key.to_string());
+                for entry in prop_list(node, "entries") {
+                    let mut p = entry.splitn(2, '|');
+                    let label = p.next().unwrap_or("").trim().to_owned();
+                    let links = p
+                        .next()
+                        .unwrap_or("")
+                        .split(',')
+                        .map(str::trim)
+                        .filter(|s| !s.is_empty())
+                        .map(|s| Choice::new(s, s));
+                    n = n.entry(label, links);
+                }
+                if let Some(h) = change_str(view, node, "select", cx) {
+                    n = n.on_select(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                Some(n.into_any_element())
+            }
+            "TabOverflowMenu" => {
+                let mut t = TabOverflowMenu::new(key.to_string(), choices(node));
+                if let Some(sel) = prop_str_opt(node, "selected") {
+                    t = t.selected(sel);
+                }
+                if let Some(h) = change_str(view, node, "select", cx) {
+                    t = t.on_select(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                Some(t.into_any_element())
+            }
+            "Steps" => {
+                let mut st = Steps::new(
+                    key.to_string(),
+                    choices(node),
+                    prop_num(node, "current").unwrap_or(0.0) as usize,
+                );
+                if prop_bool(node, "vertical") {
+                    st = st.vertical();
+                }
+                if let Some(h) = fire_str(view, node, "select", cx) {
+                    st = st.on_select(move |i, w, cx| h(i.to_string(), w, cx));
+                }
+                Some(st.into_any_element())
+            }
+            "Wizard" => {
+                let on_step = {
+                    let h = fire_str(view, node, "step", cx);
+                    move |i: usize, w: &mut Window, cx: &mut App| {
+                        if let Some(h) = &h {
+                            h(i.to_string(), w, cx)
+                        }
+                    }
+                };
+                let on_finish = {
+                    let h = handler(view, node, "finish", cx);
+                    move |w: &mut Window, cx: &mut App| {
+                        if let Some(h) = &h {
+                            h(w, cx)
+                        }
+                    }
+                };
+                let mut w = Wizard::new(
+                    key.to_string(),
+                    choices(node),
+                    prop_num(node, "current").unwrap_or(0.0) as usize,
+                    on_step,
+                    on_finish,
+                )
+                .ready(!prop_bool(node, "blocked"));
+                if let Some(v) = self.child_views(node, key, cx).into_iter().next() {
+                    w = w.content(v);
+                }
+                Some(w.into_any_element())
+            }
+            "Tabs" => {
+                let selected = prop_str(node, "selected");
+                let selected = if selected.is_empty() {
+                    prop_list(node, "options")
+                        .first()
+                        .cloned()
+                        .unwrap_or_default()
+                } else {
+                    selected
+                };
+                let mut t = Tabs::new(key.to_string(), choices(node), selected);
+                t = match prop_str(node, "placement").as_str() {
+                    "Left" => t.placement(TabPlacement::Left),
+                    "Bottom" => t.placement(TabPlacement::Bottom),
+                    _ => t,
+                };
+                if let Some(v) = self.child_views(node, key, cx).into_iter().next() {
+                    t = t.panel(v);
+                }
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    t = t.on_change(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                if let Some(h) = fire_str(view, node, "context", cx) {
+                    t = t.on_context(move |v, _pt, w, cx| h(v.to_string(), w, cx));
+                }
+                Some(t.into_any_element())
+            }
+            "GoToLine" => {
+                let mut g = GoToLine::new(
+                    key.to_string(),
+                    &self.field(node, key, view, _window, cx),
+                    prop_num(node, "lines").unwrap_or(1.0).max(1.0) as usize,
+                );
+                if let Some(h) = fire_str(view, node, "jump", cx) {
+                    g = g.on_jump(move |to, from, w, cx| {
+                        h(
+                            format!("{to}|{}", from.map(|f| f.to_string()).unwrap_or_default()),
+                            w,
+                            cx,
+                        )
+                    });
+                }
+                Some(g.into_any_element())
+            }
+            "BackForwardNavigation" => {
+                let mut n = BackForwardNavigation::new(
+                    key.to_string(),
+                    choices(node),
+                    prop_num(node, "current").unwrap_or(0.0) as usize,
+                );
+                if let Some(h) = fire_str(view, node, "go", cx) {
+                    n = n.on_go(move |i, w, cx| h(i.to_string(), w, cx));
+                }
+                Some(n.into_any_element())
+            }
+            "LoadMore" => {
+                let mut l = LoadMore::new(key.to_string(), prop_bool(node, "loading"));
+                let (shown, total) = (
+                    prop_num(node, "shown").unwrap_or(0.0) as usize,
+                    prop_num(node, "total").unwrap_or(0.0) as usize,
+                );
+                if total > 0 {
+                    l = l.shown(shown, total);
+                }
+                if let Some(h) = handler(view, node, "load", cx) {
+                    l = l.on_load(h);
+                }
+                Some(l.into_any_element())
+            }
+            "NavItem" => {
+                let mut n = NavItem::new(key.to_string(), icon_of(node), prop_str(node, "label"));
+                if let Some(c) = prop_str_opt(node, "count") {
+                    n = n.count(c);
+                }
+                n = n
+                    .active(prop_bool(node, "active"))
+                    .folded(prop_bool(node, "folded"));
+                if let Some(h) = handler(view, node, "click", cx) {
+                    n = n.on_click(h);
+                }
+                Some(n.into_any_element())
+            }
+            "NavGroup" => {
+                let mut g = NavGroup::new(
+                    key.to_string(),
+                    prop_str(node, "title"),
+                    prop_bool(node, "open"),
+                )
+                .folded(prop_bool(node, "folded"));
+                if let Some(h) = fire_str(view, node, "toggle", cx) {
+                    g = g.on_toggle(move |open, w, cx| h(open.to_string(), w, cx));
+                }
+                Some(g.into_any_element())
+            }
+            "TableOfContents" => {
+                let name = prop_str_opt(node, "toc").unwrap_or_else(|| key.to_owned());
+                let mut t = TableOfContents::new(key.to_string(), &self.toc(&name, cx));
+                for entry in prop_list(node, "items") {
+                    let mut p = entry.splitn(3, '|');
+                    let depth: usize = p.next().and_then(|d| d.trim().parse().ok()).unwrap_or(0);
+                    let (value, label) =
+                        (p.next().unwrap_or("").trim(), p.next().unwrap_or("").trim());
+                    t = t.entry(value, label, depth);
+                }
+                Some(t.into_any_element())
+            }
+            "Anchor" => {
+                let name = prop_str_opt(node, "toc").unwrap_or_else(|| key.to_owned());
+                let mut a = Anchor::new(&self.toc(&name, cx), prop_str(node, "value"));
+                a.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(a.into_any_element())
             }
             _ => None,
         }

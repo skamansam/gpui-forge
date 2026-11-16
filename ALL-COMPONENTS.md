@@ -222,7 +222,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Aggregate
 - [x] Alert
 - [ ] AlertDialog
-- [ ] Anchor
+- [x] Anchor
 - [ ] AnimatePresence
 - [ ] AnimatedGradient
 - [x] AppShell
@@ -237,7 +237,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] BeforeAfter
 - [ ] Blink
 - [ ] Blockquote
-- [ ] Breadcrumb
+- [x] Breadcrumb
 - [x] BulkActionBar
 - [x] Button
 - [x] ButtonGroup
@@ -271,7 +271,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] ConnectionStatus
 - [ ] Connectivity
 - [x] Container
-- [ ] ContextMenu
+- [x] ContextMenu
 - [ ] Copy
 - [ ] Corner
 - [x] CountBadge
@@ -297,11 +297,11 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] DropAt
 - [x] DropZone
 - [ ] Dropdown
-- [ ] DropdownMenu
+- [x] DropdownMenu
 - [x] DurationPicker
 - [ ] Editing
 - [ ] EditorTab
-- [ ] EditorTabs
+- [x] EditorTabs
 - [ ] Ellipsis
 - [ ] EllipsisTooltip
 - [x] EmailInput
@@ -358,7 +358,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] List
 - [x] ListInput
 - [x] ListItem
-- [ ] LoadMore
+- [x] LoadMore
 - [ ] LoadingOverlay
 - [ ] Marquee
 - [x] MaskedInput
@@ -372,7 +372,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] MiniWindow
 - [ ] Mix
 - [x] MonthPicker
-- [ ] NavGroup
+- [x] NavGroup
 - [x] NavItem
 - [x] Notification
 - [x] NotificationCenter
@@ -380,7 +380,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] OfflineIndicator
 - [ ] OnClimb
 - [ ] OnFold
-- [ ] OverflowMenu
+- [x] OverflowMenu
 - [x] Overline
 - [ ] PICTURES
 - [x] Page
@@ -398,7 +398,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] PhoneInput
 - [ ] Pick
 - [ ] PieItem
-- [ ] PieMenu
+- [x] PieMenu
 - [ ] Place
 - [ ] Presence
 - [x] ProgressBar
@@ -429,7 +429,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] ScrollShadow
 - [x] ScrollToTop
 - [x] ScrubInput
-- [ ] SearchableMenu
+- [x] SearchableMenu
 - [x] Section
 - [x] Sections
 - [ ] SelectAll
@@ -453,7 +453,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] Sparkline
 - [x] Spinner
 - [ ] SplashScreen
-- [ ] SplitButton
+- [x] SplitButton
 - [x] SplitPane
 - [ ] Spot
 - [ ] Spotlight
@@ -464,7 +464,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] StatusBar
 - [ ] StatusBarItem
 - [x] StatusMessage
-- [ ] Steps
+- [x] Steps
 - [x] StickyHeader
 - [ ] Stroke
 - [x] Subtitle
@@ -475,8 +475,8 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] TabBar
 - [ ] TabPlacement
 - [ ] Table
-- [ ] TableOfContents
-- [ ] Tabs
+- [x] TableOfContents
+- [x] Tabs
 - [x] Tag
 - [ ] Test
 - [ ] TextInput
@@ -521,7 +521,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] WindowControls
 - [ ] WindowManager
 - [ ] WindowTab
-- [ ] Wizard
+- [x] Wizard
 - [ ] Workspace
 - [x] YearPicker
 - [x] ZStack
@@ -563,6 +563,11 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] SortableList
 
 - [x] GroupedList
+
+- [x] BackForwardNavigation
+- [x] GoToLine
+- [x] NavigationMenu
+- [x] TabOverflowMenu
 
 ## guise Components
 

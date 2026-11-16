@@ -1964,3 +1964,214 @@ elements:
       tree: list<string>
       value: string
     events: {change:}
+
+  DropdownMenu:
+    icon: chevron-down
+    group: Menus
+    summary: Button that opens a menu — `items` rows are `label|icon|keys`, `check:`/`radio:` prefixes, `@heading`, `-` separator. Rows fire `item:<label>`.
+    component: ely_core::menus::DropdownMenu
+    children: none
+    props:
+      label: string
+      icon: icon
+      items: list<string>
+
+  OverflowMenu:
+    icon: ellipsis
+    group: Menus
+    summary: "… button that opens a menu — same `items` syntax as DropdownMenu."
+    component: ely_core::menus::OverflowMenu
+    children: none
+    props:
+      items: list<string>
+
+  ContextMenu:
+    icon: mouse-pointer-click
+    group: Menus
+    summary: Right-click menu around children — same `items` syntax as DropdownMenu.
+    component: ely_core::menus::ContextMenu
+    children: any
+    props:
+      items: list<string>
+
+  SearchableMenu:
+    icon: text-search
+    group: Menus
+    summary: Button that opens a filterable menu — same `items` syntax as DropdownMenu.
+    component: ely_core::menus::SearchableMenu
+    children: none
+    props:
+      label: string
+      items: list<string>
+
+  SplitButton:
+    icon: split
+    group: Menus
+    summary: Button with a menu tail — `click` is the main action, `items` the menu.
+    component: ely_core::menus::SplitButton
+    children: none
+    props:
+      label: string
+      items: list<string>
+    events: {click:}
+
+  PieMenu:
+    icon: chart-pie
+    group: Menus
+    summary: Radial menu — `items` are `label|icon`; slices fire `item:<label>`.
+    component: ely_core::menus::PieMenu
+    children: none
+    props:
+      items: list<string>
+
+  Breadcrumb:
+    icon: chevrons-right
+    group: Navigation
+    summary: Path crumbs — `crumbs` entries are `value|label|icon`; `select` fires `index|value`.
+    component: ely_core::navigation::Breadcrumb
+    children: none
+    props:
+      crumbs: list<string>
+      value: string
+    events: {select:}
+
+  EditorTabs:
+    icon: folder-tabs
+    group: Navigation
+    summary: Editor tab strip — `tabs` entries are `id|title|flags` (flags: icon name, dirty, pinned, preview).
+    component: ely_core::navigation::EditorTabs
+    children: none
+    props:
+      tabs: list<string>
+      selected: string
+      value: string
+    events: {select:, close:, pin:, keep:, context:, reorder:}
+
+  NavigationMenu:
+    icon: compass
+    group: Navigation
+    summary: Dropdown nav bar — `entries` are `Label|link,link,…`.
+    component: ely_core::navigation::NavigationMenu
+    children: none
+    props:
+      entries: list<string>
+      value: string
+    events: {select:}
+
+  TabOverflowMenu:
+    icon: chevrons-down
+    group: Navigation
+    summary: `…` picker for tabs — `options` are tab values.
+    component: ely_core::navigation::TabOverflowMenu
+    children: none
+    props:
+      options: list<string>
+      selected: string
+      value: string
+    events: {select:}
+
+  Steps:
+    icon: list-ordered
+    group: Navigation
+    summary: Numbered step flow — `options` are step names, `current` the step index.
+    component: ely_core::navigation::Steps
+    children: none
+    props:
+      options: list<string>
+      current: number
+      vertical: bool
+    events: {select:}
+
+  Wizard:
+    icon: wand-2
+    group: Navigation
+    summary: Step-by-step flow — `options` steps, `current` index, first child is the step content.
+    component: ely_core::navigation::Wizard
+    children: any
+    props:
+      options: list<string>
+      current: number
+      blocked: bool
+    events: {step:, finish:}
+
+  Tabs:
+    icon: panel-top
+    group: Navigation
+    summary: Tab strip — `options` tab values, first child is the selected panel.
+    component: ely_core::navigation::Tabs
+    children: any
+    props:
+      options: list<string>
+      selected: string
+      placement:
+        type: enum
+        values: [Top, Left, Bottom]
+      value: string
+    events: {change:, context:}
+
+  GoToLine:
+    icon: arrow-down-to-line
+    group: Navigation
+    summary: Jump-to-line field — `lines` is the max; `jump` fires `to|from`.
+    component: ely_core::navigation::GoToLine
+    children: none
+    props:
+      lines: number
+      value: string
+      placeholder: string
+    events: {jump:, change:, submit:}
+
+  BackForwardNavigation:
+    icon: arrow-left-right
+    group: Navigation
+    summary: Back/forward history controls — `options` are places, `current` the index.
+    component: ely_core::navigation::BackForwardNavigation
+    children: none
+    props:
+      options: list<string>
+      current: number
+    events: {go:}
+
+  LoadMore:
+    icon: arrow-down
+    group: Navigation
+    summary: "Load more" control — `shown`/`total` counts, `loading` spinner state.
+    component: ely_core::navigation::LoadMore
+    children: none
+    props:
+      shown: number
+      total: number
+      loading: bool
+    events: {load:}
+
+  NavGroup:
+    icon: folder-open-dot
+    group: Navigation
+    summary: Collapsible nav section — children render inside (NavItem rows).
+    component: ely_core::navigation::NavGroup
+    children: any
+    props:
+      title: string
+      open: bool
+      folded: bool
+    events: {toggle:}
+
+  TableOfContents:
+    icon: book-open
+    group: Navigation
+    summary: Scroll spy — `items` entries are `depth|value|label`; shares a `toc` name with Anchors.
+    component: ely_core::navigation::TableOfContents
+    children: none
+    props:
+      items: list<string>
+      toc: string
+
+  Anchor:
+    icon: anchor
+    group: Navigation
+    summary: Scroll target for TableOfContents — same `toc` name links them; wraps children.
+    component: ely_core::navigation::Anchor
+    children: any
+    props:
+      value: string
+      toc: string
