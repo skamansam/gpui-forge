@@ -1,7 +1,9 @@
 //! Adapter for Ely GPUI Components (`use: ely: ely-core` → `ely.*` elements).
 
 use ely_core::buttons::{
-    Button, ButtonVariant, CopyButton, IconButton, SegmentedControl, ToggleButton, ToggleItem,
+    ActionBar, ActionSheet, BulkActionBar, Button, ButtonGroup, ButtonVariant, ConfirmButton,
+    ConfirmMode, CopyButton, FloatingActionButton, IconButton, QuickAction, QuickActions,
+    SegmentedControl, ShareButton, ToggleButton, ToggleGroup, ToggleItem,
 };
 use ely_core::data_display::{
     Activity, ActivityFeed, Avatar, AvatarGroup, Badge, Barcode, BeforeAfter, Carousel, Change,
@@ -31,10 +33,11 @@ use ely_core::theme::{ContainerSize, ControlSize, IconSize};
 use ely_core::typography::{Caption, Heading, Label, Overline, Paragraph, Subtitle, Title};
 use ely_core::typography::{Code, CopyableText, NumberText, PercentText};
 use jiff::Timestamp;
+use serde_json::Value as Json;
 
 use gpui_forge_runtime::base::kit::*;
 use gpui_forge_runtime::forge_spec::catalog::{self, Catalog};
-use gpui_forge_runtime::forge_spec::{Node, Value};
+use gpui_forge_runtime::forge_spec::{Node, Path, Value};
 use gpui_forge_runtime::render::{ForgeLibrary, ForgeView};
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
@@ -176,6 +179,103 @@ fn handler(
     })
 }
 
+/// The state path a `{{…}}`-bound prop points at.
+fn binding_of(node: &Node, name: &str) -> Option<Path> {
+    match prop(node, name) {
+        Some(Value::Binding { path, .. }) => Some(path.clone()),
+        _ => None,
+    }
+}
+
+/// Update the entity through a weak handle without panicking if a render pass
+/// holds a borrow — mirrors the base's `try_update`.
+fn try_update(
+    weak: &WeakEntity<ForgeView>,
+    cx: &mut App,
+    f: impl FnOnce(&mut ForgeView, &mut Context<ForgeView>),
+) {
+    use std::panic::{AssertUnwindSafe, catch_unwind};
+    let weak = weak.clone();
+    let _ = catch_unwind(AssertUnwindSafe(|| {
+        weak.update(cx, |v, cx| f(v, cx)).ok();
+    }));
+}
+
+/// `on <event>:` calls on a node, resolved to `(handler, args)` pairs.
+fn calls_for(view: &ForgeView, node: &Node, event: &str) -> Vec<(String, Vec<String>)> {
+    node.events
+        .iter()
+        .filter(|e| e.event == event)
+        .map(|e| {
+            (
+                e.handler.name.clone(),
+                e.handler
+                    .args
+                    .iter()
+                    .map(|a| {
+                        view.resolve(a)
+                            .as_str()
+                            .map(str::to_owned)
+                            .unwrap_or_default()
+                    })
+                    .collect(),
+            )
+        })
+        .collect()
+}
+
+/// A `{{binding}}` on `value` plus `on change:` calls → callback taking the
+/// new `Json` value (for selection/toggle/entry controls).
+fn change(
+    view: &ForgeView,
+    node: &Node,
+    cx: &mut Context<ForgeView>,
+) -> Option<impl Fn(Json, &mut Window, &mut App) + 'static> {
+    let path = binding_of(node, "value");
+    let calls = calls_for(view, node, "change");
+    if path.is_none() && calls.is_empty() {
+        return None;
+    }
+    let weak = cx.entity().downgrade();
+    Some(move |v: Json, _w: &mut Window, cx: &mut App| {
+        if let Some(path) = path.clone() {
+            let v = v.clone();
+            try_update(&weak, cx, |view, cx| view.update_state(&path, v, cx));
+        }
+        for (name, args) in &calls {
+            let (name, args) = (name.clone(), args.clone());
+            try_update(&weak, cx, |view, cx| view.fire_call(&name, args, cx));
+        }
+    })
+}
+
+/// `on <event>:` calls with one runtime string argument appended — for
+/// "which item was picked" callbacks (menus, sheets, toggle groups).
+fn change_str(
+    view: &ForgeView,
+    node: &Node,
+    event: &str,
+    cx: &mut Context<ForgeView>,
+) -> Option<impl Fn(String, &mut Window, &mut App) + 'static> {
+    let path = binding_of(node, "value");
+    let calls = calls_for(view, node, event);
+    if path.is_none() && calls.is_empty() {
+        return None;
+    }
+    let weak = cx.entity().downgrade();
+    Some(move |v: String, _w: &mut Window, cx: &mut App| {
+        if let Some(path) = path.clone() {
+            let v = Json::String(v.clone());
+            try_update(&weak, cx, |view, cx| view.update_state(&path, v, cx));
+        }
+        for (name, args) in &calls {
+            let (name, mut args) = (name.clone(), args.clone());
+            args.push(v.clone());
+            try_update(&weak, cx, |view, cx| view.fire_call(&name, args, cx));
+        }
+    })
+}
+
 /// Lucide name → `IconName`, searched across the bundled set.
 fn icon_named(name: &str) -> Option<IconName> {
     IconName::ALL.iter().copied().find(|i| i.name() == name)
@@ -210,7 +310,7 @@ impl ForgeLibrary for Ely {
         &self,
         node: &Node,
         key: &str,
-        _view: &ForgeView,
+        view: &ForgeView,
         _window: &mut Window,
         cx: &mut Context<ForgeView>,
     ) -> Option<AnyElement> {
@@ -222,32 +322,7 @@ impl ForgeLibrary for Ely {
             }
         }
         match node.element.name.as_str() {
-            "Button" => {
-                let mut b = Button::new(key.to_string(), prop_str(node, "label"));
-                if let Some(v) = prop_str_opt(node, "variant") {
-                    b = b.variant(match v.as_str() {
-                        "Secondary" => ButtonVariant::Secondary,
-                        "Outline" => ButtonVariant::Outline,
-                        "Ghost" => ButtonVariant::Ghost,
-                        "Subtle" => ButtonVariant::Subtle,
-                        "Success" => ButtonVariant::Success,
-                        "Danger" => ButtonVariant::Danger,
-                        "Link" => ButtonVariant::Link,
-                        _ => ButtonVariant::Primary,
-                    });
-                }
-                if let Some(s) = prop_str_opt(node, "size") {
-                    b = b.size(match s.as_str() {
-                        "Sm" => ControlSize::Sm,
-                        "Lg" => ControlSize::Lg,
-                        _ => ControlSize::Md,
-                    });
-                }
-                if prop_bool(node, "disabled") {
-                    b = b.disabled(true);
-                }
-                Some(b.into_any_element())
-            }
+            "Button" => Some(button_of(node, key).into_any_element()),
             "Badge" => Some(Badge::new(prop_str(node, "label")).into_any_element()),
             "Alert" => {
                 let severity = match prop_str_opt(node, "severity").as_deref() {
@@ -434,14 +509,23 @@ impl ForgeLibrary for Ely {
                 Some(Switch::new(key.to_string(), prop_bool(node, "checked")).into_any_element())
             }
             "Tag" => Some(Tag::new(key.to_string(), prop_str(node, "label")).into_any_element()),
-            "ToggleButton" => Some(
-                ToggleButton::new(
+            "ToggleButton" => {
+                let mut item = ToggleItem::new(prop_str(node, "value"))
+                    .label(prop_str(node, "label"))
+                    .icon(icon_of(node));
+                if let Some(t) = prop_str_opt(node, "tooltip") {
+                    item = item.tooltip(t);
+                }
+                let mut b = ToggleButton::new(
                     key.to_string(),
-                    ToggleItem::new(prop_str(node, "label")).icon(icon_of(node)),
-                    prop_bool(node, "checked"),
-                )
-                .into_any_element(),
-            ),
+                    item,
+                    prop_bool(node, "checked") || prop_bool(node, "on"),
+                );
+                if let Some(h) = change(view, node, cx) {
+                    b = b.on_toggle(move |on, w, cx| h(Json::Bool(on), w, cx));
+                }
+                Some(b.into_any_element())
+            }
             "Collapsible" => {
                 Some(Collapsible::new(key.to_string(), prop_bool(node, "open")).into_any_element())
             }
@@ -756,6 +840,183 @@ impl ForgeLibrary for Ely {
             }
             .ok()
             .map(|b| b.into_any_element()),
+            "ActionBar" => {
+                let mut bar = ActionBar::new();
+                if prop_bool(node, "floating") {
+                    bar = bar.floating();
+                }
+                bar.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(bar.into_any_element())
+            }
+            "BulkActionBar" => {
+                let mut bar = BulkActionBar::new(
+                    key.to_string(),
+                    prop_num(node, "count").unwrap_or(0.0) as usize,
+                );
+                for el in self
+                    .child_views(node, key, cx)
+                    .into_iter()
+                    .map(|v| v.into_any_element())
+                {
+                    bar = bar.action(el);
+                }
+                if let Some(h) = handler(view, node, "clear", cx) {
+                    bar = bar.on_clear(h);
+                }
+                Some(bar.into_any_element())
+            }
+            "ConfirmButton" => {
+                let mut b = ConfirmButton::new(
+                    key.to_string(),
+                    prop_str(node, "label"),
+                    match prop_str(node, "mode").as_str() {
+                        "hold" | "Hold" => ConfirmMode::Hold,
+                        _ => ConfirmMode::Twice,
+                    },
+                );
+                if let Some(l) = prop_str_opt(node, "armed") {
+                    b = b.armed_label(l);
+                }
+                if let Some(h) = handler(view, node, "confirm", cx) {
+                    b = b.on_confirm(h);
+                }
+                Some(b.into_any_element())
+            }
+            "FloatingActionButton" => {
+                let mut b = FloatingActionButton::new(key.to_string(), icon_of(node));
+                if let Some(l) = prop_str_opt(node, "label") {
+                    b = b.label(l);
+                }
+                if let Some(t) = prop_str_opt(node, "tooltip") {
+                    b = b.tooltip(t);
+                }
+                Some(b.into_any_element())
+            }
+            "ButtonGroup" => {
+                let mut g = ButtonGroup::new();
+                for (i, child) in node.children.iter().enumerate() {
+                    g = g.button(button_of(child, &format!("{key}/{i}")));
+                }
+                Some(g.into_any_element())
+            }
+            "ToggleGroup" => {
+                let mut g = ToggleGroup::new(key.to_string());
+                for entry in prop_list(node, "items") {
+                    let mut parts = entry.splitn(3, '|');
+                    let Some(value) = parts.next() else {
+                        continue;
+                    };
+                    let label = parts
+                        .clone()
+                        .next()
+                        .map(str::trim)
+                        .filter(|s| !s.is_empty())
+                        .unwrap_or(value.trim());
+                    let mut item = ToggleItem::new(value.trim()).label(label.to_owned());
+                    if let Some(icon) = parts.nth(1).and_then(|n| icon_named(n.trim())) {
+                        item = item.icon(icon);
+                    }
+                    g = g.item(item);
+                }
+                if prop_bool(node, "multiple") {
+                    g = g.multiple();
+                }
+                match prop(node, "value") {
+                    Some(Value::List(items)) => {
+                        g = g.selected(items.iter().filter_map(|v| match v {
+                            Value::String(s) | Value::Enum(s) => Some(s.clone()),
+                            _ => None,
+                        }));
+                    }
+                    _ => {
+                        let sel = prop_str(node, "value");
+                        if !sel.is_empty() {
+                            g = g.selected([sel]);
+                        }
+                    }
+                }
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    g = g.on_change(move |values, w, cx| h(values.join(","), w, cx));
+                }
+                Some(g.into_any_element())
+            }
+            "QuickActions" => {
+                let mut q = QuickActions::new(key.to_string());
+                for entry in prop_list(node, "actions") {
+                    let mut parts = entry.splitn(3, '|');
+                    let (Some(icon), Some(label)) = (parts.next(), parts.next()) else {
+                        continue;
+                    };
+                    let pick = change_str(view, node, "pick", cx);
+                    let l = label.trim().to_owned();
+                    let mut a = QuickAction::new(
+                        icon_named(icon.trim()).unwrap_or(IconName::Zap),
+                        l.clone(),
+                        move |w, cx| {
+                            if let Some(pick) = &pick {
+                                pick(l.clone(), w, cx);
+                            }
+                        },
+                    );
+                    if let Some(note) = parts.next() {
+                        a = a.note(note.trim());
+                    }
+                    q = q.action(a);
+                }
+                Some(q.into_any_element())
+            }
+            "ShareButton" => {
+                let text = prop_str_opt(node, "text");
+                let url = prop_str_opt(node, "url");
+                if text.is_none() && url.is_none() {
+                    return None;
+                }
+                let mut b = ShareButton::new(key.to_string());
+                if let Some(t) = text {
+                    b = b.text(t);
+                }
+                if let Some(u) = url {
+                    b = b.url(u);
+                }
+                Some(b.into_any_element())
+            }
+            "ActionSheet" => {
+                let close = handler(view, node, "close", cx);
+                let mut s = ActionSheet::new(key.to_string(), move |w, cx| {
+                    if let Some(h) = &close {
+                        h(w, cx);
+                    }
+                });
+                if let Some(t) = prop_str_opt(node, "title") {
+                    s = s.title(t);
+                }
+                if let Some(m) = prop_str_opt(node, "message") {
+                    s = s.message(m);
+                }
+                for entry in prop_list(node, "actions") {
+                    let pick = change_str(view, node, "pick", cx);
+                    let (label, danger) = match entry.strip_prefix("danger:") {
+                        Some(l) => (l.trim().to_owned(), true),
+                        None => (entry.trim().to_owned(), false),
+                    };
+                    let l2 = label.clone();
+                    let run = move |w: &mut Window, cx: &mut App| {
+                        if let Some(p) = &pick {
+                            p(l2.clone(), w, cx);
+                        }
+                    };
+                    s = if danger {
+                        s.destructive(label, run)
+                    } else {
+                        s.action(label, run)
+                    };
+                }
+                Some(s.into_any_element())
+            }
             _ => None,
         }
     }
@@ -826,6 +1087,38 @@ fn avatar_size(node: &Node) -> AvatarSize {
         Some("xl") | Some("Xl") => AvatarSize::Xl,
         _ => AvatarSize::Md,
     }
+}
+
+/// Build an Ely `Button` from a node's props (shared by `Button` and
+/// `ButtonGroup` children).
+fn button_of(node: &Node, key: &str) -> Button {
+    let mut b = Button::new(key.to_string(), prop_str(node, "label"));
+    if let Some(v) = prop_str_opt(node, "variant") {
+        b = b.variant(match v.as_str() {
+            "Secondary" => ButtonVariant::Secondary,
+            "Outline" => ButtonVariant::Outline,
+            "Ghost" => ButtonVariant::Ghost,
+            "Subtle" => ButtonVariant::Subtle,
+            "Success" => ButtonVariant::Success,
+            "Danger" => ButtonVariant::Danger,
+            "Link" => ButtonVariant::Link,
+            _ => ButtonVariant::Primary,
+        });
+    }
+    if let Some(s) = prop_str_opt(node, "size") {
+        b = b.size(match s.as_str() {
+            "Sm" => ControlSize::Sm,
+            "Lg" => ControlSize::Lg,
+            _ => ControlSize::Md,
+        });
+    }
+    if let Some(i) = prop_str_opt(node, "icon").and_then(|n| icon_named(&n)) {
+        b = b.icon(i);
+    }
+    if prop_bool(node, "disabled") {
+        b = b.disabled(true);
+    }
+    b
 }
 
 fn severity_of(node: &Node) -> Severity {

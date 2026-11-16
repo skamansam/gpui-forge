@@ -214,7 +214,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] AboutDialog
 - [ ] Accordion
 - [ ] AccordionItem
-- [ ] ActionBar
+- [x] ActionBar
 - [x] Activity
 - [ ] ActivityBar
 - [x] ActivityFeed
@@ -238,9 +238,9 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Blink
 - [ ] Blockquote
 - [ ] Breadcrumb
-- [ ] BulkActionBar
+- [x] BulkActionBar
 - [x] Button
-- [ ] ButtonGroup
+- [x] ButtonGroup
 - [ ] COUNTRIES
 - [ ] Calendar
 - [x] Callout
@@ -266,7 +266,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Command
 - [x] Comparison
 - [ ] Confetti
-- [ ] ConfirmButton
+- [x] ConfirmButton
 - [ ] ConfirmDialog
 - [ ] ConnectionStatus
 - [ ] Connectivity
@@ -489,8 +489,8 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] ToastViewport
 - [ ] Toaster
 - [x] ToggleButton
-- [ ] ToggleGroup
-- [ ] ToggleItem
+- [x] ToggleGroup
+- [x] ToggleItem
 - [ ] Tone
 - [x] Toolbar
 - [ ] ToolbarGroup

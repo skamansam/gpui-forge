@@ -3835,6 +3835,7 @@ dependencies = [
  "ely-core",
  "gpui-forge-runtime",
  "jiff",
+ "serde_json",
 ]
 
 [[package]]

@@ -761,3 +761,103 @@ elements:
     props:
       data: string
       kind: {type: enum, values: [code128, ean13], default: code128}
+
+  ActionBar:
+    icon: square-menu
+    group: Buttons
+    summary: Row of action buttons — docked or floating pill; children are the actions.
+    component: ely_core::buttons::ActionBar
+    props:
+      floating: {type: bool, default: false}
+
+  BulkActionBar:
+    icon: list-checks
+    group: Buttons
+    summary: Selection bar — shows count, bulk action children, and a clear button.
+    component: ely_core::buttons::BulkActionBar
+    props:
+      count: number
+    events:
+      clear:
+
+  ConfirmButton:
+    icon: shield-check
+    group: Buttons
+    summary: Button that arms before confirming (second click or hold).
+    component: ely_core::buttons::ConfirmButton
+    children: none
+    props:
+      label: string
+      armed: string
+      mode: {type: enum, values: [Twice, Hold], default: Twice}
+    events:
+      confirm:
+
+  FloatingActionButton:
+    icon: circle-plus
+    group: Buttons
+    summary: Floating action button with optional extended label.
+    component: ely_core::buttons::FloatingActionButton
+    children: none
+    props:
+      icon: string
+      label: string
+      tooltip: string
+    events:
+      click:
+
+  ButtonGroup:
+    icon: layout-panel-left
+    group: Buttons
+    summary: Joined row of buttons — children are Button elements.
+    component: ely_core::buttons::ButtonGroup
+
+  ToggleGroup:
+    icon: toggle-left
+    group: Buttons
+    summary: Single/multi-select toggle strip; value binds the selection.
+    component: ely_core::buttons::ToggleGroup
+    children: none
+    props:
+      items: list<string>   # "value|label|icon" (label, icon optional)
+      value: string         # selected value(s); list for multiple
+      multiple: {type: bool, default: false}
+    events:
+      change:
+
+  QuickActions:
+    icon: zap
+    group: Buttons
+    summary: Compact quick-action palette; picking an action fires pick with its label.
+    component: ely_core::buttons::QuickActions
+    children: none
+    props:
+      actions: list<string>  # "icon|label|note"
+    events:
+      pick:
+
+  ShareButton:
+    icon: share-2
+    group: Buttons
+    summary: Shares text and/or a URL via the platform share sheet.
+    component: ely_core::buttons::ShareButton
+    children: none
+    props:
+      text: string
+      url: string
+    events:
+      click:
+
+  ActionSheet:
+    icon: panel-bottom
+    group: Buttons
+    summary: Bottom action sheet; "danger:label" entries render destructive.
+    component: ely_core::buttons::ActionSheet
+    children: none
+    props:
+      title: string
+      message: string
+      actions: list<string>  # "label" or "danger:label"
+    events:
+      pick:
+      close:
