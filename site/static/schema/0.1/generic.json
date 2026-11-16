@@ -7245,6 +7245,14 @@
                   "null"
                 ]
               },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "vertical": {
                 "anyOf": [
                   {
@@ -7260,7 +7268,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Carousel(#[\\w-]+| \\.[\\w-]+)?|children|controls|height|item-width|no_wrap|on (change)|pagination|style|tooltip|vertical)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Carousel(#[\\w-]+| \\.[\\w-]+)?|children|controls|height|item-width|no_wrap|on (change)|pagination|style|tooltip|value|vertical)$"
             }
           }
         },
@@ -7378,6 +7386,14 @@
                   "null"
                 ]
               },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "vertical": {
                 "anyOf": [
                   {
@@ -7393,7 +7409,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Carousel(#[\\w-]+| \\.[\\w-]+)?|children|controls|height|item-width|no_wrap|on (change)|pagination|style|tooltip|vertical)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Carousel(#[\\w-]+| \\.[\\w-]+)?|children|controls|height|item-width|no_wrap|on (change)|pagination|style|tooltip|value|vertical)$"
             }
           }
         },
@@ -11043,6 +11059,14 @@
                   "null"
                 ]
               },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "width": {
                 "anyOf": [
                   {
@@ -11059,7 +11083,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|ContextMenu(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|size|style|tooltip|width)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|ContextMenu(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|size|style|tooltip|value|width)$"
             }
           }
         },
@@ -11129,6 +11153,14 @@
                   "null"
                 ]
               },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "width": {
                 "anyOf": [
                   {
@@ -11145,7 +11177,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.ContextMenu(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|size|style|tooltip|width)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.ContextMenu(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|size|style|tooltip|value|width)$"
             }
           }
         },
@@ -11584,10 +11616,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|DataView(#[\\w-]+| \\.[\\w-]+)?|children|columns|height|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|DataView(#[\\w-]+| \\.[\\w-]+)?|children|columns|height|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -11668,10 +11708,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.DataView(#[\\w-]+| \\.[\\w-]+)?|children|columns|height|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.DataView(#[\\w-]+| \\.[\\w-]+)?|children|columns|height|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -13820,10 +13868,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Dropzone(#[\\w-]+| \\.[\\w-]+)?|accept|children|height|hint|icon|label|no_click|on (change)|single|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Dropzone(#[\\w-]+| \\.[\\w-]+)?|accept|children|height|hint|icon|label|no_click|on (change)|single|style|tooltip|value)$"
             }
           }
         },
@@ -13940,10 +13996,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Dropzone(#[\\w-]+| \\.[\\w-]+)?|accept|children|height|hint|icon|label|no_click|on (change)|single|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Dropzone(#[\\w-]+| \\.[\\w-]+)?|accept|children|height|hint|icon|label|no_click|on (change)|single|style|tooltip|value)$"
             }
           }
         },
@@ -15357,10 +15421,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|FileInput(#[\\w-]+| \\.[\\w-]+)?|children|directories|disabled|label|multiple|on (change)|placeholder|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|FileInput(#[\\w-]+| \\.[\\w-]+)?|children|directories|disabled|label|multiple|on (change)|placeholder|size|style|tooltip|value)$"
             }
           }
         },
@@ -15468,10 +15540,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.FileInput(#[\\w-]+| \\.[\\w-]+)?|children|directories|disabled|label|multiple|on (change)|placeholder|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.FileInput(#[\\w-]+| \\.[\\w-]+)?|children|directories|disabled|label|multiple|on (change)|placeholder|size|style|tooltip|value)$"
             }
           }
         },
@@ -17558,6 +17638,28 @@
                 },
                 "type": "array"
               },
+              "height": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "slot": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "style": {
                 "$ref": "#/definitions/style"
               },
@@ -17572,7 +17674,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|HStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|HStack(#[\\w-]+| \\.[\\w-]+)?|children|height|slot|style|tooltip)$"
             }
           }
         },
@@ -17617,6 +17719,28 @@
                 },
                 "type": "array"
               },
+              "height": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "slot": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "style": {
                 "$ref": "#/definitions/style"
               },
@@ -17631,7 +17755,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.HStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.HStack(#[\\w-]+| \\.[\\w-]+)?|children|height|slot|style|tooltip)$"
             }
           }
         },
@@ -19413,6 +19537,9 @@
                   },
                   {
                     "type": "null"
+                  },
+                  {
+                    "type": "null"
                   }
                 ],
                 "description": "Positional content — mapped to the element's primary prop."
@@ -19434,6 +19561,14 @@
                   {
                     "type": "null"
                   }
+                ]
+              },
+              "description": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
                 ]
               },
               "disabled": {
@@ -19466,6 +19601,22 @@
                   }
                 ]
               },
+              "error": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "masked": {
                 "anyOf": [
                   {
@@ -19494,6 +19645,14 @@
               },
               "placeholder": {
                 "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  },
                   {
                     "type": [
                       "string",
@@ -19618,12 +19777,20 @@
                       "boolean",
                       "null"
                     ]
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
                   }
                 ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Input(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|disabled|masked|on (change|submit)|placeholder|readonly|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Input(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|description|disabled|error|label|masked|on (change|submit)|placeholder|readonly|style|tooltip|value)$"
             }
           }
         },
@@ -19661,6 +19828,9 @@
                   },
                   {
                     "type": "null"
+                  },
+                  {
+                    "type": "null"
                   }
                 ],
                 "description": "Positional content — mapped to the element's primary prop."
@@ -19682,6 +19852,14 @@
                   {
                     "type": "null"
                   }
+                ]
+              },
+              "description": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
                 ]
               },
               "disabled": {
@@ -19714,6 +19892,22 @@
                   }
                 ]
               },
+              "error": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "masked": {
                 "anyOf": [
                   {
@@ -19742,6 +19936,14 @@
               },
               "placeholder": {
                 "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  },
                   {
                     "type": [
                       "string",
@@ -19866,12 +20068,20 @@
                       "boolean",
                       "null"
                     ]
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
                   }
                 ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Input(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|disabled|masked|on (change|submit)|placeholder|readonly|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Input(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|description|disabled|error|label|masked|on (change|submit)|placeholder|readonly|style|tooltip|value)$"
             }
           }
         },
@@ -23742,10 +23952,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Menu(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|size|style|tooltip|trigger)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Menu(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|size|style|tooltip|trigger|value)$"
             }
           }
         },
@@ -23814,10 +24032,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Menu(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|size|style|tooltip|trigger)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Menu(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|size|style|tooltip|trigger|value)$"
             }
           }
         },
@@ -23878,10 +24104,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|MenuBar(#[\\w-]+| \\.[\\w-]+)?|children|menus|on (change)|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|MenuBar(#[\\w-]+| \\.[\\w-]+)?|children|menus|on (change)|size|style|tooltip|value)$"
             }
           }
         },
@@ -23942,10 +24176,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.MenuBar(#[\\w-]+| \\.[\\w-]+)?|children|menus|on (change)|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.MenuBar(#[\\w-]+| \\.[\\w-]+)?|children|menus|on (change)|size|style|tooltip|value)$"
             }
           }
         },
@@ -25576,10 +25818,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|NavigationMenu(#[\\w-]+| \\.[\\w-]+)?|active|children|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|NavigationMenu(#[\\w-]+| \\.[\\w-]+)?|active|children|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -25640,10 +25890,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.NavigationMenu(#[\\w-]+| \\.[\\w-]+)?|active|children|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.NavigationMenu(#[\\w-]+| \\.[\\w-]+)?|active|children|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -27085,6 +27343,14 @@
                 ],
                 "description": "Total number of pages."
               },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "visible": {
                 "anyOf": [
                   {
@@ -27102,7 +27368,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Pagination(#[\\w-]+| \\.[\\w-]+)?|active|children|color|compact|on (change)|page|style|tooltip|total|visible)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Pagination(#[\\w-]+| \\.[\\w-]+)?|active|children|color|compact|on (change)|page|style|tooltip|total|value|visible)$"
             }
           }
         },
@@ -27242,6 +27508,14 @@
                 ],
                 "description": "Total number of pages."
               },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "visible": {
                 "anyOf": [
                   {
@@ -27259,7 +27533,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Pagination(#[\\w-]+| \\.[\\w-]+)?|active|children|color|compact|on (change)|page|style|tooltip|total|visible)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Pagination(#[\\w-]+| \\.[\\w-]+)?|active|children|color|compact|on (change)|page|style|tooltip|total|value|visible)$"
             }
           }
         },
@@ -27587,6 +27861,36 @@
                 },
                 "type": "array"
               },
+              "height": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "slot": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "style": {
                 "$ref": "#/definitions/style"
               },
@@ -27601,7 +27905,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Paper(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Paper(#[\\w-]+| \\.[\\w-]+)?|children|height|label|slot|style|tooltip)$"
             }
           }
         },
@@ -27631,6 +27935,36 @@
                 },
                 "type": "array"
               },
+              "height": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "slot": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "style": {
                 "$ref": "#/definitions/style"
               },
@@ -27645,7 +27979,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Paper(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Paper(#[\\w-]+| \\.[\\w-]+)?|children|height|label|slot|style|tooltip)$"
             }
           }
         },
@@ -36716,10 +37050,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|SortableList(#[\\w-]+| \\.[\\w-]+)?|children|gap|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|SortableList(#[\\w-]+| \\.[\\w-]+)?|children|gap|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -36786,10 +37128,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.SortableList(#[\\w-]+| \\.[\\w-]+)?|children|gap|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.SortableList(#[\\w-]+| \\.[\\w-]+)?|children|gap|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -37327,6 +37677,20 @@
                   "null"
                 ]
               },
+              "height": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -37358,10 +37722,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|SplitPanel(#[\\w-]+| \\.[\\w-]+)?|children|direction|on (change)|ratio|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|SplitPanel(#[\\w-]+| \\.[\\w-]+)?|children|direction|height|on (change)|ratio|style|tooltip|value)$"
             }
           }
         },
@@ -37399,6 +37771,20 @@
                   "null"
                 ]
               },
+              "height": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -37430,10 +37816,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.SplitPanel(#[\\w-]+| \\.[\\w-]+)?|children|direction|on (change)|ratio|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.SplitPanel(#[\\w-]+| \\.[\\w-]+)?|children|direction|height|on (change)|ratio|style|tooltip|value)$"
             }
           }
         },
@@ -37716,10 +38110,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Spotlight(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Spotlight(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -37772,10 +38174,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Spotlight(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Spotlight(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -39857,10 +40267,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TabBar(#[\\w-]+| \\.[\\w-]+)?|active|add_button|children|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TabBar(#[\\w-]+| \\.[\\w-]+)?|active|add_button|children|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -39940,10 +40358,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TabBar(#[\\w-]+| \\.[\\w-]+)?|active|add_button|children|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TabBar(#[\\w-]+| \\.[\\w-]+)?|active|add_button|children|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -40027,6 +40453,14 @@
                   }
                 ]
               },
+              "options": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "rows": {
                 "anyOf": [
                   {
@@ -40082,7 +40516,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Table(#[\\w-]+| \\.[\\w-]+)?|border|children|head|header|hover|rows|striped|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Table(#[\\w-]+| \\.[\\w-]+)?|border|children|head|header|hover|options|rows|striped|style|title|tooltip)$"
             }
           }
         },
@@ -40166,6 +40600,14 @@
                   }
                 ]
               },
+              "options": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "rows": {
                 "anyOf": [
                   {
@@ -40221,7 +40663,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Table(#[\\w-]+| \\.[\\w-]+)?|border|children|head|header|hover|rows|striped|style|title|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Table(#[\\w-]+| \\.[\\w-]+)?|border|children|head|header|hover|options|rows|striped|style|title|tooltip)$"
             }
           }
         },
@@ -41092,6 +41534,14 @@
                   "null"
                 ]
               },
+              "options": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "rows": {
                 "type": [
                   "string",
@@ -41124,10 +41574,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TableView(#[\\w-]+| \\.[\\w-]+)?|children|head|multiple|on (change)|rows|selectable|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TableView(#[\\w-]+| \\.[\\w-]+)?|children|head|multiple|on (change)|options|rows|selectable|style|tooltip|value)$"
             }
           }
         },
@@ -41182,6 +41640,14 @@
                   "null"
                 ]
               },
+              "options": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "rows": {
                 "type": [
                   "string",
@@ -41214,10 +41680,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TableView(#[\\w-]+| \\.[\\w-]+)?|children|head|multiple|on (change)|rows|selectable|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TableView(#[\\w-]+| \\.[\\w-]+)?|children|head|multiple|on (change)|options|rows|selectable|style|tooltip|value)$"
             }
           }
         },
@@ -41835,10 +42309,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TagsInput(#[\\w-]+| \\.[\\w-]+)?|children|description|disabled|error|label|max_tags|on (change)|options|placeholder|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TagsInput(#[\\w-]+| \\.[\\w-]+)?|children|description|disabled|error|label|max_tags|on (change)|options|placeholder|size|style|tooltip|value)$"
             }
           }
         },
@@ -41958,10 +42440,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TagsInput(#[\\w-]+| \\.[\\w-]+)?|children|description|disabled|error|label|max_tags|on (change)|options|placeholder|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TagsInput(#[\\w-]+| \\.[\\w-]+)?|children|description|disabled|error|label|max_tags|on (change)|options|placeholder|size|style|tooltip|value)$"
             }
           }
         },
@@ -45575,10 +46065,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Tour(#[\\w-]+| \\.[\\w-]+)?|autostart|children|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Tour(#[\\w-]+| \\.[\\w-]+)?|autostart|children|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -45644,10 +46142,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Tour(#[\\w-]+| \\.[\\w-]+)?|autostart|children|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Tour(#[\\w-]+| \\.[\\w-]+)?|autostart|children|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -46199,10 +46705,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TreeView(#[\\w-]+| \\.[\\w-]+)?|children|expanded|height|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TreeView(#[\\w-]+| \\.[\\w-]+)?|children|expanded|height|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -46282,10 +46796,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TreeView(#[\\w-]+| \\.[\\w-]+)?|children|expanded|height|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TreeView(#[\\w-]+| \\.[\\w-]+)?|children|expanded|height|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -46582,6 +47104,28 @@
                 },
                 "type": "array"
               },
+              "height": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "slot": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "style": {
                 "$ref": "#/definitions/style"
               },
@@ -46596,7 +47140,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|VStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|VStack(#[\\w-]+| \\.[\\w-]+)?|children|height|slot|style|tooltip)$"
             }
           }
         },
@@ -46641,6 +47185,28 @@
                 },
                 "type": "array"
               },
+              "height": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "slot": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "style": {
                 "$ref": "#/definitions/style"
               },
@@ -46655,7 +47221,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.VStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.VStack(#[\\w-]+| \\.[\\w-]+)?|children|height|slot|style|tooltip)$"
             }
           }
         },
@@ -47428,10 +47994,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|WebView(#[\\w-]+| \\.[\\w-]+)?|bordered|children|html|init_script|on (change)|radius|style|tooltip|transparent|url)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|WebView(#[\\w-]+| \\.[\\w-]+)?|bordered|children|html|init_script|on (change)|radius|style|tooltip|transparent|url|value)$"
             }
           }
         },
@@ -47534,10 +48108,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.WebView(#[\\w-]+| \\.[\\w-]+)?|bordered|children|html|init_script|on (change)|radius|style|tooltip|transparent|url)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.WebView(#[\\w-]+| \\.[\\w-]+)?|bordered|children|html|init_script|on (change)|radius|style|tooltip|transparent|url|value)$"
             }
           }
         },

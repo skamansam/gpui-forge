@@ -31,6 +31,28 @@
                 },
                 "type": "array"
               },
+              "height": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "slot": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "style": {
                 "$ref": "#/definitions/style"
               },
@@ -45,7 +67,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|VStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|VStack(#[\\w-]+| \\.[\\w-]+)?|children|height|slot|style|tooltip)$"
             }
           }
         },
@@ -75,6 +97,28 @@
                 },
                 "type": "array"
               },
+              "height": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "slot": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "style": {
                 "$ref": "#/definitions/style"
               },
@@ -89,7 +133,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|HStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|HStack(#[\\w-]+| \\.[\\w-]+)?|children|height|slot|style|tooltip)$"
             }
           }
         },
@@ -319,6 +363,36 @@
                 },
                 "type": "array"
               },
+              "height": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "slot": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "style": {
                 "$ref": "#/definitions/style"
               },
@@ -333,7 +407,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Paper(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Paper(#[\\w-]+| \\.[\\w-]+)?|children|height|label|slot|style|tooltip)$"
             }
           }
         },
@@ -806,6 +880,94 @@
             },
             "propertyNames": {
               "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TextInput(#[\\w-]+| \\.[\\w-]+)?|children|description|error|label|on (change)|placeholder|style|tooltip|value)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?!Input(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^Input(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "description": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "error": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on change": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "placeholder": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Input(#[\\w-]+| \\.[\\w-]+)?|children|description|error|label|on (change)|placeholder|style|tooltip|value)$"
             }
           }
         },
@@ -3624,10 +3786,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TagsInput(#[\\w-]+| \\.[\\w-]+)?|children|description|disabled|error|label|max_tags|on (change)|options|placeholder|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TagsInput(#[\\w-]+| \\.[\\w-]+)?|children|description|disabled|error|label|max_tags|on (change)|options|placeholder|size|style|tooltip|value)$"
             }
           }
         },
@@ -4371,10 +4541,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|FileInput(#[\\w-]+| \\.[\\w-]+)?|children|directories|disabled|label|multiple|on (change)|placeholder|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|FileInput(#[\\w-]+| \\.[\\w-]+)?|children|directories|disabled|label|multiple|on (change)|placeholder|size|style|tooltip|value)$"
             }
           }
         },
@@ -4491,10 +4669,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Dropzone(#[\\w-]+| \\.[\\w-]+)?|accept|children|height|hint|icon|label|no_click|on (change)|single|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Dropzone(#[\\w-]+| \\.[\\w-]+)?|accept|children|height|hint|icon|label|no_click|on (change)|single|style|tooltip|value)$"
             }
           }
         },
@@ -5038,10 +5224,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TabBar(#[\\w-]+| \\.[\\w-]+)?|active|add_button|children|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TabBar(#[\\w-]+| \\.[\\w-]+)?|active|add_button|children|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -5103,6 +5297,14 @@
                   }
                 ]
               },
+              "options": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "rows": {
                 "type": [
                   "string",
@@ -5138,7 +5340,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Table(#[\\w-]+| \\.[\\w-]+)?|border|children|head|hover|rows|striped|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Table(#[\\w-]+| \\.[\\w-]+)?|border|children|head|hover|options|rows|striped|style|tooltip)$"
             }
           }
         },
@@ -5193,6 +5395,14 @@
                   "null"
                 ]
               },
+              "options": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "rows": {
                 "type": [
                   "string",
@@ -5225,10 +5435,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TableView(#[\\w-]+| \\.[\\w-]+)?|children|head|multiple|on (change)|rows|selectable|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TableView(#[\\w-]+| \\.[\\w-]+)?|children|head|multiple|on (change)|options|rows|selectable|style|tooltip|value)$"
             }
           }
         },
@@ -5451,10 +5669,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TreeView(#[\\w-]+| \\.[\\w-]+)?|children|expanded|height|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TreeView(#[\\w-]+| \\.[\\w-]+)?|children|expanded|height|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -5535,10 +5761,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|DataView(#[\\w-]+| \\.[\\w-]+)?|children|columns|height|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|DataView(#[\\w-]+| \\.[\\w-]+)?|children|columns|height|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -5903,10 +6137,18 @@
                     "type": "null"
                   }
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Pagination(#[\\w-]+| \\.[\\w-]+)?|active|children|color|on (change)|style|tooltip|total)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Pagination(#[\\w-]+| \\.[\\w-]+)?|active|children|color|on (change)|style|tooltip|total|value)$"
             },
             "required": [
               "total"
@@ -6135,10 +6377,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|NavigationMenu(#[\\w-]+| \\.[\\w-]+)?|active|children|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|NavigationMenu(#[\\w-]+| \\.[\\w-]+)?|active|children|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -6928,6 +7178,14 @@
                   "null"
                 ]
               },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "width": {
                 "anyOf": [
                   {
@@ -6944,7 +7202,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|ContextMenu(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|size|style|tooltip|width)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|ContextMenu(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|size|style|tooltip|value|width)$"
             }
           }
         },
@@ -7013,10 +7271,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Menu(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|size|style|tooltip|trigger)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Menu(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|size|style|tooltip|trigger|value)$"
             }
           }
         },
@@ -7077,10 +7343,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|MenuBar(#[\\w-]+| \\.[\\w-]+)?|children|menus|on (change)|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|MenuBar(#[\\w-]+| \\.[\\w-]+)?|children|menus|on (change)|size|style|tooltip|value)$"
             }
           }
         },
@@ -7221,10 +7495,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Spotlight(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Spotlight(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -7353,10 +7635,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Tour(#[\\w-]+| \\.[\\w-]+)?|autostart|children|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Tour(#[\\w-]+| \\.[\\w-]+)?|autostart|children|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -8545,10 +8835,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|SortableList(#[\\w-]+| \\.[\\w-]+)?|children|gap|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|SortableList(#[\\w-]+| \\.[\\w-]+)?|children|gap|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -8586,6 +8884,20 @@
                   "null"
                 ]
               },
+              "height": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -8617,10 +8929,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|SplitPanel(#[\\w-]+| \\.[\\w-]+)?|children|direction|on (change)|ratio|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|SplitPanel(#[\\w-]+| \\.[\\w-]+)?|children|direction|height|on (change)|ratio|style|tooltip|value)$"
             }
           }
         },
@@ -8694,10 +9014,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Carousel(#[\\w-]+| \\.[\\w-]+)?|children|height|no_wrap|on (change)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Carousel(#[\\w-]+| \\.[\\w-]+)?|children|height|no_wrap|on (change)|style|tooltip|value)$"
             }
           }
         },
@@ -9078,10 +9406,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|WebView(#[\\w-]+| \\.[\\w-]+)?|bordered|children|html|init_script|on (change)|radius|style|tooltip|transparent|url)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|WebView(#[\\w-]+| \\.[\\w-]+)?|bordered|children|html|init_script|on (change)|radius|style|tooltip|transparent|url|value)$"
             }
           }
         },
@@ -10644,10 +10980,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Carousel(#[\\w-]+| \\.[\\w-]+)?|children|height|no_wrap|on (change)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Carousel(#[\\w-]+| \\.[\\w-]+)?|children|height|no_wrap|on (change)|style|tooltip|value)$"
             }
           }
         },
@@ -11522,6 +11866,14 @@
                   "null"
                 ]
               },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "width": {
                 "anyOf": [
                   {
@@ -11538,7 +11890,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.ContextMenu(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|size|style|tooltip|width)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.ContextMenu(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|size|style|tooltip|value|width)$"
             }
           }
         },
@@ -11680,10 +12032,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.DataView(#[\\w-]+| \\.[\\w-]+)?|children|columns|height|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.DataView(#[\\w-]+| \\.[\\w-]+)?|children|columns|height|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -12060,10 +12420,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Dropzone(#[\\w-]+| \\.[\\w-]+)?|accept|children|height|hint|icon|label|no_click|on (change)|single|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Dropzone(#[\\w-]+| \\.[\\w-]+)?|accept|children|height|hint|icon|label|no_click|on (change)|single|style|tooltip|value)$"
             }
           }
         },
@@ -12324,10 +12692,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.FileInput(#[\\w-]+| \\.[\\w-]+)?|children|directories|disabled|label|multiple|on (change)|placeholder|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.FileInput(#[\\w-]+| \\.[\\w-]+)?|children|directories|disabled|label|multiple|on (change)|placeholder|size|style|tooltip|value)$"
             }
           }
         },
@@ -12443,6 +12819,28 @@
                 },
                 "type": "array"
               },
+              "height": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "slot": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "style": {
                 "$ref": "#/definitions/style"
               },
@@ -12457,7 +12855,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.HStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.HStack(#[\\w-]+| \\.[\\w-]+)?|children|height|slot|style|tooltip)$"
             }
           }
         },
@@ -12808,6 +13206,94 @@
             },
             "propertyNames": {
               "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Indicator(#[\\w-]+| \\.[\\w-]+)?|children|color|disabled|label|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.Input(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.Input(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "description": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "error": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on change": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "placeholder": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Input(#[\\w-]+| \\.[\\w-]+)?|children|description|error|label|on (change)|placeholder|style|tooltip|value)$"
             }
           }
         },
@@ -13504,10 +13990,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Menu(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|size|style|tooltip|trigger)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Menu(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|size|style|tooltip|trigger|value)$"
             }
           }
         },
@@ -13568,10 +14062,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.MenuBar(#[\\w-]+| \\.[\\w-]+)?|children|menus|on (change)|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.MenuBar(#[\\w-]+| \\.[\\w-]+)?|children|menus|on (change)|size|style|tooltip|value)$"
             }
           }
         },
@@ -13813,10 +14315,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.NavigationMenu(#[\\w-]+| \\.[\\w-]+)?|active|children|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.NavigationMenu(#[\\w-]+| \\.[\\w-]+)?|active|children|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -14126,10 +14636,18 @@
                     "type": "null"
                   }
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Pagination(#[\\w-]+| \\.[\\w-]+)?|active|children|color|on (change)|style|tooltip|total)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Pagination(#[\\w-]+| \\.[\\w-]+)?|active|children|color|on (change)|style|tooltip|total|value)$"
             },
             "required": [
               "total"
@@ -14222,6 +14740,36 @@
                 },
                 "type": "array"
               },
+              "height": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "slot": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "style": {
                 "$ref": "#/definitions/style"
               },
@@ -14236,7 +14784,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Paper(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Paper(#[\\w-]+| \\.[\\w-]+)?|children|height|label|slot|style|tooltip)$"
             }
           }
         },
@@ -15994,10 +16542,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.SortableList(#[\\w-]+| \\.[\\w-]+)?|children|gap|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.SortableList(#[\\w-]+| \\.[\\w-]+)?|children|gap|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -16174,6 +16730,20 @@
                   "null"
                 ]
               },
+              "height": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -16205,10 +16775,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.SplitPanel(#[\\w-]+| \\.[\\w-]+)?|children|direction|on (change)|ratio|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.SplitPanel(#[\\w-]+| \\.[\\w-]+)?|children|direction|height|on (change)|ratio|style|tooltip|value)$"
             }
           }
         },
@@ -16376,10 +16954,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Spotlight(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Spotlight(#[\\w-]+| \\.[\\w-]+)?|children|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -16663,10 +17249,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TabBar(#[\\w-]+| \\.[\\w-]+)?|active|add_button|children|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TabBar(#[\\w-]+| \\.[\\w-]+)?|active|add_button|children|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -16728,6 +17322,14 @@
                   }
                 ]
               },
+              "options": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "rows": {
                 "type": [
                   "string",
@@ -16763,7 +17365,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Table(#[\\w-]+| \\.[\\w-]+)?|border|children|head|hover|rows|striped|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Table(#[\\w-]+| \\.[\\w-]+)?|border|children|head|hover|options|rows|striped|style|tooltip)$"
             }
           }
         },
@@ -16818,6 +17420,14 @@
                   "null"
                 ]
               },
+              "options": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "rows": {
                 "type": [
                   "string",
@@ -16850,10 +17460,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TableView(#[\\w-]+| \\.[\\w-]+)?|children|head|multiple|on (change)|rows|selectable|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TableView(#[\\w-]+| \\.[\\w-]+)?|children|head|multiple|on (change)|options|rows|selectable|style|tooltip|value)$"
             }
           }
         },
@@ -17031,10 +17649,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TagsInput(#[\\w-]+| \\.[\\w-]+)?|children|description|disabled|error|label|max_tags|on (change)|options|placeholder|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TagsInput(#[\\w-]+| \\.[\\w-]+)?|children|description|disabled|error|label|max_tags|on (change)|options|placeholder|size|style|tooltip|value)$"
             }
           }
         },
@@ -17864,10 +18490,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Tour(#[\\w-]+| \\.[\\w-]+)?|autostart|children|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Tour(#[\\w-]+| \\.[\\w-]+)?|autostart|children|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -18054,10 +18688,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TreeView(#[\\w-]+| \\.[\\w-]+)?|children|expanded|height|on (change)|options|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TreeView(#[\\w-]+| \\.[\\w-]+)?|children|expanded|height|on (change)|options|style|tooltip|value)$"
             }
           }
         },
@@ -18087,6 +18729,28 @@
                 },
                 "type": "array"
               },
+              "height": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "slot": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "style": {
                 "$ref": "#/definitions/style"
               },
@@ -18101,7 +18765,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.VStack(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.VStack(#[\\w-]+| \\.[\\w-]+)?|children|height|slot|style|tooltip)$"
             }
           }
         },
@@ -18370,10 +19034,18 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.WebView(#[\\w-]+| \\.[\\w-]+)?|bordered|children|html|init_script|on (change)|radius|style|tooltip|transparent|url)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.WebView(#[\\w-]+| \\.[\\w-]+)?|bordered|children|html|init_script|on (change)|radius|style|tooltip|transparent|url|value)$"
             }
           }
         },
@@ -18492,7 +19164,7 @@
         }
       },
       "propertyNames": {
-        "pattern": "^((SegmentedControl|LoadingOverlay|MarkdownEditor|NavigationMenu|WindowControls|CheckboxGroup|PasswordInput|Autocomplete|ConfirmModal|Notification|RingProgress|ScatterChart|SortableList|AvatarGroup|Breadcrumbs|CloseButton|ContextMenu|NumberInput|RangeSlider|VirtualList|ActionIcon|Blockquote|ColorInput|CopyButton|DatePicker|Pagination|RadioGroup|ScrollArea|SimpleGrid|SplitPanel|TimePicker|ToastStack|Accordion|AreaChart|Container|FileInput|HoverCard|Indicator|LineChart|Sparkline|Spotlight|StatusBar|TableView|TagsInput|TextInput|ThemeIcon|VideoView|AppShell|BarChart|Calendar|Carousel|Checkbox|Combobox|DataView|Dropzone|Markdown|PieChart|PinInput|Progress|Skeleton|TextArea|Timeline|Transfer|TreeView|Divider|MenuBar|NavLink|Popover|Spoiler|Stepper|Tooltip|WebView|Anchor|Avatar|Button|Center|Drawer|Editor|HStack|Loader|Rating|Select|Slider|Switch|TabBar|VStack|About|Alert|Badge|Field|Image|Modal|Panel|Paper|Radio|Space|Table|Title|Card|Chip|Code|Icon|List|Mark|Menu|Tabs|Text|Tour|Kbd)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(SegmentedControl|LoadingOverlay|MarkdownEditor|NavigationMenu|WindowControls|CheckboxGroup|PasswordInput|Autocomplete|ConfirmModal|Notification|RingProgress|ScatterChart|SortableList|AvatarGroup|Breadcrumbs|CloseButton|ContextMenu|NumberInput|RangeSlider|VirtualList|ActionIcon|Blockquote|ColorInput|CopyButton|DatePicker|Pagination|RadioGroup|ScrollArea|SimpleGrid|SplitPanel|TimePicker|ToastStack|Accordion|AreaChart|Container|FileInput|HoverCard|Indicator|LineChart|Sparkline|Spotlight|StatusBar|TableView|TagsInput|TextInput|ThemeIcon|VideoView|AppShell|BarChart|Calendar|Carousel|Checkbox|Combobox|DataView|Dropzone|Markdown|PieChart|PinInput|Progress|Skeleton|TextArea|Timeline|Transfer|TreeView|Divider|MenuBar|NavLink|Popover|Spoiler|Stepper|Tooltip|WebView|Anchor|Avatar|Button|Canvas|Center|Drawer|Editor|HStack|Loader|Player|Rating|Select|Slider|Switch|TabBar|VStack|About|Alert|Badge|Field|Frame|Image|Modal|Panel|Paper|Radio|Space|Table|Title|Card|Chip|Code|Icon|List|Mark|Menu|Tabs|Text|Tour|Kbd)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<|(if|for|with|match|else|each|index|key|as|is|not|case .+))$"
+        "pattern": "^((SegmentedControl|LoadingOverlay|MarkdownEditor|NavigationMenu|WindowControls|CheckboxGroup|PasswordInput|Autocomplete|ConfirmModal|Notification|RingProgress|ScatterChart|SortableList|AvatarGroup|Breadcrumbs|CloseButton|ContextMenu|NumberInput|RangeSlider|VirtualList|ActionIcon|Blockquote|ColorInput|CopyButton|DatePicker|Pagination|RadioGroup|ScrollArea|SimpleGrid|SplitPanel|TimePicker|ToastStack|Accordion|AreaChart|Container|FileInput|HoverCard|Indicator|LineChart|Sparkline|Spotlight|StatusBar|TableView|TagsInput|TextInput|ThemeIcon|VideoView|AppShell|BarChart|Calendar|Carousel|Checkbox|Combobox|DataView|Dropzone|Markdown|PieChart|PinInput|Progress|Skeleton|TextArea|Timeline|Transfer|TreeView|Divider|MenuBar|NavLink|Popover|Spoiler|Stepper|Tooltip|WebView|Anchor|Avatar|Button|Center|Drawer|Editor|HStack|Loader|Rating|Select|Slider|Switch|TabBar|VStack|About|Alert|Badge|Field|Image|Input|Modal|Panel|Paper|Radio|Space|Table|Title|Card|Chip|Code|Icon|List|Mark|Menu|Tabs|Text|Tour|Kbd)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(SegmentedControl|LoadingOverlay|MarkdownEditor|NavigationMenu|WindowControls|CheckboxGroup|PasswordInput|Autocomplete|ConfirmModal|Notification|RingProgress|ScatterChart|SortableList|AvatarGroup|Breadcrumbs|CloseButton|ContextMenu|NumberInput|RangeSlider|VirtualList|ActionIcon|Blockquote|ColorInput|CopyButton|DatePicker|Pagination|RadioGroup|ScrollArea|SimpleGrid|SplitPanel|TimePicker|ToastStack|Accordion|AreaChart|Container|FileInput|HoverCard|Indicator|LineChart|Sparkline|Spotlight|StatusBar|TableView|TagsInput|TextInput|ThemeIcon|VideoView|AppShell|BarChart|Calendar|Carousel|Checkbox|Combobox|DataView|Dropzone|Markdown|PieChart|PinInput|Progress|Skeleton|TextArea|Timeline|Transfer|TreeView|Divider|MenuBar|NavLink|Popover|Spoiler|Stepper|Tooltip|WebView|Anchor|Avatar|Button|Canvas|Center|Drawer|Editor|HStack|Loader|Player|Rating|Select|Slider|Switch|TabBar|VStack|About|Alert|Badge|Field|Frame|Image|Input|Modal|Panel|Paper|Radio|Space|Table|Title|Card|Chip|Code|Icon|List|Mark|Menu|Tabs|Text|Tour|Kbd)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<|(if|for|with|match|else|each|index|key|as|is|not|case .+))$"
       },
       "type": "object"
     },

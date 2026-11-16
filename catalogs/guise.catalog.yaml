@@ -19,6 +19,9 @@ elements:
     component: guise::layout::Stack
     canvas: VStack
     children: any
+    props:
+      slot: string  # AppShell slot: header|navbar|aside|footer
+      height: number
 
   HStack:
     icon: columns-3
@@ -27,6 +30,9 @@ elements:
     component: guise::layout::Group
     canvas: HStack
     children: any
+    props:
+      slot: string  # AppShell slot: header|navbar|aside|footer
+      height: number
 
   Center:
     icon: align-center-horizontal
@@ -66,6 +72,10 @@ elements:
       label: string
 
   Paper:
+    props:
+      slot: string  # AppShell slot: header|navbar|aside|footer
+      height: number
+      label: string
     icon: square-stack
     group: Layout
     summary: Elevated surface — background, radius and shadow from the theme.
@@ -153,6 +163,21 @@ elements:
       click:
 
   TextInput:
+    icon: text-cursor-input
+    group: Input
+    summary: Single-line text input with label, description and error.
+    component: guise::input::TextInput
+    canvas: Input
+    props:
+      label: string
+      placeholder: string
+      description: string
+      error: string
+      value: string
+    events:
+      change:
+
+  Input:
     icon: text-cursor-input
     group: Input
     summary: Single-line text input with label, description and error.
@@ -641,6 +666,7 @@ elements:
     summary: Token/chip entry field.
     component: guise::input::TagsInput
     props:
+      value: string
       options: string   # initial tags, comma-separated
       placeholder: string
       label: string
@@ -767,6 +793,7 @@ elements:
     summary: Native file/directory picker button.
     component: guise::input::FileInput
     props:
+      value: string
       multiple:
         type: bool
         default: false
@@ -788,6 +815,7 @@ elements:
     summary: Drag-and-drop file target.
     component: guise::input::Dropzone
     props:
+      value: string
       label: string
       hint: string
       icon: string
@@ -883,6 +911,7 @@ elements:
     summary: Standalone tab strip with optional add button.
     component: guise::data::TabBar
     props:
+      value: string
       options: string  # tab labels, comma-separated
       active: number
       add_button:
@@ -897,6 +926,7 @@ elements:
     summary: Static styled table — head cells plus semicolon-separated rows.
     component: guise::data::Table
     props:
+      options: string  # alias for head
       head: string     # head cells, comma-separated
       rows: string     # "a,b;c,d"
       striped:
@@ -915,6 +945,8 @@ elements:
     summary: Sortable/selectable data table over text rows.
     component: guise::data::TableView
     props:
+      options: string  # alias for head
+      value: string
       head: string     # column titles, comma-separated
       rows: string     # "a,b;c,d"
       selectable:
@@ -954,6 +986,7 @@ elements:
     summary: Nested tree — options are slash-separated paths ("a/b/c").
     component: guise::data::TreeView
     props:
+      value: string
       options: string  # paths, comma-separated
       height: number
       expanded:
@@ -968,6 +1001,7 @@ elements:
     summary: Signal-backed selectable item view (list or grid).
     component: guise::data::DataView
     props:
+      value: string
       options: string  # items, comma-separated
       height: number
       columns: number  # >0 switches to grid layout
@@ -1021,6 +1055,7 @@ elements:
     summary: Page number strip.
     component: guise::nav::Pagination
     props:
+      value: string
       total:
         type: number
         required: true
@@ -1061,6 +1096,7 @@ elements:
     summary: Horizontal nav menu — options are "id | Label".
     component: guise::nav::NavigationMenu
     props:
+      value: string
       options: string  # items, comma-separated
       active: string   # active item id
     events:
@@ -1186,6 +1222,7 @@ elements:
     summary: Right-click item menu — show() drives it from tree/context events.
     component: guise::overlay::ContextMenu
     props:
+      value: string
       options: string  # items, comma-separated
       size: string
       width: number
@@ -1198,6 +1235,7 @@ elements:
     summary: Dropdown menu with a text trigger.
     component: guise::overlay::Menu
     props:
+      value: string
       trigger: string
       options: string  # items, comma-separated
       size: string
@@ -1210,6 +1248,7 @@ elements:
     summary: Top menu strip — menus are "File:New,Open;Edit:Copy,Paste".
     component: guise::overlay::MenuBar
     props:
+      value: string
       menus: string
       size: string
     events:
@@ -1235,6 +1274,7 @@ elements:
     summary: Command palette — options are "Label | hint".
     component: guise::overlay::Spotlight
     props:
+      value: string
       options: string  # commands, comma-separated
     events:
       change: Fires on command pick; writes the label to a bound value.
@@ -1256,6 +1296,7 @@ elements:
     summary: Guided step tour — options are "Title | body".
     component: guise::overlay::Tour
     props:
+      value: string
       options: string  # steps, comma-separated
       autostart:
         type: bool
@@ -1443,6 +1484,7 @@ elements:
     summary: Drag-to-reorder list — items from options.
     component: guise::SortableList
     props:
+      value: string
       options: string  # items, comma-separated
       gap: number
     events:
@@ -1455,6 +1497,8 @@ elements:
     component: guise::SplitPanel
     children: any
     props:
+      height: number
+      value: string
       direction: string  # horizontal | vertical
       ratio: number
     events:
@@ -1467,6 +1511,7 @@ elements:
     component: guise::Carousel
     children: any
     props:
+      value: string
       no_wrap:
         type: bool
         default: false
@@ -1523,6 +1568,7 @@ elements:
     summary: Embedded web view.
     component: guise::WebView
     props:
+      value: string
       url: string
       html: string
       init_script: string

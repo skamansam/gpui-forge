@@ -1,0 +1,277 @@
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/guise.json
+forge: "0.1"
+state:
+  sel: string
+  val: number
+  txt: string
+
+base: guise
+meta:
+  title: guise smoke — new widgets
+
+root:
+  VStack:
+  style: {padding: 16px, gap: 8px}
+  children:
+      - Title: "guise smoke"
+        order: H3
+      - Text: "display"
+      - HStack:
+        children:
+          - Chip:
+            label: "chip"
+          - Kbd:
+            text: "⌘K"
+          - Mark:
+            text: "marked"
+          - ThemeIcon:
+            name: "star"
+          - ActionIcon:
+            name: "plus"
+          - CloseButton:
+          - CopyButton:
+            text: "copied"
+          - Avatar:
+            text: "AB"
+      - HStack:
+        children:
+          - Icon:
+            name: "heart"
+          - Skeleton:
+            width: 40
+            height: 12
+          - Indicator:
+            label: "3"
+          - Loader:
+          - RingProgress:
+            value: 60
+            label: "60%"
+      - Code:
+        text: "let x = 1;"
+      - Blockquote:
+        text: "quote me"
+      - AvatarGroup:
+        options: "AA,BB,CC"
+        limit: 2
+      - List:
+        options: "one,two,three"
+      - Timeline:
+        options: "Step A | did it,Step B | doing"
+      - Divider:
+        label: "inputs"
+      - HStack:
+        children:
+          - Rating:
+            value: 3
+          - SegmentedControl:
+            options: "A,B,C"
+          - Radio:
+            checked: true
+      - RadioGroup:
+        options: "X,Y"
+        value: "1"
+      - CheckboxGroup:
+        options: "P,Q,R"
+        value: "0,2"
+      - Slider:
+        value: 40
+      - RangeSlider:
+        value: "20,80"
+      - NumberInput:
+        value: 5
+        label: "num"
+      - PasswordInput:
+        placeholder: "pw"
+      - PinInput:
+        length: 4
+      - TextArea:
+        placeholder: "write…"
+        rows: 2
+      - TagsInput:
+        options: "rust,gpui"
+        placeholder: "add tag"
+      - Combobox:
+        options: "Red,Green,Blue"
+        placeholder: "pick"
+      - Autocomplete:
+        options: "apple,apricot,banana"
+        placeholder: "fruit"
+      - ColorInput:
+        value: "#3366ff"
+        label: "color"
+      - DatePicker:
+        value: "2025-01-15"
+        label: "date"
+      - TimePicker:
+        value: "09:30"
+        label: "time"
+      - Calendar:
+        value: "2025-01-15"
+      - Field:
+        label: "field label"
+        description: "field description"
+        children:
+          - Text: "inside field"
+      - Divider:
+        label: "data"
+      - Table:
+        head: "A,B"
+        rows: "1,2;3,4"
+        striped: true
+      - TableView:
+        head: "Col1,Col2"
+        rows: "a,b;c,d"
+        selectable: true
+      - TreeView:
+        options: "root/a/x,root/b,other"
+        expanded: true
+        height: 120
+      - DataView:
+        options: "m,n,o"
+        columns: 3
+      - Accordion:
+        children:
+          - Paper:
+            label: "first panel"
+            children:
+              - Text: "panel one"
+          - Paper:
+            label: "second panel"
+            children:
+              - Text: "panel two"
+      - Tabs:
+        children:
+          - Paper:
+            label: "tab one"
+            children:
+              - Text: "tab content one"
+          - Paper:
+            label: "tab two"
+            children:
+              - Text: "tab content two"
+      - TabBar:
+        options: "t1,t2"
+        active: 0
+      - VirtualList:
+        options: "v1,v2,v3,v4,v5"
+        height: 60
+      - Divider:
+        label: "nav + overlay"
+      - Breadcrumbs:
+        options: "home,dir,file"
+      - Pagination:
+        total: 5
+        active: 1
+      - Stepper:
+        options: "one | first,two | second"
+        active: 1
+      - NavLink:
+        label: "nav"
+        icon: "home"
+        active: true
+      - NavigationMenu:
+        options: "m1 | Menu One,m2 | Menu Two"
+      - StatusBar:
+        children:
+          - Text: "left"
+          - Text: "center"
+          - Text: "right"
+      - Notification:
+        text: "heads up"
+        title: "note"
+      - ToastStack:
+        options: "saved!,done!"
+      - Modal:
+        title: "a modal"
+        children:
+          - Text: "modal body"
+      - ConfirmModal:
+        title: "sure?"
+        message: "really sure?"
+        danger: true
+      - Drawer:
+        title: "a drawer"
+        children:
+          - Text: "drawer body"
+      - Popover:
+        children:
+          - Button:
+            label: "trigger"
+          - Text: "popover content"
+      - HoverCard:
+        children:
+          - Text: "hover me"
+          - Text: "card body"
+      - Tooltip:
+        label: "a hint"
+      - ContextMenu:
+        options: "Copy,Paste"
+      - Menu:
+        trigger: "File"
+        options: "New,Open"
+      - MenuBar:
+        menus: "File:New,Open;Edit:Copy,Paste"
+      - Spotlight:
+        options: "Open | ⌘O,Quit | ⌘Q"
+      - LoadingOverlay:
+        visible: true
+      - Tour:
+        options: "Welcome | hello world"
+      - Divider:
+        label: "charts + media"
+      - LineChart:
+        values: "1,3,2,5,4"
+        axis: true
+      - BarChart:
+        values: "a:3,b:7,c:2"
+        axis: true
+      - PieChart:
+        values: "x:40,y:60"
+      - AreaChart:
+        values: "2,4,3,6"
+        axis: true
+      - ScatterChart:
+        values: "1,2;3,4;5,1"
+      - Sparkline:
+        values: "1,2,1,3,2,4"
+        height: 24
+      - SimpleGrid:
+        cols: 3
+        children:
+          - Text: "c1"
+          - Text: "c2"
+          - Text: "c3"
+      - ScrollArea:
+        max_height: 40
+        children:
+          - Text: "scrollable content that is fairly long and wraps"
+      - SplitPanel:
+        children:
+          - Text: "left pane"
+          - Text: "right pane"
+      - Carousel:
+        height: 60
+        children:
+          - Text: "slide 1"
+          - Text: "slide 2"
+      - SortableList:
+        options: "s1,s2,s3"
+      - Anchor:
+        label: "a link"
+      - About:
+        name: "app"
+        version: "1.0"
+        tagline: "hello"
+      - WindowControls:
+      - Markdown:
+        text: "# Head\n\nsome *markdown*"
+      - MarkdownEditor:
+        value: "# draft"
+        rows: 3
+      - Editor:
+        value: "fn main() {{}}"
+        language: "rust"
+      - VideoView:
+        width: 120
+        height: 80
+        placeholder: "no video"
