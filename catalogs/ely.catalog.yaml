@@ -224,11 +224,11 @@ elements:
   TimelineItem:
     icon: clock
     group: Display
-    summary: Ely timeline item.
+    summary: One timeline entry (child of Timeline); children render inside the entry body.
     component: ely_core::data_display::TimelineItem
-    content: text
-    children: none
-    props: {text: string}
+    props:
+      title: string
+      time: string
   Banner:
     icon: megaphone
     group: Feedback
@@ -575,3 +575,189 @@ elements:
     component: ely_core::forms::ChoiceChips
     children: any
 
+
+  AvatarGroup:
+    icon: users
+    group: Display
+    summary: Overlapping avatar stack with optional overflow count.
+    component: ely_core::data_display::AvatarGroup
+    children: none
+    props:
+      names: list<string>
+      max: number
+      size: {type: enum, values: [xs, sm, md, lg, xl], default: md}
+
+  UserChip:
+    icon: user
+    group: Display
+    summary: Compact user chip — avatar + name.
+    component: ely_core::data_display::UserChip
+    children: none
+    props:
+      name: string
+      image: string
+
+  CountBadge:
+    icon: badge
+    group: Display
+    summary: Numeric badge overlaid on a child (e.g. unread counts).
+    component: ely_core::data_display::CountBadge
+    props:
+      count: number
+      max: number
+
+  DotBadge:
+    icon: circle
+    group: Display
+    summary: Status dot overlaid on a child.
+    component: ely_core::data_display::DotBadge
+    props:
+      tone: {type: enum, values: [Neutral, Accent, Info, Success, Warning, Danger], default: Accent}
+
+  BeforeAfter:
+    icon: columns-2
+    group: Display
+    summary: Before/after comparison slider over two children.
+    component: ely_core::data_display::BeforeAfter
+
+  Changelog:
+    icon: history
+    group: Display
+    summary: Versioned changelog — children are Release elements.
+    component: ely_core::data_display::Changelog
+
+  Release:
+    icon: tag
+    group: Display
+    summary: One changelog release (child of Changelog).
+    component: ely_core::data_display::Release
+    children: none
+    props:
+      version: string
+      date: string
+      summary: string
+      changes: string  # "kind:text;kind:text" — kinds: added, changed, deprecated, removed, fixed, security
+
+  Comparison:
+    icon: columns-3
+    group: Display
+    summary: Feature-comparison matrix; rows use "name|v1|v2…", all-yes/no cells render as check marks.
+    component: ely_core::data_display::Comparison
+    children: none
+    props:
+      columns: list<string>
+      rows: list<string>   # "name|cell|cell…"; cells "yes"/"no"/"true"/"false" → marks
+
+  ActivityFeed:
+    icon: activity
+    group: Display
+    summary: Chronological activity stream — children are Activity elements.
+    component: ely_core::data_display::ActivityFeed
+
+  Activity:
+    icon: zap
+    group: Display
+    summary: One feed entry (child of ActivityFeed).
+    component: ely_core::data_display::Activity
+    children: none
+    props:
+      actor: string
+      verb: string
+      object: string
+      at: string       # ISO-8601 timestamp
+      icon: string
+
+  Gauge:
+    icon: gauge
+    group: Display
+    summary: Circular gauge for a value in [min, max].
+    component: ely_core::data_display::Gauge
+    children: none
+    props:
+      label: string
+      value: number
+      min: {type: number, default: 0}
+      max: {type: number, default: 100}
+
+  DescriptionList:
+    icon: list
+    group: Display
+    summary: Label/value description list.
+    component: ely_core::data_display::DescriptionList
+    children: none
+    props:
+      rows: list<string>  # "label|text"
+
+  PropertyGrid:
+    icon: table-properties
+    group: Display
+    summary: Grouped property sheet — children are PropertyGroup elements.
+    component: ely_core::data_display::PropertyGrid
+
+  PropertyGroup:
+    icon: folder
+    group: Display
+    summary: One property-sheet section (child of PropertyGrid).
+    component: ely_core::data_display::PropertyGroup
+    children: none
+    props:
+      title: string
+      rows: list<string>  # "name|value"
+
+  Sparkline:
+    icon: trending-up
+    group: Display
+    summary: Tiny inline chart — line, area, or bars.
+    component: ely_core::data_display::Sparkline
+    children: none
+    props:
+      values: list<string>  # numbers
+      kind: {type: enum, values: [line, area, bars], default: line}
+
+  Stars:
+    icon: star
+    group: Display
+    summary: Read-only star rating.
+    component: ely_core::data_display::Stars
+    children: none
+    props: {score: number}
+
+  Timeline:
+    icon: git-commit-vertical
+    group: Display
+    summary: Vertical timeline — children are TimelineItem elements.
+    component: ely_core::data_display::Timeline
+
+  Watermark:
+    icon: stamp
+    group: Display
+    summary: Repeating text watermark overlay.
+    component: ely_core::data_display::Watermark
+    children: none
+    props: {text: string}
+
+  Gallery:
+    icon: layout-grid
+    group: Display
+    summary: Image gallery grid.
+    component: ely_core::data_display::Gallery
+    children: none
+    props:
+      slides: list<string>  # "src|caption"
+      columns: number
+
+  Carousel:
+    icon: gallery-horizontal
+    group: Display
+    summary: Horizontal slide carousel — each child is one slide.
+    component: ely_core::data_display::Carousel
+
+  Barcode:
+    icon: barcode
+    group: Display
+    summary: 1-D barcode (Code 128 or EAN-13).
+    component: ely_core::data_display::Barcode
+    children: none
+    props:
+      data: string
+      kind: {type: enum, values: [code128, ean13], default: code128}

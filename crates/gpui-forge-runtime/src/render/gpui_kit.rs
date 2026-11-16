@@ -2915,7 +2915,10 @@ impl ForgeView {
         }
     }
 
-    fn render_node(
+    /// Render one document node — public so `ForgeLibrary` adapters can defer
+    /// child content into their own proxy entities (re-entering through
+    /// `Entity::update` inside this render pass would double-borrow).
+    pub fn render_node(
         &mut self,
         node: &Node,
         key: &str,

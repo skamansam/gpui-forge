@@ -9,6 +9,7 @@ repository.workspace = true
 [dependencies]
 ely-core = "0.2"
 gpui-forge-runtime = { path = "../gpui-forge-runtime" }
+jiff = "0.2"
 
 [lints]
 workspace = true

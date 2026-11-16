@@ -4,7 +4,10 @@ use ely_core::buttons::{
     Button, ButtonVariant, CopyButton, IconButton, SegmentedControl, ToggleButton, ToggleItem,
 };
 use ely_core::data_display::{
-    Avatar, Badge, KpiCard, Meter, QrCode, Statistic, Tag, TimelineItem, TrendIndicator, UsageBar,
+    Activity, ActivityFeed, Avatar, AvatarGroup, Badge, Barcode, BeforeAfter, Carousel, Change,
+    Changelog, Comparison, CountBadge, DescriptionList, DotBadge, Gallery, Gauge, KpiCard, Meter,
+    PropertyGrid, PropertyGroup, QrCode, Release, Sparkline, Stars, Statistic, Tag, Timeline,
+    TimelineItem, Tone, TrendIndicator, UsageBar, UserChip, Watermark,
 };
 use ely_core::feedback::Notification;
 use ely_core::feedback::{Alert, Banner, Callout, EmptyState, InlineMessage, StatusMessage};
@@ -19,18 +22,22 @@ use ely_core::lists::{GroupedList, ListItem};
 use ely_core::motion::{ProgressBar, Reorder, Skeleton};
 use ely_core::motion::{Spinner, SpinnerStyle};
 use ely_core::navigation::{NavItem, Pagination};
+use ely_core::overlays::Slide;
 use ely_core::primitives::Disclosure;
 use ely_core::primitives::{Divider, Icon, IconName, Severity};
 use ely_core::shell::Toolbar;
+use ely_core::theme::AvatarSize;
 use ely_core::theme::{ContainerSize, ControlSize, IconSize};
 use ely_core::typography::{Caption, Heading, Label, Overline, Paragraph, Subtitle, Title};
 use ely_core::typography::{Code, CopyableText, NumberText, PercentText};
+use jiff::Timestamp;
 
 use gpui_forge_runtime::base::kit::*;
 use gpui_forge_runtime::forge_spec::catalog::{self, Catalog};
 use gpui_forge_runtime::forge_spec::{Node, Value};
 use gpui_forge_runtime::render::{ForgeLibrary, ForgeView};
-use std::cell::Cell;
+use std::cell::{Cell, RefCell};
+use std::collections::HashMap;
 use std::sync::OnceLock;
 
 /// `ely.*` adapter — register with `view.register_library(Ely)`.
@@ -40,14 +47,144 @@ use std::sync::OnceLock;
 /// loads Ely's asset bundle, which hosts may not ship).
 pub struct Ely {
     inited: Cell<bool>,
+    /// `&Entity<TextInput>` fields keyed by element key — inputs carry their
+    /// state in the entity, so it must persist across renders; the view's own
+    /// entity maps are private to the base.
+    texts: RefCell<HashMap<String, Entity<ely_core::forms::TextInput>>>,
+    /// Lazy child-content proxies keyed `{key}/{i}` — children render in the
+    /// proxy's own pass, not inside ForgeView's (which would double-borrow).
+    views: RefCell<HashMap<String, AnyView>>,
+}
+
+/// Renders one Forge child in its own entity update — the ely widgets'
+/// lazy-content slots (`content` closures, `over`, pane bodies) need a view
+/// they can clone and draw later.
+struct LibProxy {
+    view: WeakEntity<ForgeView>,
+    node: Node,
+    key: String,
+}
+
+impl Render for LibProxy {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        self.view
+            .update(cx, |view, cx| {
+                view.render_node(&self.node, &self.key, window, cx)
+            })
+            .unwrap_or_else(|_| div().into_any_element())
+    }
 }
 
 impl Ely {
     pub fn new() -> Self {
         Self {
             inited: Cell::new(false),
+            texts: RefCell::new(HashMap::new()),
+            views: RefCell::new(HashMap::new()),
         }
     }
+
+    /// The shared `Entity<TextInput>` behind `Input`/`SearchInput`/`MaskedInput`
+    /// and friends — one per element key.
+    fn text_input(
+        &self,
+        key: &str,
+        window: &mut Window,
+        cx: &mut Context<ForgeView>,
+    ) -> Entity<ely_core::forms::TextInput> {
+        let mut texts = self.texts.borrow_mut();
+        if let Some(t) = texts.get(key) {
+            return t.clone();
+        }
+        let t = cx.new(|cx| ely_core::forms::TextInput::new(window, cx));
+        texts.insert(key.to_owned(), t.clone());
+        t
+    }
+
+    /// A proxy view rendering `child` in a later pass — safe to hand to lazy
+    /// content slots.
+    fn child_view(&self, child: &Node, key: &str, cx: &mut Context<ForgeView>) -> AnyView {
+        let mut views = self.views.borrow_mut();
+        if let Some(v) = views.get(key) {
+            return v.clone();
+        }
+        let node = child.clone();
+        let k = key.to_owned();
+        let weak = cx.entity().downgrade();
+        let v: AnyView = cx
+            .new(|_| LibProxy {
+                view: weak,
+                node,
+                key: k,
+            })
+            .into();
+        views.insert(key.to_owned(), v.clone());
+        v
+    }
+
+    /// Render every child of `node` as proxies, keyed `{key}/{i}`.
+    fn child_views(&self, node: &Node, key: &str, cx: &mut Context<ForgeView>) -> Vec<AnyView> {
+        node.children
+            .iter()
+            .enumerate()
+            .map(|(i, c)| self.child_view(c, &format!("{key}/{i}"), cx))
+            .collect()
+    }
+}
+
+/// `on <event>:` calls on a library node, as `Fn(&mut Window, &mut App)` —
+/// most ely handlers take that exact shape. (Plain `on click:` is wrapped by
+/// the runtime itself; this covers `change`, `confirm`, `close`, ….)
+fn handler(
+    view: &ForgeView,
+    node: &Node,
+    event: &str,
+    cx: &mut Context<ForgeView>,
+) -> Option<impl Fn(&mut Window, &mut App) + 'static> {
+    let calls: Vec<(String, Vec<String>)> = node
+        .events
+        .iter()
+        .filter(|e| e.event == event)
+        .map(|e| {
+            (
+                e.handler.name.clone(),
+                e.handler
+                    .args
+                    .iter()
+                    .map(|a| {
+                        view.resolve(a)
+                            .as_str()
+                            .map(str::to_owned)
+                            .unwrap_or_default()
+                    })
+                    .collect(),
+            )
+        })
+        .collect();
+    if calls.is_empty() {
+        return None;
+    }
+    let weak = cx.entity().downgrade();
+    Some(move |_: &mut Window, cx: &mut App| {
+        for (name, args) in &calls {
+            let weak = weak.clone();
+            let name = name.clone();
+            let args = args.clone();
+            weak.update(cx, |view, cx| view.fire_call(&name, args, cx))
+                .ok();
+        }
+    })
+}
+
+/// Lucide name → `IconName`, searched across the bundled set.
+fn icon_named(name: &str) -> Option<IconName> {
+    IconName::ALL.iter().copied().find(|i| i.name() == name)
+}
+
+fn icon_of(node: &Node) -> IconName {
+    prop_str_opt(node, "icon")
+        .and_then(|n| icon_named(&n))
+        .unwrap_or(IconName::Plus)
 }
 
 impl Default for Ely {
@@ -402,6 +539,223 @@ impl ForgeLibrary for Ely {
             "ChoiceChips" => {
                 Some(ChoiceChips::new(key.to_string(), choices(node)).into_any_element())
             }
+            "AvatarGroup" => {
+                let mut g = AvatarGroup::new(
+                    prop_list(node, "names")
+                        .into_iter()
+                        .enumerate()
+                        .map(|(i, n)| Avatar::new(format!("{key}/{i}"), n)),
+                )
+                .size(avatar_size(node));
+                if let Some(m) = prop_num(node, "max") {
+                    g = g.max(m as usize);
+                }
+                Some(g.into_any_element())
+            }
+            "UserChip" => {
+                let mut c = UserChip::new(key.to_string(), prop_str(node, "name"));
+                if let Some(src) = prop_str_opt(node, "image") {
+                    c = c.image(std::path::PathBuf::from(src));
+                }
+                Some(c.into_any_element())
+            }
+            "CountBadge" => {
+                let mut b = CountBadge::new(
+                    key.to_string(),
+                    prop_num(node, "count").unwrap_or(0.0) as usize,
+                );
+                if let Some(m) = prop_num(node, "max") {
+                    b = b.max(m as usize);
+                }
+                if let Some(c) = node.children.first() {
+                    b = b.over(self.child_view(c, &format!("{key}/0"), cx));
+                }
+                Some(b.into_any_element())
+            }
+            "DotBadge" => {
+                let mut b = DotBadge::new().tone(tone_of(node));
+                if let Some(c) = node.children.first() {
+                    b = b.over(self.child_view(c, &format!("{key}/0"), cx));
+                }
+                Some(b.into_any_element())
+            }
+            "BeforeAfter" => {
+                let mut it = node.children.iter();
+                let (Some(before), Some(after)) = (it.next(), it.next()) else {
+                    return None;
+                };
+                Some(
+                    BeforeAfter::new(
+                        key.to_string(),
+                        self.child_view(before, &format!("{key}/0"), cx),
+                        self.child_view(after, &format!("{key}/1"), cx),
+                    )
+                    .into_any_element(),
+                )
+            }
+            "Changelog" => {
+                let mut c = Changelog::new();
+                for child in node.children.iter() {
+                    let mut r = Release::new(prop_str(child, "version"), prop_str(child, "date"));
+                    if let Some(s) = prop_str_opt(child, "summary") {
+                        r = r.summary(s);
+                    }
+                    for entry in prop_str(child, "changes").split(';') {
+                        let mut parts = entry.splitn(2, ':');
+                        let (Some(kind), Some(text)) = (parts.next(), parts.next()) else {
+                            continue;
+                        };
+                        let kind = match kind.trim() {
+                            "changed" => Change::Changed,
+                            "deprecated" => Change::Deprecated,
+                            "removed" => Change::Removed,
+                            "fixed" => Change::Fixed,
+                            "security" => Change::Security,
+                            _ => Change::Added,
+                        };
+                        r = r.change(kind, text.trim().to_owned());
+                    }
+                    c = c.release(r);
+                }
+                Some(c.into_any_element())
+            }
+            "Comparison" => {
+                let mut c = Comparison::new(prop_list(node, "columns"));
+                for entry in prop_list(node, "rows") {
+                    let mut parts = entry.split('|');
+                    let (Some(name), cells) = (parts.next(), parts.collect::<Vec<_>>()) else {
+                        continue;
+                    };
+                    if cells
+                        .iter()
+                        .all(|v| matches!(*v, "yes" | "no" | "true" | "false"))
+                    {
+                        c = c.marks(
+                            name.trim(),
+                            cells.iter().map(|v| matches!(*v, "yes" | "true")),
+                        );
+                    } else {
+                        c = c.row(name.trim(), cells.iter().map(|v| v.trim()));
+                    }
+                }
+                Some(c.into_any_element())
+            }
+            "ActivityFeed" => {
+                let mut f = ActivityFeed::new(key.to_string());
+                for child in &node.children {
+                    let at: Timestamp = prop_str(child, "at")
+                        .parse()
+                        .unwrap_or_else(|_| Timestamp::now());
+                    let mut a = Activity::new(
+                        key.to_string(),
+                        prop_str(child, "actor"),
+                        prop_str(child, "verb"),
+                        at,
+                    );
+                    if let Some(o) = prop_str_opt(child, "object") {
+                        a = a.object(o);
+                    }
+                    if let Some(i) = prop_str_opt(child, "icon").and_then(|n| icon_named(&n)) {
+                        a = a.icon(i);
+                    }
+                    f = f.entry(a);
+                }
+                Some(f.into_any_element())
+            }
+            "Gauge" => Some(
+                Gauge::new(
+                    key.to_string(),
+                    prop_str(node, "label"),
+                    prop_num(node, "value").unwrap_or(0.0),
+                    prop_num(node, "min").unwrap_or(0.0),
+                    prop_num(node, "max").unwrap_or(100.0).max(1.0),
+                )
+                .into_any_element(),
+            ),
+            "DescriptionList" => {
+                let mut d = DescriptionList::new();
+                for entry in prop_list(node, "rows") {
+                    let mut parts = entry.splitn(2, '|');
+                    if let (Some(l), Some(t)) = (parts.next(), parts.next()) {
+                        d = d.text(l.trim(), t.trim());
+                    }
+                }
+                Some(d.into_any_element())
+            }
+            "PropertyGrid" => {
+                let mut g = PropertyGrid::new(key.to_string());
+                for child in &node.children {
+                    let mut pg = PropertyGroup::new(prop_str(child, "title"));
+                    for entry in prop_list(child, "rows") {
+                        let mut parts = entry.splitn(2, '|');
+                        if let (Some(n), Some(v)) = (parts.next(), parts.next()) {
+                            pg = pg.row(n.trim(), Paragraph::new(v.trim().to_owned()));
+                        }
+                    }
+                    g = g.group(pg);
+                }
+                Some(g.into_any_element())
+            }
+            "Sparkline" => {
+                let mut s = Sparkline::new(prop_floats(node, "values"));
+                s = match prop_str(node, "kind").as_str() {
+                    "area" => s.area(),
+                    "bars" => s.bars(),
+                    _ => s,
+                };
+                Some(s.into_any_element())
+            }
+            "Stars" => {
+                Some(Stars::new(prop_num(node, "score").unwrap_or(0.0) as f32).into_any_element())
+            }
+            "Timeline" => {
+                let mut t = Timeline::new();
+                for (i, child) in node.children.iter().enumerate() {
+                    let mut item = TimelineItem::new(Paragraph::new(prop_str(child, "title")));
+                    if let Some(time) = prop_str_opt(child, "time") {
+                        item = item.time(Paragraph::new(time));
+                    }
+                    let k = format!("{key}/{i}");
+                    item.extend([self.child_view(child, &k, cx).into_any_element()]);
+                    t = t.item(item);
+                }
+                Some(t.into_any_element())
+            }
+            "Watermark" => {
+                Some(Watermark::new(key.to_string(), prop_str(node, "text")).into_any_element())
+            }
+            "Gallery" => {
+                let slides = prop_list(node, "slides")
+                    .into_iter()
+                    .filter_map(|entry| {
+                        let mut parts = entry.splitn(2, '|');
+                        Some(Slide::new(
+                            std::path::PathBuf::from(parts.next()?.trim()),
+                            parts.next().unwrap_or("").trim().to_owned(),
+                        ))
+                    })
+                    .collect::<Vec<_>>();
+                let mut g = Gallery::new(key.to_string(), slides);
+                if let Some(c) = prop_num(node, "columns") {
+                    g = g.columns(c as u16);
+                }
+                Some(g.into_any_element())
+            }
+            "Carousel" => {
+                let mut c = Carousel::new(key.to_string());
+                c.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(c.into_any_element())
+            }
+            "Barcode" => match prop_str(node, "kind").as_str() {
+                "ean13" => Barcode::ean13(&prop_str(node, "data")),
+                _ => Barcode::code128(&prop_str(node, "data")),
+            }
+            .ok()
+            .map(|b| b.into_any_element()),
             _ => None,
         }
     }
@@ -453,6 +807,27 @@ fn prop_num(node: &Node, name: &str) -> Option<f64> {
     }
 }
 
+fn tone_of(node: &Node) -> Tone {
+    match prop_str_opt(node, "tone").as_deref() {
+        Some("Accent") | Some("accent") => Tone::Accent,
+        Some("Info") | Some("info") => Tone::Info,
+        Some("Success") | Some("success") => Tone::Success,
+        Some("Warning") | Some("warning") => Tone::Warning,
+        Some("Danger") | Some("danger") => Tone::Danger,
+        _ => Tone::Neutral,
+    }
+}
+
+fn avatar_size(node: &Node) -> AvatarSize {
+    match prop_str_opt(node, "size").as_deref() {
+        Some("xs") | Some("Xs") => AvatarSize::Xs,
+        Some("sm") | Some("Sm") => AvatarSize::Sm,
+        Some("lg") | Some("Lg") => AvatarSize::Lg,
+        Some("xl") | Some("Xl") => AvatarSize::Xl,
+        _ => AvatarSize::Md,
+    }
+}
+
 fn severity_of(node: &Node) -> Severity {
     match prop_str_opt(node, "severity").as_deref() {
         Some("Success") => Severity::Success,
@@ -462,16 +837,28 @@ fn severity_of(node: &Node) -> Severity {
     }
 }
 
-fn icon_of(node: &Node) -> IconName {
-    match prop_str_opt(node, "icon").as_deref() {
-        Some("check") => IconName::Check,
-        Some("circle-check") => IconName::CircleCheck,
-        Some("file-plus") => IconName::FilePlus,
-        Some("folder-plus") => IconName::FolderPlus,
-        Some("menu") => IconName::Menu,
-        Some("list-checks") => IconName::ListChecks,
-        Some("square-check") => IconName::SquareCheck,
-        Some("check-check") => IconName::CheckCheck,
-        _ => IconName::Plus,
+fn prop_list(node: &Node, name: &str) -> Vec<String> {
+    match prop(node, name) {
+        Some(Value::List(items)) => items
+            .iter()
+            .filter_map(|v| match v {
+                Value::String(s) | Value::Enum(s) => Some(s.clone()),
+                Value::Number { value, .. } => Some(value.to_string()),
+                _ => None,
+            })
+            .collect(),
+        Some(Value::String(s)) | Some(Value::Enum(s)) => s
+            .split(',')
+            .map(|x| x.trim().to_owned())
+            .filter(|x| !x.is_empty())
+            .collect(),
+        _ => Vec::new(),
     }
+}
+
+fn prop_floats(node: &Node, name: &str) -> Vec<f32> {
+    prop_list(node, name)
+        .iter()
+        .filter_map(|s| s.parse::<f32>().ok())
+        .collect()
 }
