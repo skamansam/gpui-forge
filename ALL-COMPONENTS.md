@@ -169,7 +169,7 @@ github: https://github.com/longbridge/gpui-kit
 
 - [ ] Cancel
 - [ ] Confirm
-- [ ] Date
+- [ ] Date — value type, not a widget — `DatePicker`/`Calendar` produce it
 - [ ] DiffConflict
 - [ ] DiffConflictResolution
 - [ ] DiffFile
@@ -381,7 +381,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] PICTURES
 - [ ] Page
 - [x] Pagination
-- [ ] PaneGroup
+- [ ] PaneGroup — unconstructable — its `ItemId` is `pub(crate)` upstream
 - [ ] PaneId
 - [ ] PaneLayout
 - [x] Panel
@@ -396,7 +396,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] PieItem
 - [ ] PieMenu
 - [ ] Place
-- [ ] Presence
+- [ ] Presence — exit-animation primitive — wraps elements, not a standalone widget
 - [x] ProgressBar
 - [ ] ProgressRing
 - [ ] PromptDialog
@@ -453,7 +453,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Spot
 - [ ] Spotlight
 - [ ] Spreadsheet
-- [ ] Stagger
+- [ ] Stagger — animation sequencing primitive
 - [x] Statistic
 - [ ] StatusBar
 - [ ] StatusBarItem
@@ -535,28 +535,34 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 docs: https://docs.rs/guise  
 github: https://github.com/wess/guise
 
-> Vanilla-gpui flavor base — `base: guise` on crates.io `gpui 0.2.2`. Below is every exported widget type in `guise-ui` 1.10 — `[x]` entries are mapped by `catalogs/guise.catalog.yaml` (`Stack`/`Group` surface as Forge `VStack`/`HStack`); the rest are intentionally unmapped: the `ai::*` module, animation/presence primitives (`Animated`, `Collapse`, `Transition`…), infrastructure types (`OverlayHost`, `MenuColumn`, `ItemId`-keyed `PaneGroup`, `Responsive`, `Scrollbar`, `VideoFeed`/`VideoFrame`), and value types (`Date`, `Time`).
+> Vanilla-gpui flavor base — `base: guise` on crates.io `gpui 0.2.2`. Below is every exported widget type in `guise-ui` 1.10 — `[x]` entries are mapped by `catalogs/guise.catalog.yaml` (`Stack`/`Group` surface as Forge `VStack`/`HStack`); each unchecked entry carries a one-line reason it stays unmapped.
 
 - [x] About
 - [x] Accordion
 - [x] ActionIcon
-- [ ] AIChatView
-- [ ] AICitation
-- [ ] AIComposer
-- [ ] AICost
-- [ ] AIMessage
-- [ ] AIModelPicker
-- [ ] AIReasoning
-- [ ] AISettings
-- [ ] AISources
-- [ ] AIStreamingText
-- [ ] AIThinking
-- [ ] AITokenMeter
-- [ ] AIToolCall
+- [x] AIChatView
+- [x] AICitation
+- [x] AIComposer
+- [x] AICost
+- [x] AIMessage
+- [x] AIModelPicker
+- [x] AIReasoning
+- [x] AISettings
+- [x] AISources
+- [x] AIStreamingText
+- [x] AIThinking
+- [x] AITokenMeter
+- [x] AIToolCall
+- [ ] AIModel — model descriptor consumed by `AIModelPicker`, not a widget
+- [ ] AIPricing — pricing descriptor consumed by `AICost`, not a widget
+- [ ] AISource — source descriptor consumed by `AISources`/`AIChatView`, not a widget
+- [ ] AITurn — turn descriptor consumed by `AIChatView`, not a widget
+- [ ] AITurnTool — tool descriptor consumed by `AITurn`, not a widget
+- [ ] AIUsage — token-usage descriptor consumed by `AICost`, not a widget
 - [x] Alert
 - [x] Anchor
-- [ ] Animated
-- [ ] Animator
+- [ ] Animated — animation primitive — wraps an element tree, not a standalone widget
+- [ ] Animator — drives `Animated` — construct it from Forge state instead
 - [x] AppShell
 - [x] Autocomplete
 - [x] Avatar
@@ -575,7 +581,7 @@ github: https://github.com/wess/guise
 - [x] Chip
 - [x] CloseButton
 - [x] Code
-- [ ] Collapse
+- [ ] Collapse — animation primitive — use `Spoiler` for expandable content
 - [x] ColorInput
 - [x] Combobox
 - [x] ConfirmModal
@@ -583,18 +589,18 @@ github: https://github.com/wess/guise
 - [x] ContextMenu
 - [x] CopyButton
 - [x] DataView
-- [ ] Date
+- [ ] Date — value type, not a widget — `DatePicker`/`Calendar` produce it
 - [x] DatePicker
-- [ ] DevTools
+- [ ] DevTools — in-app debug panel — developer tooling, not a document element
 - [x] Divider
-- [ ] Draggable
+- [ ] Draggable — drag-source primitive — `SortableList` covers reorderable lists
 - [x] Drawer
-- [ ] DropTarget
+- [ ] DropTarget — drop-target primitive — needs host drag state; `Dropzone` covers file drops
 - [x] Dropzone
 - [x] Editor
 - [x] Field
 - [x] FileInput
-- [ ] GpuView
+- [ ] GpuView — raw wgpu surface — needs a caller-supplied `GpuScene` render callback
 - [x] Group
 - [x] HoverCard
 - [x] Icon
@@ -610,41 +616,41 @@ github: https://github.com/wess/guise
 - [x] Mark
 - [x] Menu
 - [x] MenuBar
-- [ ] MenuColumn
+- [ ] MenuColumn — internal layout primitive of `Menu`/`MenuBar`
 - [x] Modal
-- [ ] Motioned
+- [ ] Motioned — animation wrapper — applies motion curves to a child element
 - [x] NavigationMenu
 - [x] NavLink
 - [x] Notification
 - [x] NumberInput
-- [ ] OverlayHost
+- [ ] OverlayHost — internal mounting point — overlays host themselves
 - [x] Pagination
-- [ ] PaneGroup
+- [ ] PaneGroup — unconstructable — its `ItemId` is `pub(crate)` upstream
 - [x] Panel
 - [x] Paper
 - [x] PasswordInput
 - [x] PieChart
 - [x] PinInput
 - [x] Popover
-- [ ] Presence
+- [ ] Presence — exit-animation primitive — wraps elements, not a standalone widget
 - [x] Progress
 - [x] Radio
 - [x] RadioGroup
 - [x] RangeSlider
 - [x] Rating
-- [ ] ResizeHandles
-- [ ] Responsive
+- [ ] ResizeHandles — internal part of `SplitPanel`
+- [ ] Responsive — generic viewport switch — takes a layout closure, not props
 - [x] RingProgress
 - [x] ScatterChart
 - [x] ScrollArea
-- [ ] Scrollbar
+- [ ] Scrollbar — internal part of `ScrollArea`
 - [x] SegmentedControl
 - [x] Select
-- [ ] Sequence
-- [ ] SettingsPage
-- [ ] SettingsRow
-- [ ] SettingsSection
-- [ ] SettingsView
+- [ ] Sequence — animation sequencing primitive
+- [ ] SettingsPage — page descriptor consumed by `SettingsView`, not a widget
+- [x] SettingsRow
+- [x] SettingsSection
+- [x] SettingsView
 - [x] SimpleGrid
 - [x] Skeleton
 - [x] Slider
@@ -655,7 +661,7 @@ github: https://github.com/wess/guise
 - [x] Spoiler
 - [x] Spotlight
 - [x] Stack
-- [ ] Stagger
+- [ ] Stagger — animation sequencing primitive
 - [x] StatusBar
 - [x] Stepper
 - [x] Switch
@@ -666,11 +672,11 @@ github: https://github.com/wess/guise
 - [x] TagsInput
 - [x] Text
 - [x] TextArea
-- [ ] TextEdit
+- [ ] TextEdit — editor value type (cursor/undo model), not a widget
 - [x] TextInput
 - [x] ThemeIcon
-- [ ] ThemePicker
-- [ ] Time
+- [x] ThemePicker
+- [ ] Time — value type, not a widget — `TimePicker` produces it
 - [x] TimePicker
 - [x] Timeline
 - [x] Title
@@ -678,12 +684,12 @@ github: https://github.com/wess/guise
 - [x] Tooltip
 - [x] Tour
 - [x] Transfer
-- [ ] Transition
+- [ ] Transition — animation primitive
 - [x] TreeView
-- [ ] UpdateNotice
-- [ ] UpdatePrompt
-- [ ] VideoFeed
-- [ ] VideoFrame
+- [ ] UpdateNotice — needs a live `Updater`/`UpdateOutcome` — host update infrastructure
+- [ ] UpdatePrompt — needs a live `Updater`/`Release` — host update infrastructure
+- [ ] VideoFeed — frame source consumed by `VideoView`, not a standalone widget
+- [ ] VideoFrame — single frame consumed by `VideoView`, not a widget
 - [x] VideoView
 - [x] VirtualList
 - [x] WebView
@@ -895,7 +901,7 @@ github: https://github.com/ratatui/ratatui
 - [ ] Rectangle
 - [ ] Row
 - [ ] Cell
-- [ ] Scrollbar
+- [ ] Scrollbar — internal part of `ScrollArea`
 - [x] Sparkline
 - [x] Table
 - [x] Tabs
@@ -926,7 +932,7 @@ github: https://github.com/iced-rs/iced
 - [x] ProgressBar
 - [ ] QRCode
 - [x] Radio
-- [ ] Responsive
+- [ ] Responsive — generic viewport switch — takes a layout closure, not props
 - [x] Row
 - [x] Rule
 - [x] Scrollable
@@ -1020,7 +1026,7 @@ github: https://crates.io/crates/adabraka-ui
 - [ ] Dock
 - [x] DonutChart
 - [ ] DragData
-- [ ] Draggable
+- [ ] Draggable — drag-source primitive — `SortableList` covers reorderable lists
 - [ ] DrawerNavigation
 - [ ] DrawerSide
 - [ ] DropZone

@@ -9,6 +9,2652 @@
           "if": {
             "not": {
               "propertyNames": {
+                "pattern": "^(?!AIChatView(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^AIChatView(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "empty": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "max_width": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "on open": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "turns": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "virtualize": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|AIChatView(#[\\w-]+| \\.[\\w-]+)?|children|empty|max_width|on (open)|size|style|tooltip|turns|value|virtualize)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.AIChatView(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.AIChatView(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "empty": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "max_width": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "on open": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "turns": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "virtualize": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.AIChatView(#[\\w-]+| \\.[\\w-]+)?|children|empty|max_width|on (open)|size|style|tooltip|turns|value|virtualize)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?!AICitation(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^AICitation(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "number": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "on click": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|AICitation(#[\\w-]+| \\.[\\w-]+)?|children|label|number|on (click)|size|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.AICitation(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.AICitation(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "number": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "on click": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.AICitation(#[\\w-]+| \\.[\\w-]+)?|children|label|number|on (click)|size|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?!AIComposer(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^AIComposer(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "attachments": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "disabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "hint": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on attach": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on change": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on stop": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on submit": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "placeholder": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|AIComposer(#[\\w-]+| \\.[\\w-]+)?|attachments|children|disabled|hint|on (attach|change|submit|stop)|placeholder|size|style|tooltip|value)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.AIComposer(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.AIComposer(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "attachments": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "disabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "hint": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on attach": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on change": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on stop": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on submit": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "placeholder": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.AIComposer(#[\\w-]+| \\.[\\w-]+)?|attachments|children|disabled|hint|on (attach|change|submit|stop)|placeholder|size|style|tooltip|value)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?!AICost(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^AICost(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "breakdown": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "cache_read": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "input": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "output": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "price_cache": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "price_in": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "price_out": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|AICost(#[\\w-]+| \\.[\\w-]+)?|breakdown|cache_read|children|input|label|output|price_cache|price_in|price_out|size|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.AICost(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.AICost(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "breakdown": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "cache_read": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "input": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "output": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "price_cache": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "price_in": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "price_out": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.AICost(#[\\w-]+| \\.[\\w-]+)?|breakdown|cache_read|children|input|label|output|price_cache|price_in|price_out|size|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?!AIMessage(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^AIMessage(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "avatar": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "children": {
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
+                "type": "array"
+              },
+              "error": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "meta": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "role": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "streaming": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "text": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|AIMessage(#[\\w-]+| \\.[\\w-]+)?|avatar|children|error|meta|name|role|size|streaming|style|text|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.AIMessage(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.AIMessage(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "avatar": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "children": {
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
+                "type": "array"
+              },
+              "error": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "meta": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "role": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "streaming": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "text": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.AIMessage(#[\\w-]+| \\.[\\w-]+)?|avatar|children|error|meta|name|role|size|streaming|style|text|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?!AIModelPicker(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^AIModelPicker(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "disabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "models": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on change": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|AIModelPicker(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|models|on (change)|size|style|tooltip|value)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.AIModelPicker(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.AIModelPicker(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "disabled": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "models": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on change": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.AIModelPicker(#[\\w-]+| \\.[\\w-]+)?|children|disabled|label|models|on (change)|size|style|tooltip|value)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?!AIReasoning(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^AIReasoning(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on toggle": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "open": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "streaming": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "text": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|AIReasoning(#[\\w-]+| \\.[\\w-]+)?|children|label|on (toggle)|open|size|streaming|style|text|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.AIReasoning(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.AIReasoning(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on toggle": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "open": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "streaming": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "text": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.AIReasoning(#[\\w-]+| \\.[\\w-]+)?|children|label|on (toggle)|open|size|streaming|style|text|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?!AISettings(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^AISettings(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "max_tokens": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "on change": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "temperature": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|AISettings(#[\\w-]+| \\.[\\w-]+)?|children|max_tokens|on (change)|size|style|temperature|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.AISettings(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.AISettings(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "max_tokens": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "on change": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "temperature": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.AISettings(#[\\w-]+| \\.[\\w-]+)?|children|max_tokens|on (change)|size|style|temperature|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?!AISources(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^AISources(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "excerpts": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "on open": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "sources": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "title": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|AISources(#[\\w-]+| \\.[\\w-]+)?|children|excerpts|on (open)|size|sources|style|title|tooltip|value)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.AISources(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.AISources(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "excerpts": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "on open": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "sources": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "title": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.AISources(#[\\w-]+| \\.[\\w-]+)?|children|excerpts|on (open)|size|sources|style|title|tooltip|value)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?!AIStreamingText(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^AIStreamingText(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "caret": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "text": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|AIStreamingText(#[\\w-]+| \\.[\\w-]+)?|caret|children|size|style|text|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.AIStreamingText(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.AIStreamingText(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "caret": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "text": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.AIStreamingText(#[\\w-]+| \\.[\\w-]+)?|caret|children|size|style|text|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?!AIThinking(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^AIThinking(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "color": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|AIThinking(#[\\w-]+| \\.[\\w-]+)?|children|color|label|size|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.AIThinking(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.AIThinking(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "color": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.AIThinking(#[\\w-]+| \\.[\\w-]+)?|children|color|label|size|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?!AITokenMeter(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^AITokenMeter(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "bar": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "limit": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "used": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|AITokenMeter(#[\\w-]+| \\.[\\w-]+)?|bar|children|label|limit|size|style|tooltip|used)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.AITokenMeter(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.AITokenMeter(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "bar": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "label": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "limit": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "used": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.AITokenMeter(#[\\w-]+| \\.[\\w-]+)?|bar|children|label|limit|size|style|tooltip|used)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?!AIToolCall(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^AIToolCall(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "arguments": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "expandable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "meta": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on toggle": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "open": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "result": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "status": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|AIToolCall(#[\\w-]+| \\.[\\w-]+)?|arguments|children|expandable|meta|name|on (toggle)|open|result|size|status|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.AIToolCall(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.AIToolCall(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "arguments": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "expandable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "meta": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on toggle": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "open": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "result": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "size": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "status": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.AIToolCall(#[\\w-]+| \\.[\\w-]+)?|arguments|children|expandable|meta|name|on (toggle)|open|result|size|status|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
                 "pattern": "^(?!About(#[\\w-]+| \\.[\\w-]+)?$).*$"
               }
             }
@@ -34789,6 +37435,612 @@
           "if": {
             "not": {
               "propertyNames": {
+                "pattern": "^(?!SettingsRow(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^SettingsRow(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
+                "type": "array"
+              },
+              "description": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "divider": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "modified": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "on reset": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "text": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|SettingsRow(#[\\w-]+| \\.[\\w-]+)?|children|description|divider|modified|on (reset)|style|text|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.SettingsRow(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.SettingsRow(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
+                "type": "array"
+              },
+              "description": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "divider": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "modified": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "on reset": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "text": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.SettingsRow(#[\\w-]+| \\.[\\w-]+)?|children|description|divider|modified|on (reset)|style|text|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?!SettingsSection(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^SettingsSection(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
+                "type": "array"
+              },
+              "description": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "rule": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "text": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|SettingsSection(#[\\w-]+| \\.[\\w-]+)?|children|description|rule|style|text|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.SettingsSection(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.SettingsSection(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
+                "type": "array"
+              },
+              "description": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "rule": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "text": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.SettingsSection(#[\\w-]+| \\.[\\w-]+)?|children|description|rule|style|text|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?!SettingsView(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^SettingsView(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "active": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "children": {
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
+                "type": "array"
+              },
+              "on change": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on search": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "pages": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "query": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "searchable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "sidebar_matches_body": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "sidebar_width": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|SettingsView(#[\\w-]+| \\.[\\w-]+)?|active|children|on (change|search)|pages|query|searchable|sidebar_matches_body|sidebar_width|style|tooltip|value)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.SettingsView(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.SettingsView(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "active": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "children": {
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
+                "type": "array"
+              },
+              "on change": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on search": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "pages": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "query": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "searchable": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "sidebar_matches_body": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "sidebar_width": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.SettingsView(#[\\w-]+| \\.[\\w-]+)?|active|children|on (change|search)|pages|query|searchable|sidebar_matches_body|sidebar_width|style|tooltip|value)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
                 "pattern": "^(?!Sheet(#[\\w-]+| \\.[\\w-]+)?$).*$"
               }
             }
@@ -44261,6 +47513,160 @@
           "if": {
             "not": {
               "propertyNames": {
+                "pattern": "^(?!ThemePicker(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^ThemePicker(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "layout": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on change": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "system": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|ThemePicker(#[\\w-]+| \\.[\\w-]+)?|children|layout|on (change)|style|system|tooltip|value)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.ThemePicker(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.ThemePicker(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "layout": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on change": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "system": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "value": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.ThemePicker(#[\\w-]+| \\.[\\w-]+)?|children|layout|on (change)|style|system|tooltip|value)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
                 "pattern": "^(?!TimeField(#[\\w-]+| \\.[\\w-]+)?$).*$"
               }
             }
@@ -48396,7 +51802,7 @@
         }
       },
       "propertyNames": {
-        "pattern": "^((FloatingActionButton|QuestionnaireChoice|InputGroupTextarea|QuestionnaireItem|CommandSeparator|InputGroupButton|SegmentedControl|DescriptionItem|DescriptionList|InputGroupAddon|InputGroupInput|SidebarMenuItem|BreadcrumbItem|CommandPalette|DropdownButton|ExpandableCard|InfiniteScroll|InputGroupText|LoadingOverlay|MarkdownEditor|MessageContent|NavigationMenu|ProgressCircle|ResizablePanel|TrendIndicator|VerticalSlider|WindowControls|AccordionItem|CheckboxGroup|InlineMessage|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|PasswordInput|Questionnaire|SettingsGroup|SidebarFooter|SidebarHeader|StatusMessage|Autocomplete|CommandGroup|ConfirmModal|CopyableText|DropdownMenu|Notification|RingProgress|ScatterChart|SortableList|SwitchButton|TableCaption|TimelineItem|ToggleButton|AlertDialog|AspectRatio|AvatarGroup|BottomSheet|Breadcrumbs|ChoiceChips|CloseButton|Collapsible|ColorPicker|CommandItem|ContextMenu|GroupedList|HotkeyInput|KeyedColumn|MultiSelect|NumberInput|PercentText|ProgressBar|RangeSlider|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|VirtualList|ActionIcon|Attachment|Blockquote|Breadcrumb|ColorInput|CopyButton|DatePicker|Disclosure|DonutChart|EmptyState|GridLayout|IconButton|InlineEdit|InputGroup|NumberText|Pagination|RadioGroup|ScrollArea|Scrollable|SimpleGrid|SplitPanel|TextEditor|TimePicker|ToastStack|Accordion|AreaChart|Clipboard|Container|DataTable|FileInput|FocusTrap|FormField|HoverCard|Indicator|Inspector|LineChart|Paragraph|RadioCard|Resizable|Separator|Sparkline|Spotlight|Statistic|StatusBar|TableBody|TableCell|TableHead|TableView|TagsInput|TextInput|ThemeIcon|TimeField|VideoView|AppShell|BarChart|Calendar|Carousel|Checkbox|ComboBox|Combobox|DataView|Dropdown|Dropzone|Fieldset|FileTree|GroupBox|ListItem|Markdown|MenuItem|OtpInput|Overline|PaneGrid|PickList|PieChart|PinInput|Progress|Settings|Showcase|Skeleton|Subtitle|TableRow|Terminal|TextArea|TextView|Textarea|Timeline|TitleBar|Transfer|TreeItem|TreeView|UsageBar|Callout|Caption|Command|Divider|Heading|KpiCard|MenuBar|Message|NavItem|NavLink|Outline|Palette|Popover|Preview|Reorder|Section|Shimmer|Sidebar|Spinner|Spoiler|Stepper|Toolbar|Tooltip|WebView|Anchor|Avatar|Banner|Bubble|Button|Canvas|Center|Dialog|Drawer|Editor|HStack|Loader|Marker|Mascot|Player|QrCode|Rating|Select|Slider|Switch|TabBar|Toggle|VStack|Viewer|ZStack|About|Alert|Badge|Block|Board|Chart|Empty|Field|Files|Frame|Gauge|Image|Input|Label|Meter|Modal|Panel|Paper|Radio|Sheet|Space|Stack|Table|Title|Toast|Card|Chip|Code|Diff|Fade|Form|Grid|Icon|Knob|Link|List|Logo|Mark|Menu|Rule|Tabs|Text|Tour|Tree|Vars|Box|KBD|Kbd|Svg|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(FloatingActionButton|QuestionnaireChoice|InputGroupTextarea|QuestionnaireItem|CommandSeparator|InputGroupButton|SegmentedControl|DescriptionItem|DescriptionList|InputGroupAddon|InputGroupInput|SidebarMenuItem|BreadcrumbItem|CommandPalette|DropdownButton|ExpandableCard|InfiniteScroll|InputGroupText|LoadingOverlay|MarkdownEditor|MessageContent|NavigationMenu|ProgressCircle|ResizablePanel|TrendIndicator|VerticalSlider|WindowControls|AccordionItem|CheckboxGroup|InlineMessage|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|PasswordInput|Questionnaire|SettingsGroup|SidebarFooter|SidebarHeader|StatusMessage|Autocomplete|CommandGroup|ConfirmModal|CopyableText|DropdownMenu|Notification|RingProgress|ScatterChart|SortableList|SwitchButton|TableCaption|TimelineItem|ToggleButton|AlertDialog|AspectRatio|AvatarGroup|BottomSheet|Breadcrumbs|ChoiceChips|CloseButton|Collapsible|ColorPicker|CommandItem|ContextMenu|GroupedList|HotkeyInput|KeyedColumn|MultiSelect|NumberInput|PercentText|ProgressBar|RangeSlider|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|VirtualList|ActionIcon|Attachment|Blockquote|Breadcrumb|ColorInput|CopyButton|DatePicker|Disclosure|DonutChart|EmptyState|GridLayout|IconButton|InlineEdit|InputGroup|NumberText|Pagination|RadioGroup|ScrollArea|Scrollable|SimpleGrid|SplitPanel|TextEditor|TimePicker|ToastStack|Accordion|AreaChart|Clipboard|Container|DataTable|FileInput|FocusTrap|FormField|HoverCard|Indicator|Inspector|LineChart|Paragraph|RadioCard|Resizable|Separator|Sparkline|Spotlight|Statistic|StatusBar|TableBody|TableCell|TableHead|TableView|TagsInput|TextInput|ThemeIcon|TimeField|VideoView|AppShell|BarChart|Calendar|Carousel|Checkbox|ComboBox|Combobox|DataView|Dropdown|Dropzone|Fieldset|FileTree|GroupBox|ListItem|Markdown|MenuItem|OtpInput|Overline|PaneGrid|PickList|PieChart|PinInput|Progress|Settings|Showcase|Skeleton|Subtitle|TableRow|Terminal|TextArea|TextView|Textarea|Timeline|TitleBar|Transfer|TreeItem|TreeView|UsageBar|Callout|Caption|Command|Divider|Heading|KpiCard|MenuBar|Message|NavItem|NavLink|Outline|Palette|Popover|Preview|Reorder|Section|Shimmer|Sidebar|Spinner|Spoiler|Stepper|Toolbar|Tooltip|WebView|Anchor|Avatar|Banner|Bubble|Button|Canvas|Center|Dialog|Drawer|Editor|HStack|Loader|Marker|Mascot|Player|QrCode|Rating|Select|Slider|Switch|TabBar|Toggle|VStack|Viewer|ZStack|About|Alert|Badge|Block|Board|Chart|Empty|Field|Files|Frame|Gauge|Image|Input|Label|Meter|Modal|Panel|Paper|Radio|Sheet|Space|Stack|Table|Title|Toast|Card|Chip|Code|Diff|Fade|Form|Grid|Icon|Knob|Link|List|Logo|Mark|Menu|Rule|Tabs|Text|Tour|Tree|Vars|Box|KBD|Kbd|Svg|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<|(if|for|with|match|else|each|index|key|as|is|not|case .+))$"
+        "pattern": "^((FloatingActionButton|QuestionnaireChoice|InputGroupTextarea|QuestionnaireItem|CommandSeparator|InputGroupButton|SegmentedControl|AIStreamingText|DescriptionItem|DescriptionList|InputGroupAddon|InputGroupInput|SettingsSection|SidebarMenuItem|BreadcrumbItem|CommandPalette|DropdownButton|ExpandableCard|InfiniteScroll|InputGroupText|LoadingOverlay|MarkdownEditor|MessageContent|NavigationMenu|ProgressCircle|ResizablePanel|TrendIndicator|VerticalSlider|WindowControls|AIModelPicker|AccordionItem|CheckboxGroup|InlineMessage|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|PasswordInput|Questionnaire|SettingsGroup|SidebarFooter|SidebarHeader|StatusMessage|AITokenMeter|Autocomplete|CommandGroup|ConfirmModal|CopyableText|DropdownMenu|Notification|RingProgress|ScatterChart|SettingsView|SortableList|SwitchButton|TableCaption|TimelineItem|ToggleButton|AIReasoning|AlertDialog|AspectRatio|AvatarGroup|BottomSheet|Breadcrumbs|ChoiceChips|CloseButton|Collapsible|ColorPicker|CommandItem|ContextMenu|GroupedList|HotkeyInput|KeyedColumn|MultiSelect|NumberInput|PercentText|ProgressBar|RangeSlider|SettingItem|SettingPage|SettingsRow|SidebarMenu|StepperItem|TableFooter|TableHeader|ThemePicker|VirtualList|AIChatView|AICitation|AIComposer|AISettings|AIThinking|AIToolCall|ActionIcon|Attachment|Blockquote|Breadcrumb|ColorInput|CopyButton|DatePicker|Disclosure|DonutChart|EmptyState|GridLayout|IconButton|InlineEdit|InputGroup|NumberText|Pagination|RadioGroup|ScrollArea|Scrollable|SimpleGrid|SplitPanel|TextEditor|TimePicker|ToastStack|AIMessage|AISources|Accordion|AreaChart|Clipboard|Container|DataTable|FileInput|FocusTrap|FormField|HoverCard|Indicator|Inspector|LineChart|Paragraph|RadioCard|Resizable|Separator|Sparkline|Spotlight|Statistic|StatusBar|TableBody|TableCell|TableHead|TableView|TagsInput|TextInput|ThemeIcon|TimeField|VideoView|AppShell|BarChart|Calendar|Carousel|Checkbox|ComboBox|Combobox|DataView|Dropdown|Dropzone|Fieldset|FileTree|GroupBox|ListItem|Markdown|MenuItem|OtpInput|Overline|PaneGrid|PickList|PieChart|PinInput|Progress|Settings|Showcase|Skeleton|Subtitle|TableRow|Terminal|TextArea|TextView|Textarea|Timeline|TitleBar|Transfer|TreeItem|TreeView|UsageBar|Callout|Caption|Command|Divider|Heading|KpiCard|MenuBar|Message|NavItem|NavLink|Outline|Palette|Popover|Preview|Reorder|Section|Shimmer|Sidebar|Spinner|Spoiler|Stepper|Toolbar|Tooltip|WebView|AICost|Anchor|Avatar|Banner|Bubble|Button|Canvas|Center|Dialog|Drawer|Editor|HStack|Loader|Marker|Mascot|Player|QrCode|Rating|Select|Slider|Switch|TabBar|Toggle|VStack|Viewer|ZStack|About|Alert|Badge|Block|Board|Chart|Empty|Field|Files|Frame|Gauge|Image|Input|Label|Meter|Modal|Panel|Paper|Radio|Sheet|Space|Stack|Table|Title|Toast|Card|Chip|Code|Diff|Fade|Form|Grid|Icon|Knob|Link|List|Logo|Mark|Menu|Rule|Tabs|Text|Tour|Tree|Vars|Box|KBD|Kbd|Svg|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(FloatingActionButton|QuestionnaireChoice|InputGroupTextarea|QuestionnaireItem|CommandSeparator|InputGroupButton|SegmentedControl|AIStreamingText|DescriptionItem|DescriptionList|InputGroupAddon|InputGroupInput|SettingsSection|SidebarMenuItem|BreadcrumbItem|CommandPalette|DropdownButton|ExpandableCard|InfiniteScroll|InputGroupText|LoadingOverlay|MarkdownEditor|MessageContent|NavigationMenu|ProgressCircle|ResizablePanel|TrendIndicator|VerticalSlider|WindowControls|AIModelPicker|AccordionItem|CheckboxGroup|InlineMessage|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|PasswordInput|Questionnaire|SettingsGroup|SidebarFooter|SidebarHeader|StatusMessage|AITokenMeter|Autocomplete|CommandGroup|ConfirmModal|CopyableText|DropdownMenu|Notification|RingProgress|ScatterChart|SettingsView|SortableList|SwitchButton|TableCaption|TimelineItem|ToggleButton|AIReasoning|AlertDialog|AspectRatio|AvatarGroup|BottomSheet|Breadcrumbs|ChoiceChips|CloseButton|Collapsible|ColorPicker|CommandItem|ContextMenu|GroupedList|HotkeyInput|KeyedColumn|MultiSelect|NumberInput|PercentText|ProgressBar|RangeSlider|SettingItem|SettingPage|SettingsRow|SidebarMenu|StepperItem|TableFooter|TableHeader|ThemePicker|VirtualList|AIChatView|AICitation|AIComposer|AISettings|AIThinking|AIToolCall|ActionIcon|Attachment|Blockquote|Breadcrumb|ColorInput|CopyButton|DatePicker|Disclosure|DonutChart|EmptyState|GridLayout|IconButton|InlineEdit|InputGroup|NumberText|Pagination|RadioGroup|ScrollArea|Scrollable|SimpleGrid|SplitPanel|TextEditor|TimePicker|ToastStack|AIMessage|AISources|Accordion|AreaChart|Clipboard|Container|DataTable|FileInput|FocusTrap|FormField|HoverCard|Indicator|Inspector|LineChart|Paragraph|RadioCard|Resizable|Separator|Sparkline|Spotlight|Statistic|StatusBar|TableBody|TableCell|TableHead|TableView|TagsInput|TextInput|ThemeIcon|TimeField|VideoView|AppShell|BarChart|Calendar|Carousel|Checkbox|ComboBox|Combobox|DataView|Dropdown|Dropzone|Fieldset|FileTree|GroupBox|ListItem|Markdown|MenuItem|OtpInput|Overline|PaneGrid|PickList|PieChart|PinInput|Progress|Settings|Showcase|Skeleton|Subtitle|TableRow|Terminal|TextArea|TextView|Textarea|Timeline|TitleBar|Transfer|TreeItem|TreeView|UsageBar|Callout|Caption|Command|Divider|Heading|KpiCard|MenuBar|Message|NavItem|NavLink|Outline|Palette|Popover|Preview|Reorder|Section|Shimmer|Sidebar|Spinner|Spoiler|Stepper|Toolbar|Tooltip|WebView|AICost|Anchor|Avatar|Banner|Bubble|Button|Canvas|Center|Dialog|Drawer|Editor|HStack|Loader|Marker|Mascot|Player|QrCode|Rating|Select|Slider|Switch|TabBar|Toggle|VStack|Viewer|ZStack|About|Alert|Badge|Block|Board|Chart|Empty|Field|Files|Frame|Gauge|Image|Input|Label|Meter|Modal|Panel|Paper|Radio|Sheet|Space|Stack|Table|Title|Toast|Card|Chip|Code|Diff|Fade|Form|Grid|Icon|Knob|Link|List|Logo|Mark|Menu|Rule|Tabs|Text|Tour|Tree|Vars|Box|KBD|Kbd|Svg|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<|(if|for|with|match|else|each|index|key|as|is|not|case .+))$"
       },
       "type": "object"
     },

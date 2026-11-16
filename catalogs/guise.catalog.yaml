@@ -1581,3 +1581,243 @@ elements:
         default: false
     events:
       change: Fires on title/url/message; writes the payload to a bound value.
+
+  AIChatView:
+    icon: messages-square
+    group: AI
+    summary: Scrolling chat transcript of turns, with stick-to-bottom and streaming reply support.
+    component: guise::AIChatView
+    props:
+      turns: string  # "role|body" entries, separated by ';' — role: user|assistant|system
+      empty: string
+      max_width: number
+      virtualize: bool
+      size: string
+      value: string
+    events:
+      open: Fires on source click; writes [turn, source] to a bound value.
+
+  AIComposer:
+    icon: send-horizontal
+    group: AI
+    summary: Prompt input box with send, stop and attach.
+    component: guise::AIComposer
+    props:
+      placeholder: string
+      hint: string
+      attachments: bool
+      disabled: bool
+      size: string
+      value: string
+    events:
+      submit: Fires on send; writes the prompt to a bound value.
+      stop: Fires on interrupt.
+      attach: Fires on the attach button.
+      change: Fires as the draft changes; writes it to a bound value.
+
+  AIMessage:
+    icon: message-square
+    group: AI
+    summary: One chat turn — role avatar, body, optional error; children slot under the body.
+    component: guise::AIMessage
+    content: text
+    props:
+      text: string
+      role: string  # user | assistant | system | tool
+      name: string
+      meta: string
+      error: string
+      streaming: bool
+      avatar: bool
+      size: string
+    children: any
+
+  AIModelPicker:
+    icon: brain-cog
+    group: AI
+    summary: Dropdown to pick the model a request runs on.
+    component: guise::AIModelPicker
+    props:
+      models: string  # "id:Label" entries, separated by ';'
+      value: string
+      label: string
+      disabled: bool
+      size: string
+    events:
+      change: Fires on selection; writes the model id to a bound value.
+
+  AIReasoning:
+    icon: lightbulb
+    group: AI
+    summary: Collapsible block for a model's extended thinking.
+    component: guise::AIReasoning
+    content: text
+    props:
+      text: string
+      label: string
+      open: bool
+      streaming: bool
+      size: string
+    events:
+      toggle: Fires on expand/collapse.
+
+  AISources:
+    icon: book-open
+    group: AI
+    summary: Citation list under an answer.
+    component: guise::AISources
+    props:
+      sources: string  # "title|location|excerpt" entries, separated by ';'
+      title: string
+      excerpts: bool
+      size: string
+      value: string
+    events:
+      open: Fires on source click; writes the index to a bound value.
+
+  AIStreamingText:
+    icon: text-cursor
+    group: AI
+    summary: Reply text arriving token by token, with an optional caret.
+    component: guise::AIStreamingText
+    content: text
+    props:
+      text: string
+      caret: bool
+      size: string
+
+  AIThinking:
+    icon: loader-pinwheel
+    group: AI
+    summary: "Waiting-for-reply indicator (\"thinking…\")"
+    component: guise::AIThinking
+    props:
+      label: string
+      color: string
+      size: string
+
+  AITokenMeter:
+    icon: gauge
+    group: AI
+    summary: Token usage against a limit, with an optional bar.
+    component: guise::AITokenMeter
+    props:
+      used: number
+      limit: number
+      label: string
+      bar: bool
+      size: string
+
+  AIToolCall:
+    icon: wrench
+    group: AI
+    summary: A tool invocation — name, status, arguments and result.
+    component: guise::AIToolCall
+    props:
+      name: string
+      status: string  # pending | running | ok | error
+      arguments: string
+      result: string
+      meta: string
+      open: bool
+      expandable: bool
+      size: string
+    events:
+      toggle: Fires on expand/collapse.
+
+  AICitation:
+    icon: quote
+    group: AI
+    summary: Inline numbered citation marker.
+    component: guise::AICitation
+    props:
+      number: number
+      label: string
+      size: string
+    events:
+      click: Fires when the citation is clicked.
+
+  AICost:
+    icon: circle-dollar-sign
+    group: AI
+    summary: Dollar cost of a request, computed from usage and pricing.
+    component: guise::AICost
+    props:
+      input: number
+      output: number
+      cache_read: number
+      price_in: number
+      price_out: number
+      price_cache: number
+      label: string
+      breakdown: bool
+      size: string
+
+  AISettings:
+    icon: sliders-horizontal
+    group: AI
+    summary: Temperature and max-token controls for a request.
+    component: guise::AISettings
+    props:
+      temperature: number
+      max_tokens: number
+      size: string
+    events:
+      change: Fires on either control; writes temperature/max_tokens bindings.
+
+  SettingsView:
+    icon: settings
+    group: Layout
+    summary: "Settings shell — page sidebar, search, per-page content. Children take `slot: <page-id>` (or `footer`)."
+    component: guise::settings::SettingsView
+    props:
+      pages: string  # "id|Title" entries, separated by ';'
+      active: string
+      searchable: bool
+      sidebar_width: number
+      sidebar_matches_body: bool
+      value: string
+      query: string
+    children: any
+    events:
+      change: Fires on page select; writes the page id to a bound value.
+      search: Fires on search; writes the query to a bound value.
+
+  SettingsSection:
+    icon: group
+    group: Layout
+    summary: Titled group of settings rows.
+    component: guise::settings::SettingsSection
+    content: text
+    props:
+      text: string
+      description: string
+      rule: bool
+    children: any
+
+  SettingsRow:
+    icon: list
+    group: Layout
+    summary: Label + control row; the first child is the control.
+    component: guise::settings::SettingsRow
+    content: text
+    props:
+      text: string
+      description: string
+      modified: bool
+      divider: bool
+    children: any
+    events:
+      reset: Fires on the modified-reset affordance.
+
+  ThemePicker:
+    icon: palette
+    group: Inputs
+    summary: Theme chooser — list or swatch grid, system option included.
+    component: guise::ThemePicker
+    props:
+      layout: string  # list | grid
+      system: bool
+      value: string
+    events:
+      change: Fires on choice; writes the choice to a bound value.

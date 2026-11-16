@@ -275,3 +275,68 @@ root:
         width: 120
         height: 80
         placeholder: "no video"
+
+      - Paper:
+        label: "ai"
+        children:
+          - Title: "ai + settings"
+            order: H3
+          - AIChatView:
+            turns: "user|what is forge?;assistant|a declarative UI spec for gpui apps"
+          - AIComposer:
+            placeholder: "ask anything"
+          - AIMessage:
+            text: "streamed reply goes here"
+            role: assistant
+          - AIStreamingText: "token stream…"
+          - AIThinking:
+          - AIReasoning:
+            text: "the model considered three approaches"
+            open: true
+          - AIToolCall:
+            name: "read_file"
+            status: ok
+            result: "42 lines"
+          - AISources:
+            sources: "docs.rs|https://docs.rs/guise|the component library;readme|repo/README.md|overview"
+          - AICitation:
+            number: 1
+          - AITokenMeter:
+            used: 1200
+            limit: 8000
+          - AICost:
+            input: 1200
+            output: 300
+            price_in: 3.0
+            price_out: 15.0
+          - AIModelPicker:
+            models: "sonnet:Sonnet 4;opus:Opus 4"
+            value: sonnet
+          - AISettings:
+            temperature: 0.7
+            max_tokens: 4096
+          - ThemePicker:
+            layout: list
+          - SettingsView:
+            pages: "general|General;account|Account"
+            active: general
+            children:
+              - Paper:
+                slot: general
+                children:
+                  - SettingsSection: "Profile"
+                    children:
+                      - SettingsRow: "Theme"
+                        children:
+                          - ThemePicker:
+                            layout: grid
+              - Paper:
+                slot: account
+                children:
+                  - SettingsSection: "Billing"
+                    children:
+                      - SettingsRow: "Tokens"
+                        children:
+                          - AITokenMeter:
+                            used: 1200
+                            limit: 8000

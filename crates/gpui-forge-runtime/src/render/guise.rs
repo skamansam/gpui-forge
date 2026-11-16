@@ -4084,6 +4084,548 @@ impl ForgeView {
                     .child(self.views.get(key).unwrap().clone())
                     .into_any_element()
             }
+            "AIThinking" => {
+                let mut t = guise::AIThinking::new().size(self.size_of(node, "size"));
+                let label = self.prop_text(node, "label");
+                if !label.is_empty() {
+                    t = t.label(label);
+                }
+                if let Some(c) = self.color_of(node, "color") {
+                    t = t.color(c);
+                }
+                t.into_any_element()
+            }
+            "AIStreamingText" => {
+                guise::AIStreamingText::new(SharedString::from(self.node_text(node)))
+                    .size(self.size_of(node, "size"))
+                    .caret(self.prop_bool(node, "caret", true))
+                    .into_any_element()
+            }
+            "AITokenMeter" => {
+                let mut m = guise::AITokenMeter::new(
+                    self.num(node, "used", 0.0) as u64,
+                    self.num(node, "limit", 0.0) as u64,
+                )
+                .size(self.size_of(node, "size"))
+                .bar(self.prop_bool(node, "bar", true));
+                let label = self.prop_text(node, "label");
+                if !label.is_empty() {
+                    m = m.label(label);
+                }
+                m.into_any_element()
+            }
+            "AICost" => {
+                let mut usage = guise::AIUsage::new(
+                    self.num(node, "input", 0.0) as u64,
+                    self.num(node, "output", 0.0) as u64,
+                );
+                let cached = self.num(node, "cache_read", 0.0) as u64;
+                if cached > 0 {
+                    usage = usage.cache_read(cached);
+                }
+                let mut pricing = guise::AIPricing::new(
+                    self.num(node, "price_in", 0.0),
+                    self.num(node, "price_out", 0.0),
+                );
+                let price_cache = self.num(node, "price_cache", 0.0);
+                if price_cache > 0.0 {
+                    pricing = pricing.cache_read(price_cache);
+                }
+                let mut c = guise::AICost::new(usage, pricing)
+                    .size(self.size_of(node, "size"))
+                    .breakdown(self.prop_bool(node, "breakdown", false));
+                let label = self.prop_text(node, "label");
+                if !label.is_empty() {
+                    c = c.label(label);
+                }
+                c.into_any_element()
+            }
+            "AIReasoning" => {
+                let mut r = guise::AIReasoning::new(
+                    ElementId::from(SharedString::from(key.to_owned())),
+                    SharedString::from(self.node_text(node)),
+                )
+                .open(self.prop_bool(node, "open", false))
+                .streaming(self.prop_bool(node, "streaming", false))
+                .size(self.size_of(node, "size"));
+                let label = self.prop_text(node, "label");
+                if !label.is_empty() {
+                    r = r.label(label);
+                }
+                if let Some(h) = self.event_handler(node, "toggle", cx) {
+                    r = r.on_toggle(h);
+                }
+                r.into_any_element()
+            }
+            "AIToolCall" => {
+                let status = match self.prop_text(node, "status").as_str() {
+                    "running" => guise::AIToolStatus::Running,
+                    "ok" => guise::AIToolStatus::Ok,
+                    "error" => guise::AIToolStatus::Error,
+                    _ => guise::AIToolStatus::Pending,
+                };
+                let name = self.prop_text(node, "name");
+                let mut t = guise::AIToolCall::new(
+                    ElementId::from(SharedString::from(key.to_owned())),
+                    SharedString::from(if name.is_empty() {
+                        self.node_text(node)
+                    } else {
+                        name
+                    }),
+                )
+                .status(status)
+                .open(self.prop_bool(node, "open", false))
+                .expandable(self.prop_bool(node, "expandable", true))
+                .size(self.size_of(node, "size"));
+                for (setter, prop) in [
+                    (guise::AIToolCall::arguments as fn(_, _) -> _, "arguments"),
+                    (guise::AIToolCall::result, "result"),
+                    (guise::AIToolCall::meta, "meta"),
+                ] {
+                    let v = self.prop_text(node, prop);
+                    if !v.is_empty() {
+                        t = setter(t, SharedString::from(v));
+                    }
+                }
+                if let Some(h) = self.event_handler(node, "toggle", cx) {
+                    t = t.on_toggle(h);
+                }
+                t.into_any_element()
+            }
+            "AICitation" => {
+                let mut c = guise::AICitation::new(
+                    ElementId::from(SharedString::from(key.to_owned())),
+                    self.num(node, "number", 1.0) as usize,
+                )
+                .size(self.size_of(node, "size"));
+                let label = self.prop_text(node, "label");
+                if !label.is_empty() {
+                    c = c.label(label);
+                }
+                if let Some(h) = self.click_handler(node, cx) {
+                    c = c.on_click(h);
+                }
+                c.into_any_element()
+            }
+            "AISources" => {
+                let mut sources = Vec::new();
+                for entry in self.prop_text(node, "sources").split(';') {
+                    let mut parts = entry.splitn(3, '|');
+                    let (Some(title), Some(loc)) = (parts.next(), parts.next()) else {
+                        continue;
+                    };
+                    let mut s = guise::AISource::new(title.trim(), loc.trim());
+                    if let Some(excerpt) = parts.next() {
+                        s = s.excerpt(excerpt.trim());
+                    }
+                    sources.push(s);
+                }
+                let mut s = guise::AISources::new(sources)
+                    .size(self.size_of(node, "size"))
+                    .excerpts(self.prop_bool(node, "excerpts", true));
+                let title = self.prop_text(node, "title");
+                if !title.is_empty() {
+                    s = s.title(title);
+                }
+                let calls = self.events_for(node, "open");
+                let binding = Self::binding_of(node, "value");
+                if !calls.is_empty() || binding.is_some() {
+                    let weak = cx.entity().downgrade();
+                    s = s.on_open(move |index, _w, cx| {
+                        for (name, args) in &calls {
+                            let weak = weak.clone();
+                            let name = name.clone();
+                            let args = args.clone();
+                            try_update(&weak, cx, "open", |view, cx| {
+                                view.fire_call(&name, args, cx)
+                            })
+                            .ok();
+                        }
+                        if let Some(p) = &binding {
+                            try_update(&weak, cx, "open", |view, cx| {
+                                view.write(p, Json::from(index as i64), cx)
+                            })
+                            .ok();
+                        }
+                    });
+                }
+                s.into_any_element()
+            }
+            "AIMessage" => {
+                let role = match self.prop_text(node, "role").as_str() {
+                    "assistant" => guise::AIRole::Assistant,
+                    "system" => guise::AIRole::System,
+                    "tool" => guise::AIRole::Tool,
+                    _ => guise::AIRole::User,
+                };
+                let mut m = guise::AIMessage::new(role, SharedString::from(self.node_text(node)))
+                    .streaming(self.prop_bool(node, "streaming", false))
+                    .avatar(self.prop_bool(node, "avatar", true))
+                    .size(self.size_of(node, "size"));
+                for prop in ["name", "meta", "error"] {
+                    let v = self.prop_text(node, prop);
+                    if !v.is_empty() {
+                        m = match prop {
+                            "name" => m.name(v),
+                            "meta" => m.meta(v),
+                            _ => m.error(v),
+                        };
+                    }
+                }
+                for (i, child) in node.children.iter().enumerate() {
+                    let k = format!("{key}/{i}");
+                    m = m.child(self.render_node(child, &k, window, cx));
+                }
+                m.into_any_element()
+            }
+            "AIComposer" => {
+                if !self.views.contains_key(key) {
+                    let entity = cx.new(|cx| {
+                        let mut c = guise::AIComposer::new(cx)
+                            .attachments(self.prop_bool(node, "attachments", false))
+                            .size(self.size_of(node, "size"))
+                            .disabled(self.prop_bool(node, "disabled", false));
+                        let hint = self.prop_text(node, "hint");
+                        if !hint.is_empty() {
+                            c = c.hint(hint);
+                        }
+                        let placeholder = self.prop_text(node, "placeholder");
+                        if !placeholder.is_empty() {
+                            c = c.placeholder(placeholder, cx);
+                        }
+                        c
+                    });
+                    let calls: Vec<(String, Vec<(String, Vec<String>)>)> =
+                        ["submit", "stop", "attach", "change"]
+                            .iter()
+                            .map(|e| (e.to_string(), self.events_for(node, e)))
+                            .collect();
+                    let binding = Self::binding_of(node, "value");
+                    self.subscriptions.push(cx.subscribe(
+                        &entity,
+                        move |view, _w, e: &guise::AIComposerEvent, cx| {
+                            let (event, text) = match e {
+                                guise::AIComposerEvent::Submit(t) => ("submit", t.clone()),
+                                guise::AIComposerEvent::Change(t) => ("change", t.clone()),
+                                guise::AIComposerEvent::Stop => ("stop", String::new()),
+                                guise::AIComposerEvent::Attach => ("attach", String::new()),
+                            };
+                            for (ev, calls) in &calls {
+                                if ev == event {
+                                    for (name, args) in calls {
+                                        view.fire_call(name, args.clone(), cx);
+                                    }
+                                }
+                            }
+                            if !text.is_empty() {
+                                if let Some(p) = &binding {
+                                    view.write(p, Json::String(text), cx);
+                                }
+                            }
+                        },
+                    ));
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "AIModelPicker" => {
+                if !self.views.contains_key(key) {
+                    let mut models = Vec::new();
+                    for entry in self.prop_text(node, "models").split(';') {
+                        let mut parts = entry.splitn(2, ':');
+                        let (Some(id), Some(label)) = (parts.next(), parts.next()) else {
+                            continue;
+                        };
+                        models.push(guise::AIModel::new(id.trim(), label.trim()));
+                    }
+                    let selected = self.prop_text(node, "value");
+                    let entity = cx.new(|cx| {
+                        let mut p = guise::AIModelPicker::new(cx)
+                            .models(models)
+                            .size(self.size_of(node, "size"))
+                            .disabled(self.prop_bool(node, "disabled", false));
+                        let label = self.prop_text(node, "label");
+                        if !label.is_empty() {
+                            p = p.label(label);
+                        }
+                        if !selected.is_empty() {
+                            p = p.selected_id(&selected);
+                        }
+                        p
+                    });
+                    let calls = self.events_for(node, "change");
+                    let binding = Self::binding_of(node, "value");
+                    self.subscriptions.push(cx.subscribe(
+                        &entity,
+                        move |view, _w, e: &guise::AIModelPickerEvent, cx| {
+                            for (name, args) in &calls {
+                                view.fire_call(name, args.clone(), cx);
+                            }
+                            if let Some(p) = &binding {
+                                view.write(p, Json::String(e.0.id.clone()), cx);
+                            }
+                        },
+                    ));
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "AIChatView" => {
+                if !self.views.contains_key(key) {
+                    let mut turns = Vec::new();
+                    for entry in self.prop_text(node, "turns").split(';') {
+                        let mut parts = entry.splitn(2, '|');
+                        let (Some(role), Some(body)) = (parts.next(), parts.next()) else {
+                            continue;
+                        };
+                        let t = match role.trim() {
+                            "assistant" => guise::AITurn::assistant(body.trim()),
+                            "system" => guise::AITurn::system(body.trim()),
+                            _ => guise::AITurn::user(body.trim()),
+                        };
+                        turns.push(t);
+                    }
+                    let entity = cx.new(|cx| {
+                        let mut v = guise::AIChatView::new(cx)
+                            .turns(turns)
+                            .size(self.size_of(node, "size"))
+                            .virtualize(self.prop_bool(node, "virtualize", true));
+                        let empty = self.prop_text(node, "empty");
+                        if !empty.is_empty() {
+                            v = v.empty_message(empty);
+                        }
+                        let mw = self.num(node, "max_width", 0.0) as f32;
+                        if mw > 0.0 {
+                            v = v.max_width(mw);
+                        }
+                        v
+                    });
+                    let calls = self.events_for(node, "open");
+                    let binding = Self::binding_of(node, "value");
+                    self.subscriptions.push(cx.subscribe(
+                        &entity,
+                        move |view, _w, e: &guise::AIChatViewEvent, cx| {
+                            let guise::AIChatViewEvent::OpenSource(turn, source) = *e;
+                            for (name, args) in &calls {
+                                view.fire_call(name, args.clone(), cx);
+                            }
+                            if let Some(p) = &binding {
+                                view.write(
+                                    p,
+                                    Json::Array(vec![
+                                        Json::from(turn as i64),
+                                        Json::from(source as i64),
+                                    ]),
+                                    cx,
+                                );
+                            }
+                        },
+                    ));
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "AISettings" => {
+                if !self.views.contains_key(key) {
+                    let entity = cx.new(|cx| {
+                        let mut s = guise::AISettings::new(cx)
+                            .temperature(self.num(node, "temperature", 1.0), cx)
+                            .size(self.size_of(node, "size"));
+                        let max = self.num(node, "max_tokens", 0.0) as u64;
+                        if max > 0 {
+                            s = s.max_tokens(max, cx);
+                        }
+                        s
+                    });
+                    let calls = self.events_for(node, "change");
+                    let temp_binding = Self::binding_of(node, "temperature");
+                    let tokens_binding = Self::binding_of(node, "max_tokens");
+                    self.subscriptions.push(cx.subscribe(
+                        &entity,
+                        move |view, _w, e: &guise::AISettingsEvent, cx| {
+                            for (name, args) in &calls {
+                                view.fire_call(name, args.clone(), cx);
+                            }
+                            match e {
+                                guise::AISettingsEvent::Temperature(v) => {
+                                    if let Some(p) = &temp_binding {
+                                        view.write(p, Json::from(*v), cx);
+                                    }
+                                }
+                                guise::AISettingsEvent::MaxTokens(v) => {
+                                    if let Some(p) = &tokens_binding {
+                                        view.write(p, Json::from(*v), cx);
+                                    }
+                                }
+                            }
+                        },
+                    ));
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "SettingsSection" => {
+                let mut s =
+                    guise::settings::SettingsSection::new(SharedString::from(self.node_text(node)))
+                        .rule(self.prop_bool(node, "rule", false));
+                let description = self.prop_text(node, "description");
+                if !description.is_empty() {
+                    s = s.description(description);
+                }
+                for (i, child) in node.children.iter().enumerate() {
+                    let k = format!("{key}/{i}");
+                    s.extend([self.render_node(child, &k, window, cx)]);
+                }
+                s.into_any_element()
+            }
+            "SettingsRow" => {
+                let mut r = guise::settings::SettingsRow::new(
+                    ElementId::from(SharedString::from(key.to_owned())),
+                    SharedString::from(self.node_text(node)),
+                )
+                .modified(self.prop_bool(node, "modified", false))
+                .divider(self.prop_bool(node, "divider", false));
+                let description = self.prop_text(node, "description");
+                if !description.is_empty() {
+                    r = r.description(description);
+                }
+                if let Some(first) = node.children.first() {
+                    let k = format!("{key}/0");
+                    r = r.control(self.render_node(first, &k, window, cx));
+                }
+                if let Some(h) = self.event_handler(node, "reset", cx) {
+                    r = r.on_reset(h);
+                }
+                r.into_any_element()
+            }
+            "SettingsView" => {
+                if !self.views.contains_key(key) {
+                    let weak = cx.entity().downgrade();
+                    let mut pages = Vec::new();
+                    for entry in self.prop_text(node, "pages").split(';') {
+                        let mut parts = entry.splitn(2, '|');
+                        let (Some(id), Some(title)) = (parts.next(), parts.next()) else {
+                            continue;
+                        };
+                        pages.push((id.trim().to_owned(), title.trim().to_owned()));
+                    }
+                    let mut page_views: std::collections::BTreeMap<String, AnyView> =
+                        std::collections::BTreeMap::new();
+                    let mut footer: Option<AnyView> = None;
+                    for (i, child) in node.children.iter().enumerate() {
+                        let slot = self.prop_text(child, "slot");
+                        let k = format!("{key}/{i}");
+                        let proxy = self.proxy_for(child, &k, &weak, &mut **cx);
+                        if slot == "footer" {
+                            footer = Some(proxy);
+                        } else {
+                            page_views.insert(slot, proxy);
+                        }
+                    }
+                    let active = self.prop_text(node, "active");
+                    let entity = cx.new(|cx| {
+                        let mut v = guise::settings::SettingsView::new(cx)
+                            .searchable(self.prop_bool(node, "searchable", true))
+                            .sidebar_matches_body(self.prop_bool(
+                                node,
+                                "sidebar_matches_body",
+                                true,
+                            ));
+                        let width = self.num(node, "sidebar_width", 0.0) as f32;
+                        if width > 0.0 {
+                            v = v.sidebar_width(width);
+                        }
+                        for (id, title) in pages {
+                            v = v.page(id, title);
+                        }
+                        if !active.is_empty() {
+                            v = v.active(active);
+                        }
+                        let page_views = page_views.clone();
+                        v = v.content(move |page, _query, _w, _cx| {
+                            page_views
+                                .get(page)
+                                .cloned()
+                                .map(|v| v.into_any_element())
+                                .unwrap_or_else(|| div().into_any_element())
+                        });
+                        if let Some(f) = footer {
+                            v = v.footer(move |_, _| f.clone());
+                        }
+                        v
+                    });
+                    let calls = self.events_for(node, "change");
+                    let search_calls = self.events_for(node, "search");
+                    let binding = Self::binding_of(node, "value");
+                    let search_binding = Self::binding_of(node, "query");
+                    self.subscriptions.push(cx.subscribe(
+                        &entity,
+                        move |view, _w, e: &guise::settings::SettingsViewEvent, cx| match e {
+                            guise::settings::SettingsViewEvent::PageChanged(id) => {
+                                for (name, args) in &calls {
+                                    view.fire_call(name, args.clone(), cx);
+                                }
+                                if let Some(p) = &binding {
+                                    view.write(p, Json::String(id.to_string()), cx);
+                                }
+                            }
+                            guise::settings::SettingsViewEvent::Search(q) => {
+                                for (name, args) in &search_calls {
+                                    view.fire_call(name, args.clone(), cx);
+                                }
+                                if let Some(p) = &search_binding {
+                                    view.write(p, Json::String(q.to_string()), cx);
+                                }
+                            }
+                        },
+                    ));
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "ThemePicker" => {
+                let layout = match self.prop_text(node, "layout").as_str() {
+                    "grid" => guise::ThemePickerLayout::Grid,
+                    _ => guise::ThemePickerLayout::List,
+                };
+                let mut t = guise::ThemePicker::new()
+                    .layout(layout)
+                    .system_option(self.prop_bool(node, "system", true));
+                let calls = self.events_for(node, "change");
+                let binding = Self::binding_of(node, "value");
+                if !calls.is_empty() || binding.is_some() {
+                    let weak = cx.entity().downgrade();
+                    t = t.on_change(move |choice, _w, cx| {
+                        for (name, args) in &calls {
+                            let weak = weak.clone();
+                            let name = name.clone();
+                            let args = args.clone();
+                            try_update(&weak, cx, "change", |view, cx| {
+                                view.fire_call(&name, args, cx)
+                            })
+                            .ok();
+                        }
+                        if let Some(p) = &binding {
+                            let what = format!("{choice:?}");
+                            try_update(&weak, cx, "change", |view, cx| {
+                                view.write(p, Json::String(what), cx)
+                            })
+                            .ok();
+                        }
+                    });
+                }
+                t.into_any_element()
+            }
             _ => placeholder(format!("{} — no guise renderer", node.element.name)),
         }
     }
