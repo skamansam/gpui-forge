@@ -230,6 +230,7 @@ elements:
     props:
       title: string
       time: string
+    children: none
   Banner:
     icon: megaphone
     group: Feedback
@@ -456,6 +457,7 @@ elements:
       disabled: bool
     events: {secondary:}
 
+    children: none
   GroupedList:
     icon: rows-2
     group: Lists
@@ -614,6 +616,7 @@ elements:
       count: number
       max: number
 
+    children: any
   DotBadge:
     icon: circle
     group: Display
@@ -622,18 +625,21 @@ elements:
     props:
       tone: {type: enum, values: [Neutral, Accent, Info, Success, Warning, Danger], default: Accent}
 
+    children: any
   BeforeAfter:
     icon: columns-2
     group: Display
     summary: "Before/after comparison slider over two children."
     component: ely_core::data_display::BeforeAfter
 
+    children: any
   Changelog:
     icon: history
     group: Display
     summary: "Versioned changelog — children are Release elements."
     component: ely_core::data_display::Changelog
 
+    children: any
   Release:
     icon: tag
     group: Display
@@ -662,6 +668,7 @@ elements:
     summary: "Chronological activity stream — children are Activity elements."
     component: ely_core::data_display::ActivityFeed
 
+    children: any
   Activity:
     icon: zap
     group: Display
@@ -702,6 +709,7 @@ elements:
     summary: "Grouped property sheet — children are PropertyGroup elements."
     component: ely_core::data_display::PropertyGrid
 
+    children: any
   PropertyGroup:
     icon: folder
     group: Display
@@ -736,6 +744,7 @@ elements:
     summary: "Vertical timeline — children are TimelineItem elements."
     component: ely_core::data_display::Timeline
 
+    children: any
   Watermark:
     icon: stamp
     group: Display
@@ -760,6 +769,7 @@ elements:
     summary: "Horizontal slide carousel — each child is one slide."
     component: ely_core::data_display::Carousel
 
+    children: any
   Barcode:
     icon: barcode
     group: Display
@@ -778,6 +788,7 @@ elements:
     props:
       floating: {type: bool, default: false}
 
+    children: any
   BulkActionBar:
     icon: list-checks
     group: Buttons
@@ -788,6 +799,7 @@ elements:
     events:
       clear:
 
+    children: any
   ConfirmButton:
     icon: shield-check
     group: Buttons
@@ -820,6 +832,7 @@ elements:
     summary: "Joined row of buttons — children are Button elements."
     component: ely_core::buttons::ButtonGroup
 
+    children: any
   ToggleGroup:
     icon: toggle-left
     group: Buttons
@@ -916,6 +929,7 @@ elements:
       read_all:
       clear:
 
+    children: any
   ResultView:
     icon: circle-check-big
     group: Feedback
@@ -926,6 +940,7 @@ elements:
       title: string
       body: string
 
+    children: any
   ErrorView:
     icon: octagon-alert
     group: Feedback
@@ -947,6 +962,7 @@ elements:
     events:
       retry:
 
+    children: any
   Suspense:
     icon: hourglass
     group: Feedback
@@ -959,6 +975,7 @@ elements:
     events:
       retry:
 
+    children: any
   SavingIndicator:
     icon: cloud-upload
     group: Feedback
@@ -1007,6 +1024,7 @@ elements:
       multiple: {type: bool, default: false}
       first_open: {type: bool, default: false}
 
+    children: any
   AccordionItem:
     icon: chevron-down
     group: Layout
@@ -1014,6 +1032,7 @@ elements:
     component: ely_core::layout::AccordionItem
     props: {title: string}
 
+    children: any
   SimpleGrid:
     icon: grid-2x2
     group: Layout
@@ -1023,6 +1042,7 @@ elements:
       min: {type: number, default: 160}
       gap: {type: number, default: 8}
 
+    children: any
   Masonry:
     icon: layout-dashboard
     group: Layout
@@ -1032,6 +1052,7 @@ elements:
       columns: {type: number, default: 2}
       gap: {type: number, default: 8}
 
+    children: any
   Page:
     icon: file
     group: Layout
@@ -1041,12 +1062,14 @@ elements:
       title: string
       subtitle: string
 
+    children: any
   AppShell:
     icon: app-window
     group: Layout
     summary: "Window frame — children take `slot:` title_bar, sidebar, status_bar, or default body."
     component: ely_core::layout::AppShell
 
+    children: any
   MasterDetail:
     icon: columns-2
     group: Layout
@@ -1055,6 +1078,7 @@ elements:
     props:
       min: {type: number, default: 160}
 
+    children: any
   PaneGroup:
     icon: layout-template
     group: Layout
@@ -1064,6 +1088,7 @@ elements:
       panes: {type: number, default: 1}
       axis: {type: enum, values: [Horizontal, Vertical], default: Horizontal}
 
+    children: any
   Dock:
     icon: panel-left
     group: Layout
@@ -1072,6 +1097,7 @@ elements:
     props:
       panels: list<string>  # "id|title|icon|side" — sides: left, right, top, bottom
 
+    children: any
   Sheet:
     icon: panel-right
     group: Layout
@@ -1083,6 +1109,7 @@ elements:
     events:
       close:
 
+    children: any
   Drawer:
     icon: panel-bottom-open
     group: Layout
@@ -1091,6 +1118,7 @@ elements:
     events:
       close:
 
+    children: any
   FloatingPanel:
     icon: picture-in-picture-2
     group: Layout
@@ -1103,6 +1131,7 @@ elements:
     events:
       move:
 
+    children: any
   SplitPane:
     icon: separator-vertical
     group: Layout
@@ -1115,6 +1144,7 @@ elements:
     events:
       resize:
 
+    children: any
   ScrollArea:
     icon: scroll
     group: Layout
@@ -1125,6 +1155,7 @@ elements:
       shadows: {type: bool, default: false}
       handle: string
 
+    children: any
   ScrollShadow:
     icon: shadow
     group: Layout
@@ -1148,6 +1179,7 @@ elements:
     component: ely_core::layout::StickyHeader
     props: {handle: string}
 
+    children: any
   Viewport:
     icon: move
     group: Layout
@@ -1157,12 +1189,14 @@ elements:
       min_zoom: number
       max_zoom: number
 
+    children: any
   Card:
     icon: square
     group: Layout
     summary: "Flat surface — `slot: header` child makes a CardHeader, `slot: footer` docks below."
     component: ely_core::layout::Card
 
+    children: any
   CardHeader:
     icon: heading
     group: Layout
@@ -1172,18 +1206,21 @@ elements:
       title: string
       description: string
 
+    children: any
   Frame:
     icon: square-dashed
     group: Layout
     summary: "Bordered raised container."
     component: ely_core::layout::Frame
 
+    children: any
   Well:
     icon: square-chevron-down
     group: Layout
     summary: "Recessed container on the sunken tone."
     component: ely_core::layout::Well
 
+    children: any
   Input:
     icon: text-cursor-input
     group: Forms

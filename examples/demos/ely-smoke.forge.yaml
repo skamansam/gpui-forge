@@ -1,0 +1,81 @@
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/ely.json
+forge: "0.1"
+base: gpui-kit
+use:
+  ely: ely-core
+
+root:
+  VStack:
+  style:
+    padding: 24px
+    gap: 16px
+  children:
+    - HStack:
+      style:
+        gap: 16px
+      children:
+        - ely.Spinner: ""
+          spinner: Ring
+        - ely.ProgressBar: ""
+          value: 0.6
+        - ely.ProgressRing: ""
+          value: 0.4
+          percent: true
+        - ely.TypingIndicator: ""
+    - ely.Stagger: ""
+      step: 120
+      entrance: Rise
+      children:
+        - ely.SkeletonCard: ""
+        - ely.SkeletonCard: ""
+        - Text: Staggered
+    - HStack:
+      style:
+        gap: 16px
+      children:
+        - ely.SkeletonText: ""
+          lines: 2
+        - ely.SkeletonAvatar: ""
+        - ely.SkeletonCard: ""
+    - ely.Marquee: ""
+      children:
+        - Text: "Scrolling headline text …"
+    - ely.AnimatedGradient: ""
+      children:
+        - Text: Gradient backdrop
+    - ely.ParticleBackground: ""
+      children:
+        - Text: Particles behind
+    - ely.Pulse: ""
+      children:
+        - ely.Badge: pulsing
+    - ely.Transition: ""
+      entrance: Rise
+      children:
+        - Text: Transitioned in
+    - ely.Reorder: ""
+      children:
+        - Text: Row alpha
+        - Text: Row beta
+    - ely.HelpTooltip: ""
+      text: Helpful text
+    - ely.TooltipTrigger: ""
+      tip: A tooltip
+      children:
+        - Text: Hover me
+    - ely.Measure: ""
+      on measure: status('measured')
+      children:
+        - Text: Measured child
+    - ely.IntersectionObserver: ""
+      children:
+        - Text: Observed child
+    - ely.Backdrop: ""
+      children:
+        - Text: Over a backdrop
+    - ely.InputGroup: ""
+      children:
+        - ely.InputAddon: ""
+          text: https://
+        - ely.Input: ""
+          placeholder: domain

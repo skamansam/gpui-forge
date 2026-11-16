@@ -9594,16 +9594,7 @@
               },
               "children": {
                 "items": {
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/node"
-                    },
-                    {
-                      "propertyNames": {
-                        "pattern": "^((([a-z][\\w-]*\\.)?AccordionItem)(#[\\w-]+| \\.[\\w-]+)?|([a-z_][A-Za-z0-9_-]*|on [a-z_][A-Za-z0-9_-]*|<<))$"
-                      }
-                    }
-                  ]
+                  "$ref": "#/definitions/node"
                 },
                 "type": "array"
               },
@@ -9813,7 +9804,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "floating": {
@@ -10108,7 +10101,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "style": {
@@ -10732,7 +10727,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "style": {
@@ -11707,7 +11704,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "style": {
@@ -12189,7 +12188,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "count": {
@@ -12597,7 +12598,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "style": {
@@ -12952,7 +12955,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "style": {
@@ -12994,7 +12999,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "description": {
@@ -13230,7 +13237,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "style": {
@@ -15332,7 +15341,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "count": {
@@ -16968,7 +16979,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "panels": {
@@ -17032,7 +17045,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "style": {
@@ -17095,7 +17110,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "on close": {
@@ -18371,7 +18388,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "on retry": {
@@ -19466,7 +19485,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "on move": {
@@ -20155,7 +20176,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "style": {
@@ -24350,7 +24373,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "columns": {
@@ -24420,7 +24445,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "min": {
@@ -25602,7 +25629,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "on clear": {
@@ -26216,7 +26245,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "style": {
@@ -26444,7 +26475,9 @@
                 ]
               },
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "panes": {
@@ -28185,7 +28218,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "style": {
@@ -30090,7 +30125,9 @@
                 ]
               },
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "status": {
@@ -30267,7 +30304,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "handle": {
@@ -31582,7 +31621,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "on close": {
@@ -32276,7 +32317,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "gap": {
@@ -33271,7 +33314,9 @@
                 ]
               },
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "min": {
@@ -34178,7 +34223,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "handle": {
@@ -34283,7 +34330,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "error": {
@@ -36611,7 +36660,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "style": {
@@ -39097,7 +39148,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "max_zoom": {
@@ -39362,7 +39415,9 @@
             },
             "properties": {
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "style": {
