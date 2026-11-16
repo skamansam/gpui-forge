@@ -584,6 +584,31 @@ impl ForgeView {
         Some(c)
     }
 
+    /// The shared `on <event>:` wiring for `Fn(&ClickEvent, _)` handlers —
+    /// used by click, close, confirm, cancel slots across widgets.
+    fn event_handler(
+        &self,
+        node: &Node,
+        event: &str,
+        cx: &mut Context<Self>,
+    ) -> Option<impl Fn(&ClickEvent, &mut Window, &mut App) + 'static> {
+        let calls = self.events_for(node, event);
+        if calls.is_empty() {
+            return None;
+        }
+        let weak = cx.entity().downgrade();
+        let what = event.to_owned();
+        Some(move |_: &ClickEvent, _: &mut Window, cx: &mut App| {
+            for (name, args) in &calls {
+                let weak = weak.clone();
+                let name = name.clone();
+                let args = args.clone();
+                let what = what.clone();
+                try_update(&weak, cx, &what, |view, cx| view.fire_call(&name, args, cx)).ok();
+            }
+        })
+    }
+
     /// The shared `on click:` wiring — handler calls through `try_update`,
     /// same as the Button arm.
     fn click_handler(
@@ -2720,6 +2745,756 @@ impl ForgeView {
                     t = t.color(c);
                 }
                 t.into_any_element()
+            }
+            "Breadcrumbs" => {
+                let mut b = guise::nav::Breadcrumbs::new().items(self.options_of(node, "options"));
+                let sep = self.prop_text(node, "separator");
+                if !sep.is_empty() {
+                    b = b.separator(sep);
+                }
+                b.into_any_element()
+            }
+            "Pagination" => {
+                if !self.views.contains_key(key) {
+                    let total = self.num(node, "total", 1.0).max(1.0) as usize;
+                    let active = self.num(node, "active", 0.0) as usize;
+                    let entity = cx.new(|cx| {
+                        let mut p = guise::nav::Pagination::new(cx, total).active(active);
+                        if let Some(c) = self.color_of(node, "color") {
+                            p = p.color(c);
+                        }
+                        p
+                    });
+                    let calls = self.events_for(node, "change");
+                    let binding = Self::binding_of(node, "value");
+                    self.subscriptions.push(cx.subscribe(
+                        &entity,
+                        move |view, _w, e: &guise::nav::PaginationEvent, cx| {
+                            for (name, args) in &calls {
+                                view.fire_call(name, args.clone(), cx);
+                            }
+                            if let Some(p) = &binding {
+                                view.write(p, Json::from(e.0), cx);
+                            }
+                        },
+                    ));
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "Stepper" => {
+                let mut s = guise::nav::Stepper::new();
+                let options = self.prop_text(node, "options");
+                for opt in options.split(',') {
+                    let opt = opt.trim();
+                    if opt.is_empty() {
+                        continue;
+                    }
+                    s = match opt.split_once('|') {
+                        Some((label, desc)) => {
+                            s.step_desc(label.trim().to_owned(), desc.trim().to_owned())
+                        }
+                        None => s.step(opt.to_owned()),
+                    };
+                }
+                s = s.active(self.num(node, "active", 0.0) as usize);
+                if let Some(c) = self.color_of(node, "color") {
+                    s = s.color(c);
+                }
+                s.into_any_element()
+            }
+            "NavLink" => {
+                let label = self.prop_text(node, "label");
+                let label = if label.is_empty() {
+                    self.node_text(node)
+                } else {
+                    label
+                };
+                let mut l = guise::nav::NavLink::new(SharedString::from(key.to_owned()), label);
+                let desc = self.prop_text(node, "description");
+                if !desc.is_empty() {
+                    l = l.description(desc);
+                }
+                if let Some(i) = Self::icon_of(&self.prop_text(node, "icon")) {
+                    l = l.icon(i);
+                }
+                if let Some(c) = self.color_of(node, "color") {
+                    l = l.color(c);
+                }
+                if self.prop_bool(node, "active", false) {
+                    l = l.active(true);
+                }
+                if let Some(h) = self.click_handler(node, cx) {
+                    l = l.on_click(h);
+                }
+                l.into_any_element()
+            }
+            "NavigationMenu" => {
+                if !self.views.contains_key(key) {
+                    let entries: Vec<(String, String)> = self
+                        .prop_text(node, "options")
+                        .split(',')
+                        .filter_map(|o| {
+                            let o = o.trim();
+                            if o.is_empty() {
+                                return None;
+                            }
+                            Some(match o.split_once('|') {
+                                Some((id, label)) => {
+                                    (id.trim().to_owned(), label.trim().to_owned())
+                                }
+                                None => (o.to_owned(), o.to_owned()),
+                            })
+                        })
+                        .collect();
+                    let active = self.prop_text(node, "active");
+                    let entity = cx.new(|cx| {
+                        let mut m = guise::nav::NavigationMenu::new(cx);
+                        for (id, label) in entries {
+                            m = m.item(id, label);
+                        }
+                        if !active.is_empty() {
+                            m = m.active(active);
+                        }
+                        m
+                    });
+                    let calls = self.events_for(node, "change");
+                    let binding = Self::binding_of(node, "value");
+                    self.subscriptions.push(cx.subscribe(
+                        &entity,
+                        move |view, _w, e: &guise::nav::NavigationMenuEvent, cx| {
+                            for (name, args) in &calls {
+                                view.fire_call(name, args.clone(), cx);
+                            }
+                            if let Some(p) = &binding {
+                                view.write(p, Json::String(e.0.to_string()), cx);
+                            }
+                        },
+                    ));
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "StatusBar" => {
+                let mut bar = guise::nav::StatusBar::new();
+                let h = self.num(node, "height", 0.0) as f32;
+                if h > 0.0 {
+                    bar = bar.height(h);
+                }
+                let mut slots = [None, None, None];
+                for (i, child) in node.children.iter().enumerate().take(3) {
+                    let k = format!("{key}/{i}");
+                    slots[i] = Some(self.render_node(child, &k, window, cx));
+                }
+                if let Some(l) = slots[0].take() {
+                    bar = bar.left(l);
+                }
+                if let Some(c) = slots[1].take() {
+                    bar = bar.center(c);
+                }
+                if let Some(r) = slots[2].take() {
+                    bar = bar.right(r);
+                }
+                bar.into_any_element()
+            }
+            "Loader" => {
+                let mut l = guise::feedback::Loader::new().size(self.size_of(node, "size"));
+                if self.prop_text(node, "variant") == "bars" {
+                    l = l.variant(guise::feedback::LoaderVariant::Bars);
+                }
+                if let Some(c) = self.color_of(node, "color") {
+                    l = l.color(c);
+                }
+                l.into_any_element()
+            }
+            "Notification" => {
+                let msg = self.prop_text(node, "text");
+                let msg = if msg.is_empty() {
+                    self.node_text(node)
+                } else {
+                    msg
+                };
+                let mut n = guise::feedback::Notification::new(msg);
+                let title = self.prop_text(node, "title");
+                if !title.is_empty() {
+                    n = n.title(title);
+                }
+                if let Some(c) = self.color_of(node, "color") {
+                    n = n.color(c);
+                }
+                if let Some(i) = Self::icon_of(&self.prop_text(node, "icon")) {
+                    n = n.icon(i);
+                }
+                let calls = self.events_for(node, "close");
+                if !calls.is_empty() {
+                    let weak = cx.entity().downgrade();
+                    n = n.on_close(move |_: &ClickEvent, _: &mut Window, cx: &mut App| {
+                        for (name, args) in &calls {
+                            let weak = weak.clone();
+                            let name = name.clone();
+                            let args = args.clone();
+                            try_update(&weak, cx, "close", |view, cx| {
+                                view.fire_call(&name, args, cx)
+                            })
+                            .ok();
+                        }
+                    });
+                }
+                n.into_any_element()
+            }
+            "RingProgress" => {
+                let mut r = guise::feedback::RingProgress::new(self.num(node, "value", 0.0) as f32);
+                let size = self.num(node, "size", 0.0) as f32;
+                if size > 0.0 {
+                    r = r.size(size);
+                }
+                if let Some(c) = self.color_of(node, "color") {
+                    r = r.color(c);
+                }
+                let label = self.prop_text(node, "label");
+                if !label.is_empty() {
+                    r = r.label(label);
+                }
+                r.into_any_element()
+            }
+            "ToastStack" => {
+                if !self.views.contains_key(key) {
+                    let entity = cx.new(|_| guise::feedback::ToastStack::new());
+                    let toasts: Vec<String> = self
+                        .options_of(node, "options")
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect();
+                    if !toasts.is_empty() {
+                        entity.update(cx, |t, cx| {
+                            for m in toasts {
+                                t.push(m, cx);
+                            }
+                        });
+                    }
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "Modal" => {
+                let mut m = guise::overlay::Modal::new()
+                    .padding(self.size_of(node, "padding"))
+                    .radius(self.size_of(node, "radius"));
+                let title = self.prop_text(node, "title");
+                if !title.is_empty() {
+                    m = m.title(title);
+                }
+                let w = self.num(node, "width", 0.0) as f32;
+                if w > 0.0 {
+                    m = m.width(w);
+                }
+                if let Some(h) = self.event_handler(node, "close", cx) {
+                    m = m.on_close(h);
+                }
+                for (i, child) in node.children.iter().enumerate() {
+                    let k = format!("{key}/{i}");
+                    m.extend([self.render_node(child, &k, window, cx)]);
+                }
+                m.into_any_element()
+            }
+            "ConfirmModal" => {
+                let mut m = guise::overlay::ConfirmModal::new();
+                let title = self.prop_text(node, "title");
+                if !title.is_empty() {
+                    m = m.title(title);
+                }
+                let msg = self.prop_text(node, "message");
+                let msg = if msg.is_empty() {
+                    self.node_text(node)
+                } else {
+                    msg
+                };
+                if !msg.is_empty() {
+                    m = m.message(msg);
+                }
+                let ok = self.prop_text(node, "confirm_label");
+                if !ok.is_empty() {
+                    m = m.confirm_label(ok);
+                }
+                let cancel = self.prop_text(node, "cancel_label");
+                if !cancel.is_empty() {
+                    m = m.cancel_label(cancel);
+                }
+                if self.prop_bool(node, "danger", false) {
+                    m = m.danger();
+                }
+                let w = self.num(node, "width", 0.0) as f32;
+                if w > 0.0 {
+                    m = m.width(w);
+                }
+                if let Some(h) = self.event_handler(node, "confirm", cx) {
+                    m = m.on_confirm(h);
+                }
+                if let Some(h) = self.event_handler(node, "cancel", cx) {
+                    m = m.on_cancel(h);
+                }
+                for (i, child) in node.children.iter().enumerate() {
+                    let k = format!("{key}/{i}");
+                    m.extend([self.render_node(child, &k, window, cx)]);
+                }
+                m.into_any_element()
+            }
+            "Drawer" => {
+                let mut d = guise::overlay::Drawer::new().padding(self.size_of(node, "padding"));
+                let title = self.prop_text(node, "title");
+                if !title.is_empty() {
+                    d = d.title(title);
+                }
+                d = match self.prop_text(node, "side").as_str() {
+                    "left" => d.side(guise::overlay::Side::Left),
+                    "top" => d.side(guise::overlay::Side::Top),
+                    "bottom" => d.side(guise::overlay::Side::Bottom),
+                    _ => d.side(guise::overlay::Side::Right),
+                };
+                let size = self.num(node, "size", 0.0) as f32;
+                if size > 0.0 {
+                    d = d.size(size);
+                }
+                if let Some(h) = self.event_handler(node, "close", cx) {
+                    d = d.on_close(h);
+                }
+                for (i, child) in node.children.iter().enumerate() {
+                    let k = format!("{key}/{i}");
+                    d.extend([self.render_node(child, &k, window, cx)]);
+                }
+                d.into_any_element()
+            }
+            "Popover" | "HoverCard" => {
+                if !self.views.contains_key(key) {
+                    let weak = cx.entity().downgrade();
+                    let mut proxies = Vec::new();
+                    for (i, child) in node.children.iter().enumerate().take(2) {
+                        let k = format!("{key}/{i}");
+                        proxies.push(self.proxy_for(child, &k, &weak, &mut **cx));
+                    }
+                    let fallback: AnyView = cx
+                        .new(|_| ProxyView {
+                            forge: weak.clone(),
+                            node: Node::default(),
+                            key: format!("{key}/empty"),
+                        })
+                        .into();
+                    let trigger = proxies.first().cloned();
+                    let content = proxies.get(1).cloned();
+                    let fb = fallback.clone();
+                    let fb2 = fallback.clone();
+                    let placement = match self.prop_text(node, "placement").as_str() {
+                        "top" => guise::overlay::Placement::Top,
+                        "top-end" | "top_end" => guise::overlay::Placement::TopEnd,
+                        "bottom-end" | "bottom_end" => guise::overlay::Placement::BottomEnd,
+                        _ => guise::overlay::Placement::Bottom,
+                    };
+                    let width = self.num(node, "width", 0.0) as f32;
+                    let entity = if node.element.name == "Popover" {
+                        cx.new(|cx| {
+                            let mut p = guise::overlay::Popover::new(
+                                cx,
+                                {
+                                    let trigger = trigger.clone();
+                                    let fb = fb.clone();
+                                    move |_w, _app| {
+                                        trigger
+                                            .clone()
+                                            .map(|t| div().child(t).into_any_element())
+                                            .unwrap_or_else(|| {
+                                                div().child(fb.clone()).into_any_element()
+                                            })
+                                    }
+                                },
+                                {
+                                    let content = content.clone();
+                                    let fb2 = fb2.clone();
+                                    move |_w, _app| {
+                                        content
+                                            .clone()
+                                            .map(|t| div().child(t).into_any_element())
+                                            .unwrap_or_else(|| {
+                                                div().child(fb2.clone()).into_any_element()
+                                            })
+                                    }
+                                },
+                            )
+                            .placement(placement);
+                            if width > 0.0 {
+                                p = p.width(width);
+                            }
+                            p
+                        })
+                        .into()
+                    } else {
+                        cx.new(|cx| {
+                            let mut p = guise::overlay::HoverCard::new(
+                                cx,
+                                {
+                                    let trigger = trigger.clone();
+                                    let fb = fb.clone();
+                                    move |_w, _app| {
+                                        trigger
+                                            .clone()
+                                            .map(|t| div().child(t).into_any_element())
+                                            .unwrap_or_else(|| {
+                                                div().child(fb.clone()).into_any_element()
+                                            })
+                                    }
+                                },
+                                {
+                                    let content = content.clone();
+                                    let fb2 = fb2.clone();
+                                    move |_w, _app| {
+                                        content
+                                            .clone()
+                                            .map(|t| div().child(t).into_any_element())
+                                            .unwrap_or_else(|| {
+                                                div().child(fb2.clone()).into_any_element()
+                                            })
+                                    }
+                                },
+                            )
+                            .placement(placement);
+                            if width > 0.0 {
+                                p = p.width(width);
+                            }
+                            p
+                        })
+                        .into()
+                    };
+                    self.views.insert(key.to_owned(), entity);
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "Tooltip" => {
+                if !self.views.contains_key(key) {
+                    let label = self.prop_text(node, "label");
+                    let label = if label.is_empty() {
+                        self.node_text(node)
+                    } else {
+                        label
+                    };
+                    let entity = cx.new(|_| guise::overlay::Tooltip::new(label));
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "ContextMenu" => {
+                if !self.views.contains_key(key) {
+                    let items: Vec<String> = self
+                        .options_of(node, "options")
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect();
+                    let weak = cx.entity().downgrade();
+                    let calls = self.events_for(node, "change");
+                    let binding = Self::binding_of(node, "value");
+                    let entity = cx.new(|cx| {
+                        let mut m =
+                            guise::overlay::ContextMenu::new(cx).size(self.size_of(node, "size"));
+                        let w = self.num(node, "width", 0.0) as f32;
+                        if w > 0.0 {
+                            m = m.width(w);
+                        }
+                        for label in items {
+                            let weak = weak.clone();
+                            let calls = calls.clone();
+                            let binding = binding.clone();
+                            let v = label.clone();
+                            m = m.item(label, move |_: &mut Window, cx: &mut App| {
+                                for (name, args) in &calls {
+                                    let weak = weak.clone();
+                                    let name = name.clone();
+                                    let args = args.clone();
+                                    try_update(&weak, cx, "change", |view, cx| {
+                                        view.fire_call(&name, args, cx)
+                                    })
+                                    .ok();
+                                }
+                                if let Some(p) = &binding {
+                                    let v = v.clone();
+                                    try_update(&weak, cx, "change", |view, cx| {
+                                        view.write(p, Json::String(v), cx)
+                                    })
+                                    .ok();
+                                }
+                            });
+                        }
+                        m
+                    });
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "Menu" => {
+                if !self.views.contains_key(key) {
+                    let items: Vec<String> = self
+                        .options_of(node, "options")
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect();
+                    let trigger = self.prop_text(node, "trigger");
+                    let trigger = if trigger.is_empty() {
+                        self.node_text(node)
+                    } else {
+                        trigger
+                    };
+                    let weak = cx.entity().downgrade();
+                    let calls = self.events_for(node, "change");
+                    let binding = Self::binding_of(node, "value");
+                    let entity = cx.new(|cx| {
+                        let mut m =
+                            guise::overlay::Menu::new(cx, trigger).size(self.size_of(node, "size"));
+                        for label in items {
+                            let weak = weak.clone();
+                            let calls = calls.clone();
+                            let binding = binding.clone();
+                            let v = label.clone();
+                            m = m.item(label, move |_: &mut Window, cx: &mut App| {
+                                for (name, args) in &calls {
+                                    let weak = weak.clone();
+                                    let name = name.clone();
+                                    let args = args.clone();
+                                    try_update(&weak, cx, "change", |view, cx| {
+                                        view.fire_call(&name, args, cx)
+                                    })
+                                    .ok();
+                                }
+                                if let Some(p) = &binding {
+                                    let v = v.clone();
+                                    try_update(&weak, cx, "change", |view, cx| {
+                                        view.write(p, Json::String(v), cx)
+                                    })
+                                    .ok();
+                                }
+                            });
+                        }
+                        m
+                    });
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "MenuBar" => {
+                if !self.views.contains_key(key) {
+                    // "File:New,Open;Edit:Copy,Paste"
+                    let menus: Vec<(String, Vec<String>)> = self
+                        .prop_text(node, "menus")
+                        .split(';')
+                        .filter_map(|group| {
+                            let group = group.trim();
+                            if group.is_empty() {
+                                return None;
+                            }
+                            let (label, items) = match group.split_once(':') {
+                                Some((l, i)) => (l.trim().to_owned(), i),
+                                None => (group.to_owned(), ""),
+                            };
+                            Some((
+                                label,
+                                items
+                                    .split(',')
+                                    .map(|s| s.trim().to_owned())
+                                    .filter(|s| !s.is_empty())
+                                    .collect(),
+                            ))
+                        })
+                        .collect();
+                    let weak = cx.entity().downgrade();
+                    let calls = self.events_for(node, "change");
+                    let binding = Self::binding_of(node, "value");
+                    let entity = cx.new(|cx| {
+                        let mut bar =
+                            guise::overlay::MenuBar::new(cx).size(self.size_of(node, "size"));
+                        for (label, items) in menus {
+                            let weak = weak.clone();
+                            let calls = calls.clone();
+                            let binding = binding.clone();
+                            bar = bar.menu(label, move |mut col| {
+                                for item in items {
+                                    let weak = weak.clone();
+                                    let calls = calls.clone();
+                                    let binding = binding.clone();
+                                    let v = item.clone();
+                                    col = col.item(item, move |_: &mut Window, cx: &mut App| {
+                                        for (name, args) in &calls {
+                                            let weak = weak.clone();
+                                            let name = name.clone();
+                                            let args = args.clone();
+                                            try_update(&weak, cx, "change", |view, cx| {
+                                                view.fire_call(&name, args, cx)
+                                            })
+                                            .ok();
+                                        }
+                                        if let Some(p) = &binding {
+                                            let v = v.clone();
+                                            try_update(&weak, cx, "change", |view, cx| {
+                                                view.write(p, Json::String(v), cx)
+                                            })
+                                            .ok();
+                                        }
+                                    });
+                                }
+                                col
+                            });
+                        }
+                        bar
+                    });
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "Spotlight" => {
+                if !self.views.contains_key(key) {
+                    let items: Vec<(String, String)> = self
+                        .prop_text(node, "options")
+                        .split(',')
+                        .filter_map(|o| {
+                            let o = o.trim();
+                            if o.is_empty() {
+                                return None;
+                            }
+                            Some(match o.split_once('|') {
+                                Some((l, h)) => (l.trim().to_owned(), h.trim().to_owned()),
+                                None => (o.to_owned(), String::new()),
+                            })
+                        })
+                        .collect();
+                    let weak = cx.entity().downgrade();
+                    let calls = self.events_for(node, "change");
+                    let binding = Self::binding_of(node, "value");
+                    let entity = cx.new(|cx| {
+                        let mut s = guise::overlay::Spotlight::new(cx);
+                        for (label, hint) in items {
+                            let weak = weak.clone();
+                            let calls = calls.clone();
+                            let binding = binding.clone();
+                            let v = label.clone();
+                            s = if hint.is_empty() {
+                                s.item(label, move |_: &mut Window, cx: &mut App| {
+                                    for (name, args) in &calls {
+                                        let weak = weak.clone();
+                                        let name = name.clone();
+                                        let args = args.clone();
+                                        try_update(&weak, cx, "change", |view, cx| {
+                                            view.fire_call(&name, args, cx)
+                                        })
+                                        .ok();
+                                    }
+                                    if let Some(p) = &binding {
+                                        let v = v.clone();
+                                        try_update(&weak, cx, "change", |view, cx| {
+                                            view.write(p, Json::String(v), cx)
+                                        })
+                                        .ok();
+                                    }
+                                })
+                            } else {
+                                s.item_hint(label, hint, move |_: &mut Window, cx: &mut App| {
+                                    for (name, args) in &calls {
+                                        let weak = weak.clone();
+                                        let name = name.clone();
+                                        let args = args.clone();
+                                        try_update(&weak, cx, "change", |view, cx| {
+                                            view.fire_call(&name, args, cx)
+                                        })
+                                        .ok();
+                                    }
+                                    if let Some(p) = &binding {
+                                        let v = v.clone();
+                                        try_update(&weak, cx, "change", |view, cx| {
+                                            view.write(p, Json::String(v), cx)
+                                        })
+                                        .ok();
+                                    }
+                                })
+                            };
+                        }
+                        s
+                    });
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "LoadingOverlay" => {
+                let mut o = guise::overlay::LoadingOverlay::new()
+                    .visible(self.prop_bool(node, "visible", true));
+                if self.prop_text(node, "variant") == "bars" {
+                    o = o.loader(
+                        guise::feedback::Loader::new()
+                            .variant(guise::feedback::LoaderVariant::Bars),
+                    );
+                }
+                o.into_any_element()
+            }
+            "Tour" => {
+                if !self.views.contains_key(key) {
+                    let steps: Vec<(String, String)> = self
+                        .prop_text(node, "options")
+                        .split(',')
+                        .filter_map(|o| {
+                            let o = o.trim();
+                            if o.is_empty() {
+                                return None;
+                            }
+                            Some(match o.split_once('|') {
+                                Some((t, b)) => (t.trim().to_owned(), b.trim().to_owned()),
+                                None => (o.to_owned(), String::new()),
+                            })
+                        })
+                        .collect();
+                    let autostart = self.prop_bool(node, "autostart", false);
+                    let entity = cx.new(|cx| {
+                        let mut t = guise::overlay::Tour::new(cx);
+                        for (title, body) in steps {
+                            t = t.step(title, body);
+                        }
+                        t
+                    });
+                    if autostart {
+                        entity.update(cx, |t, cx| t.start(cx));
+                    }
+                    let calls = self.events_for(node, "change");
+                    let binding = Self::binding_of(node, "value");
+                    self.subscriptions.push(cx.subscribe(
+                        &entity,
+                        move |view, _w, e: &guise::overlay::TourEvent, cx| {
+                            let v = match e {
+                                guise::overlay::TourEvent::Step(i) => *i as i64,
+                                _ => -1,
+                            };
+                            for (name, args) in &calls {
+                                view.fire_call(name, args.clone(), cx);
+                            }
+                            if let Some(p) = &binding {
+                                view.write(p, Json::from(v), cx);
+                            }
+                        },
+                    ));
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
             }
             _ => placeholder(format!("{} — no guise renderer", node.element.name)),
         }

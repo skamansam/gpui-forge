@@ -1005,3 +1005,260 @@ elements:
       options: string  # items, comma-separated
       active: number
       color: string
+
+  Breadcrumbs:
+    icon: chevrons-right
+    group: Navigation
+    summary: Hierarchical breadcrumb trail.
+    component: guise::nav::Breadcrumbs
+    props:
+      options: string  # crumbs, comma-separated
+      separator: string
+
+  Pagination:
+    icon: ellipsis
+    group: Navigation
+    summary: Page number strip.
+    component: guise::nav::Pagination
+    props:
+      total:
+        type: number
+        required: true
+      active: number
+      color: string
+    events:
+      change: Fires on page change; writes the page number to a bound value.
+
+  Stepper:
+    icon: list-ordered
+    group: Navigation
+    summary: Step wizard — options are "Label | description".
+    component: guise::nav::Stepper
+    props:
+      options: string  # steps, comma-separated
+      active: number
+      color: string
+
+  NavLink:
+    icon: link
+    group: Navigation
+    summary: Sidebar/nav link with optional icon, description, active state.
+    component: guise::nav::NavLink
+    props:
+      label: string
+      description: string
+      icon: string
+      color: string
+      active:
+        type: bool
+        default: false
+    events:
+      click: Fires on activation.
+
+  NavigationMenu:
+    icon: menu
+    group: Navigation
+    summary: Horizontal nav menu — options are "id | Label".
+    component: guise::nav::NavigationMenu
+    props:
+      options: string  # items, comma-separated
+      active: string   # active item id
+    events:
+      change: Fires on selection; writes the item id to a bound value.
+
+  StatusBar:
+    icon: panel-bottom
+    group: Navigation
+    summary: Bottom status strip — children fill left/center/right in order.
+    component: guise::nav::StatusBar
+    children: any
+    props:
+      height: number
+
+  Loader:
+    icon: loader-circle
+    group: Feedback
+    summary: Animated loading indicator (dots or bars).
+    component: guise::feedback::Loader
+    props:
+      variant: string  # "dots" (default) or "bars"
+      size: string
+      color: string
+
+  Notification:
+    icon: bell
+    group: Feedback
+    summary: Inline notification card with optional title and close.
+    component: guise::feedback::Notification
+    props:
+      text: string
+      title: string
+      color: string
+      icon: string
+    events:
+      close: Fires when dismissed.
+
+  RingProgress:
+    icon: circle-dashed
+    group: Feedback
+    summary: Circular progress ring with optional center label.
+    component: guise::feedback::RingProgress
+    props:
+      value:
+        type: number
+        required: true
+      size: number
+      color: string
+      label: string
+
+  ToastStack:
+    icon: layers
+    group: Feedback
+    summary: Auto-dismissing toast stack.
+    component: guise::feedback::ToastStack
+    props:
+      options: string  # initial toasts, comma-separated
+
+  Modal:
+    icon: square
+    group: Overlays
+    summary: Dialog overlay with title and optional close handler.
+    component: guise::overlay::Modal
+    children: any
+    props:
+      title: string
+      width: number
+      padding: string
+      radius: string
+    events:
+      close: Fires on backdrop/close.
+
+  ConfirmModal:
+    icon: message-square-warning
+    group: Overlays
+    summary: Confirm/cancel dialog — confirm and cancel events.
+    component: guise::overlay::ConfirmModal
+    children: any
+    props:
+      title: string
+      message: string
+      confirm_label: string
+      cancel_label: string
+      danger:
+        type: bool
+        default: false
+      width: number
+    events:
+      confirm: Fires on the confirm button.
+      cancel: Fires on cancel/backdrop.
+
+  Popover:
+    icon: message-square
+    group: Overlays
+    summary: Anchored floating panel — first child is the trigger, second the content.
+    component: guise::overlay::Popover
+    children: any
+    props:
+      placement: string  # bottom, bottom-end, top, top-end
+      width: number
+
+  HoverCard:
+    icon: square-mouse-pointer
+    group: Overlays
+    summary: Hover-triggered card — first child is the trigger, second the content.
+    component: guise::overlay::HoverCard
+    children: any
+    props:
+      placement: string
+      width: number
+
+  Tooltip:
+    icon: info
+    group: Overlays
+    summary: Floating hint label.
+    component: guise::overlay::Tooltip
+    props:
+      label: string
+
+  ContextMenu:
+    icon: square-menu
+    group: Overlays
+    summary: Right-click item menu — show() drives it from tree/context events.
+    component: guise::overlay::ContextMenu
+    props:
+      options: string  # items, comma-separated
+      size: string
+      width: number
+    events:
+      change: Fires on item pick; writes the label to a bound value.
+
+  Menu:
+    icon: chevron-down
+    group: Overlays
+    summary: Dropdown menu with a text trigger.
+    component: guise::overlay::Menu
+    props:
+      trigger: string
+      options: string  # items, comma-separated
+      size: string
+    events:
+      change: Fires on item pick; writes the label to a bound value.
+
+  MenuBar:
+    icon: panel-top
+    group: Overlays
+    summary: Top menu strip — menus are "File:New,Open;Edit:Copy,Paste".
+    component: guise::overlay::MenuBar
+    props:
+      menus: string
+      size: string
+    events:
+      change: Fires on item pick; writes the item label to a bound value.
+
+  Drawer:
+    icon: panel-right
+    group: Overlays
+    summary: Slide-in side panel.
+    component: guise::overlay::Drawer
+    children: any
+    props:
+      title: string
+      side: string  # left, right, top, bottom
+      size: number
+      padding: string
+    events:
+      close: Fires on dismiss.
+
+  Spotlight:
+    icon: search
+    group: Overlays
+    summary: Command palette — options are "Label | hint".
+    component: guise::overlay::Spotlight
+    props:
+      options: string  # commands, comma-separated
+    events:
+      change: Fires on command pick; writes the label to a bound value.
+
+  LoadingOverlay:
+    icon: loader
+    group: Overlays
+    summary: Blocking busy overlay.
+    component: guise::overlay::LoadingOverlay
+    props:
+      visible:
+        type: bool
+        default: true
+      variant: string  # loader variant
+
+  Tour:
+    icon: route
+    group: Overlays
+    summary: Guided step tour — options are "Title | body".
+    component: guise::overlay::Tour
+    props:
+      options: string  # steps, comma-separated
+      autostart:
+        type: bool
+        default: false
+    events:
+      change: Fires on step change; writes the index to a bound value.
