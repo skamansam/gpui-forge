@@ -49,7 +49,7 @@ if [ $# -gt 0 ]; then
     exit 2
   fi
   build_base "$base"
-  [ "$base" = gpui-kit ] && stage_icons
+  if [ "$base" = gpui-kit ]; then stage_icons; fi
 else
   for base in "${!FEATURE[@]}"; do
     build_base "$base"
