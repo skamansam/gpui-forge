@@ -482,7 +482,7 @@ elements:
   Toolbar:
     icon: wrench
     group: Shell
-    summary: Tool row — children render as tools.
+    summary: "Tool row — children render as tools."
     component: ely_core::shell::Toolbar
     children: any
 
@@ -2179,7 +2179,7 @@ elements:
   Dialog:
     icon: square-stack
     group: Overlays
-    summary: Modal dialog — children are the body; `actions` labels become footer buttons firing `action:<label>` then closing.
+    summary: "Modal dialog — children are the body; `actions` labels become footer buttons firing `action:<label>` then closing."
     component: ely_core::overlays::Dialog
     children: any
     props:
@@ -2191,7 +2191,7 @@ elements:
   AlertDialog:
     icon: message-circle-warning
     group: Overlays
-    summary: Severity-styled message dialog — `close` fires on the button.
+    summary: "Severity-styled message dialog — `close` fires on the button."
     component: ely_core::overlays::AlertDialog
     children: none
     props:
@@ -2206,7 +2206,7 @@ elements:
   ConfirmDialog:
     icon: message-circle-question
     group: Overlays
-    summary: Confirm/cancel dialog — `confirm` fires before `close`.
+    summary: "Confirm/cancel dialog — `confirm` fires before `close`."
     component: ely_core::overlays::ConfirmDialog
     children: none
     props:
@@ -2219,7 +2219,7 @@ elements:
   PromptDialog:
     icon: text-cursor-input
     group: Overlays
-    summary: Text-entry dialog sharing the TextInput entity — `submit` fires with the text.
+    summary: "Text-entry dialog sharing the TextInput entity — `submit` fires with the text."
     component: ely_core::overlays::PromptDialog
     children: none
     props:
@@ -2233,7 +2233,7 @@ elements:
   FloatingToolbar:
     icon: panel-top-open
     group: Overlays
-    summary: Floating selection toolbar bound to a TextInput entity — children are tools.
+    summary: "Floating selection toolbar bound to a TextInput entity — children are tools."
     component: ely_core::overlays::FloatingToolbar
     children: any
     props:
@@ -2242,7 +2242,7 @@ elements:
   Peek:
     icon: eye
     group: Overlays
-    summary: Peek panel — `open` shows it; children are the body.
+    summary: "Peek panel — `open` shows it; children are the body."
     component: ely_core::overlays::Peek
     children: any
     props:
@@ -2253,7 +2253,7 @@ elements:
   HoverCard:
     icon: message-square
     group: Overlays
-    summary: Hover preview — first child is the trigger, second the card.
+    summary: "Hover preview — first child is the trigger, second the card."
     component: ely_core::overlays::HoverCard
     children: any
     props:
@@ -2262,7 +2262,7 @@ elements:
   Popover:
     icon: panel-top
     group: Overlays
-    summary: Button-triggered popover — first child is the content.
+    summary: "Button-triggered popover — first child is the content."
     component: ely_core::overlays::Popover
     children: any
     props:
@@ -2271,7 +2271,7 @@ elements:
   Lightbox:
     icon: images
     group: Overlays
-    summary: Image viewer — `slides` entries are `path|caption`, `at` the start index.
+    summary: "Image viewer — `slides` entries are `path|caption`, `at` the start index."
     component: ely_core::overlays::Lightbox
     children: none
     props:
@@ -2282,7 +2282,7 @@ elements:
   ActivityBar:
     icon: sidebar
     group: Shell
-    summary: Icon rail — children are items (`icon`/`label`/`badge`; `slot: footer` docks low).
+    summary: "Icon rail — children are items (`icon`/`label`/`badge`; `slot: footer` docks low)."
     component: ely_core::shell::ActivityBar
     children: any
     props:
@@ -2293,14 +2293,14 @@ elements:
   StatusBar:
     icon: panel-bottom
     group: Shell
-    summary: Window foot bar — children are items; `slot: right` pushes to the right edge.
+    summary: "Window foot bar — children are items; `slot: right` pushes to the right edge."
     component: ely_core::shell::StatusBar
     children: any
 
   StatusBarItem:
     icon: panel-bottom
     group: Shell
-    summary: Status bar cell — `leading` child, `icon`, `label`, `tooltip`.
+    summary: "Status bar cell — `leading` child, `icon`, `label`, `tooltip`."
     component: ely_core::shell::StatusBarItem
     children: any
     props:
@@ -2312,21 +2312,21 @@ elements:
   ToolbarGroup:
     icon: group
     group: Shell
-    summary: Grouped run inside a Toolbar — children are tools.
+    summary: "Grouped run inside a Toolbar — children are tools."
     component: ely_core::shell::ToolbarGroup
     children: any
 
   ToolbarSeparator:
     icon: separator-vertical
     group: Shell
-    summary: Vertical hairline between toolbar tools.
+    summary: "Vertical hairline between toolbar tools."
     component: ely_core::shell::ToolbarSeparator
     children: none
 
   TitleBar:
     icon: panel-top
     group: Shell
-    summary: Window title bar — children are the content; `slot: action` children go right.
+    summary: "Window title bar — children are the content; `slot: action` children go right."
     component: ely_core::shell::TitleBar
     children: any
     props:
@@ -2339,7 +2339,7 @@ elements:
   WindowControls:
     icon: circle-x
     group: Shell
-    summary: Min/max/close cluster — `close` fires instead of closing when set.
+    summary: "Min/max/close cluster — `close` fires instead of closing when set."
     component: ely_core::shell::WindowControls
     children: none
     props:
@@ -2351,7 +2351,7 @@ elements:
   ColumnShell:
     icon: columns-3
     group: Shell
-    summary: Titled column chrome — each child becomes a ShellColumn (child `title`/`width`).
+    summary: "Titled column chrome — each child becomes a ShellColumn (child `title`/`width`)."
     component: ely_core::shell::ColumnShell
     children: any
     props:
@@ -2364,7 +2364,7 @@ elements:
   ShellColumn:
     icon: column
     group: Shell
-    summary: One column (wraps in a single-column shell) — `slot: leading`/`action` on children.
+    summary: "One column (wraps in a single-column shell) — `slot: leading`/`action` on children."
     component: ely_core::shell::ShellColumn
     children: any
     props:
@@ -2374,12 +2374,12 @@ elements:
   CrashReporter:
     icon: bug
     group: Shell
-    summary: Crash report card — `send`/`dismiss` events.
+    summary: "Crash report card — `send`/`dismiss` events."
     component: ely_core::shell::CrashReporter
     children: none
     props:
       name: string
-      summary: string
+      summary: "string"
       report: string
       details: bool
     events: {send:, dismiss:}
@@ -2387,7 +2387,7 @@ elements:
   OfflineIndicator:
     icon: wifi-off
     group: Shell
-    summary: Connectivity dot — `state` Online/Offline/Reconnecting.
+    summary: "Connectivity dot — `state` Online/Offline/Reconnecting."
     component: ely_core::shell::OfflineIndicator
     children: none
     props:
@@ -2398,7 +2398,7 @@ elements:
   ZoomControl:
     icon: zoom-in
     group: Shell
-    summary: Minus/percent/plus zoom — `percent` seeds; `zoom` fires Out/In/Reset.
+    summary: "Minus/percent/plus zoom — `percent` seeds; `zoom` fires Out/In/Reset."
     component: ely_core::shell::ZoomControl
     children: none
     props:
@@ -2409,7 +2409,7 @@ elements:
   WindowSwitcher:
     icon: app-window
     group: Shell
-    summary: Cmd-Tab-style switcher overlay — `close` fires on dismiss.
+    summary: "Cmd-Tab-style switcher overlay — `close` fires on dismiss."
     component: ely_core::shell::WindowSwitcher
     children: none
     events: {close:}
@@ -2417,7 +2417,7 @@ elements:
   TabBar:
     icon: tabs
     group: Shell
-    summary: Window tab strip — `tabs` entries are `id|title|icon`; `selected` the open id.
+    summary: "Window tab strip — `tabs` entries are `id|title|icon`; `selected` the open id."
     component: ely_core::shell::TabBar
     children: none
     props:
@@ -2429,7 +2429,7 @@ elements:
   UpdateBanner:
     icon: arrow-down-to-line
     group: Shell
-    summary: Update prompt — `version`, `state` Available/Downloading:0.5/Ready.
+    summary: "Update prompt — `version`, `state` Available/Downloading:0.5/Ready."
     component: ely_core::shell::UpdateBanner
     children: none
     props:
@@ -2440,7 +2440,7 @@ elements:
   UpdateDialog:
     icon: circle-arrow-up
     group: Shell
-    summary: Update release dialog — `notes` lines, same `state` as UpdateBanner.
+    summary: "Update release dialog — `notes` lines, same `state` as UpdateBanner."
     component: ely_core::shell::UpdateDialog
     children: none
     props:
@@ -2454,13 +2454,13 @@ elements:
   Vibrancy:
     icon: droplets
     group: Shell
-    summary: macOS vibrancy surface — children render through it.
+    summary: "macOS vibrancy surface — children render through it."
     component: ely_core::shell::Vibrancy
     children: any
 
   ResizeBorder:
     icon: expand
     group: Shell
-    summary: Edge-drag resize border around children.
+    summary: "Edge-drag resize border around children."
     component: ely_core::shell::ResizeBorder
     children: any
