@@ -47,8 +47,12 @@ use ely_core::menus::{
     ContextMenu, DropdownMenu, Menu, MenuItem, OverflowMenu, PieItem, PieMenu, SearchableMenu,
     SplitButton,
 };
-use ely_core::motion::{ProgressBar, Reorder, Skeleton};
-use ely_core::motion::{Spinner, SpinnerStyle};
+use ely_core::motion::{
+    AnimatePresence, AnimatedGradient, Blink, Confetti, Entrance, Flash, Flip, Glow, LazyLoad,
+    LoadingOverlay, Marquee, ParticleBackground, ProgressBar, ProgressRing, Pulse, Refresh,
+    RefreshIndicator, Reorder, Ripple, Shake, Shimmer, Skeleton, SkeletonAvatar, SkeletonCard,
+    SkeletonTable, SkeletonText, Spinner, SpinnerStyle, Stagger, Transition, TypingIndicator,
+};
 use ely_core::navigation::{
     Anchor, BackForwardNavigation, Breadcrumb, Crumb, EditorTab, EditorTabs, GoToLine, LoadMore,
     NavGroup, NavItem, NavigationMenu, Pagination, Sections as TocSections, Steps, TabOverflowMenu,
@@ -935,13 +939,24 @@ impl ForgeLibrary for Ely {
                 Knob::new(key.to_string(), prop_num(node, "value").unwrap_or(0.0))
                     .into_any_element(),
             ),
-            "ProgressBar" => Some(
-                ProgressBar::new(
-                    key.to_string(),
-                    prop_num(node, "value").unwrap_or(0.0) as f32,
-                )
-                .into_any_element(),
-            ),
+            "ProgressBar" => {
+                let bar = if prop_bool(node, "indeterminate") {
+                    ProgressBar::indeterminate(key.to_string())
+                } else {
+                    let mut b = ProgressBar::new(
+                        key.to_string(),
+                        prop_num(node, "value").unwrap_or(0.0) as f32,
+                    );
+                    if let Some(buf) = prop_num(node, "buffer") {
+                        b = b.buffer(buf as f32);
+                    }
+                    if let Some(n) = prop_num(node, "segments") {
+                        b = b.segments(n as usize);
+                    }
+                    b
+                };
+                Some(bar.into_any_element())
+            }
             "NumberInput" => Some(
                 NumberInput::new(key.to_string(), prop_num(node, "value").unwrap_or(0.0))
                     .into_any_element(),
@@ -963,7 +978,6 @@ impl ForgeLibrary for Ely {
             ),
             "Form" => Some(Form::new(key.to_string()).into_any_element()),
             "Skeleton" => Some(Skeleton::new(key.to_string()).into_any_element()),
-            "Reorder" => Some(Reorder::new(key.to_string()).into_any_element()),
             "Panel" => Some(Panel::new(prop_str(node, "title")).into_any_element()),
             "Fieldset" => Some(Fieldset::new(prop_str(node, "title")).into_any_element()),
             "Section" => Some(Section::new(prop_str(node, "title")).into_any_element()),
@@ -4126,6 +4140,258 @@ impl ForgeLibrary for Ely {
                     .parse::<Timestamp>()
                     .unwrap_or_else(|_| Timestamp::now());
                 Some(DateTimeText::new(at).into_any_element())
+            }
+            "Blink" => {
+                let mut e = Blink::new(key.to_string());
+                e.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(e.into_any_element())
+            }
+            "Glow" => {
+                let mut e = Glow::new(key.to_string());
+                e.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(e.into_any_element())
+            }
+            "Pulse" => {
+                let mut e = Pulse::new(key.to_string());
+                e.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(e.into_any_element())
+            }
+            "Flash" => {
+                let mut e = Flash::new(key.to_string(), prop_str(node, "trigger"));
+                e.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(e.into_any_element())
+            }
+            "Shake" => {
+                let mut e = Shake::new(key.to_string(), prop_str(node, "trigger"));
+                e.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(e.into_any_element())
+            }
+            "Marquee" => {
+                let content = self.child_views(node, key, cx).into_iter().next();
+                Some(
+                    Marquee::new(key.to_string(), move || {
+                        content
+                            .clone()
+                            .map(|v| v.into_any_element())
+                            .unwrap_or_else(|| gpui::div().into_any_element())
+                    })
+                    .into_any_element(),
+                )
+            }
+            "Flip" => {
+                let mut f = Flip::new(key.to_string());
+                for (i, child) in node.children.iter().enumerate() {
+                    let row_key = prop_str(child, "key");
+                    let row_key = if row_key.is_empty() {
+                        format!("{i}")
+                    } else {
+                        row_key
+                    };
+                    f = f.row(row_key, self.child_view(child, &format!("{key}/{i}"), cx));
+                }
+                Some(f.into_any_element())
+            }
+            "AnimatePresence" => {
+                let mut a = AnimatePresence::new(key.to_string());
+                for (i, child) in node.children.iter().enumerate() {
+                    let row_key = prop_str(child, "key");
+                    let row_key = if row_key.is_empty() {
+                        format!("{i}")
+                    } else {
+                        row_key
+                    };
+                    a = a.row(
+                        row_key,
+                        !prop_bool(child, "hidden"),
+                        self.child_view(child, &format!("{key}/{i}"), cx),
+                    );
+                }
+                if let Some(h) = fire_str(view, node, "gone", cx) {
+                    a = a.on_gone(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                Some(a.into_any_element())
+            }
+            "LoadingOverlay" => {
+                let mut o = LoadingOverlay::new(key.to_string(), prop_bool(node, "loading"));
+                o.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(o.into_any_element())
+            }
+            "LazyLoad" => {
+                let content = self.child_views(node, key, cx).into_iter().next();
+                let height = prop_num(node, "height").unwrap_or(100.0);
+                Some(
+                    LazyLoad::new(
+                        key.to_string(),
+                        px(height as f32),
+                        move |_w, _cx| match &content {
+                            Some(v) => v.clone().into_any_element(),
+                            None => gpui::div().into_any_element(),
+                        },
+                    )
+                    .into_any_element(),
+                )
+            }
+            "RefreshIndicator" => {
+                let state = match prop_str(node, "state").as_str() {
+                    s if s.starts_with("Pulling:") => Refresh::Pulling(
+                        s.trim_start_matches("Pulling:")
+                            .parse::<f32>()
+                            .unwrap_or(0.0)
+                            .clamp(0.0, 1.0),
+                    ),
+                    "Refreshing" => Refresh::Refreshing,
+                    "Done" => Refresh::Done,
+                    _ => Refresh::Idle,
+                };
+                Some(RefreshIndicator::new(key.to_string(), state).into_any_element())
+            }
+            "TypingIndicator" => Some(TypingIndicator::new(key.to_string()).into_any_element()),
+            "Confetti" => Some(
+                Confetti::new(
+                    key.to_string(),
+                    prop_num(node, "bursts").unwrap_or(1.0).max(0.0) as usize,
+                )
+                .into_any_element(),
+            ),
+            "ParticleBackground" => {
+                let mut e = ParticleBackground::new(key.to_string());
+                e.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(e.into_any_element())
+            }
+            "AnimatedGradient" => {
+                let mut e = AnimatedGradient::new(key.to_string());
+                e.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(e.into_any_element())
+            }
+            "Ripple" => {
+                let mut e = Ripple::new(key.to_string());
+                e.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(e.into_any_element())
+            }
+            "ProgressRing" => {
+                let mut r = ProgressRing::new(
+                    key.to_string(),
+                    prop_num(node, "value").unwrap_or(0.0) as f32,
+                );
+                if prop_bool(node, "percent") {
+                    r = r.percent();
+                }
+                if let Some(size) = prop_num(node, "size") {
+                    r = r.size(rems(size as f32));
+                }
+                if let Some(v) = self.child_views(node, key, cx).into_iter().next() {
+                    r = r.inside(v);
+                }
+                Some(r.into_any_element())
+            }
+            "Reorder" => {
+                let mut r = Reorder::new(key.to_string());
+                for (i, child) in node.children.iter().enumerate() {
+                    let row_key = prop_str(child, "key");
+                    let row_key = if row_key.is_empty() {
+                        format!("{i}")
+                    } else {
+                        row_key
+                    };
+                    r = r.row(row_key, self.child_view(child, &format!("{key}/{i}"), cx));
+                }
+                if let Some(h) = change_str(view, node, "reorder", cx) {
+                    r = r.on_reorder(move |from, to, w, cx| h(format!("{from}|{to}"), w, cx));
+                }
+                Some(r.into_any_element())
+            }
+            "SkeletonText" => Some(
+                SkeletonText::new(
+                    key.to_string(),
+                    prop_num(node, "lines").unwrap_or(3.0).max(1.0) as usize,
+                )
+                .into_any_element(),
+            ),
+            "SkeletonAvatar" => Some(SkeletonAvatar::new(key.to_string()).into_any_element()),
+            "SkeletonCard" => Some(SkeletonCard::new(key.to_string()).into_any_element()),
+            "SkeletonTable" => Some(
+                SkeletonTable::new(
+                    key.to_string(),
+                    prop_num(node, "rows").unwrap_or(5.0).max(1.0) as usize,
+                    prop_num(node, "columns").unwrap_or(4.0).max(1.0) as usize,
+                )
+                .into_any_element(),
+            ),
+            "Shimmer" => {
+                let mut e = Shimmer::new(key.to_string());
+                e.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(e.into_any_element())
+            }
+            "Transition" => {
+                let mut t = Transition::new(key.to_string(), !prop_bool(node, "hidden"));
+                t = match prop_str(node, "entrance").as_str() {
+                    "Rise" => t.entrance(Entrance::Rise),
+                    "Slide" => t.entrance(Entrance::Slide),
+                    _ => t,
+                };
+                t.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(t.into_any_element())
+            }
+            "Stagger" => {
+                let mut st = Stagger::new(key.to_string());
+                if let Some(ms) = prop_num(node, "step") {
+                    st = st.step(Duration::from_millis(ms.max(0.0) as u64));
+                }
+                st = match prop_str(node, "entrance").as_str() {
+                    "Rise" => st.entrance(Entrance::Rise),
+                    "Slide" => st.entrance(Entrance::Slide),
+                    _ => st,
+                };
+                st.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(st.into_any_element())
             }
             _ => None,
         }

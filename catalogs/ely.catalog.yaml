@@ -409,11 +409,16 @@ elements:
     children: any
 
   ProgressBar:
-    icon: circle-dot
+    icon: loader
     group: Motion
-    summary: "ProgressBar — `use: ely`."
+    summary: "Linear progress — `value` 0-1, or `indeterminate`; `buffer`, `segments`."
     component: ely_core::motion::ProgressBar
-    children: any
+    children: none
+    props:
+      value: number
+      indeterminate: bool
+      buffer: number
+      segments: number
 
   NumberInput:
     icon: circle-dot
@@ -2787,3 +2792,213 @@ elements:
     children: none
     props:
       at: string
+
+  Blink:
+    icon: zap
+    group: Motion
+    summary: "Blinks children on a loop."
+    component: ely_core::motion::Blink
+    children: any
+
+  Glow:
+    icon: sun
+    group: Motion
+    summary: "Pulses a glow around children."
+    component: ely_core::motion::Glow
+    children: any
+
+  Pulse:
+    icon: activity
+    group: Motion
+    summary: "Scales children in a heartbeat."
+    component: ely_core::motion::Pulse
+    children: any
+
+  Flash:
+    icon: zap
+    group: Motion
+    summary: "Flashes children when `trigger` changes."
+    component: ely_core::motion::Flash
+    children: any
+    props:
+      trigger: string
+
+  Shake:
+    icon: vibrate
+    group: Motion
+    summary: "Shakes children when `trigger` changes."
+    component: ely_core::motion::Shake
+    children: any
+    props:
+      trigger: string
+
+  Marquee:
+    icon: move-horizontal
+    group: Motion
+    summary: "Scrolls its first child in a loop."
+    component: ely_core::motion::Marquee
+    children: any
+
+  Flip:
+    icon: arrow-up-down
+    group: Motion
+    summary: "Animates children moving — child `key` props identify rows."
+    component: ely_core::motion::Flip
+    children: any
+
+  AnimatePresence:
+    icon: ghost
+    group: Motion
+    summary: "Fades children in/out — `key` identifies, `hidden` folds a row; `gone` fires on removal."
+    component: ely_core::motion::AnimatePresence
+    children: any
+    events: {gone:}
+
+  LoadingOverlay:
+    icon: loader-circle
+    group: Motion
+    summary: "Dims children under a spinner while `loading`."
+    component: ely_core::motion::LoadingOverlay
+    children: any
+    props:
+      loading: bool
+
+  LazyLoad:
+    icon: hourglass
+    group: Motion
+    summary: "Renders its first child only once scrolled near — `height` reserves room."
+    component: ely_core::motion::LazyLoad
+    children: any
+    props:
+      height: number
+
+  RefreshIndicator:
+    icon: rotate-cw
+    group: Motion
+    summary: "Pull-to-refresh mark — `state` Idle/Pulling:0.5/Refreshing/Done."
+    component: ely_core::motion::RefreshIndicator
+    children: none
+    props:
+      state: string
+
+  TypingIndicator:
+    icon: message-circle-more
+    group: Motion
+    summary: "Three-dot typing indicator."
+    component: ely_core::motion::TypingIndicator
+    children: none
+
+  Confetti:
+    icon: party-popper
+    group: Motion
+    summary: "Confetti burst — `bursts` count."
+    component: ely_core::motion::Confetti
+    children: none
+    props:
+      bursts: number
+
+  ParticleBackground:
+    icon: sparkles
+    group: Motion
+    summary: "Drifting motes behind children."
+    component: ely_core::motion::ParticleBackground
+    children: any
+
+  AnimatedGradient:
+    icon: blend
+    group: Motion
+    summary: "Slow-drifting gradient behind children."
+    component: ely_core::motion::AnimatedGradient
+    children: any
+
+  Ripple:
+    icon: waves
+    group: Motion
+    summary: "Ripple backdrop behind children."
+    component: ely_core::motion::Ripple
+    children: any
+
+  ProgressRing:
+    icon: loader
+    group: Motion
+    summary: "Circular progress — `value` 0-1, `percent` label, first child inside."
+    component: ely_core::motion::ProgressRing
+    children: any
+    props:
+      value: number
+      percent: bool
+      size: number
+
+  Reorder:
+    icon: arrow-up-down
+    group: Motion
+    summary: "Animated reordering — child `key` props identify rows; `reorder` fires `from|to`."
+    component: ely_core::motion::Reorder
+    children: any
+    props:
+      value: string
+    events: {reorder:}
+
+  SkeletonText:
+    icon: text
+    group: Motion
+    summary: "`lines` placeholder text lines."
+    component: ely_core::motion::SkeletonText
+    children: none
+    props:
+      lines: number
+
+  SkeletonAvatar:
+    icon: circle-user
+    group: Motion
+    summary: "Avatar placeholder."
+    component: ely_core::motion::SkeletonAvatar
+    children: none
+
+  SkeletonCard:
+    icon: square
+    group: Motion
+    summary: "Card placeholder."
+    component: ely_core::motion::SkeletonCard
+    children: none
+
+  SkeletonTable:
+    icon: table
+    group: Motion
+    summary: "`rows`×`columns` table placeholder."
+    component: ely_core::motion::SkeletonTable
+    children: none
+    props:
+      rows: number
+      columns: number
+
+  Shimmer:
+    icon: sparkles
+    group: Motion
+    summary: "Shimmer pass over children."
+    component: ely_core::motion::Shimmer
+    children: any
+
+  Transition:
+    icon: wand
+    group: Motion
+    summary: "Fades/rises/slides children in and out — `hidden` controls, `entrance` picks the motion."
+    component: ely_core::motion::Transition
+    children: any
+    props:
+      hidden: bool
+      entrance:
+        type: enum
+        values: [Fade, Rise, Slide]
+
+  Stagger:
+    icon: list
+    group: Motion
+    summary: "Children enter one after another — `step` ms apart, `entrance` motion."
+    component: ely_core::motion::Stagger
+    children: any
+    props:
+      step: number
+      entrance:
+        type: enum
+        values: [Fade, Rise, Slide]

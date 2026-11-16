@@ -223,8 +223,8 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] Alert
 - [x] AlertDialog
 - [x] Anchor
-- [ ] AnimatePresence
-- [ ] AnimatedGradient
+- [x] AnimatePresence
+- [x] AnimatedGradient
 - [x] AppShell
 - [x] AspectRatio
 - [ ] AsyncView
@@ -235,7 +235,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] Banner
 - [x] Barcode
 - [x] BeforeAfter
-- [ ] Blink
+- [x] Blink
 - [x] Blockquote
 - [x] Breadcrumb
 - [x] BulkActionBar
@@ -265,7 +265,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] ColumnShell
 - [ ] Command
 - [x] Comparison
-- [ ] Confetti
+- [x] Confetti
 - [x] ConfirmButton
 - [x] ConfirmDialog
 - [x] ConnectionStatus
@@ -316,15 +316,15 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] FileInput
 - [x] FileTree
 - [ ] Finder
-- [ ] Flash
-- [ ] Flip
+- [x] Flash
+- [x] Flip
 - [x] FloatingToolbar
 - [ ] Folder
 - [x] FontPicker
 - [x] Frame
 - [x] Gallery
 - [x] Gauge
-- [ ] Glow
+- [x] Glow
 - [x] GradientEditor
 - [x] GradientText
 - [ ] Grid
@@ -352,15 +352,15 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] LEADING
 - [ ] LOCALES
 - [x] Label
-- [ ] LazyLoad
+- [x] LazyLoad
 - [x] Lightbox
 - [x] Link
 - [x] List
 - [x] ListInput
 - [x] ListItem
 - [x] LoadMore
-- [ ] LoadingOverlay
-- [ ] Marquee
+- [x] LoadingOverlay
+- [x] Marquee
 - [x] MaskedInput
 - [x] Masonry
 - [x] MasterDetail
@@ -390,7 +390,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] PaneLayout
 - [x] Panel
 - [x] Paragraph
-- [ ] ParticleBackground
+- [x] ParticleBackground
 - [x] PasswordInput
 - [ ] Paste
 - [x] PathInput
@@ -402,11 +402,11 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Place
 - [ ] Presence
 - [x] ProgressBar
-- [ ] ProgressRing
+- [x] ProgressRing
 - [x] PromptDialog
 - [x] PropertyGrid
 - [x] PropertyGroup
-- [ ] Pulse
+- [x] Pulse
 - [x] QrCode
 - [x] QuarterPicker
 - [ ] QuickOpen
@@ -417,11 +417,11 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Raised
 - [x] RangeSlider
 - [ ] Refresh
-- [ ] RefreshIndicator
+- [x] RefreshIndicator
 - [x] RegexInput
 - [x] RelativeDatePicker
 - [x] Release
-- [ ] Ripple
+- [x] Ripple
 - [ ] Row
 - [x] SavingIndicator
 - [ ] ScrollModel
@@ -435,19 +435,19 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] SelectAll
 - [ ] Selectable
 - [x] SelectableList
-- [ ] Shake
+- [x] Shake
 - [x] Sheet
 - [x] ShellColumn
-- [ ] Shimmer
+- [x] Shimmer
 - [x] ShimmerText
 - [x] SignaturePad
 - [x] SimpleGrid
 - [ ] Sizable
 - [x] Skeleton
-- [ ] SkeletonAvatar
-- [ ] SkeletonCard
-- [ ] SkeletonTable
-- [ ] SkeletonText
+- [x] SkeletonAvatar
+- [x] SkeletonCard
+- [x] SkeletonTable
+- [x] SkeletonText
 - [x] Slider
 - [ ] SortKey
 - [x] Sparkline
@@ -458,7 +458,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Spot
 - [ ] Spotlight
 - [x] Spreadsheet
-- [ ] Stagger
+- [x] Stagger
 - [x] Stars
 - [x] Statistic
 - [x] StatusBar
@@ -505,7 +505,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] TreeTable
 - [x] TrendIndicator
 - [x] Typewriter
-- [ ] TypingIndicator
+- [x] TypingIndicator
 - [x] UpdateBanner
 - [x] UpdateDialog
 - [ ] Upload
@@ -624,6 +624,10 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] fresh — helper fn, not a component
 - [ ] relative_text — helper fn, not a component
 - [ ] LEADING — typography constant
+
+- [x] ProgressBar
+- [x] Reorder
+- [x] Transition
 
 ## guise Components
 
