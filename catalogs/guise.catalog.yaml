@@ -236,3 +236,622 @@ elements:
         required: true
       title: string
       color: string
+
+  Icon:
+    icon: star
+    group: Display
+    summary: Lucide icon glyph — `name` is a lucide icon name.
+    component: guise::Icon
+    props:
+      name:
+        type: string
+        required: true
+      color: string
+      size:
+        type: enum
+        values: [Xs, Sm, Md, Lg, Xl]
+        default: Md
+
+  ThemeIcon:
+    icon: circle-dot
+    group: Display
+    summary: Lucide icon inside a themed tile.
+    component: guise::ThemeIcon
+    props:
+      name:
+        type: string
+        required: true
+      variant:
+        type: enum
+        values: [Default, Filled, Light, Outline, Subtle, Transparent, White]
+        default: Filled
+      color: string
+      size:
+        type: enum
+        values: [Xs, Sm, Md, Lg, Xl]
+        default: Md
+
+  Kbd:
+    icon: keyboard
+    group: Display
+    summary: Keyboard shortcut glyph.
+    component: guise::Kbd
+    canvas: Text
+    content: text
+    props:
+      text:
+        type: string
+        required: true
+
+  Code:
+    icon: code
+    group: Display
+    summary: Inline code fragment.
+    component: guise::Code
+    canvas: Text
+    content: text
+    props:
+      text:
+        type: string
+        required: true
+      color: string
+
+  Mark:
+    icon: highlighter
+    group: Display
+    summary: Highlighted text run.
+    component: guise::Mark
+    canvas: Text
+    content: text
+    props:
+      text:
+        type: string
+        required: true
+      color: string
+      size:
+        type: enum
+        values: [Xs, Sm, Md, Lg, Xl]
+        default: Md
+
+  Blockquote:
+    icon: quote
+    group: Display
+    summary: Quoted passage with optional citation and icon.
+    component: guise::Blockquote
+    content: text
+    props:
+      text:
+        type: string
+        required: true
+      cite: string
+      icon: string
+      color: string
+
+  Panel:
+    icon: square-stack
+    group: Display
+    summary: Titled bordered section with optional description.
+    component: guise::Panel
+    canvas: GroupBox
+    children: any
+    props:
+      title: string
+      description: string
+
+  Spoiler:
+    icon: chevron-down
+    group: Display
+    summary: Collapsible clip for long content — show/hide toggle.
+    component: guise::Spoiler
+    children: any
+    props:
+      max_height:
+        type: number
+        default: 96
+      expanded:
+        type: bool
+        default: false
+      show_label: string
+      hide_label: string
+      color: string
+      size:
+        type: enum
+        values: [Xs, Sm, Md, Lg, Xl]
+        default: Md
+
+  Image:
+    icon: image
+    group: Display
+    summary: Image — `src` is a document-relative file path or URL.
+    component: guise::Image
+    props:
+      src:
+        type: string
+        required: true
+      width: number
+      height: number
+      circle:
+        type: bool
+        default: false
+      fit:
+        type: enum
+        values: [Cover, Contain, Fill, None, ScaleDown]
+        default: Cover
+
+  Chip:
+    icon: circle-check
+    group: Input
+    summary: Toggleable choice chip.
+    component: guise::Chip
+    content: label
+    props:
+      label: string
+      checked:
+        type: bool
+        default: false
+      color: string
+      size:
+        type: enum
+        values: [Xs, Sm, Md, Lg, Xl]
+        default: Md
+    events:
+      change:
+
+  ActionIcon:
+    icon: mouse-pointer-click
+    group: Input
+    summary: Icon-only action button.
+    component: guise::ActionIcon
+    props:
+      name:
+        type: string
+        required: true
+      label: string
+      variant:
+        type: enum
+        values: [Default, Filled, Light, Outline, Subtle, Transparent, White]
+        default: Filled
+      color: string
+      size:
+        type: enum
+        values: [Xs, Sm, Md, Lg, Xl]
+        default: Md
+      disabled:
+        type: bool
+        default: false
+    events:
+      click:
+
+  CloseButton:
+    icon: x
+    group: Input
+    summary: Compact dismiss button.
+    component: guise::CloseButton
+    props:
+      size:
+        type: enum
+        values: [Xs, Sm, Md, Lg, Xl]
+        default: Md
+    events:
+      click:
+
+  CopyButton:
+    icon: copy
+    group: Input
+    summary: Copies `text` to the clipboard with transient feedback.
+    component: guise::CopyButton
+    props:
+      text:
+        type: string
+        required: true
+      label: string
+
+  Skeleton:
+    icon: rectangle-horizontal
+    group: Feedback
+    summary: Loading placeholder — bar or circle.
+    component: guise::Skeleton
+    canvas: Box
+    props:
+      width: number
+      height: number
+      circle:
+        type: bool
+        default: false
+
+  Indicator:
+    icon: bell
+    group: Feedback
+    summary: Dot or label badge anchored over its child.
+    component: guise::Indicator
+    children: any
+    props:
+      label: string
+      color: string
+      disabled:
+        type: bool
+        default: false
+
+  Slider:
+    icon: sliders-horizontal
+    group: Inputs
+    summary: Single-value drag slider over a numeric range.
+    component: guise::input::Slider
+    props:
+      value: number
+      min: number
+      max: number
+      step: number
+      color: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: Fires on every value change; writes the number to a bound value.
+
+  RangeSlider:
+    icon: sliders-horizontal
+    group: Inputs
+    summary: Two-thumb slider selecting a numeric range.
+    component: guise::input::RangeSlider
+    props:
+      value: string  # "lo,hi"
+      min: number
+      max: number
+      step: number
+      min_gap: number
+      color: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: Fires on change; writes [lo, hi] to a bound value.
+
+  Rating:
+    icon: star
+    group: Inputs
+    summary: Star rating input.
+    component: guise::input::Rating
+    props:
+      value: number
+      count: number
+      color: string
+      size: string
+      readonly:
+        type: bool
+        default: false
+    events:
+      change: Fires when the user picks a rating.
+
+  Radio:
+    icon: circle-dot
+    group: Inputs
+    summary: Single radio option; group via RadioGroup.
+    component: guise::input::Radio
+    content: label
+    props:
+      label: string
+      checked:
+        type: bool
+        default: false
+      size: string
+      color: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: Fires when toggled; flips a bound checked.
+
+  RadioGroup:
+    icon: circle-dot
+    group: Inputs
+    summary: Exclusive choice over a set of options.
+    component: guise::input::RadioGroup
+    props:
+      options: string  # comma-separated
+      value: string    # selected index
+      label: string
+      color: string
+      size: string
+    events:
+      change: Fires on selection; writes the option text to a bound value.
+
+  NumberInput:
+    icon: hash
+    group: Inputs
+    summary: Numeric stepper input with min/max/step.
+    component: guise::input::NumberInput
+    props:
+      value: number
+      min: number
+      max: number
+      step: number
+      label: string
+      description: string
+      error: string
+      size: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: Fires on value change; writes the number to a bound value.
+
+  PasswordInput:
+    icon: key
+    group: Inputs
+    summary: Masked text input.
+    component: guise::input::PasswordInput
+    props:
+      value: string
+      placeholder: string
+      label: string
+      description: string
+      error: string
+      size: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: Fires on edit and submit; writes the text to a bound value.
+
+  PinInput:
+    icon: rectangle-ellipsis
+    group: Inputs
+    summary: Per-digit code entry (OTP/PIN).
+    component: guise::input::PinInput
+    props:
+      length: number
+      value: string
+      mask:
+        type: bool
+        default: false
+      size: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: Fires on change/complete; writes the code to a bound value.
+
+  TextArea:
+    icon: align-left
+    group: Inputs
+    summary: Multi-line text input.
+    component: guise::input::TextArea
+    props:
+      value: string
+      placeholder: string
+      label: string
+      description: string
+      error: string
+      rows: number
+      max_rows: number
+      submit_on_enter:
+        type: bool
+        default: false
+      size: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: Fires on edit; writes the text to a bound value.
+
+  TagsInput:
+    icon: tags
+    group: Inputs
+    summary: Token/chip entry field.
+    component: guise::input::TagsInput
+    props:
+      options: string   # initial tags, comma-separated
+      placeholder: string
+      label: string
+      description: string
+      error: string
+      max_tags: number
+      size: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: Fires when tags change; writes the tag array to a bound value.
+
+  Combobox:
+    icon: chevrons-up-down
+    group: Inputs
+    summary: Filterable dropdown select.
+    component: guise::input::Combobox
+    props:
+      options: string  # comma-separated
+      value: string    # selected indices, comma-separated
+      placeholder: string
+      label: string
+      multiple:
+        type: bool
+        default: false
+      size: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: Fires on selection; writes the option text to a bound value.
+
+  Autocomplete:
+    icon: text-cursor-input
+    group: Inputs
+    summary: Free text with a suggestion list.
+    component: guise::input::Autocomplete
+    props:
+      options: string  # suggestions, comma-separated
+      value: string
+      max_shown: number
+      placeholder: string
+      label: string
+      size: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: Fires on change/commit; writes the text to a bound value.
+
+  ColorInput:
+    icon: palette
+    group: Inputs
+    summary: Color picker with hex value.
+    component: guise::input::ColorInput
+    props:
+      value: string  # "#RRGGBB" or "#RRGGBBAA"
+      label: string
+      description: string
+      error: string
+      size: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: Fires on pick; writes the color to a bound value.
+
+  DatePicker:
+    icon: calendar
+    group: Inputs
+    summary: Single-date or range picker.
+    component: guise::input::DatePicker
+    props:
+      value: string  # ISO date
+      min: string    # ISO date
+      max: string    # ISO date
+      range:
+        type: bool
+        default: false
+      placeholder: string
+      label: string
+      size: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: Fires on selection; writes the date (or [start,end]) to a bound value.
+
+  TimePicker:
+    icon: clock
+    group: Inputs
+    summary: Time-of-day picker.
+    component: guise::input::TimePicker
+    props:
+      value: string   # "HH:MM"
+      hour24:
+        type: bool
+        default: true
+      minute_step: number
+      placeholder: string
+      label: string
+      size: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: Fires on pick; writes "HH:MM" to a bound value.
+
+  Calendar:
+    icon: calendar-days
+    group: Inputs
+    summary: Month grid for date selection.
+    component: guise::input::Calendar
+    props:
+      month: string  # "YYYY-MM"
+      value: string  # ISO date
+    events:
+      change: Fires on selection; writes the ISO date to a bound value.
+
+  FileInput:
+    icon: folder-open
+    group: Inputs
+    summary: Native file/directory picker button.
+    component: guise::input::FileInput
+    props:
+      multiple:
+        type: bool
+        default: false
+      directories:
+        type: bool
+        default: false
+      placeholder: string
+      label: string
+      size: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: Fires on pick; writes ";" joined paths to a bound value.
+
+  Dropzone:
+    icon: upload
+    group: Inputs
+    summary: Drag-and-drop file target.
+    component: guise::input::Dropzone
+    props:
+      label: string
+      hint: string
+      icon: string
+      accept: string  # comma-separated extensions
+      height: number
+      single:
+        type: bool
+        default: false
+      no_click:
+        type: bool
+        default: false
+    events:
+      change: Fires on drop/pick; writes ";" joined paths to a bound value.
+
+  CheckboxGroup:
+    icon: check-square
+    group: Inputs
+    summary: Multi-select checkbox set.
+    component: guise::input::CheckboxGroup
+    props:
+      options: string  # comma-separated
+      value: string    # selected indices, comma-separated
+      label: string
+      color: string
+      size: string
+    events:
+      change: Fires on toggle; writes selected option names to a bound value.
+
+  Field:
+    icon: square-pen
+    group: Inputs
+    summary: Label + description + error wrapper around a control.
+    component: guise::input::Field
+    children: any
+    props:
+      label: string
+      description: string
+      error: string
+
+  Transfer:
+    icon: arrow-left-right
+    group: Inputs
+    summary: Dual-list shuttle picker.
+    component: guise::input::Transfer
+    props:
+      options: string      # items, comma-separated
+      value: string        # chosen indices, comma-separated
+      left_title: string
+      right_title: string
+      height: number
+      disabled:
+        type: bool
+        default: false
+    events:
+      change: Fires when the chosen set moves; writes chosen names to a bound value.
+
+  SegmentedControl:
+    icon: columns-3
+    group: Inputs
+    summary: Single-select segmented button row.
+    component: guise::input::SegmentedControl
+    props:
+      options: string  # comma-separated
+      value: string    # selected index
+      size: string
+    events:
+      change: Fires on selection; writes the option text to a bound value.
