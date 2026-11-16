@@ -11,10 +11,36 @@
 #   surface   restrict the "not cataloged" report to a module subtree
 #             (e.g. "iced::widget" — default: every reachable public item)
 #   ignore    export names to never list as "not cataloged" (non-widget types)
+#   exclude   dep packages whose re-exported surface is hidden from the
+#             "not cataloged" report (engine facades like `pub use gpui::*`)
 
 # The published package is `guise-ui`; the library name is `guise`.
 [crates.guise]
 package = "guise-ui"
+exclude = ["gpui"]
+
+# Facades that re-export their gpui engine — hide the engine surface from
+# the "not cataloged" report; their own widget exports still report.
+[crates.adabraka_ui]
+exclude = ["adabraka-gpui"]
+
+[crates.bezel]
+exclude = ["bezel-gpui"]
+
+[crates.ely_core]
+exclude = ["gpui-pre"]
+
+[crates.gpui_kit]
+exclude = ["gpui-pre"]
+
+[crates.gpui_base]
+exclude = ["gpui-pre"]
+
+[crates.gpui_video_player]
+exclude = ["gpui", "gstreamer", "glib"]
+
+[crates.bezel_motion]
+exclude = ["bezel-gpui"]
 
 # Vendored upstreams — not on crates.io.
 [crates.base_gpui]
@@ -22,6 +48,7 @@ vendored = "vendor/base-gpui"
 
 [crates.gpui_apple_hig]
 vendored = "vendor/gpui-apple-hig"
+exclude = ["gpui-kit"]
 
 [crates.gpui_flow]
 vendored = "vendor/gpui-flow"
@@ -30,6 +57,7 @@ vendored = "vendor/gpui-flow"
 # workspace source directly (no crates.io lookup, no version check).
 [crates.gpui_forge_runtime]
 local = "crates/gpui-forge-runtime"
+exclude = ["gpui", "gpui-pre", "bezel-gpui", "adabraka-gpui", "gpui-kit", "gpui-base"]
 
 [crates.forge]
 skip = "forge intrinsics — schema elements, not a Rust crate"

@@ -48,6 +48,11 @@ struct CratePolicy {
     /// Export names to never list as "not cataloged".
     #[serde(default)]
     ignore: Vec<String>,
+    /// Dependency packages whose grafted surfaces are hidden from the
+    /// not-cataloged report — for facades that re-export an engine
+    /// (`pub use gpui::*`) whose surface isn't the library's widgets.
+    #[serde(default)]
+    exclude: Vec<String>,
 }
 
 fn load_config() -> DriftConfig {
@@ -279,6 +284,13 @@ struct CrateIndex {
     deps: BTreeMap<String, String>,
     /// package → version req string from the manifest.
     dep_reqs: BTreeMap<String, String>,
+    /// Item names declared in this crate's own files (before facade grafts).
+    own_items: BTreeSet<String>,
+    /// Leaf names each extern dep graft contributed (package → names) — so a
+    /// facade that re-exports an engine (`pub use gpui::*`) can hide that
+    /// dep's surface from the "not cataloged" report without hiding its own
+    /// widget names.
+    extern_items: BTreeMap<String, BTreeSet<String>>,
 }
 
 /// `[lib] path` / package name / dep tables from an extracted crate manifest.
@@ -618,6 +630,8 @@ fn index_crate(
         mods: BTreeMap::new(),
         deps: deps.clone(),
         dep_reqs,
+        own_items: BTreeSet::new(),
+        extern_items: BTreeMap::new(),
     };
     let lib_file = crate_dir.join(&lib_path);
 
@@ -662,6 +676,14 @@ fn index_crate(
             collect_items(&file.items, &mut index.mods, &mod_path, &index.deps);
         }
     }
+
+    // Snapshot names declared in this crate's own files before facade grafts
+    // merge foreign surfaces into `items`.
+    index.own_items = index
+        .mods
+        .values()
+        .flat_map(|m| m.items.iter().cloned())
+        .collect();
 
     // Resolve extern grafts (facades) recursively, depth-capped.
     if depth < 3 {
@@ -711,6 +733,21 @@ fn index_crate(
                 }
             }
             if let Some(dep_idx) = cache.get(&key) {
+                let names: BTreeSet<String> = dep_idx
+                    .mods
+                    .iter()
+                    .filter(|(spath, _)| {
+                        sub.is_empty()
+                            || spath.as_str() == sub
+                            || spath.starts_with(&format!("{sub}::"))
+                    })
+                    .flat_map(|(_, m)| m.items.iter().chain(&m.reexports).cloned())
+                    .collect();
+                index
+                    .extern_items
+                    .entry(package.clone())
+                    .or_default()
+                    .extend(names);
                 graft(&mut index.mods, &target, dep_idx, &sub);
             }
         }
@@ -1162,6 +1199,13 @@ pub fn run(args: &[String]) -> ! {
 
         // Upstream surface not referenced by any catalog.
         let ignore: BTreeSet<&str> = pol.ignore.iter().map(String::as_str).collect();
+        let excluded: BTreeSet<&str> = pol.exclude.iter().map(String::as_str).collect();
+        let hidden: BTreeSet<&str> = index
+            .extern_items
+            .iter()
+            .filter(|(pkg, _)| excluded.contains(pkg.as_str()))
+            .flat_map(|(_, names)| names.iter().map(String::as_str))
+            .collect();
         let surface = pol.surface.unwrap_or_default();
         let mut added = BTreeSet::new();
         for (path, m) in mods {
@@ -1171,9 +1215,13 @@ pub fn run(args: &[String]) -> ! {
                 continue;
             }
             for name in m.items.iter().chain(&m.reexports) {
-                if !referenced.contains(name) && looks_like_widget(name, &ignore) {
-                    added.insert(name.clone());
+                if referenced.contains(name) || !looks_like_widget(name, &ignore) {
+                    continue;
                 }
+                if hidden.contains(name.as_str()) && !index.own_items.contains(name) {
+                    continue;
+                }
+                added.insert(name.clone());
             }
         }
 
