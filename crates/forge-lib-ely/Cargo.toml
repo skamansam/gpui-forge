@@ -11,6 +11,8 @@ ely-core = "0.2"
 gpui-forge-runtime = { path = "../gpui-forge-runtime" }
 jiff = "0.2"
 serde_json = "1"
+anyhow = "1"
+web-time = "1"
 
 [lints]
 workspace = true

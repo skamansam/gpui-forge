@@ -3832,10 +3832,12 @@ dependencies = [
 name = "forge-lib-ely"
 version = "0.9.1"
 dependencies = [
+ "anyhow",
  "ely-core",
  "gpui-forge-runtime",
  "jiff",
  "serde_json",
+ "web-time",
 ]
 
 [[package]]

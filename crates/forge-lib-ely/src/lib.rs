@@ -11,8 +11,12 @@ use ely_core::data_display::{
     PropertyGrid, PropertyGroup, QrCode, Release, Sparkline, Stars, Statistic, Tag, Timeline,
     TimelineItem, Tone, TrendIndicator, UsageBar, UserChip, Watermark,
 };
-use ely_core::feedback::Notification;
-use ely_core::feedback::{Alert, Banner, Callout, EmptyState, InlineMessage, StatusMessage};
+use ely_core::feedback::{
+    Alert, Banner, Callout, ConfirmationCard, ConnectionStatus, Countdown, EmptyState,
+    ErrorBoundary, ErrorView, InlineMessage, Notification, NotificationCenter, ResultView,
+    SaveState, SavingIndicator, StatusMessage, Suspense, SyncState, SyncStatus, Timer, Toast,
+    ToastViewport, Toaster,
+};
 use ely_core::forms::{
     Checkbox, Choice, ChoiceChips, Form, HotkeyInput, InlineEdit, Knob, MultiSelect, NumberInput,
     PinInput, Radio, RadioCard, Select, Slider,
@@ -27,13 +31,16 @@ use ely_core::navigation::{NavItem, Pagination};
 use ely_core::overlays::Slide;
 use ely_core::primitives::Disclosure;
 use ely_core::primitives::{Divider, Icon, IconName, Severity};
+use ely_core::shell::Connectivity;
 use ely_core::shell::Toolbar;
 use ely_core::theme::AvatarSize;
-use ely_core::theme::{ContainerSize, ControlSize, IconSize};
+use ely_core::theme::{ContainerSize, ControlSize, IconSize, TextSize};
 use ely_core::typography::{Caption, Heading, Label, Overline, Paragraph, Subtitle, Title};
 use ely_core::typography::{Code, CopyableText, NumberText, PercentText};
 use jiff::Timestamp;
 use serde_json::Value as Json;
+use std::time::Duration;
+use web_time::Instant;
 
 use gpui_forge_runtime::base::kit::*;
 use gpui_forge_runtime::forge_spec::catalog::{self, Catalog};
@@ -57,6 +64,8 @@ pub struct Ely {
     /// Lazy child-content proxies keyed `{key}/{i}` — children render in the
     /// proxy's own pass, not inside ForgeView's (which would double-borrow).
     views: RefCell<HashMap<String, AnyView>>,
+    /// One `Entity<Toaster>` per `ToastViewport` element key.
+    toasters: RefCell<HashMap<String, Entity<Toaster>>>,
 }
 
 /// Renders one Forge child in its own entity update — the ely widgets'
@@ -84,6 +93,7 @@ impl Ely {
             inited: Cell::new(false),
             texts: RefCell::new(HashMap::new()),
             views: RefCell::new(HashMap::new()),
+            toasters: RefCell::new(HashMap::new()),
         }
     }
 
@@ -123,6 +133,17 @@ impl Ely {
             .into();
         views.insert(key.to_owned(), v.clone());
         v
+    }
+
+    /// The shared `Entity<Toaster>` for a `ToastViewport` key.
+    fn toaster(&self, key: &str, cx: &mut Context<ForgeView>) -> Entity<Toaster> {
+        let mut toasters = self.toasters.borrow_mut();
+        if let Some(t) = toasters.get(key) {
+            return t.clone();
+        }
+        let t = cx.new(|_| Toaster::default());
+        toasters.insert(key.to_owned(), t.clone());
+        t
     }
 
     /// Render every child of `node` as proxies, keyed `{key}/{i}`.
@@ -1017,6 +1038,209 @@ impl ForgeLibrary for Ely {
                 }
                 Some(s.into_any_element())
             }
+            "Countdown" => {
+                let secs = prop_num(node, "seconds").unwrap_or(60.0);
+                let mut c = Countdown::new(
+                    key.to_string(),
+                    Instant::now() + Duration::from_secs_f64(secs.max(0.0)),
+                )
+                .size(text_size(node));
+                if let Some(h) = handler(view, node, "done", cx) {
+                    c = c.on_done(h);
+                }
+                Some(c.into_any_element())
+            }
+            "Timer" => {
+                let secs = prop_num(node, "seconds").unwrap_or(0.0);
+                Some(
+                    Timer::new(
+                        key.to_string(),
+                        Instant::now() - Duration::from_secs_f64(secs.max(0.0)),
+                    )
+                    .size(text_size(node))
+                    .into_any_element(),
+                )
+            }
+            "ConfirmationCard" => {
+                let mut c = ConfirmationCard::new(key.to_string(), prop_str(node, "title"));
+                if let Some(b) = prop_str_opt(node, "body") {
+                    c = c.body(b);
+                }
+                if let Some(l) = prop_str_opt(node, "confirm_label") {
+                    c = c.confirm(l);
+                }
+                if prop_bool(node, "destructive") {
+                    c = c.destructive();
+                }
+                if let Some(h) = handler(view, node, "confirm", cx) {
+                    c = c.on_confirm(h);
+                }
+                if let Some(h) = handler(view, node, "cancel", cx) {
+                    c = c.on_cancel(h);
+                }
+                Some(c.into_any_element())
+            }
+            "NotificationCenter" => {
+                let mut center = NotificationCenter::new(key.to_string());
+                let mut groups: Vec<(String, Vec<Notification>)> = Vec::new();
+                for (i, child) in node.children.iter().enumerate() {
+                    let group = prop_str(child, "group");
+                    let group = if group.is_empty() { "New" } else { &group };
+                    let n = notification_of(child, &format!("{key}/{i}"));
+                    if let Some((_, items)) = groups.iter_mut().find(|(h, _)| h == group) {
+                        items.push(n);
+                    } else {
+                        groups.push((group.to_owned(), vec![n]));
+                    }
+                }
+                for (heading, items) in groups {
+                    center = center.group(heading, items);
+                }
+                if let Some(h) = handler(view, node, "read_all", cx) {
+                    center = center.on_read_all(h);
+                }
+                if let Some(h) = handler(view, node, "clear", cx) {
+                    center = center.on_clear(h);
+                }
+                Some(center.into_any_element())
+            }
+            "ResultView" => {
+                let mut r = match prop_str(node, "status").as_str() {
+                    "failure" | "Failure" => {
+                        ResultView::failure(key.to_string(), prop_str(node, "title"))
+                    }
+                    _ => ResultView::success(key.to_string(), prop_str(node, "title")),
+                };
+                if let Some(b) = prop_str_opt(node, "body") {
+                    r = r.body(b);
+                }
+                for el in self
+                    .child_views(node, key, cx)
+                    .into_iter()
+                    .map(|v| v.into_any_element())
+                {
+                    r = r.action(el);
+                }
+                Some(r.into_any_element())
+            }
+            "ErrorView" => {
+                let mut e = match prop_str(node, "kind").as_str() {
+                    "not_found" => ErrorView::not_found(key.to_string()),
+                    "no_permission" => ErrorView::no_permission(key.to_string()),
+                    "maintenance" => ErrorView::maintenance(key.to_string()),
+                    "offline" => ErrorView::offline(key.to_string()),
+                    "code" => ErrorView::with_code(
+                        key.to_string(),
+                        prop_str(node, "code"),
+                        prop_str(node, "title"),
+                    ),
+                    _ => ErrorView::new(key.to_string(), icon_of(node), prop_str(node, "title")),
+                };
+                if let Some(d) = prop_str_opt(node, "detail") {
+                    e = e.detail(d);
+                }
+                Some(e.into_any_element())
+            }
+            "ErrorBoundary" => {
+                let mut b = ErrorBoundary::new(
+                    key.to_string(),
+                    node.children.first().map_or_else(
+                        || Err(anyhow::anyhow!("empty boundary")),
+                        |c| {
+                            Ok(self
+                                .child_view(c, &format!("{key}/0"), cx)
+                                .into_any_element())
+                        },
+                    ),
+                );
+                if let Some(h) = handler(view, node, "retry", cx) {
+                    b = b.on_retry(h);
+                }
+                Some(b.into_any_element())
+            }
+            "Suspense" => {
+                let child = node.children.first().map(|c| {
+                    Ok(self
+                        .child_view(c, &format!("{key}/0"), cx)
+                        .into_any_element())
+                });
+                let content = match prop_str(node, "state").as_str() {
+                    "error" => Some(Err(anyhow::anyhow!(prop_str(node, "error")))),
+                    "waiting" => None,
+                    _ => child,
+                };
+                let mut s = Suspense::new(key.to_string(), content);
+                if let Some(f) = node.children.get(1) {
+                    s = s.fallback(self.child_view(f, &format!("{key}/1"), cx));
+                } else if let Some(f) = prop_str_opt(node, "fallback") {
+                    s = s.fallback(Paragraph::new(f));
+                }
+                if let Some(h) = handler(view, node, "retry", cx) {
+                    s = s.on_retry(h);
+                }
+                Some(s.into_any_element())
+            }
+            "SavingIndicator" => {
+                let mut s = SavingIndicator::new(
+                    key.to_string(),
+                    match prop_str(node, "state").as_str() {
+                        "Saved" | "saved" => SaveState::Saved,
+                        "Failed" | "failed" => SaveState::Failed,
+                        _ => SaveState::Saving,
+                    },
+                );
+                if let Some(h) = handler(view, node, "retry", cx) {
+                    s = s.on_retry(h);
+                }
+                Some(s.into_any_element())
+            }
+            "SyncStatus" => {
+                let state = match prop_str(node, "state").as_str() {
+                    "Syncing" | "syncing" => {
+                        SyncState::Syncing(prop_num(node, "left").unwrap_or(0.0) as usize)
+                    }
+                    "Paused" | "paused" => SyncState::Paused,
+                    "Failed" | "failed" => SyncState::Failed,
+                    _ => SyncState::Synced,
+                };
+                Some(SyncStatus::new(key.to_string(), state).into_any_element())
+            }
+            "ConnectionStatus" => {
+                let state = match prop_str(node, "state").as_str() {
+                    "Offline" | "offline" => Connectivity::Offline,
+                    "Reconnecting" | "reconnecting" => Connectivity::Reconnecting,
+                    _ => Connectivity::Online,
+                };
+                Some(ConnectionStatus::new(key.to_string(), state).into_any_element())
+            }
+            "ToastViewport" => {
+                let fresh = !self.toasters.borrow().contains_key(key);
+                let toaster = self.toaster(key, cx);
+                if fresh {
+                    // Seed once — pushing on every render would duplicate.
+                    for entry in prop_list(node, "toasts") {
+                        let mut parts = entry.splitn(3, '|');
+                        let (severity, title, body) = (
+                            parts.next().unwrap_or("info"),
+                            parts.next().unwrap_or("").to_owned(),
+                            parts.next().map(str::to_owned),
+                        );
+                        let mut t = Toast::new(title).severity(match severity.trim() {
+                            "success" | "Success" => Severity::Success,
+                            "warning" | "Warning" => Severity::Warning,
+                            "danger" | "Danger" | "error" => Severity::Danger,
+                            _ => Severity::Info,
+                        });
+                        if let Some(b) = body {
+                            t = t.body(b);
+                        }
+                        toaster.update(cx, |t2, cx| {
+                            t2.push(t, cx);
+                        });
+                    }
+                }
+                Some(ToastViewport::new(key.to_string(), &toaster).into_any_element())
+            }
             _ => None,
         }
     }
@@ -1076,6 +1300,34 @@ fn tone_of(node: &Node) -> Tone {
         Some("Warning") | Some("warning") => Tone::Warning,
         Some("Danger") | Some("danger") => Tone::Danger,
         _ => Tone::Neutral,
+    }
+}
+
+/// Build an Ely `Notification` row from a node's props.
+fn notification_of(node: &Node, key: &str) -> Notification {
+    let mut n = Notification::new(key.to_string(), icon_of(node), prop_str(node, "title"));
+    if let Some(b) = prop_str_opt(node, "body") {
+        n = n.body(b);
+    }
+    if let Some(t) = prop_str_opt(node, "time") {
+        n = n.time(t);
+    }
+    if prop_bool(node, "unread") {
+        n = n.unread(true);
+    }
+    n
+}
+
+fn text_size(node: &Node) -> TextSize {
+    match prop_str_opt(node, "size").as_deref() {
+        Some("Xs") | Some("xs") => TextSize::Xs,
+        Some("Sm") | Some("sm") => TextSize::Sm,
+        Some("Md") | Some("md") => TextSize::Md,
+        Some("Lg") | Some("lg") => TextSize::Lg,
+        Some("Xl") | Some("xl") => TextSize::Xl,
+        Some("Xxl") | Some("xxl") => TextSize::Xxl,
+        Some("Display") | Some("display") => TextSize::Display,
+        _ => TextSize::Base,
     }
 }
 

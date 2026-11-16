@@ -861,3 +861,131 @@ elements:
     events:
       pick:
       close:
+
+  Countdown:
+    icon: timer
+    group: Feedback
+    summary: Counts down `seconds`; fires done when it reaches zero.
+    component: ely_core::feedback::Countdown
+    children: none
+    props:
+      seconds: {type: number, default: 60}
+      size: {type: enum, values: [Xs, Sm, Base, Md, Lg, Xl, Xxl, Display], default: Base}
+    events:
+      done:
+
+  Timer:
+    icon: alarm-clock
+    group: Feedback
+    summary: Elapsed-time readout; `seconds` offsets the start.
+    component: ely_core::feedback::Timer
+    children: none
+    props:
+      seconds: {type: number, default: 0}
+      size: {type: enum, values: [Xs, Sm, Base, Md, Lg, Xl, Xxl, Display], default: Base}
+
+  ConfirmationCard:
+    icon: shield-question
+    group: Feedback
+    summary: Inline confirm/cancel card.
+    component: ely_core::feedback::ConfirmationCard
+    children: none
+    props:
+      title: string
+      body: string
+      confirm_label: string
+      destructive: {type: bool, default: false}
+    events:
+      confirm:
+      cancel:
+
+  NotificationCenter:
+    icon: bell
+    group: Feedback
+    summary: Grouped notification list — children are Notification elements; `group` prop buckets them.
+    component: ely_core::feedback::NotificationCenter
+    events:
+      read_all:
+      clear:
+
+  ResultView:
+    icon: circle-check-big
+    group: Feedback
+    summary: Full-area success/failure result; children render as actions.
+    component: ely_core::feedback::ResultView
+    props:
+      status: {type: enum, values: [success, failure], default: success}
+      title: string
+      body: string
+
+  ErrorView:
+    icon: octagon-alert
+    group: Feedback
+    summary: Error page — preset kinds or a status code.
+    component: ely_core::feedback::ErrorView
+    children: none
+    props:
+      kind: {type: enum, values: [default, code, not_found, no_permission, maintenance, offline], default: default}
+      icon: string
+      code: string
+      title: string
+      detail: string
+
+  ErrorBoundary:
+    icon: shield
+    group: Feedback
+    summary: Renders its child or an error view with retry.
+    component: ely_core::feedback::ErrorBoundary
+    events:
+      retry:
+
+  Suspense:
+    icon: hourglass
+    group: Feedback
+    summary: Shows the child when ready, the fallback (second child or `fallback` text) while waiting.
+    component: ely_core::feedback::Suspense
+    props:
+      state: {type: enum, values: [ready, waiting, error], default: ready}
+      error: string
+      fallback: string
+    events:
+      retry:
+
+  SavingIndicator:
+    icon: cloud-upload
+    group: Feedback
+    summary: Autosave status line — saving, saved, or failed with retry.
+    component: ely_core::feedback::SavingIndicator
+    children: none
+    props:
+      state: {type: enum, values: [Saving, Saved, Failed], default: Saving}
+    events:
+      retry:
+
+  SyncStatus:
+    icon: refresh-cw
+    group: Feedback
+    summary: Background-sync status; `left` counts remaining items while syncing.
+    component: ely_core::feedback::SyncStatus
+    children: none
+    props:
+      state: {type: enum, values: [Synced, Syncing, Paused, Failed], default: Synced}
+      left: number
+
+  ConnectionStatus:
+    icon: wifi
+    group: Feedback
+    summary: Online/offline/reconnecting indicator.
+    component: ely_core::feedback::ConnectionStatus
+    children: none
+    props:
+      state: {type: enum, values: [Online, Offline, Reconnecting], default: Online}
+
+  ToastViewport:
+    icon: message-square
+    group: Feedback
+    summary: Toast stack viewport — seeds its Toaster once from `toasts`.
+    component: ely_core::feedback::ToastViewport
+    children: none
+    props:
+      toasts: list<string>  # "severity|title|body"
