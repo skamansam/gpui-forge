@@ -285,7 +285,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] DateTimePicker
 - [x] DescriptionList
 - [ ] Dialog
-- [ ] DirectoryListing
+- [x] DirectoryListing
 - [ ] Disableable
 - [x] Dock
 - [ ] DockLayout
@@ -314,7 +314,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] FieldArray
 - [x] Fieldset
 - [x] FileInput
-- [ ] FileTree
+- [x] FileTree
 - [ ] Finder
 - [ ] Flash
 - [ ] Flip
@@ -338,7 +338,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] IconButton
 - [x] IconPicker
 - [ ] Image
-- [ ] InfiniteList
+- [x] InfiniteList
 - [x] InlineEdit
 - [x] InlineMessage
 - [x] Input
@@ -355,7 +355,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] LazyLoad
 - [ ] Lightbox
 - [x] Link
-- [ ] List
+- [x] List
 - [x] ListInput
 - [x] ListItem
 - [ ] LoadMore
@@ -431,10 +431,10 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] ScrubInput
 - [ ] SearchableMenu
 - [x] Section
-- [ ] Sections
+- [x] Sections
 - [ ] SelectAll
 - [ ] Selectable
-- [ ] SelectableList
+- [x] SelectableList
 - [ ] Shake
 - [x] Sheet
 - [ ] ShellColumn
@@ -469,7 +469,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Stroke
 - [x] Subtitle
 - [x] Suspense
-- [ ] SwipeableListItem
+- [x] SwipeableListItem
 - [x] SyncStatus
 - [ ] Syntax
 - [ ] TabBar
@@ -498,10 +498,10 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Tooltip
 - [ ] Tour
 - [x] Transform
-- [ ] Tree
+- [x] Tree
 - [ ] TreeNode
 - [ ] TreeRow
-- [ ] TreeSelect
+- [x] TreeSelect
 - [ ] TreeTable
 - [x] TrendIndicator
 - [ ] Typewriter
@@ -514,7 +514,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] UsageBar
 - [x] UserChip
 - [x] Viewport
-- [ ] VirtualList
+- [x] VirtualList
 - [ ] WORKSPACE_VERSION
 - [x] Watermark
 - [x] Well
@@ -558,6 +558,11 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] TransferList
 - [x] UnitInput
 - [x] WeekPicker
+
+- [x] Outline
+- [x] SortableList
+
+- [x] GroupedList
 
 ## guise Components
 

@@ -437,16 +437,24 @@ elements:
     children: any
 
   ListItem:
-    icon: circle-dot
+    icon: list
     group: Lists
-    summary: "ListItem — `use: ely`."
+    summary: List row — title/description/detail text, selected/current/disabled states.
     component: ely_core::lists::ListItem
-    children: any
+    content: title
+    props:
+      title: string
+      description: string
+      detail: string
+      selected: bool
+      current: bool
+      disabled: bool
+    events: {secondary:}
 
   GroupedList:
-    icon: circle-dot
+    icon: rows-2
     group: Lists
-    summary: "GroupedList — `use: ely`."
+    summary: Grouped rows — consecutive children sharing a `group` prop form a section.
     component: ely_core::lists::GroupedList
     children: any
 
@@ -1829,3 +1837,130 @@ elements:
     children: none
     props:
       dirty: bool
+
+  List:
+    icon: list
+    group: Lists
+    summary: Plain list — children render as rows.
+    component: ely_core::lists::List
+    children: any
+
+  InfiniteList:
+    icon: infinity
+    group: Lists
+    summary: Endless list — `more` fires when scrolled near the end.
+    component: ely_core::lists::InfiniteList
+    children: any
+    events: {more:}
+
+  VirtualList:
+    icon: rows-4
+    group: Lists
+    summary: Windowed list — children supply rows by index; `count` sets total rows.
+    component: ely_core::lists::VirtualList
+    children: any
+    props:
+      count: number
+
+  Outline:
+    icon: list-tree
+    group: Lists
+    summary: Document outline — `items` entries are `level|title`.
+    component: ely_core::lists::Outline
+    children: none
+    props:
+      items: list<string>
+      current: string
+      value: string
+    events: {select:}
+
+  Sections:
+    icon: layout-list
+    group: Lists
+    summary: Grouped, foldable sections — children become rows under their `group` prop.
+    component: ely_core::lists::Sections
+    children: any
+    props:
+      value: string
+    events: {select:, activate:}
+
+  SelectableList:
+    icon: list-checks
+    group: Lists
+    summary: Multi-select list over `options` — `activate` fires on double-press.
+    component: ely_core::lists::SelectableList
+    children: none
+    props:
+      options: list<string>
+      value: string
+    events: {activate:, change:}
+
+  SortableList:
+    icon: grip-vertical
+    group: Lists
+    summary: Drag-to-reorder list over `options` — `reorder` fires `from|to`.
+    component: ely_core::lists::SortableList
+    children: none
+    props:
+      options: list<string>
+      value: string
+    events: {reorder:}
+
+  SwipeableListItem:
+    icon: move-horizontal
+    group: Lists
+    summary: Swipeable row — first child is the content; `actions` are `label|icon|tone`.
+    component: ely_core::lists::SwipeableListItem
+    children: any
+    props:
+      title: string
+      actions: list<string>
+
+  DirectoryListing:
+    icon: folder
+    group: Lists
+    summary: File browser — `path` breadcrumbs, `entries` are `name|size|modified` (empty size = folder).
+    component: ely_core::lists::DirectoryListing
+    children: none
+    props:
+      path: list<string>
+      entries: list<string>
+      selected: string
+      value: string
+    events: {select:, open:, climb:}
+
+  FileTree:
+    icon: folder-tree
+    group: Lists
+    summary: File tree — `paths` entries, `status` pairs are `path|Status` (Modified/Added/…).
+    component: ely_core::lists::FileTree
+    children: none
+    props:
+      paths: list<string>
+      status: list<string>
+    events: {open:, context:}
+
+  Tree:
+    icon: network
+    group: Lists
+    summary: Tree view — `tree` entries are `/`-separated paths; `open`/`selected` by key.
+    component: ely_core::lists::Tree
+    children: none
+    props:
+      tree: list<string>
+      open: list<string>
+      selected: list<string>
+      multiple: bool
+      value: string
+    events: {select:, activate:}
+
+  TreeSelect:
+    icon: square-mouse-pointer
+    group: Lists
+    summary: Tree picker — `tree` entries are `/`-separated paths.
+    component: ely_core::lists::TreeSelect
+    children: none
+    props:
+      tree: list<string>
+      value: string
+    events: {change:}

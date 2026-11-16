@@ -38,7 +38,11 @@ use ely_core::layout::{
     ZStack,
 };
 use ely_core::layout::{Collapsible, Fieldset, Panel, Section, Sheet, Sidebar};
-use ely_core::lists::{GroupedList, ListItem};
+use ely_core::lists::{
+    DirEntry, DirectoryListing, FileTree, GitStatus, GroupedList, InfiniteList, List, ListItem,
+    Outline, Sections, SelectableList, SortableList, SwipeAction, SwipeableListItem, Tree,
+    TreeNode, TreeSelect, VirtualList,
+};
 use ely_core::motion::{ProgressBar, Reorder, Skeleton};
 use ely_core::motion::{Spinner, SpinnerStyle};
 use ely_core::navigation::{NavItem, Pagination};
@@ -399,6 +403,61 @@ fn change_str(
 }
 
 /// Lucide name → `IconName`, searched across the bundled set.
+/// Fire `on <event>:` calls with a string payload appended to each call's
+/// args — like `change_str` but without touching the `value` binding.
+fn fire_str(
+    view: &ForgeView,
+    node: &Node,
+    event: &str,
+    cx: &mut Context<ForgeView>,
+) -> Option<impl Fn(String, &mut Window, &mut App) + 'static> {
+    let calls = calls_for(view, node, event);
+    if calls.is_empty() {
+        return None;
+    }
+    let weak = cx.entity().downgrade();
+    Some(move |v: String, _w: &mut Window, cx: &mut App| {
+        for (name, args) in &calls {
+            let (name, mut args) = (name.clone(), args.clone());
+            args.push(v.clone());
+            try_update(&weak, cx, |view, cx| view.fire_call(&name, args, cx));
+        }
+    })
+}
+
+/// Build a `TreeNode` forest from `/`-separated paths (`src/lib.rs` …).
+fn tree_nodes(paths: &[String]) -> Vec<TreeNode> {
+    fn into_nodes<'a>(it: impl Iterator<Item = &'a [String]>) -> Vec<TreeNode> {
+        let mut nodes: Vec<TreeNode> = Vec::new();
+        let mut grouped: std::collections::BTreeMap<&str, Vec<&[String]>> =
+            std::collections::BTreeMap::new();
+        for parts in it {
+            match parts.split_first() {
+                Some((head, rest)) if rest.is_empty() => {
+                    nodes.push(TreeNode::new(head.trim(), head.trim()));
+                }
+                Some((head, rest)) => grouped.entry(head.trim()).or_default().push(rest),
+                None => {}
+            }
+        }
+        for (key, rests) in grouped {
+            nodes.push(TreeNode::new(key, key).children(into_nodes(rests.into_iter())));
+        }
+        nodes
+    }
+    let parts: Vec<Vec<String>> = paths
+        .iter()
+        .map(|p| {
+            p.split('/')
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .map(str::to_owned)
+                .collect()
+        })
+        .collect();
+    into_nodes(parts.iter().map(Vec::as_slice))
+}
+
 fn icon_named(name: &str) -> Option<IconName> {
     IconName::ALL.iter().copied().find(|i| i.name() == name)
 }
@@ -705,10 +764,6 @@ impl ForgeLibrary for Ely {
                 )
                 .into_any_element(),
             ),
-            "ListItem" => {
-                Some(ListItem::new(key.to_string(), prop_str(node, "title")).into_any_element())
-            }
-            "GroupedList" => Some(GroupedList::new(key.to_string()).into_any_element()),
             "Form" => Some(Form::new(key.to_string()).into_any_element()),
             "Skeleton" => Some(Skeleton::new(key.to_string()).into_any_element()),
             "Reorder" => Some(Reorder::new(key.to_string()).into_any_element()),
@@ -2380,6 +2435,289 @@ impl ForgeLibrary for Ely {
             "DirtyIndicator" => Some(
                 DirtyIndicator::new(key.to_string(), prop_bool(node, "dirty")).into_any_element(),
             ),
+            "ListItem" => {
+                let mut item = ListItem::new(key.to_string(), prop_str(node, "title"));
+                if let Some(d) = prop_str_opt(node, "description") {
+                    item = item.description(d);
+                }
+                if let Some(d) = prop_str_opt(node, "detail") {
+                    item = item.detail(d);
+                }
+                item = item
+                    .selected(prop_bool(node, "selected"))
+                    .current(prop_bool(node, "current"))
+                    .disabled(prop_bool(node, "disabled"));
+                if let Some(h) = fire_str(view, node, "secondary", cx) {
+                    item =
+                        item.on_secondary(move |pt, w, cx| h(format!("{}|{}", pt.x, pt.y), w, cx));
+                }
+                Some(item.into_any_element())
+            }
+            "List" => {
+                let mut l = List::new();
+                l.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(l.into_any_element())
+            }
+            "GroupedList" => {
+                let mut g = GroupedList::new(key.to_string());
+                let mut groups: Vec<(String, Vec<AnyView>)> = Vec::new();
+                for (i, child) in node.children.iter().enumerate() {
+                    let title = prop_str(child, "group");
+                    let v = self.child_view(child, &format!("{key}/{i}"), cx);
+                    match groups.last_mut() {
+                        Some((t, rows)) if *t == title => rows.push(v),
+                        _ => groups.push((title, vec![v])),
+                    }
+                }
+                for (title, rows) in groups {
+                    g = g.group(title, rows);
+                }
+                Some(g.into_any_element())
+            }
+            "InfiniteList" => {
+                let mut l = InfiniteList::new(key.to_string());
+                l.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                if let Some(h) = handler(view, node, "more", cx) {
+                    l = l.on_more(h);
+                }
+                Some(l.into_any_element())
+            }
+            "VirtualList" => {
+                let rows: Rc<Vec<AnyView>> = Rc::new(self.child_views(node, key, cx));
+                let count = prop_num(node, "count")
+                    .map(|c| c.max(0.0) as usize)
+                    .unwrap_or_else(|| rows.len().max(1));
+                let list = VirtualList::new(key.to_string(), count, move |i, _w, _cx| {
+                    match rows.get(i) {
+                        Some(v) => v.clone().into_any_element(),
+                        None => gpui::div().child(format!("Row {i}")).into_any_element(),
+                    }
+                });
+                Some(list.into_any_element())
+            }
+            "Outline" => {
+                let mut o = Outline::new(key.to_string());
+                for entry in prop_list(node, "items") {
+                    let mut p = entry.splitn(2, '|');
+                    let level: usize = p.next().and_then(|l| l.trim().parse().ok()).unwrap_or(1);
+                    let title = p.next().unwrap_or("").trim();
+                    o = o.item(title, title, level.max(1));
+                }
+                if let Some(c) = prop_str_opt(node, "current") {
+                    o = o.current(c);
+                }
+                if let Some(h) = change_str(view, node, "select", cx) {
+                    o = o.on_select(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                Some(o.into_any_element())
+            }
+            "Sections" => {
+                let mut sec = Sections::new(key.to_string()).counted();
+                let mut groups: Vec<(String, Vec<(SharedString, ListItem)>)> = Vec::new();
+                for (i, child) in node.children.iter().enumerate() {
+                    let title = prop_str(child, "group");
+                    let name = prop_str(child, "title");
+                    let name = if name.is_empty() {
+                        prop_str(child, "label")
+                    } else {
+                        name
+                    };
+                    let mut item = ListItem::new(format!("{key}/{i}"), name.clone());
+                    if let Some(d) = prop_str_opt(child, "description") {
+                        item = item.description(d);
+                    }
+                    if let Some(d) = prop_str_opt(child, "detail") {
+                        item = item.detail(d);
+                    }
+                    let row = (SharedString::from(name), item);
+                    match groups.last_mut() {
+                        Some((t, rows)) if *t == title => rows.push(row),
+                        _ => groups.push((title, vec![row])),
+                    }
+                }
+                for (title, rows) in groups {
+                    sec = sec.section(title.into(), rows);
+                }
+                if let Some(h) = change_str(view, node, "select", cx) {
+                    sec = sec.on_select(Rc::new(move |v: &SharedString, w, cx| {
+                        h(v.to_string(), w, cx)
+                    }));
+                }
+                if let Some(h) = fire_str(view, node, "activate", cx) {
+                    sec = sec.on_activate(Rc::new(move |v: &SharedString, w, cx| {
+                        h(v.to_string(), w, cx)
+                    }));
+                }
+                Some(sec.into_any_element())
+            }
+            "SelectableList" => {
+                let mut l = SelectableList::new(key.to_string());
+                for (i, name) in prop_list(node, "options").into_iter().enumerate() {
+                    l = l.row(name.clone(), ListItem::new(format!("{key}/{i}"), name));
+                }
+                if let Some(h) = fire_str(view, node, "activate", cx) {
+                    l = l.on_activate(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    l = l.on_change(move |v, w, cx| {
+                        h(
+                            v.iter()
+                                .map(|s| s.to_string())
+                                .collect::<Vec<_>>()
+                                .join(","),
+                            w,
+                            cx,
+                        )
+                    });
+                }
+                Some(l.into_any_element())
+            }
+            "SortableList" => {
+                let mut l = SortableList::new(key.to_string());
+                for (i, name) in prop_list(node, "options").into_iter().enumerate() {
+                    l = l.row(name.clone(), ListItem::new(format!("{key}/{i}"), name));
+                }
+                if let Some(h) = change_str(view, node, "reorder", cx) {
+                    l = l.on_reorder(move |from, to, w, cx| h(format!("{from}|{to}"), w, cx));
+                }
+                Some(l.into_any_element())
+            }
+            "SwipeableListItem" => {
+                let item = self
+                    .child_views(node, key, cx)
+                    .into_iter()
+                    .next()
+                    .map(|v| v.into_any_element())
+                    .unwrap_or_else(|| {
+                        gpui::div()
+                            .child(prop_str(node, "title"))
+                            .into_any_element()
+                    });
+                let mut s = SwipeableListItem::new(key.to_string(), item);
+                for action in prop_list(node, "actions") {
+                    let mut p = action.splitn(3, '|');
+                    let label = p.next().unwrap_or("").trim().to_owned();
+                    let icon = p
+                        .next()
+                        .and_then(|n| icon_named(n.trim()))
+                        .unwrap_or(IconName::Check);
+                    let tone = p.next().and_then(|t| match t.trim() {
+                        "Accent" => Some(Tone::Accent),
+                        "Info" => Some(Tone::Info),
+                        "Success" => Some(Tone::Success),
+                        "Warning" => Some(Tone::Warning),
+                        "Danger" => Some(Tone::Danger),
+                        _ => None,
+                    });
+                    let run = fire_str(view, node, &format!("action:{label}"), cx);
+                    let mut a = SwipeAction::new(label, icon, move |w, cx| {
+                        if let Some(run) = &run {
+                            run(String::new(), w, cx);
+                        }
+                    });
+                    if let Some(t) = tone {
+                        a = a.tone(t);
+                    }
+                    s = s.action(a);
+                }
+                Some(s.into_any_element())
+            }
+            "DirectoryListing" => {
+                let path = prop_list(node, "path");
+                let path = if path.is_empty() {
+                    vec![".".to_owned()]
+                } else {
+                    path
+                };
+                let entries = prop_list(node, "entries").into_iter().filter_map(|e| {
+                    let mut p = e.splitn(3, '|');
+                    let name = p.next()?.trim().to_owned();
+                    let size = p.next().unwrap_or("").trim();
+                    let _modified = p.next();
+                    Some(if size.is_empty() {
+                        DirEntry::folder(name, Timestamp::now())
+                    } else {
+                        DirEntry::file(name, size.parse().unwrap_or(0), Timestamp::now())
+                    })
+                });
+                let mut d = DirectoryListing::new(key.to_string(), path, entries);
+                if let Some(sel) = prop_str_opt(node, "selected") {
+                    d = d.selected(sel);
+                }
+                if let Some(h) = change_str(view, node, "select", cx) {
+                    d = d.on_select(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                if let Some(h) = fire_str(view, node, "open", cx) {
+                    d = d.on_open(move |e, w, cx| h(e.name().to_string(), w, cx));
+                }
+                if let Some(h) = fire_str(view, node, "climb", cx) {
+                    d = d.on_climb(move |i, w, cx| h(i.to_string(), w, cx));
+                }
+                Some(d.into_any_element())
+            }
+            "FileTree" => {
+                let mut f = FileTree::new(key.to_string(), prop_list(node, "paths"));
+                for entry in prop_list(node, "status") {
+                    let mut p = entry.splitn(2, '|');
+                    let (path, st) = (p.next().unwrap_or("").trim(), p.next().unwrap_or("").trim());
+                    let status = match st {
+                        "Added" => GitStatus::Added,
+                        "Deleted" => GitStatus::Deleted,
+                        "Untracked" => GitStatus::Untracked,
+                        "Renamed" => GitStatus::Renamed,
+                        "Conflicted" => GitStatus::Conflicted,
+                        _ => GitStatus::Modified,
+                    };
+                    f = f.status(path, status);
+                }
+                if let Some(h) = fire_str(view, node, "open", cx) {
+                    f = f.on_open(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                if let Some(h) = fire_str(view, node, "context", cx) {
+                    f = f.on_context(move |v, _pt, w, cx| h(v.to_string(), w, cx));
+                }
+                Some(f.into_any_element())
+            }
+            "Tree" => {
+                let mut t = Tree::new(key.to_string(), tree_nodes(&prop_list(node, "tree")));
+                t = t
+                    .open(prop_list(node, "open"))
+                    .selected(prop_list(node, "selected"));
+                if prop_bool(node, "multiple") {
+                    t = t.multiple();
+                }
+                if let Some(h) = change_str(view, node, "select", cx) {
+                    t = t.on_select(move |v: &[SharedString], w, cx| {
+                        h(
+                            v.iter()
+                                .map(|s| s.to_string())
+                                .collect::<Vec<_>>()
+                                .join(","),
+                            w,
+                            cx,
+                        )
+                    });
+                }
+                if let Some(h) = fire_str(view, node, "activate", cx) {
+                    t = t.on_activate(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                Some(t.into_any_element())
+            }
+            "TreeSelect" => {
+                let mut t = TreeSelect::new(key.to_string(), tree_nodes(&prop_list(node, "tree")));
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    t = t.on_change(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                Some(t.into_any_element())
+            }
             _ => None,
         }
     }
