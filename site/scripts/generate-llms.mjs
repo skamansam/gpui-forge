@@ -42,7 +42,8 @@ const PAGE_ORDER = {
 		'catalog-manifest',
 		'yaml-validation',
 		'state-inspector',
-		'adapters'
+		'adapters',
+		'components'
 	],
 	studio: ['studio', 'studio-editing', 'studio-preview', 'studio-themes', 'studio-projects'],
 	web: ['editor', 'preview', 'web-examples'],

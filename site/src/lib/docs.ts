@@ -32,7 +32,8 @@ const PAGE_ORDER: Record<string, string[]> = {
 		'catalog-manifest',
 		'yaml-validation',
 		'state-inspector',
-		'adapters'
+		'adapters',
+		'components'
 	],
 	studio: ['studio', 'studio-editing', 'studio-preview', 'studio-themes', 'studio-projects'],
 	web: ['editor', 'preview', 'web-examples'],

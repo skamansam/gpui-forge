@@ -15,7 +15,6 @@ export type Example = {
 // element); `base: ratatui` docs draw a terminal frame via TuiCanvas, and
 // `native` bases have no web renderer, so the source stands alone.
 import elyDemo from '../../../examples/demos/ely-demo.forge.yaml?raw';
-import gcShowcase from '../../../examples/showcases/gc-showcase.forge.yaml?raw';
 import gflowDemo from '../../../examples/demos/gflow-demo.forge.yaml?raw';
 import baseDemo from '../../../examples/demos/base-demo.forge.yaml?raw';
 import videoDemo from '../../../examples/demos/video-demo.forge.yaml?raw';
@@ -51,13 +50,6 @@ export const showcases: Showcase[] = [
 		title: 'Ely GPUI Components',
 		summary: '`use: ely: ely-core` — data-display widgets (KPI cards, meters, timelines).',
 		yaml: elyDemo
-	},
-	{
-		slug: 'gc-showcase',
-		alias: 'gc',
-		title: 'gpui-component',
-		summary: '`use: gc: gpui-component` — the upstream component suite.',
-		yaml: gcShowcase
 	},
 	{
 		slug: 'gflow-demo',
