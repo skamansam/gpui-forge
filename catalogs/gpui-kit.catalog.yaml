@@ -1762,3 +1762,29 @@ elements:
     group: Windows
     summary: Edge sheet — declare a `Dialog` id with `sheet` `true` and a `placement` edge.
     component: gpui_base::sheet::Sheet
+
+  RadarChart:
+    icon: radar
+    group: Charts
+    summary: "Radar/spider chart — `data` number series."
+    component: gpui_component::chart::RadarChart
+    children: none
+    props:
+      data: list<number>
+
+  SankeyChart:
+    icon: chart-sankey
+    group: Charts
+    summary: "Sankey flow — `nodes` labels, `links` 'source,target,value'."
+    component: gpui_component::chart::SankeyChart
+    children: none
+    props:
+      nodes: list<string>
+      links: list<string>
+
+  WindowBorder:
+    icon: app-window
+    group: Layout
+    summary: "Window frame with resize-hit padding — wraps children."
+    component: gpui_component::WindowBorder
+    children: any

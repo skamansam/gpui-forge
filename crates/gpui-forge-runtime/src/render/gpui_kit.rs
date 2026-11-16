@@ -33,7 +33,8 @@ use gpui_kit::component::carousel::{
     Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPagination, CarouselPrevious,
     CarouselState,
 };
-use gpui_kit::component::chart::{BarChart, LineChart, PieChart};
+use gpui_kit::component::chart::{BarChart, LineChart, PieChart, RadarChart, SankeyChart};
+use gpui_kit::component::plot::shape::SankeyLink;
 use gpui_kit::component::checkbox::Checkbox;
 use gpui_kit::component::clipboard::Clipboard;
 use gpui_kit::component::collapsible::Collapsible;
@@ -5221,6 +5222,70 @@ impl ForgeView {
                         .y(|p| p.1)
                         .into_any_element(),
                 }
+            }
+            "RadarChart" => {
+                let data: Vec<f64> = self
+                    .prop(node, "data")
+                    .map(|v| self.value_json(v))
+                    .and_then(|v| v.as_array().cloned())
+                    .map(|items| items.iter().filter_map(|v| v.as_f64()).collect())
+                    .unwrap_or_default();
+                let pairs: Vec<(SharedString, f64)> = data
+                    .iter()
+                    .enumerate()
+                    .map(|(i, v)| (SharedString::from(i.to_string()), *v))
+                    .collect();
+                RadarChart::new(pairs)
+                    .label(|p| p.0.clone())
+                    .value(|p| p.1)
+                    .into_any_element()
+            }
+            "SankeyChart" => {
+                // `nodes:` labels, `links:` "source,target,value" entries.
+                let nodes: Vec<SharedString> = self
+                    .prop(node, "nodes")
+                    .map(|v| self.value_json(v))
+                    .and_then(|v| v.as_array().cloned())
+                    .map(|items| {
+                        items
+                            .iter()
+                            .filter_map(|v| v.as_str().map(SharedString::from))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                let links: Vec<SankeyLink> = self
+                    .prop(node, "links")
+                    .map(|v| self.value_json(v))
+                    .and_then(|v| v.as_array().cloned())
+                    .map(|items| {
+                        items
+                            .iter()
+                            .filter_map(|v| v.as_str())
+                            .filter_map(|s| {
+                                let mut p = s.split(',');
+                                Some(SankeyLink::new(
+                                    p.next()?.parse().ok()?,
+                                    p.next()?.parse().ok()?,
+                                    p.next()?.parse().ok()?,
+                                ))
+                            })
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                SankeyChart::new(nodes, links)
+                    .node_label(|n| n.clone())
+                    .value_label(|_n, v| format!("{v}").into())
+                    .into_any_element()
+            }
+            "WindowBorder" => {
+                let mut b = gpui_kit::component::WindowBorder::new();
+                b.extend(
+                    node.children
+                        .iter()
+                        .enumerate()
+                        .map(|(i, c)| self.render_node(c, &format!("{key}/{i}"), window, cx)),
+                );
+                b.into_any_element()
             }
             "InputGroup" => {
                 // Slot-based: input children feed `.input()`, addons `.addon()`.

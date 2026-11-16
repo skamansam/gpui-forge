@@ -167,42 +167,42 @@ github: https://github.com/longbridge/gpui-kit
 
 > Exported by the upstream component crate but not yet in the Forge catalog.
 
-- [ ] Cancel
-- [ ] Confirm
+- [ ] Cancel — gpui `Action` — dialog cancel, not a widget
+- [ ] Confirm — gpui `Action` — dialog confirm, not a widget
 - [ ] Date — value type, not a widget — `DatePicker`/`Calendar` produce it
-- [ ] DiffConflict
-- [ ] DiffConflictResolution
-- [ ] DiffFile
-- [ ] DiffFileStatus
-- [ ] DiffSide
-- [ ] Disableable
-- [ ] History
-- [ ] HourCycle
-- [ ] Matcher
-- [ ] NumberStep
-- [ ] PlotHover
-- [ ] PopupMenu
-- [ ] PopupMenuItem
-- [ ] RadarChart
-- [ ] RadarLabel
-- [ ] RoleOverride
-- [ ] Rope
-- [ ] RopeLines
-- [ ] SankeyChart
-- [ ] SankeyLabel
-- [ ] SearchableGroup
-- [ ] SearchableListDelegate
-- [ ] SearchableListItem
-- [ ] SearchableVec
-- [ ] Selectable
-- [ ] Sizable
-- [ ] SliderScale
-- [ ] SpeechStatus
-- [ ] StyleSized
-- [ ] TimePrecision
-- [ ] TimeSegment
-- [ ] UndoHistory
-- [ ] WindowBorder
+- [ ] DiffConflict — merge-conflict value type for the diff viewer
+- [ ] DiffConflictResolution — enum — which side resolves a conflict
+- [ ] DiffFile — diff document value type behind DiffView
+- [ ] DiffFileStatus — enum — added/modified/deleted for DiffFile
+- [ ] DiffSide — enum — old/new side of a diff hunk
+- [ ] Disableable — trait — `.disabled(bool)` support
+- [ ] History — undo/redo entity behind inputs
+- [ ] HourCycle — enum — 12h/24h for TimeField/DatePicker
+- [ ] Matcher — fuzzy-match trait behind SearchableList
+- [ ] NumberStep — enum — NumberInput step behavior
+- [ ] PlotHover — chart hover value type behind interactive charts
+- [ ] PopupMenu — menu entity — `PopupMenu::build(cx)` attaches to a trigger, not a standalone element
+- [ ] PopupMenuItem — menu item descriptor consumed by PopupMenu
+- [x] RadarChart — implemented (base arm, `data` series)
+- [ ] RadarLabel — axis label value type for RadarChart
+- [ ] RoleOverride — a11y role-override trait
+- [ ] Rope — rope text buffer behind Editor/inputs
+- [ ] RopeLines — rope line iterator behind Editor
+- [x] SankeyChart — implemented (`nodes`/`links` props)
+- [ ] SankeyLabel — edge label descriptor — SankeyChart builds it
+- [ ] SearchableGroup — grouped-list section type for SearchableList
+- [ ] SearchableListDelegate — trait — supplies SearchableList rows
+- [ ] SearchableListItem — list row value type for SearchableList
+- [ ] SearchableVec — searchable row container for SearchableList
+- [ ] Selectable — trait — `.selected(bool)` support
+- [ ] Sizable — trait — `.size(...)` support
+- [ ] SliderScale — enum — linear/log slider scale
+- [ ] SpeechStatus — enum — speech-button state (recording/processing)
+- [ ] StyleSized — trait — style-driven sizing
+- [ ] TimePrecision — enum — TimeField granularity
+- [ ] TimeSegment — enum — hour/minute/second segment of TimeField
+- [ ] UndoHistory — undo stack entity behind inputs
+- [x] WindowBorder — implemented (child wrapper)
 
 ## ely Components
 
