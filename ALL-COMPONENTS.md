@@ -236,7 +236,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] Barcode
 - [x] BeforeAfter
 - [ ] Blink
-- [ ] Blockquote
+- [x] Blockquote
 - [x] Breadcrumb
 - [x] BulkActionBar
 - [x] Button
@@ -278,8 +278,8 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] Countdown
 - [ ] Crumb
 - [ ] Cut
-- [ ] DataGrid
-- [ ] DataTable
+- [x] DataGrid
+- [x] DataTable
 - [x] DatePicker
 - [x] DateRangePicker
 - [x] DateTimePicker
@@ -302,15 +302,15 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Editing
 - [ ] EditorTab
 - [x] EditorTabs
-- [ ] Ellipsis
-- [ ] EllipsisTooltip
+- [x] Ellipsis
+- [x] EllipsisTooltip
 - [x] EmailInput
 - [x] EmojiPicker
 - [ ] Entrance
 - [x] ErrorBoundary
 - [x] ErrorView
 - [x] ExpressionInput
-- [ ] ExternalLink
+- [x] ExternalLink
 - [x] FieldArray
 - [x] Fieldset
 - [x] FileInput
@@ -326,13 +326,13 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] Gauge
 - [ ] Glow
 - [x] GradientEditor
-- [ ] GradientText
+- [x] GradientText
 - [ ] Grid
 - [ ] HUE_NAMES
 - [x] Heading
-- [ ] HeatmapTable
+- [x] HeatmapTable
 - [ ] HelpTooltip
-- [ ] Highlight
+- [x] Highlight
 - [ ] History
 - [ ] Hosted
 - [x] IconButton
@@ -345,8 +345,8 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] InputAddon
 - [x] InputGroup
 - [ ] IntersectionObserver
-- [ ] Kbd
-- [ ] KbdCombo
+- [x] Kbd
+- [x] KbdCombo
 - [x] KeyValueInput
 - [x] KpiCard
 - [ ] LEADING
@@ -368,7 +368,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Menu
 - [ ] MenuItem
 - [x] Meter
-- [ ] MiddleEllipsis
+- [x] MiddleEllipsis
 - [ ] MiniWindow
 - [ ] Mix
 - [x] MonthPicker
@@ -439,7 +439,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] Sheet
 - [x] ShellColumn
 - [ ] Shimmer
-- [ ] ShimmerText
+- [x] ShimmerText
 - [x] SignaturePad
 - [x] SimpleGrid
 - [ ] Sizable
@@ -457,7 +457,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] SplitPane
 - [ ] Spot
 - [ ] Spotlight
-- [ ] Spreadsheet
+- [x] Spreadsheet
 - [ ] Stagger
 - [x] Stars
 - [x] Statistic
@@ -474,7 +474,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Syntax
 - [x] TabBar
 - [ ] TabPlacement
-- [ ] Table
+- [x] Table
 - [x] TableOfContents
 - [x] Tabs
 - [x] Tag
@@ -502,9 +502,9 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] TreeNode
 - [ ] TreeRow
 - [x] TreeSelect
-- [ ] TreeTable
+- [x] TreeTable
 - [x] TrendIndicator
-- [ ] Typewriter
+- [x] Typewriter
 - [ ] TypingIndicator
 - [x] UpdateBanner
 - [x] UpdateDialog
@@ -593,6 +593,37 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] media_button — helper fn, not a component
 - [ ] menu_under — helper fn, not a component
 - [ ] guard_close — window-lifecycle helper fn, not a component
+
+- [x] AnimatedNumber
+- [x] CurrencyText
+- [x] DateTimeText
+- [x] DurationText
+- [x] Emoji
+- [x] FileSizeText
+- [x] Link
+- [x] PivotTable
+- [x] PluralText
+- [x] RelativeTime
+- [x] SelectableText
+- [x] TableToolbar
+
+- [ ] FilterBuilder — interactive rule editor needing owner callbacks
+- [ ] SortBuilder — interactive sort editor needing owner callbacks
+- [ ] FilterRule — rule value type consumed by DataTable.filters
+- [ ] SortKey — sort value type consumed by DataTable.sorts
+- [ ] Test — filter-operator enum, not a widget
+- [ ] to_csv — helper fn, not a component
+- [ ] Aggregate — cell-aggregation enum, not a widget
+- [ ] Align — column-align enum, not a widget
+- [ ] Cell — table cell value type (encoded in `rows` props)
+- [ ] Row — table row value type (built from `rows` props)
+- [ ] TreeRow — tree row value type (built from `rows` props)
+- [ ] text_width — helper fn, not a component
+- [ ] literal — helper fn, not a component
+- [ ] tabular — helper fn, not a component
+- [ ] fresh — helper fn, not a component
+- [ ] relative_text — helper fn, not a component
+- [ ] LEADING — typography constant
 
 ## guise Components
 

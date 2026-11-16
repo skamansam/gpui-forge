@@ -2464,3 +2464,326 @@ elements:
     summary: "Edge-drag resize border around children."
     component: ely_core::shell::ResizeBorder
     children: any
+
+  Table:
+    icon: table
+    group: Tables
+    summary: "Simple table — `headers` titles, `rows` entries are `cell|cell|…`."
+    component: ely_core::tables::Table
+    children: none
+    props:
+      headers: list<string>
+      rows: list<string>
+
+  HeatmapTable:
+    icon: grid-3x3
+    group: Tables
+    summary: "Numeric heat grid — `headers` columns, `rows` entries are `label|v,v,…`."
+    component: ely_core::tables::HeatmapTable
+    children: none
+    props:
+      headers: list<string>
+      rows: list<string>
+      decimals: number
+
+  DataTable:
+    icon: table-2
+    group: Tables
+    summary: "Full table — `columns` as `key|title|flags`, `rows` cells via `n:`/`tag:`/`progress:`/`spark:`/`person:`/`link:`/`dur:`/`empty` prefixes."
+    component: ely_core::tables::DataTable
+    children: none
+    props:
+      columns: list<string>
+      rows: list<string>
+      query: string
+      hidden: list<string>
+      selected: list<string>
+      page_size: number
+      virtualized: bool
+      group_by: string
+      density:
+        type: enum
+        values: [Compact, Standard, Comfortable]
+      value: string
+    events: {select:, edit:}
+
+  DataGrid:
+    icon: sheet
+    group: Tables
+    summary: "Editable grid — `headers` titles, `rows` entries are `cell|cell|…`; `edit` fires `r|c|text`."
+    component: ely_core::tables::DataGrid
+    children: none
+    props:
+      headers: list<string>
+      rows: list<string>
+    events: {edit:}
+
+  Spreadsheet:
+    icon: grid-2x2
+    group: Tables
+    summary: "Sheet grid — `rows`/`cols` dims, `cells` entries are `r,c|text`, `freeze_rows`/`freeze_cols`."
+    component: ely_core::tables::Spreadsheet
+    children: none
+    props:
+      rows: number
+      cols: number
+      cells: list<string>
+      freeze_rows: number
+      freeze_cols: number
+    events: {edit:}
+
+  PivotTable:
+    icon: table-properties
+    group: Tables
+    summary: "Pivot over records — `pivot` is `down|across|value|how` (how: Sum/Average/Count/Min/Max)."
+    component: ely_core::tables::PivotTable
+    children: none
+    props:
+      headers: list<string>
+      rows: list<string>
+      pivot: string
+      decimals: number
+
+  TreeTable:
+    icon: folder-tree
+    group: Tables
+    summary: "Tree-grid — `rows` entries are `path>path|cell|cell`; `columns` like DataTable."
+    component: ely_core::tables::TreeTable
+    children: none
+    props:
+      columns: list<string>
+      rows: list<string>
+      open: list<string>
+
+  TableToolbar:
+    icon: panel-top-open
+    group: Tables
+    summary: "Table chrome — `search` field, `filters` count, `columns`/`hidden` toggles, `density`, `export`."
+    component: ely_core::tables::TableToolbar
+    children: none
+    props:
+      search: bool
+      filters: number
+      columns: list<string>
+      hidden: list<string>
+      density:
+        type: enum
+        values: [Compact, Standard, Comfortable]
+      value: string
+    events: {filter:, hidden:, density:, export:, change:}
+
+  Typewriter:
+    icon: keyboard
+    group: Typography
+    summary: "Types `text` letter by letter — `speed` chars/second."
+    component: ely_core::typography::Typewriter
+    content: text
+    children: none
+    props:
+      text: string
+      speed: number
+
+  GradientText:
+    icon: blend
+    group: Typography
+    summary: "`text` tinted `from`→`to` hex colors."
+    component: ely_core::typography::GradientText
+    content: text
+    children: none
+    props:
+      text: string
+      from: color
+      to: color
+
+  ShimmerText:
+    icon: sparkles
+    group: Typography
+    summary: "Shimmering `text` (loading-style sheen)."
+    component: ely_core::typography::ShimmerText
+    content: text
+    children: none
+    props:
+      text: string
+
+  Emoji:
+    icon: smile
+    group: Typography
+    summary: "One emoji — `glyph` directly or a `shortcode` like `rocket`."
+    component: ely_core::typography::Emoji
+    content: glyph
+    children: none
+    props:
+      glyph: string
+      shortcode: string
+
+  Ellipsis:
+    icon: ellipsis
+    group: Typography
+    summary: "`text` clipped with an end ellipsis."
+    component: ely_core::typography::Ellipsis
+    content: text
+    children: none
+    props:
+      text: string
+
+  MiddleEllipsis:
+    icon: ellipsis
+    group: Typography
+    summary: "`text` clipped through the middle (paths, hashes)."
+    component: ely_core::typography::MiddleEllipsis
+    content: text
+    children: none
+    props:
+      text: string
+
+  EllipsisTooltip:
+    icon: message-square-more
+    group: Typography
+    summary: "Clipped `text` that shows the full string on hover."
+    component: ely_core::typography::EllipsisTooltip
+    content: text
+    children: none
+    props:
+      text: string
+
+  Kbd:
+    icon: keyboard
+    group: Typography
+    summary: "One key cap — `keys` in gpui chord syntax."
+    component: ely_core::typography::Kbd
+    content: keys
+    children: none
+    props:
+      keys: string
+
+  KbdCombo:
+    icon: keyboard-music
+    group: Typography
+    summary: "Key chord — `keys` like `cmd-shift-p`."
+    component: ely_core::typography::KbdCombo
+    content: keys
+    children: none
+    props:
+      keys: string
+
+  Highlight:
+    icon: highlighter
+    group: Typography
+    summary: "`text` with `ranges` (`start-end,…`) highlighted."
+    component: ely_core::typography::Highlight
+    content: text
+    children: none
+    props:
+      text: string
+      ranges: list<string>
+
+  Blockquote:
+    icon: quote
+    group: Typography
+    summary: "Quote block — children render inside."
+    component: ely_core::typography::Blockquote
+    children: any
+
+  Link:
+    icon: link
+    group: Typography
+    summary: "Inline link — `click` event."
+    component: ely_core::typography::Link
+    content: label
+    children: none
+    props:
+      label: string
+    events: {click:}
+
+  ExternalLink:
+    icon: external-link
+    group: Typography
+    summary: "Link that opens `url` in the browser."
+    component: ely_core::typography::ExternalLink
+    content: label
+    children: none
+    props:
+      label: string
+      url: string
+
+  AnimatedNumber:
+    icon: timer
+    group: Typography
+    summary: "Rolling number — `value`, `decimals`, `pad`, `count_up`."
+    component: ely_core::typography::AnimatedNumber
+    children: none
+    props:
+      value: number
+      decimals: number
+      pad: number
+      count_up: bool
+
+  SelectableText:
+    icon: text-select
+    group: Typography
+    summary: "`text` the user can drag-select."
+    component: ely_core::typography::SelectableText
+    content: text
+    children: none
+    props:
+      text: string
+
+  CurrencyText:
+    icon: dollar-sign
+    group: Typography
+    summary: "`amount` as currency — `code` USD/EUR/GBP/JPY."
+    component: ely_core::typography::CurrencyText
+    children: none
+    props:
+      amount: number
+      code:
+        type: enum
+        values: [USD, EUR, GBP, JPY]
+
+  FileSizeText:
+    icon: hard-drive
+    group: Typography
+    summary: "`bytes` as a human size."
+    component: ely_core::typography::FileSizeText
+    children: none
+    props:
+      bytes: number
+
+  DurationText:
+    icon: hourglass
+    group: Typography
+    summary: "`seconds` as a duration — `style` Clock/Compact."
+    component: ely_core::typography::DurationText
+    children: none
+    props:
+      seconds: number
+      style:
+        type: enum
+        values: [Clock, Compact]
+
+  PluralText:
+    icon: list-ordered
+    group: Typography
+    summary: "count item(s) — singular/plural switch."
+    component: ely_core::typography::PluralText
+    children: none
+    props:
+      count: number
+
+  RelativeTime:
+    icon: history
+    group: Typography
+    summary: "at ago — `at` is an ISO timestamp."
+    component: ely_core::typography::RelativeTime
+    children: none
+    props:
+      at: string
+
+  DateTimeText:
+    icon: calendar-clock
+    group: Typography
+    summary: "`at` timestamp formatted (system zone)."
+    component: ely_core::typography::DateTimeText
+    children: none
+    props:
+      at: string

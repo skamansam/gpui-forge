@@ -66,9 +66,19 @@ use ely_core::shell::{
     ToolbarSeparator, UpdateBanner, UpdateDialog, UpdateState, Vibrancy, WindowControls,
     WindowSwitcher, WindowTab, ZoomControl, ZoomStep,
 };
+use ely_core::tables::{
+    Aggregate, Cell as TableCell, Column, DataGrid, DataTable, HeatmapTable, PivotTable, Row,
+    Spreadsheet, Table, TableToolbar, TreeRow, TreeTable,
+};
 use ely_core::theme::AvatarSize;
+use ely_core::theme::Density;
 use ely_core::theme::Platform;
 use ely_core::theme::{ContainerSize, ControlSize, IconSize, TextSize};
+use ely_core::typography::{
+    AnimatedNumber, Blockquote, CurrencyText, DateTimeText, DurationStyle, DurationText, Ellipsis,
+    EllipsisTooltip, Emoji, ExternalLink, FileSizeText, GradientText, Highlight, Kbd, KbdCombo,
+    Link, MiddleEllipsis, PluralText, RelativeTime, SelectableText, ShimmerText, Typewriter,
+};
 use ely_core::typography::{Caption, Heading, Label, Overline, Paragraph, Subtitle, Title};
 use ely_core::typography::{Code, CopyableText, NumberText, PercentText};
 use jiff::Timestamp;
@@ -553,6 +563,95 @@ fn update_state_of(node: &Node) -> UpdateState {
         }
         "Ready" => UpdateState::Ready,
         _ => UpdateState::Available,
+    }
+}
+
+/// One table cell: bare text, or `n:`, `tag:text|Tone`, `progress:`, `spark:`,
+/// `person:`, `link:label|url`, `dur:`, `empty`.
+fn cell_of(raw: &str) -> TableCell {
+    let (kind, rest) = match raw.split_once(':') {
+        Some((k, r))
+            if matches!(
+                k,
+                "n" | "tag" | "progress" | "spark" | "person" | "link" | "dur" | "empty"
+            ) =>
+        {
+            (k, r)
+        }
+        _ => return TableCell::Text(raw.trim().into()),
+    };
+    match kind {
+        "n" => TableCell::Number(rest.trim().parse().unwrap_or(0.0)),
+        "tag" => {
+            let mut p = rest.splitn(2, '|');
+            let text = p.next().unwrap_or("").trim();
+            let tone = match p.next().map(str::trim) {
+                Some("Accent") => Tone::Accent,
+                Some("Info") => Tone::Info,
+                Some("Success") => Tone::Success,
+                Some("Warning") => Tone::Warning,
+                Some("Danger") => Tone::Danger,
+                _ => Tone::Neutral,
+            };
+            TableCell::Tag(text.into(), tone)
+        }
+        "progress" => TableCell::Progress(rest.trim().parse().unwrap_or(0.0)),
+        "spark" => TableCell::Spark(
+            rest.split(',')
+                .filter_map(|v| v.trim().parse().ok())
+                .collect(),
+        ),
+        "person" => TableCell::Person(rest.trim().into()),
+        "link" => {
+            let mut p = rest.splitn(2, '|');
+            TableCell::Link(
+                p.next().unwrap_or("").trim().into(),
+                p.next().unwrap_or("").trim().into(),
+            )
+        }
+        "dur" => TableCell::Duration(rest.trim().parse().unwrap_or(0)),
+        _ => TableCell::Empty,
+    }
+}
+
+/// One table column: `key|title|flag,flag` — flags: end, unsorted, editable,
+/// pinned, scale, agg:Sum, pre:X, suf:X, w:rems, dec:N.
+fn column_of(raw: &str) -> Column {
+    let mut p = raw.splitn(3, '|');
+    let (key, title) = (p.next().unwrap_or("").trim(), p.next().unwrap_or("").trim());
+    let title = if title.is_empty() { key } else { title };
+    let mut col = Column::new(key, title);
+    for flag in p.next().unwrap_or("").split(',').map(str::trim) {
+        match flag {
+            "end" => col = col.end(),
+            "unsorted" => col = col.unsorted(),
+            "editable" => col = col.editable(),
+            "pinned" => col = col.pinned(),
+            "scale" => col = col.scale(),
+            f if f.starts_with("agg:") => {
+                col = col.aggregate(match &f[4..] {
+                    "Average" => Aggregate::Average,
+                    "Count" => Aggregate::Count,
+                    "Min" => Aggregate::Min,
+                    "Max" => Aggregate::Max,
+                    _ => Aggregate::Sum,
+                })
+            }
+            f if f.starts_with("pre:") => col = col.prefix(&f[4..]),
+            f if f.starts_with("suf:") => col = col.suffix(&f[4..]),
+            f if f.starts_with("w:") => col = col.width(rems(f[2..].parse::<f32>().unwrap_or(0.0))),
+            f if f.starts_with("dec:") => col = col.decimals(f[4..].parse().unwrap_or(0)),
+            _ => {}
+        }
+    }
+    col
+}
+
+fn density_of(raw: &str) -> Density {
+    match raw {
+        "Compact" => Density::Compact,
+        "Comfortable" => Density::Comfortable,
+        _ => Density::Standard,
     }
 }
 
@@ -3616,6 +3715,417 @@ impl ForgeLibrary for Ely {
                         .map(|e| e.into_any_element()),
                 );
                 Some(r.into_any_element())
+            }
+            "Table" => {
+                let mut t = Table::new(prop_list(node, "headers"));
+                for row in prop_list(node, "rows") {
+                    let cells: Vec<String> = row.split('|').map(|c| c.trim().to_owned()).collect();
+                    t = t.row(cells.into_iter().map(|c| gpui::div().child(c)));
+                }
+                Some(t.into_any_element())
+            }
+            "HeatmapTable" => {
+                let mut t = HeatmapTable::new(prop_list(node, "headers"));
+                for row in prop_list(node, "rows") {
+                    let mut p = row.splitn(2, '|');
+                    let label = p.next().unwrap_or("").trim().to_owned();
+                    let values: Vec<f64> = p
+                        .next()
+                        .unwrap_or("")
+                        .split(',')
+                        .filter_map(|v| v.trim().parse().ok())
+                        .collect();
+                    t = t.row(label, values);
+                }
+                if let Some(d) = prop_num(node, "decimals") {
+                    t = t.decimals(d as usize);
+                }
+                Some(t.into_any_element())
+            }
+            "DataTable" => {
+                let mut t = DataTable::new(
+                    key.to_string(),
+                    prop_list(node, "columns").iter().map(|c| column_of(c)),
+                );
+                let rows: Vec<Row> = prop_list(node, "rows")
+                    .iter()
+                    .enumerate()
+                    .map(|(i, r)| {
+                        Row::new(
+                            format!("{key}/row/{i}"),
+                            r.split('|').map(|c| cell_of(c.trim())),
+                        )
+                    })
+                    .collect();
+                t = t.rows(Rc::new(rows));
+                if let Some(q) = prop_str_opt(node, "query") {
+                    t = t.query(q);
+                }
+                t = t
+                    .hidden(prop_list(node, "hidden"))
+                    .selected(prop_list(node, "selected"));
+                if let Some(size) = prop_num(node, "page_size") {
+                    t = t.paged(size.max(1.0) as usize);
+                }
+                if prop_bool(node, "virtualized") {
+                    t = t.virtualized();
+                }
+                if let Some(g) = prop_str_opt(node, "group_by") {
+                    t = t.group_by(g);
+                }
+                t = t.density(density_of(&prop_str(node, "density")));
+                if let Some(h) = change_str(view, node, "select", cx) {
+                    t = t.on_select(move |v, w, cx| {
+                        h(
+                            v.iter()
+                                .map(|s| s.to_string())
+                                .collect::<Vec<_>>()
+                                .join(","),
+                            w,
+                            cx,
+                        )
+                    });
+                }
+                if let Some(h) = fire_str(view, node, "edit", cx) {
+                    t = t.on_edit(move |r, c, v, w, cx| h(format!("{r}|{c}|{v}"), w, cx));
+                }
+                Some(t.into_any_element())
+            }
+            "DataGrid" => {
+                let rows: Vec<Vec<SharedString>> = prop_list(node, "rows")
+                    .iter()
+                    .map(|r| {
+                        r.split('|')
+                            .map(|c| SharedString::from(c.trim().to_owned()))
+                            .collect()
+                    })
+                    .collect();
+                let mut g =
+                    DataGrid::new(key.to_string(), prop_list(node, "headers"), Rc::new(rows));
+                if let Some(h) = fire_str(view, node, "edit", cx) {
+                    g = g.on_change(move |v, w, cx| {
+                        h(
+                            v.iter()
+                                .map(|(r, c, t)| format!("{r}|{c}|{t}"))
+                                .collect::<Vec<_>>()
+                                .join(";"),
+                            w,
+                            cx,
+                        )
+                    });
+                }
+                Some(g.into_any_element())
+            }
+            "Spreadsheet" => {
+                let mut sh = Spreadsheet::new(
+                    key.to_string(),
+                    prop_num(node, "rows").unwrap_or(10.0).max(1.0) as usize,
+                    prop_num(node, "cols").unwrap_or(5.0).max(1.0) as usize,
+                );
+                let mut cells: HashMap<(usize, usize), SharedString> = HashMap::new();
+                for entry in prop_list(node, "cells") {
+                    if let Some((at, text)) = entry.split_once('|') {
+                        let mut p = at.split(',');
+                        if let (Some(r), Some(c)) = (
+                            p.next().and_then(|v| v.trim().parse().ok()),
+                            p.next().and_then(|v| v.trim().parse().ok()),
+                        ) {
+                            cells.insert((r, c), text.trim().into());
+                        }
+                    }
+                }
+                sh = sh.cells(Rc::new(cells));
+                let (fr, fc) = (
+                    prop_num(node, "freeze_rows").unwrap_or(0.0) as usize,
+                    prop_num(node, "freeze_cols").unwrap_or(0.0) as usize,
+                );
+                if fr > 0 || fc > 0 {
+                    sh = sh.freeze(fr, fc);
+                }
+                if let Some(h) = fire_str(view, node, "edit", cx) {
+                    sh = sh.on_change(move |v, w, cx| {
+                        h(
+                            v.iter()
+                                .map(|(r, c, t)| format!("{r}|{c}|{t}"))
+                                .collect::<Vec<_>>()
+                                .join(";"),
+                            w,
+                            cx,
+                        )
+                    });
+                }
+                Some(sh.into_any_element())
+            }
+            "PivotTable" => {
+                let row_list = prop_list(node, "rows");
+                let records = row_list.iter().map(|r| {
+                    r.split('|')
+                        .map(|c| cell_of(c.trim()))
+                        .collect::<Vec<TableCell>>()
+                });
+                let mut p = PivotTable::new(prop_list(node, "headers"), records);
+                if let Some(by) = prop_str_opt(node, "pivot") {
+                    let mut f = by.splitn(4, '|');
+                    if let (Some(d), Some(a), Some(v)) = (f.next(), f.next(), f.next()) {
+                        let how = match f.next().map(str::trim) {
+                            Some("Average") => Aggregate::Average,
+                            Some("Count") => Aggregate::Count,
+                            Some("Min") => Aggregate::Min,
+                            Some("Max") => Aggregate::Max,
+                            _ => Aggregate::Sum,
+                        };
+                        p = p.pivot(d.trim(), a.trim(), v.trim(), how);
+                    }
+                }
+                if let Some(d) = prop_num(node, "decimals") {
+                    p = p.decimals(d as usize);
+                }
+                Some(p.into_any_element())
+            }
+            "TreeTable" => {
+                fn tree_rows<'a>(
+                    it: impl Iterator<Item = (&'a [String], &'a [String])>,
+                ) -> Vec<TreeRow> {
+                    let mut rows: Vec<TreeRow> = Vec::new();
+                    let mut grouped: std::collections::BTreeMap<
+                        String,
+                        Vec<(&[String], &[String])>,
+                    > = std::collections::BTreeMap::new();
+                    for (path, cells) in it {
+                        match path.split_first() {
+                            Some((head, rest)) if rest.is_empty() => rows
+                                .push(TreeRow::new(head.clone(), cells.iter().map(|c| cell_of(c)))),
+                            Some((head, rest)) => {
+                                grouped.entry(head.clone()).or_default().push((rest, cells))
+                            }
+                            None => {}
+                        }
+                    }
+                    for (key, rests) in grouped {
+                        rows.push(
+                            TreeRow::new(key, Vec::new()).children(tree_rows(rests.into_iter())),
+                        );
+                    }
+                    rows
+                }
+                let entries: Vec<(Vec<String>, Vec<String>)> = prop_list(node, "rows")
+                    .iter()
+                    .map(|r| {
+                        let mut p = r.splitn(2, '|');
+                        let path: Vec<String> = p
+                            .next()
+                            .unwrap_or("")
+                            .split('>')
+                            .map(|s| s.trim().to_owned())
+                            .filter(|s| !s.is_empty())
+                            .collect();
+                        let cells: Vec<String> = p
+                            .next()
+                            .unwrap_or("")
+                            .split('|')
+                            .map(|c| c.trim().to_owned())
+                            .collect();
+                        (path, cells)
+                    })
+                    .collect();
+                let mut t = TreeTable::new(
+                    key.to_string(),
+                    prop_list(node, "columns").iter().map(|c| column_of(c)),
+                    tree_rows(entries.iter().map(|(p, c)| (p.as_slice(), c.as_slice()))),
+                );
+                t = t.open(prop_list(node, "open"));
+                Some(t.into_any_element())
+            }
+            "TableToolbar" => {
+                let mut t = TableToolbar::new(key.to_string());
+                if prop_bool(node, "search") {
+                    t = t.search(&self.field(node, key, view, _window, cx));
+                }
+                if let Some(rules) = prop_num(node, "filters") {
+                    if let Some(h) = handler(view, node, "filter", cx) {
+                        t = t.filter(rules as usize, h);
+                    }
+                }
+                let columns: Vec<(SharedString, SharedString)> = prop_list(node, "columns")
+                    .iter()
+                    .filter_map(|e| {
+                        let mut p = e.splitn(2, '|');
+                        Some((
+                            SharedString::from(p.next()?.trim().to_owned()),
+                            SharedString::from(p.next().unwrap_or("").trim().to_owned()),
+                        ))
+                    })
+                    .collect();
+                if !columns.is_empty() {
+                    let hidden = prop_list(node, "hidden");
+                    let change = change_str(view, node, "hidden", cx);
+                    t = t.columns(columns, hidden, move |v, w, cx| {
+                        if let Some(change) = &change {
+                            change(
+                                v.iter()
+                                    .map(|s| s.to_string())
+                                    .collect::<Vec<_>>()
+                                    .join(","),
+                                w,
+                                cx,
+                            )
+                        }
+                    });
+                }
+                if let Some(h) = change_str(view, node, "density", cx) {
+                    t = t.density(density_of(&prop_str(node, "density")), move |d, w, cx| {
+                        h(format!("{d:?}"), w, cx)
+                    });
+                }
+                if let Some(h) = handler(view, node, "export", cx) {
+                    t = t.export(h);
+                }
+                Some(t.into_any_element())
+            }
+            "Typewriter" => {
+                let mut t = Typewriter::new(key.to_string(), prop_str(node, "text"));
+                if let Some(sp) = prop_num(node, "speed") {
+                    t = t.speed(sp as f32);
+                }
+                Some(t.into_any_element())
+            }
+            "GradientText" => {
+                let mut t = GradientText::new(prop_str(node, "text"));
+                let (from, to) = (prop_str(node, "from"), prop_str(node, "to"));
+                if let (Ok(a), Ok(b)) = (parse_hex(&from), parse_hex(&to)) {
+                    t = t.colors(a, b);
+                }
+                Some(t.into_any_element())
+            }
+            "ShimmerText" => {
+                Some(ShimmerText::new(key.to_string(), prop_str(node, "text")).into_any_element())
+            }
+            "Emoji" => {
+                let glyph = prop_str(node, "glyph");
+                let emoji = prop_str_opt(node, "shortcode")
+                    .and_then(|c| Emoji::shortcode(&c))
+                    .unwrap_or_else(|| Emoji::new(glyph));
+                Some(emoji.into_any_element())
+            }
+            "Ellipsis" => Some(Ellipsis::new(prop_str(node, "text")).into_any_element()),
+            "MiddleEllipsis" => {
+                Some(MiddleEllipsis::new(prop_str(node, "text")).into_any_element())
+            }
+            "EllipsisTooltip" => Some(
+                EllipsisTooltip::new(key.to_string(), prop_str(node, "text")).into_any_element(),
+            ),
+            "Kbd" => Some(Kbd::new(&prop_str(node, "keys")).into_any_element()),
+            "KbdCombo" => Some(KbdCombo::new(&prop_str(node, "keys")).into_any_element()),
+            "Highlight" => {
+                let ranges = prop_list(node, "ranges")
+                    .iter()
+                    .filter_map(|r| {
+                        let mut p = r.splitn(2, '-');
+                        Some(
+                            p.next()?.trim().parse::<usize>().ok()?
+                                ..p.next()?.trim().parse::<usize>().ok()?,
+                        )
+                    })
+                    .collect();
+                Some(Highlight::new(prop_str(node, "text"), ranges).into_any_element())
+            }
+            "Blockquote" => {
+                let mut b = Blockquote::new();
+                b.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(b.into_any_element())
+            }
+            "Link" => {
+                let on_click = {
+                    let h = handler(view, node, "click", cx);
+                    move |_e: &ClickEvent, w: &mut Window, cx: &mut App| {
+                        if let Some(h) = &h {
+                            h(w, cx)
+                        }
+                    }
+                };
+                Some(
+                    Link::new(key.to_string(), prop_str(node, "label"), on_click)
+                        .into_any_element(),
+                )
+            }
+            "ExternalLink" => Some(
+                ExternalLink::new(
+                    key.to_string(),
+                    prop_str(node, "label"),
+                    prop_str(node, "url"),
+                )
+                .into_any_element(),
+            ),
+            "AnimatedNumber" => {
+                let mut n =
+                    AnimatedNumber::new(key.to_string(), prop_num(node, "value").unwrap_or(0.0));
+                if let Some(d) = prop_num(node, "decimals") {
+                    n = n.decimals(d as usize);
+                }
+                if let Some(p) = prop_num(node, "pad") {
+                    n = n.pad(p as usize);
+                }
+                if prop_bool(node, "count_up") {
+                    n = n.count_up();
+                }
+                Some(n.into_any_element())
+            }
+            "SelectableText" => Some(
+                SelectableText::new(key.to_string(), prop_str(node, "text")).into_any_element(),
+            ),
+            "CurrencyText" => Some(
+                CurrencyText::new(
+                    prop_num(node, "amount").unwrap_or(0.0),
+                    if prop_str(node, "code").is_empty() {
+                        "USD"
+                    } else {
+                        match prop_str(node, "code").as_str() {
+                            "EUR" => "EUR",
+                            "GBP" => "GBP",
+                            "JPY" => "JPY",
+                            _ => "USD",
+                        }
+                    },
+                )
+                .into_any_element(),
+            ),
+            "FileSizeText" => Some(
+                FileSizeText::new(prop_num(node, "bytes").unwrap_or(0.0).max(0.0) as u64)
+                    .into_any_element(),
+            ),
+            "DurationText" => Some(
+                DurationText::new(
+                    prop_num(node, "seconds").unwrap_or(0.0).max(0.0) as u64,
+                    match prop_str(node, "style").as_str() {
+                        "Clock" => DurationStyle::Clock,
+                        _ => DurationStyle::Compact,
+                    },
+                )
+                .into_any_element(),
+            ),
+            "PluralText" => Some(
+                PluralText::new(
+                    prop_num(node, "count").unwrap_or(0.0).max(0.0) as u64,
+                    "item",
+                    "items",
+                )
+                .into_any_element(),
+            ),
+            "RelativeTime" => {
+                let at = prop_str(node, "at")
+                    .parse::<Timestamp>()
+                    .unwrap_or_else(|_| Timestamp::now());
+                Some(RelativeTime::new(key.to_string(), at).into_any_element())
+            }
+            "DateTimeText" => {
+                let at = prop_str(node, "at")
+                    .parse::<Timestamp>()
+                    .unwrap_or_else(|_| Timestamp::now());
+                Some(DateTimeText::new(at).into_any_element())
             }
             _ => None,
         }
