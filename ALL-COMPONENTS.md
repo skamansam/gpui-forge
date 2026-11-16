@@ -211,15 +211,12 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 
 > The ely site advertises 1279 items (widgets + ~900 icons). Below is every exported widget type in `ely-core` 0.2 — the `[x]` entries render natively via `forge-lib-ely` (`use: ely: ely-core`); the rest have no Forge adapter support yet.
 
-- [ ] AboutDialog
 - [x] Accordion
 - [x] AccordionItem
 - [x] ActionBar
 - [x] Activity
 - [x] ActivityBar
 - [x] ActivityFeed
-- [ ] ActivityItem
-- [ ] Aggregate
 - [x] Alert
 - [x] AlertDialog
 - [x] Anchor
@@ -227,10 +224,10 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] AnimatedGradient
 - [x] AppShell
 - [x] AspectRatio
-- [ ] AsyncView
+- [ ] AsyncView — needs a `Future` + `Context` — async entity, not declarative
 - [x] Avatar
 - [x] AvatarGroup
-- [ ] Backdrop
+- [x] Backdrop
 - [x] Badge
 - [x] Banner
 - [x] Barcode
@@ -241,43 +238,41 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] BulkActionBar
 - [x] Button
 - [x] ButtonGroup
-- [ ] COUNTRIES
+- [ ] COUNTRIES — `(&str,&str,&str,&str)` constant table — PhoneInput country list
 - [x] Calendar
 - [x] Callout
 - [x] Caption
 - [x] Card
 - [x] CardHeader
 - [x] Carousel
-- [ ] Cascade
+- [ ] Cascade — Cascader option node — built from `options` props
 - [x] Cascader
-- [ ] Cell
-- [ ] Change
-- [ ] Changeable
+- [ ] Change — change-record value type behind inputs
+- [ ] Changeable — trait — widgets emit Change events
 - [x] Changelog
 - [x] Checkbox
 - [x] CheckboxCard
 - [x] CheckboxGroup
-- [ ] Close
+- [ ] Close — `Rc<dyn Fn>` dismiss-callback alias
 - [x] Code
 - [x] Collapsible
 - [x] ColorSwatch
-- [ ] Column
+- [ ] Column — column descriptor — tables build it from `columns` props
 - [x] ColumnShell
-- [ ] Command
+- [ ] Command — palette item descriptor — `value`/`label`/`keys` consumed by CommandPalette `groups`
 - [x] Comparison
 - [x] Confetti
 - [x] ConfirmButton
 - [x] ConfirmDialog
 - [x] ConnectionStatus
-- [ ] Connectivity
+- [ ] Connectivity — ConnectionStatus state enum — set via `state` prop
 - [x] Container
 - [x] ContextMenu
-- [ ] Copy
-- [ ] Corner
+- [ ] Copy — gpui `Action` — copy command, not a widget
 - [x] CountBadge
 - [x] Countdown
-- [ ] Crumb
-- [ ] Cut
+- [ ] Crumb — Breadcrumb item descriptor — built from `items` props
+- [ ] Cut — gpui `Action` — cut command, not a widget
 - [x] DataGrid
 - [x] DataTable
 - [x] DatePicker
@@ -286,27 +281,27 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] DescriptionList
 - [x] Dialog
 - [x] DirectoryListing
-- [ ] Disableable
+- [ ] Disableable — trait — `disabled` prop support
 - [x] Dock
-- [ ] DockLayout
+- [ ] DockLayout — layout model Dock owns internally
 - [x] DockPanel
 - [x] DockSide
 - [x] DotBadge
 - [x] Drawer
-- [ ] Drawing
-- [ ] DropAt
+- [ ] Drawing — internal pen-stroke entity behind SignaturePad
+- [ ] DropAt — drop-position enum for drag targets
 - [x] DropZone
-- [ ] Dropdown
+- [ ] Dropdown — `#[doc(hidden)]` picker popup state, owned by date pickers
 - [x] DropdownMenu
 - [x] DurationPicker
-- [ ] Editing
-- [ ] EditorTab
+- [ ] Editing — editor-state enum behind InlineEdit
+- [ ] EditorTab — EditorTabs tab descriptor — built from `items` props
 - [x] EditorTabs
 - [x] Ellipsis
 - [x] EllipsisTooltip
 - [x] EmailInput
 - [x] EmojiPicker
-- [ ] Entrance
+- [ ] Entrance — Transition/Stagger `entrance` enum (Fade/Rise/Slide)
 - [x] ErrorBoundary
 - [x] ErrorView
 - [x] ExpressionInput
@@ -315,11 +310,11 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] Fieldset
 - [x] FileInput
 - [x] FileTree
-- [ ] Finder
+- [ ] Finder — internal glyph-finder machinery of EmojiPicker/IconPicker
 - [x] Flash
 - [x] Flip
 - [x] FloatingToolbar
-- [ ] Folder
+- [ ] Folder — `#[doc(hidden)]` tree builder backing FileTree
 - [x] FontPicker
 - [x] Frame
 - [x] Gallery
@@ -327,30 +322,28 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] Glow
 - [x] GradientEditor
 - [x] GradientText
-- [ ] Grid
-- [ ] HUE_NAMES
+- [ ] Grid — internal glyph grid of EmojiPicker/IconPicker
+- [ ] HUE_NAMES — hue-name constant table for color pickers
 - [x] Heading
 - [x] HeatmapTable
-- [ ] HelpTooltip
+- [x] HelpTooltip
 - [x] Highlight
-- [ ] History
-- [ ] Hosted
+- [ ] History — undo/redo history entity behind text inputs
 - [x] IconButton
 - [x] IconPicker
-- [ ] Image
+- [x] Image
 - [x] InfiniteList
 - [x] InlineEdit
 - [x] InlineMessage
 - [x] Input
-- [ ] InputAddon
+- [x] InputAddon
 - [x] InputGroup
-- [ ] IntersectionObserver
+- [x] IntersectionObserver
 - [x] Kbd
 - [x] KbdCombo
 - [x] KeyValueInput
 - [x] KpiCard
-- [ ] LEADING
-- [ ] LOCALES
+- [ ] LOCALES — locale constant table
 - [x] Label
 - [x] LazyLoad
 - [x] Lightbox
@@ -364,13 +357,12 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] MaskedInput
 - [x] Masonry
 - [x] MasterDetail
-- [ ] Measure
-- [ ] Menu
-- [ ] MenuItem
+- [x] Measure
+- [ ] Menu — menu model — DropdownMenu/ContextMenu own it via OwnedMenu
+- [ ] MenuItem — menu item descriptor consumed by menu `items` props
 - [x] Meter
 - [x] MiddleEllipsis
-- [ ] MiniWindow
-- [ ] Mix
+- [ ] Mix — gradient color-stop pair for GradientEditor
 - [x] MonthPicker
 - [x] NavGroup
 - [x] NavItem
@@ -378,11 +370,11 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] NotificationCenter
 - [x] NumberInput
 - [x] OfflineIndicator
-- [ ] OnClimb
-- [ ] OnFold
+- [ ] OnClimb — `Rc<dyn Fn>` breadcrumb-climb callback alias
+- [ ] OnFold — `Rc<dyn Fn>` section-fold callback alias
 - [x] OverflowMenu
 - [x] Overline
-- [ ] PICTURES
+- [ ] PICTURES — sample-picture constant table for demos
 - [x] Page
 - [x] Pagination
 - [x] PaneGroup
@@ -392,15 +384,15 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] Paragraph
 - [x] ParticleBackground
 - [x] PasswordInput
-- [ ] Paste
+- [ ] Paste — gpui `Action` — paste command, not a widget
 - [x] PathInput
 - [x] Peek
 - [x] PhoneInput
-- [ ] Pick
-- [ ] PieItem
+- [ ] Pick — selection enum + `Rc` pick-callback alias
+- [ ] PieItem — PieMenu sector descriptor
 - [x] PieMenu
-- [ ] Place
-- [ ] Presence
+- [ ] Place — positioning enum (Center/Left/Right/Top/Bottom)
+- [ ] Presence — Avatar presence enum — set via `presence` prop
 - [x] ProgressBar
 - [x] ProgressRing
 - [x] PromptDialog
@@ -409,31 +401,30 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] Pulse
 - [x] QrCode
 - [x] QuarterPicker
-- [ ] QuickOpen
-- [ ] QuickSwitcher
+- [x] QuickOpen
+- [x] QuickSwitcher
 - [x] Radio
 - [x] RadioCard
 - [x] RadioGroup
-- [ ] Raised
+- [ ] Raised — elevation/style enum
 - [x] RangeSlider
-- [ ] Refresh
+- [ ] Refresh — RefreshIndicator `state` enum (Idle/Pulling/Refreshing/Done)
 - [x] RefreshIndicator
 - [x] RegexInput
 - [x] RelativeDatePicker
 - [x] Release
 - [x] Ripple
-- [ ] Row
 - [x] SavingIndicator
-- [ ] ScrollModel
-- [ ] ScrollPlace
+- [ ] ScrollModel — virtual-scroll state model behind VirtualList/InfiniteList
+- [ ] ScrollPlace — scroll-position value type
 - [x] ScrollShadow
 - [x] ScrollToTop
 - [x] ScrubInput
 - [x] SearchableMenu
 - [x] Section
 - [x] Sections
-- [ ] SelectAll
-- [ ] Selectable
+- [ ] SelectAll — gpui `Action` — select-all command, not a widget
+- [ ] Selectable — trait — selection support
 - [x] SelectableList
 - [x] Shake
 - [x] Sheet
@@ -442,21 +433,18 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] ShimmerText
 - [x] SignaturePad
 - [x] SimpleGrid
-- [ ] Sizable
+- [ ] Sizable — trait — `size` prop support
 - [x] Skeleton
 - [x] SkeletonAvatar
 - [x] SkeletonCard
 - [x] SkeletonTable
 - [x] SkeletonText
 - [x] Slider
-- [ ] SortKey
 - [x] Sparkline
 - [x] Spinner
-- [ ] SplashScreen
 - [x] SplitButton
 - [x] SplitPane
-- [ ] Spot
-- [ ] Spotlight
+- [ ] Spot — Spotlight/Tour target descriptor needing live Bounds
 - [x] Spreadsheet
 - [x] Stagger
 - [x] Stars
@@ -466,20 +454,19 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] StatusMessage
 - [x] Steps
 - [x] StickyHeader
-- [ ] Stroke
+- [ ] Stroke — `Vec<Point<Pixels>>` alias — signature ink data
 - [x] Subtitle
 - [x] Suspense
 - [x] SwipeableListItem
 - [x] SyncStatus
-- [ ] Syntax
+- [ ] Syntax — static language-rule table behind CodeInput (`syntax_of`)
 - [x] TabBar
-- [ ] TabPlacement
+- [ ] TabPlacement — Tabs placement enum (Top/Bottom/Left/Right)
 - [x] Table
 - [x] TableOfContents
 - [x] Tabs
 - [x] Tag
-- [ ] Test
-- [ ] TextInput
+- [ ] TextInput — input state entity; Forge inputs manage it internally
 - [x] TimePicker
 - [x] Timeline
 - [x] TimelineItem
@@ -491,16 +478,14 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] ToggleButton
 - [x] ToggleGroup
 - [x] ToggleItem
-- [ ] Tone
+- [ ] Tone — severity/color enum — set via `tone` props
 - [x] Toolbar
 - [x] ToolbarGroup
 - [x] ToolbarSeparator
-- [ ] Tooltip
-- [ ] Tour
+- [ ] Tooltip — content factory (`Tooltip::text`) for TooltipTrigger, not a widget
 - [x] Transform
 - [x] Tree
-- [ ] TreeNode
-- [ ] TreeRow
+- [ ] TreeNode — tree node value type — built from `nodes` props
 - [x] TreeSelect
 - [x] TreeTable
 - [x] TrendIndicator
@@ -508,25 +493,23 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] TypingIndicator
 - [x] UpdateBanner
 - [x] UpdateDialog
-- [ ] Upload
+- [ ] Upload — row value type consumed by UploadList `uploads`
 - [x] UploadList
 - [x] UrlInput
 - [x] UsageBar
 - [x] UserChip
 - [x] Viewport
 - [x] VirtualList
-- [ ] WORKSPACE_VERSION
+- [ ] WORKSPACE_VERSION — workspace-schema version constant
 - [x] Watermark
 - [x] Well
 - [x] WindowControls
-- [ ] WindowManager
-- [ ] WindowTab
 - [x] Wizard
-- [ ] Workspace
+- [ ] Workspace — dock capture/apply session JSON — `to_json`/`apply`, not a widget
 - [x] YearPicker
 - [x] ZStack
 - [x] ZoomControl
-- [ ] ZoomStep
+- [ ] ZoomStep — zoom-level value type behind ZoomControls
 - [x] Divider
 - [x] CopyButton
 - [x] SegmentedControl
@@ -629,6 +612,8 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] Reorder
 - [x] Transition
 
+- [x] `TooltipTrigger`
+- [x] `CommandPalette`
 ## guise Components
 
 docs: https://docs.rs/guise  

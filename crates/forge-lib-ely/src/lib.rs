@@ -54,16 +54,20 @@ use ely_core::motion::{
     SkeletonTable, SkeletonText, Spinner, SpinnerStyle, Stagger, Transition, TypingIndicator,
 };
 use ely_core::navigation::{
-    Anchor, BackForwardNavigation, Breadcrumb, Crumb, EditorTab, EditorTabs, GoToLine, LoadMore,
-    NavGroup, NavItem, NavigationMenu, Pagination, Sections as TocSections, Steps, TabOverflowMenu,
-    TabPlacement, TableOfContents, Tabs, Wizard,
+    Anchor, BackForwardNavigation, Breadcrumb, Command, CommandPalette, Crumb, EditorTab,
+    EditorTabs, GoToLine, LoadMore, NavGroup, NavItem, NavigationMenu, Pagination, QuickOpen,
+    QuickSwitcher, Sections as TocSections, Steps, TabOverflowMenu, TabPlacement, TableOfContents,
+    Tabs, Wizard,
 };
 use ely_core::overlays::{
     AlertDialog, ConfirmDialog, Dialog, FloatingToolbar, HoverCard, Lightbox, Peek, Popover,
     PromptDialog, Slide,
 };
 use ely_core::primitives::Disclosure;
-use ely_core::primitives::{Divider, Icon, IconName, Place, Severity};
+use ely_core::primitives::{
+    Backdrop, Divider, HelpTooltip, Icon, IconName, Image, IntersectionObserver, Measure, Place,
+    Severity, Tooltip, TooltipTrigger,
+};
 use ely_core::shell::{
     ActivityBar, ActivityItem, ColumnShell, Connectivity, CrashReporter, OfflineIndicator,
     ResizeBorder, ShellColumn, StatusBar, StatusBarItem, TabBar, TitleBar, Toolbar, ToolbarGroup,
@@ -4392,6 +4396,166 @@ impl ForgeLibrary for Ely {
                         .map(|v| v.into_any_element()),
                 );
                 Some(st.into_any_element())
+            }
+            "Image" => {
+                let src = prop_str(node, "source");
+                let mut img = Image::new(
+                    key.to_string(),
+                    gpui::ImageSource::Resource(gpui::Resource::Path(
+                        std::path::PathBuf::from(&src).into(),
+                    )),
+                );
+                if prop_bool(node, "cover") {
+                    img = img.fit(gpui::ObjectFit::Cover);
+                }
+                Some(img.into_any_element())
+            }
+            "TooltipTrigger" => {
+                let tip = prop_str(node, "tip");
+                let child = self
+                    .child_views(node, key, cx)
+                    .into_iter()
+                    .next()
+                    .map(|v| v.into_any_element())
+                    .unwrap_or_else(|| div().into_any_element());
+                Some(
+                    TooltipTrigger::new(key.to_string(), child, move |w, cx| {
+                        Tooltip::text(tip.clone())(w, cx).into_any_element()
+                    })
+                    .into_any_element(),
+                )
+            }
+            "HelpTooltip" => {
+                Some(HelpTooltip::new(key.to_string(), prop_str(node, "text")).into_any_element())
+            }
+            "Backdrop" => {
+                let mut b = Backdrop::new(key.to_string());
+                b = match prop_str(node, "place").as_str() {
+                    "Left" => b.place(Place::Left),
+                    "Right" => b.place(Place::Right),
+                    "Top" => b.place(Place::Top),
+                    "Bottom" => b.place(Place::Bottom),
+                    _ => b,
+                };
+                if let Some(h) = fire_str(view, node, "dismiss", cx) {
+                    b = b.on_dismiss(move |w, cx| h(String::new(), w, cx));
+                }
+                b.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(b.into_any_element())
+            }
+            "Measure" => {
+                let mut m = Measure::new(key.to_string(), |_bounds, _w, _cx| {});
+                if let Some(h) = fire_str(view, node, "measure", cx) {
+                    m = Measure::new(key.to_string(), move |bounds, w, cx| {
+                        h(
+                            format!(
+                                "{},{},{},{}",
+                                bounds.origin.x,
+                                bounds.origin.y,
+                                bounds.size.width,
+                                bounds.size.height
+                            ),
+                            w,
+                            cx,
+                        );
+                    });
+                }
+                m.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(m.into_any_element())
+            }
+            "IntersectionObserver" => {
+                let mut o = IntersectionObserver::new(key.to_string(), |_vis, _w, _cx| {});
+                if let Some(h) = fire_str(view, node, "visible", cx) {
+                    o = IntersectionObserver::new(key.to_string(), move |vis, w, cx| {
+                        h(vis.to_string(), w, cx);
+                    });
+                }
+                o.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(o.into_any_element())
+            }
+            "InputAddon" => {
+                let body = self
+                    .child_views(node, key, cx)
+                    .into_iter()
+                    .next()
+                    .map(|v| v.into_any_element())
+                    .unwrap_or_else(|| {
+                        ely_core::typography::Label::new(prop_str(node, "text")).into_any_element()
+                    });
+                Some(InputAddon::new(body).into_any_element())
+            }
+            "CommandPalette" => {
+                let mut p = CommandPalette::new(key.to_string(), move |_w, _cx| {});
+                if let Some(h) = fire_str(view, node, "close", cx) {
+                    p = CommandPalette::new(key.to_string(), move |w, cx| {
+                        h(String::new(), w, cx);
+                    });
+                }
+                for group in prop_list(node, "groups") {
+                    if let Some((title, items)) = group.split_once('|') {
+                        p = p.group(
+                            title.to_string(),
+                            items
+                                .split(';')
+                                .filter(|s| !s.is_empty())
+                                .map(|s| {
+                                    let (v, l) = s.split_once(':').unwrap_or((s, s));
+                                    Command::new(v.to_string(), l.to_string())
+                                })
+                                .collect::<Vec<_>>(),
+                        );
+                    }
+                }
+                let recent = prop_list(node, "recent");
+                if !recent.is_empty() {
+                    p = p.recent(recent);
+                }
+                if let Some(h) = fire_str(view, node, "run", cx) {
+                    p = p.on_run(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                Some(p.into_any_element())
+            }
+            "QuickOpen" => {
+                let paths = prop_list(node, "paths");
+                let mut q = QuickOpen::new(key.to_string(), paths, move |_w, _cx| {});
+                if let Some(h) = fire_str(view, node, "close", cx) {
+                    q = QuickOpen::new(key.to_string(), prop_list(node, "paths"), move |w, cx| {
+                        h(String::new(), w, cx);
+                    });
+                    let recent = prop_list(node, "recent");
+                    if !recent.is_empty() {
+                        q = q.recent(recent);
+                    }
+                    if let Some(h) = fire_str(view, node, "open", cx) {
+                        q = q.on_open(move |v, w, cx| h(v.to_string(), w, cx));
+                    }
+                }
+                Some(q.into_any_element())
+            }
+            "QuickSwitcher" => {
+                let items = choices(node);
+                let mut q = QuickSwitcher::new(key.to_string(), items.clone(), move |_w, _cx| {});
+                if let Some(h) = fire_str(view, node, "close", cx) {
+                    q = QuickSwitcher::new(key.to_string(), items.clone(), move |w, cx| {
+                        h(String::new(), w, cx);
+                    });
+                    if let Some(h) = fire_str(view, node, "switch", cx) {
+                        q = q.on_switch(move |v, w, cx| h(v.to_string(), w, cx));
+                    }
+                }
+                Some(q.into_any_element())
             }
             _ => None,
         }

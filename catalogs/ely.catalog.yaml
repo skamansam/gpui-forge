@@ -3002,3 +3002,100 @@ elements:
       entrance:
         type: enum
         values: [Fade, Rise, Slide]
+
+  Image:
+    icon: image
+    group: Data Display
+    summary: "Image from a `source` path/URL — `cover` for ObjectFit::Cover."
+    component: ely_core::primitives::Image
+    children: none
+    props:
+      source: string
+      cover: bool
+
+  TooltipTrigger:
+    icon: message-square
+    group: Overlays
+    summary: "Wraps its child; `tip` text shows on hover."
+    component: ely_core::primitives::TooltipTrigger
+    children: any
+    props:
+      tip: string
+
+  HelpTooltip:
+    icon: circle-help
+    group: Overlays
+    summary: "? mark with a hover tooltip — `text`."
+    component: ely_core::primitives::HelpTooltip
+    children: none
+    props:
+      text: string
+
+  Backdrop:
+    icon: square
+    group: Overlays
+    summary: "Dim backdrop under/around children — `place` pins an edge; `dismiss` fires on click."
+    component: ely_core::primitives::Backdrop
+    children: any
+    props:
+      place:
+        type: enum
+        values: [Center, Left, Right, Top, Bottom]
+    events: {dismiss:}
+
+  Measure:
+    icon: ruler
+    group: Primitives
+    summary: "Wraps children; `measure` fires `x,y,w,h` when bounds change."
+    component: ely_core::primitives::Measure
+    children: any
+    events: {measure:}
+
+  IntersectionObserver:
+    icon: eye
+    group: Primitives
+    summary: "Wraps children; `visible` fires true/false on scroll intersection."
+    component: ely_core::primitives::IntersectionObserver
+    children: any
+    events: {visible:}
+
+  InputAddon:
+    icon: text-cursor-input
+    group: Forms
+    summary: "Addon chip inside an InputGroup — first child or `text`."
+    component: ely_core::forms::InputAddon
+    children: any
+    props:
+      text: string
+
+  CommandPalette:
+    icon: terminal
+    group: Navigation
+    summary: "Command palette — `groups` 'title|val:label;val:label', `recent` list; `run`, `close`."
+    component: ely_core::navigation::CommandPalette
+    children: none
+    props:
+      groups: list<string>
+      recent: list<string>
+    events: {run:, close:}
+
+  QuickOpen:
+    icon: file-search
+    group: Navigation
+    summary: "File palette over `paths`, `recent` list; `open`, `close`."
+    component: ely_core::navigation::QuickOpen
+    children: none
+    props:
+      paths: list<string>
+      recent: list<string>
+    events: {open:, close:}
+
+  QuickSwitcher:
+    icon: list-checks
+    group: Navigation
+    summary: "Item switcher over `options`; `switch`, `close`."
+    component: ely_core::navigation::QuickSwitcher
+    children: none
+    props:
+      options: list<string>
+    events: {switch:, close:}
