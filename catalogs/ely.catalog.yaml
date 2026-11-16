@@ -288,7 +288,7 @@ elements:
     icon: tag
     group: Display
     summary: Ely tag/chip label.
-    component: ely_core::primitives::Tag
+    component: ely_core::data_display::Tag
     content: label
     children: none
     props: {label: string}
@@ -351,3 +351,227 @@ elements:
     summary: Ely z-stacked layers (children overlap).
     component: ely_core::layout::ZStack
     children: any
+  Collapsible:
+    icon: circle-dot
+    group: Layout
+    summary: "Collapsible — `use: ely`."
+    component: ely_core::layout::Collapsible
+    children: any
+
+  Disclosure:
+    icon: circle-dot
+    group: Primitives
+    summary: "Disclosure — `use: ely`."
+    component: ely_core::primitives::Disclosure
+    children: any
+
+  Sidebar:
+    icon: circle-dot
+    group: Layout
+    summary: "Sidebar — `use: ely`."
+    component: ely_core::layout::Sidebar
+    children: any
+
+  Radio:
+    icon: circle-dot
+    group: Forms
+    summary: "Radio — `use: ely`."
+    component: ely_core::forms::Radio
+    children: any
+
+  RadioCard:
+    icon: circle-dot
+    group: Forms
+    summary: "RadioCard — `use: ely`."
+    component: ely_core::forms::RadioCard
+    children: any
+
+  Checkbox:
+    icon: circle-dot
+    group: Forms
+    summary: "Checkbox — `use: ely`."
+    component: ely_core::forms::Checkbox
+    children: any
+
+  Slider:
+    icon: circle-dot
+    group: Forms
+    summary: "Slider — `use: ely`."
+    component: ely_core::forms::Slider
+    children: any
+
+  Knob:
+    icon: circle-dot
+    group: Forms
+    summary: "Knob — `use: ely`."
+    component: ely_core::forms::Knob
+    children: any
+
+  ProgressBar:
+    icon: circle-dot
+    group: Motion
+    summary: "ProgressBar — `use: ely`."
+    component: ely_core::motion::ProgressBar
+    children: any
+
+  NumberInput:
+    icon: circle-dot
+    group: Forms
+    summary: "NumberInput — `use: ely`."
+    component: ely_core::forms::NumberInput
+    children: any
+
+  Pagination:
+    icon: circle-dot
+    group: Navigation
+    summary: "Pagination — `use: ely`."
+    component: ely_core::navigation::Pagination
+    children: any
+
+  PinInput:
+    icon: circle-dot
+    group: Forms
+    summary: "PinInput — `use: ely`."
+    component: ely_core::forms::PinInput
+    children: any
+
+  ListItem:
+    icon: circle-dot
+    group: Lists
+    summary: "ListItem — `use: ely`."
+    component: ely_core::lists::ListItem
+    children: any
+
+  GroupedList:
+    icon: circle-dot
+    group: Lists
+    summary: "GroupedList — `use: ely`."
+    component: ely_core::lists::GroupedList
+    children: any
+
+  Form:
+    icon: circle-dot
+    group: Forms
+    summary: "Form — `use: ely`."
+    component: ely_core::forms::Form
+    children: any
+
+  Skeleton:
+    icon: circle-dot
+    group: Motion
+    summary: "Skeleton — `use: ely`."
+    component: ely_core::motion::Skeleton
+    children: any
+
+  Reorder:
+    icon: circle-dot
+    group: Motion
+    summary: "Reorder — `use: ely`."
+    component: ely_core::motion::Reorder
+    children: any
+
+  Toolbar:
+    icon: circle-dot
+    group: Shell
+    summary: "Toolbar — `use: ely`."
+    component: ely_core::shell::Toolbar
+    children: any
+
+  Panel:
+    icon: circle-dot
+    group: Layout
+    summary: "Panel — `use: ely`."
+    component: ely_core::layout::Panel
+    children: any
+
+  Fieldset:
+    icon: circle-dot
+    group: Layout
+    summary: "Fieldset — `use: ely`."
+    component: ely_core::layout::Fieldset
+    children: any
+
+  Section:
+    icon: circle-dot
+    group: Layout
+    summary: "Section — `use: ely`."
+    component: ely_core::layout::Section
+    children: any
+
+  Code:
+    icon: circle-dot
+    group: Typography
+    summary: "Code — `use: ely`."
+    component: ely_core::typography::Code
+    children: any
+
+  CopyableText:
+    icon: circle-dot
+    group: Typography
+    summary: "CopyableText — `use: ely`."
+    component: ely_core::typography::CopyableText
+    children: any
+
+  PercentText:
+    icon: circle-dot
+    group: Typography
+    summary: "PercentText — `use: ely`."
+    component: ely_core::typography::PercentText
+    children: any
+
+  NumberText:
+    icon: circle-dot
+    group: Typography
+    summary: "NumberText — `use: ely`."
+    component: ely_core::typography::NumberText
+    children: any
+
+  InlineEdit:
+    icon: circle-dot
+    group: Forms
+    summary: "InlineEdit — `use: ely`."
+    component: ely_core::forms::InlineEdit
+    children: any
+
+  NavItem:
+    icon: circle-dot
+    group: Navigation
+    summary: "NavItem — `use: ely`."
+    component: ely_core::navigation::NavItem
+    children: any
+
+  Notification:
+    icon: circle-dot
+    group: Feedback
+    summary: "Notification — `use: ely`."
+    component: ely_core::feedback::Notification
+    children: any
+
+  HotkeyInput:
+    icon: circle-dot
+    group: Forms
+    summary: "HotkeyInput — `use: ely`."
+    component: ely_core::forms::HotkeyInput
+    children: any
+
+  Select:
+    icon: circle-dot
+    group: Forms
+    summary: "Select — `use: ely`."
+    component: ely_core::forms::Select
+    children: any
+
+  MultiSelect:
+    icon: circle-dot
+    group: Forms
+    summary: "MultiSelect — `use: ely`."
+    component: ely_core::forms::MultiSelect
+    children: any
+
+  ChoiceChips:
+    icon: circle-dot
+    group: Forms
+    summary: "ChoiceChips — `use: ely`."
+    component: ely_core::forms::ChoiceChips
+    children: any
+

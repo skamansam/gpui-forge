@@ -69,5 +69,5 @@ widget set like `ely`) or a `.forge.yaml` path to open.
 The Start tab offers starters: the Start screen, the gpui-kit component
 gallery, and a blank document. A widget-set Select opens the showcase for
 any registered set (`ely`, `gc`, `gflow`, `base`, `video`, `hig`, `pdf`, `wb`,
-`math`). The other bases' demos (`ratatui`, `iced`, `bezel`, `gpui02`,
+`math`). The other bases' demos (`ratatui`, `iced`, `bezel`, `guise`,
 `adabraka`) ship in `examples/showcases/` — open them with Open….

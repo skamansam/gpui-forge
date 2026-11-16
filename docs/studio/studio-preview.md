@@ -36,7 +36,7 @@ canvas:
 ```
 
 The base's map applies even when the foreign element shares a gpui-kit
-name — `gpui02.Badge` still renders as `Tag`, not the kit `Badge` (a
+name — `guise.Badge` still renders as `Tag`, not the kit `Badge` (a
 numeric count badge).
 
 The **State** tab (`forge.Vars`) lists every `{$path}` variable bound in the
@@ -59,7 +59,7 @@ This is how bases without an in-process twin preview from Studio. `ratatui`
 draws through a real `CrosstermBackend` into a byte sink and streams the ANSI
 output — the same bytes a terminal would get — back as `preview.frame`
 chunks; Studio folds them through `forge-term`'s `alacritty_terminal`
-emulator and paints styled cells in the card. `iced`/`gpui02`/`adabraka`/
+emulator and paints styled cells in the card. `iced`/`guise`/`adabraka`/
 `bezel` open real native windows, and `gpui-kit` itself can run in-host when
 you want the genuine platform event loop.
 
@@ -104,7 +104,7 @@ Studio's own Theme tab uses the same mechanism — `studio.forge.yaml`'s
 - **inline** — same-generation `gpui-kit` documents (gpui-kit itself and
   the ely/hig/gc/gflow/math/pdf/gpui-base demos) render in a nested
   `forge.Preview` inside the preview area, no host process at all.
-- **message card** — foreign-base windowed hosts (gpui02, bezel,
+- **message card** — foreign-base windowed hosts (guise, bezel,
   adabraka, iced) get a plain `remote:` pane whose card says the preview
   lives in a separate window; a different GPUI generation can't
   composite into Studio's scene graph.
@@ -133,7 +133,7 @@ theme API accepts:
 - **gpui-kit** resolves the name in its own `ThemeRegistry` (keeping
   token gradients); when the name misses it deserializes `colors` back
   into the same `ThemeColor` type — byte-identical values.
-- **gpui02** maps semantic overrides onto guise: `accent→primary`,
+- **guise** maps semantic overrides onto guise: `accent→primary`,
   `background→body`, `popover→surface`, `muted→surface_hover`,
   `foreground→text`, `muted_foreground→dimmed`, `border`, and
   `success`/`warning`/`danger`/`info` to their named slots.

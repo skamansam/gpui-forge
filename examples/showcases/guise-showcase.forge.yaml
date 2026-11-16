@@ -1,4 +1,4 @@
-$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui02.json
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/guise.json
 forge: "0.1"
 state:
   sel: string
@@ -6,15 +6,15 @@ state:
   sw: bool
   q: string
 
-base: gpui02
+base: guise
 meta:
-  title: gpui02 showcase
+  title: guise showcase
 
 root:
   VStack:
   style: {padding: 16px, gap: 12px}
   children:
-      - Title: "gpui02 showcase — every guise widget"
+      - Title: "guise showcase — every guise widget"
         order: H2
       - Paper:
         children:

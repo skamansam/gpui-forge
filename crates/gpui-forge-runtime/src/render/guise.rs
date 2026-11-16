@@ -1,8 +1,8 @@
-//! `ForgeView` for the gpui02 base — crates.io `gpui 0.2.2` + guise (#96).
+//! `ForgeView` for the guise base — crates.io `gpui 0.2.2` + guise (#96).
 //!
 //! Same public contract as the gpui-kit twin: hosts drive `set_document`,
 //! `update_state`, `fire_call`, `preview`, pick/place/dnd flags and sinks
-//! identically. Element rendering maps the gpui02 catalog onto guise widgets
+//! identically. Element rendering maps the guise catalog onto guise widgets
 //! where their API is stable and gpui primitives elsewhere — `forge.*`
 //! intrinsics and two-way input widgets are stubs until the adapter port.
 
@@ -605,7 +605,7 @@ impl ForgeView {
                     }
                     return div().size_full().child(view).into_any_element();
                 }
-                return placeholder(format!("forge.{} — gpui02 stub", node.element.name));
+                return placeholder(format!("forge.{} — guise stub", node.element.name));
             }
             for lib in &self.libraries {
                 if lib.alias() == ns
@@ -889,7 +889,7 @@ impl ForgeView {
                 }
                 alert.into_any_element()
             }
-            _ => placeholder(format!("{} — no gpui02 renderer", node.element.name)),
+            _ => placeholder(format!("{} — no guise renderer", node.element.name)),
         }
     }
 

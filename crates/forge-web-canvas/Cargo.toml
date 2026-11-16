@@ -19,7 +19,6 @@ base-gpui-kit = [
     # (GStreamer), whiteboard and flow (their views don't paint on the web
     # platform) — their elements fall back to the "not provided" placeholder.
     "dep:forge-lib-ely",
-    "dep:forge-lib-gpui-component",
     "dep:forge-lib-zorite",
     "dep:forge-lib-hig",
     "dep:forge-lib-base",
@@ -43,7 +42,6 @@ gpui-web = { package = "bezel-gpui-web", version = "0.3.21", optional = true }
 serde_json = "1"
 # Widget-set adapters registered on the canvas ForgeView (examples/*.forge.yaml demos).
 forge-lib-ely = { path = "../forge-lib-ely", optional = true }
-forge-lib-gpui-component = { path = "../forge-lib-gpui-component", optional = true }
 forge-lib-zorite = { path = "../forge-lib-zorite", optional = true, default-features = false, features = ["pdf", "math"] }
 forge-lib-hig = { path = "../forge-lib-hig", optional = true }
 forge-lib-base = { path = "../forge-lib-base", optional = true }

@@ -9,18 +9,18 @@ pub const BASE_ID: &str = "gpui-kit";
 pub use gpui_kit as kit;
 
 /// Identifier of the active base, as written in a project's `forge.toml`.
-#[cfg(all(feature = "base-gpui02", not(feature = "base-gpui-kit")))]
-pub const BASE_ID: &str = "gpui02";
+#[cfg(all(feature = "base-guise", not(feature = "base-gpui-kit")))]
+pub const BASE_ID: &str = "guise";
 
-/// The gpui02 base's component crate (guise on crates.io gpui 0.2.2).
-#[cfg(all(feature = "base-gpui02", not(feature = "base-gpui-kit")))]
+/// The guise base's component crate (guise on crates.io gpui 0.2.2).
+#[cfg(all(feature = "base-guise", not(feature = "base-gpui-kit")))]
 pub use guise as kit;
 
 /// Identifier of the active base, as written in a project's `forge.toml`.
 #[cfg(all(
     feature = "base-bezel",
     not(feature = "base-gpui-kit"),
-    not(feature = "base-gpui02"),
+    not(feature = "base-guise"),
     not(feature = "base-adabraka")
 ))]
 pub const BASE_ID: &str = "bezel";
@@ -29,7 +29,7 @@ pub const BASE_ID: &str = "bezel";
 #[cfg(all(
     feature = "base-bezel",
     not(feature = "base-gpui-kit"),
-    not(feature = "base-gpui02"),
+    not(feature = "base-guise"),
     not(feature = "base-adabraka")
 ))]
 pub use bezel as kit;
@@ -38,7 +38,7 @@ pub use bezel as kit;
 #[cfg(all(
     feature = "base-ratatui",
     not(feature = "base-gpui-kit"),
-    not(feature = "base-gpui02"),
+    not(feature = "base-guise"),
     not(feature = "base-bezel"),
     not(feature = "base-adabraka")
 ))]
@@ -48,7 +48,7 @@ pub const BASE_ID: &str = "ratatui";
 #[cfg(all(
     feature = "base-ratatui",
     not(feature = "base-gpui-kit"),
-    not(feature = "base-gpui02"),
+    not(feature = "base-guise"),
     not(feature = "base-bezel"),
     not(feature = "base-adabraka")
 ))]
@@ -58,7 +58,7 @@ pub use ratatui as kit;
 #[cfg(all(
     feature = "base-iced",
     not(feature = "base-gpui-kit"),
-    not(feature = "base-gpui02"),
+    not(feature = "base-guise"),
     not(feature = "base-bezel"),
     not(feature = "base-adabraka"),
     not(feature = "base-ratatui")
@@ -69,7 +69,7 @@ pub const BASE_ID: &str = "iced";
 #[cfg(all(
     feature = "base-iced",
     not(feature = "base-gpui-kit"),
-    not(feature = "base-gpui02"),
+    not(feature = "base-guise"),
     not(feature = "base-bezel"),
     not(feature = "base-adabraka"),
     not(feature = "base-ratatui")

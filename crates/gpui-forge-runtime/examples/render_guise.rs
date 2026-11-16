@@ -1,7 +1,7 @@
-//! `cargo run -p gpui-forge-runtime --no-default-features --features base-gpui02
-//!   --example render_gpui02 -- <doc.forge.yaml>`
+//! `cargo run -p gpui-forge-runtime --no-default-features --features base-guise
+//!   --example render_guise -- <doc.forge.yaml>`
 //!
-//! Renders a Forge document on the gpui02 base — crates.io gpui 0.2.2 + guise —
+//! Renders a Forge document on the guise base — crates.io gpui 0.2.2 + guise —
 //! the second-base proof: same ForgeView contract, a completely different GPUI
 //! graph behind it (#96).
 
@@ -25,7 +25,7 @@ impl Render for Host {
 
 fn main() {
     let Some(path) = std::env::args().nth(1) else {
-        eprintln!("usage: render_gpui02 <doc.forge.yaml>");
+        eprintln!("usage: render_guise <doc.forge.yaml>");
         std::process::exit(2);
     };
     let src = std::fs::read_to_string(&path).expect("cannot read document");
@@ -34,10 +34,10 @@ fn main() {
         .map(|p| p.to_path_buf());
     Application::new().run(move |cx| {
         let bounds = Bounds::centered(None, size(px(800.0), px(600.0)), cx);
-        let title = format!("Forge (gpui02 · guise) — {path}");
+        let title = format!("Forge (guise · guise) — {path}");
         cx.open_window(
             WindowOptions {
-                app_id: Some("forge-render-gpui02".into()),
+                app_id: Some("forge-render-guise".into()),
                 window_bounds: Some(WindowBounds::Windowed(bounds)),
                 titlebar: Some(gpui::TitlebarOptions {
                     title: Some(title.into()),

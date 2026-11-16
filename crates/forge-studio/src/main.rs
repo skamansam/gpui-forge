@@ -14,9 +14,10 @@ use gpui_forge_runtime::forge_spec::Document;
 use gpui_forge_runtime::forge_spec::catalog::Catalog;
 use gpui_forge_runtime::forge_spec::value::parse_path;
 use gpui_forge_runtime::forge_spec::{
-    Control, Diagnostic, ElementRef, Node, Value, path_steps, path_string, yaml,
+    Control, Diagnostic, ElementRef, Entries, Node, Unit, Value, path_steps, path_string, yaml,
 };
-use gpui_forge_runtime::render::{ForgeView, get_path, pane_state_path, set_path};
+use gpui_forge_runtime::render::{ForgeView, ResizableDialog, get_path, pane_state_path, set_path};
+use gpui_kit::component::Placement;
 use gpui_kit::component::WindowExt as _;
 use gpui_kit::component::theme::ActiveTheme as _;
 use gpui_kit::component::theme::ThemeSet;
@@ -32,7 +33,6 @@ const BLANK: &str = "$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit
 
 // One demo per widget set, shared with `examples/` and the docs site (#129).
 const EXAMPLE_ELY: &str = include_str!("../../../examples/demos/ely-demo.forge.yaml");
-const EXAMPLE_GC: &str = include_str!("../../../examples/showcases/gc-showcase.forge.yaml");
 const EXAMPLE_GFLOW: &str = include_str!("../../../examples/demos/gflow-demo.forge.yaml");
 const EXAMPLE_BASE: &str = include_str!("../../../examples/demos/base-demo.forge.yaml");
 const EXAMPLE_VIDEO: &str = include_str!("../../../examples/demos/video-demo.forge.yaml");
@@ -41,7 +41,7 @@ const EXAMPLE_WB: &str = include_str!("../../../examples/demos/whiteboard-demo.f
 const EXAMPLE_MATH: &str = include_str!("../../../examples/demos/math-demo.forge.yaml");
 const EXAMPLE_HIG: &str = include_str!("../../../examples/demos/hig-demo.forge.yaml");
 // Foreign-base showcases — they render in the base's own preview host.
-const EXAMPLE_GPUI02: &str = include_str!("../../../examples/showcases/gpui02-showcase.forge.yaml");
+const EXAMPLE_GUISE: &str = include_str!("../../../examples/showcases/guise-showcase.forge.yaml");
 const EXAMPLE_BEZEL: &str = include_str!("../../../examples/showcases/bezel-showcase.forge.yaml");
 const EXAMPLE_RATATUI: &str =
     include_str!("../../../examples/showcases/ratatui-showcase.forge.yaml");
@@ -55,12 +55,11 @@ const PREVIEW_BASES: &[&str] = &[
     "gpui-kit",
     "ely",
     "hig",
-    "gc",
     "gflow",
     "math",
     "pdf",
     "gpui-base",
-    "gpui02",
+    "guise",
     "bezel",
     "adabraka",
     "iced",
@@ -71,8 +70,8 @@ const PREVIEW_BASES: &[&str] = &[
 /// gpui-kit base, the `forge` intrinsics, every registered `forge-lib-*`.
 /// Then the foreign-base showcases (they launch their preview host).
 const WIDGET_SETS: &[&str] = &[
-    "gpui-kit", "forge", "ely", "gc", "gflow", "base", "video", "hig", "pdf", "wb", "math",
-    "gpui02", "bezel", "ratatui", "iced", "adabraka",
+    "gpui-kit", "forge", "ely", "gflow", "base", "video", "hig", "pdf", "wb", "math", "guise",
+    "bezel", "ratatui", "iced", "adabraka",
 ];
 
 struct Shared {
@@ -292,7 +291,6 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     refresh_recent_menu(&mut view, &load_recents(), cx);
 
     view.register_library(forge_lib_ely::Ely::new());
-    view.register_library(forge_lib_gpui_component::GpuiComponent);
     view.register_library(forge_lib_video::VideoPlayer::new());
     view.register_library(forge_lib_zorite::Pdf::new());
     view.register_library(forge_lib_zorite::Whiteboard::new());
@@ -373,6 +371,28 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
                     .get("theme_preview")
                     .and_then(|j| j.as_str())
                     .unwrap_or(BASE_ID),
+                // `forge.Files` options — Preferences → Files writes these;
+                // persisted across launches via the prefs file.
+                "files_search": prefs
+                    .get("files_search")
+                    .and_then(|j| j.as_bool())
+                    .unwrap_or(true),
+                "files_icons": prefs
+                    .get("files_icons")
+                    .and_then(|j| j.as_bool())
+                    .unwrap_or(true),
+                "files_hidden": prefs
+                    .get("files_hidden")
+                    .and_then(|j| j.as_bool())
+                    .unwrap_or(false),
+                "files_folders": prefs
+                    .get("files_folders")
+                    .and_then(|j| j.as_str())
+                    .unwrap_or("tree"),
+                "files_highlights": prefs
+                    .get("files_highlights")
+                    .and_then(|j| j.as_str())
+                    .unwrap_or("*.forge.yaml = bold; *.json = green"),
                 "file": "welcome.forge.yaml",
                 "diagnostics": "",
                 "widget_sets": WIDGET_SETS,
@@ -406,6 +426,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "reset_theme",
         "cycle_preview_base",
         "persist_preview_base",
+        "persist_prefs",
         "source_changed",
         "copy_snippet",
         "insert_component",
@@ -556,6 +577,45 @@ fn open_dialog(
         view.report(format!("dialog `{name}` not found"));
         return;
     };
+    // `resizable: true` wraps the dialog in a `ResizableDialog` — the declared
+    // width/height become its *initial* size and the root fills it (`full`) so
+    // the corner grip can move the card's edges.
+    let resizable = node
+        .props
+        .iter()
+        .any(|(k, v)| k == "resizable" && matches!(v, Value::Bool(true)));
+    // `sheet: true` opens the declaration as an edge sheet instead of a
+    // centered dialog; `placement:` picks the edge (default `right`).
+    let sheet = node
+        .props
+        .iter()
+        .any(|(k, v)| k == "sheet" && matches!(v, Value::Bool(true)));
+    let placement = node
+        .props
+        .iter()
+        .find_map(|(k, v)| match (k.as_str(), v) {
+            ("placement", Value::String(s) | Value::Enum(s)) => Some(match s.as_str() {
+                "top" => Placement::Top,
+                "bottom" => Placement::Bottom,
+                "left" => Placement::Left,
+                _ => Placement::Right,
+            }),
+            _ => None,
+        })
+        .unwrap_or(Placement::Right);
+    let mut style = node.style.clone();
+    let initial = resizable.then(|| {
+        let size = size(
+            style_px(&style, "width").unwrap_or(px(560.)),
+            style_px(&style, "height").unwrap_or(px(400.)),
+        );
+        for (key, value) in &mut style {
+            if key == "width" || key == "height" {
+                *value = Value::Enum("full".into());
+            }
+        }
+        size
+    });
     let catalogs = view.catalogs.clone();
     let libraries = view.libraries.clone();
     let shell = cx.entity().downgrade();
@@ -607,7 +667,7 @@ fn open_dialog(
                         namespace: None,
                         name: "VStack".into(),
                     },
-                    style: node.style.clone(),
+                    style: style.clone(),
                     children: node.children.clone(),
                     ..Default::default()
                 },
@@ -634,19 +694,45 @@ fn open_dialog(
     // Handles can't be `update`d from in here because the window is taken out of
     // the slot map for the duration. A foreground task runs after the update
     // finishes, when the window is live again.
+    //
+    // `ResizableDialog` is created here, not in the builder — `open_dialog`'s
+    // builder is `Fn` and can re-run; a fresh entity each call would lose the
+    // in-progress drag size.
+    let resizable = initial.map(|initial| {
+        cx.new(|_| ResizableDialog::new(child.clone(), initial, size(px(480.), px(320.))))
+    });
     let app = cx.to_async();
-    let title = SharedString::from(name.clone());
+    let title = SharedString::from(dialog_title(&node).unwrap_or_else(|| name.clone()));
     cx.foreground_executor()
         .spawn(async move {
             let opened = app.update(|cx| {
                 for handle in cx.windows() {
                     let title = title.clone();
                     let child = child.clone();
+                    let resizable = resizable.clone();
                     if handle
                         .update(cx, move |_, window, cx| {
-                            window.open_dialog(cx, move |dialog, _, _| {
-                                dialog.title(title.clone()).child(child.clone())
-                            });
+                            let content = {
+                                let child = child.clone();
+                                let resizable = resizable.clone();
+                                move || -> AnyElement {
+                                    match &resizable {
+                                        Some(resizable) => resizable.clone().into_any_element(),
+                                        None => child.clone().into_any_element(),
+                                    }
+                                }
+                            };
+                            if sheet {
+                                window.open_sheet_at(placement, cx, {
+                                    let title = title.clone();
+                                    move |sheet, _, _| sheet.title(title.clone()).child(content())
+                                });
+                            } else {
+                                window.open_dialog(cx, {
+                                    let title = title.clone();
+                                    move |dialog, _, _| dialog.title(title.clone()).child(content())
+                                });
+                            }
                         })
                         .is_ok()
                     {
@@ -660,6 +746,34 @@ fn open_dialog(
             }
         })
         .detach();
+}
+
+/// The `title:` prop on a `Dialog#id` declaration, if the author set one.
+fn dialog_title(node: &Node) -> Option<String> {
+    node.props.iter().find_map(|(k, v)| match (k.as_str(), v) {
+        ("title", Value::String(s) | Value::Enum(s)) => Some(s.clone()),
+        _ => None,
+    })
+}
+
+/// Reads a `width`/`height`-style entry as pixels — `px` and unitless numbers
+/// directly, `rem` at 16px. Anything else (`full`, `%`, missing) is `None` and
+/// the caller falls back to a default.
+fn style_px(style: &Entries, key: &str) -> Option<Pixels> {
+    style
+        .iter()
+        .find(|(k, _)| k == key)
+        .and_then(|(_, v)| match v {
+            Value::Number {
+                value,
+                unit: None | Some(Unit::Px),
+            } => Some(px(*value as f32)),
+            Value::Number {
+                value,
+                unit: Some(Unit::Rem),
+            } => Some(px(*value as f32 * 16.)),
+            _ => None,
+        })
 }
 
 /// `apply_theme_name('Theme name')` — the titlebar `Select` writes `studio.theme`
@@ -800,11 +914,30 @@ fn dispatch(
             }
         }
         // #148 — project tree clicks open into the Document tab (index 1),
-        // unlike recent/menu opens which land on the Canvas (index 2).
+        // unlike recent/menu opens which land on the Canvas (index 2). A
+        // `.json` that parses as a `ThemeSet` opens in the Theme editor
+        // (index 4) instead — loaded, not applied; Apply stays explicit.
         "open_path" => {
             if let Some(path) = args.first().map(PathBuf::from) {
-                load_file(path, view, shared.clone(), cx);
-                view.update_state(&parse_path("studio.tab").unwrap(), Json::from(1), cx);
+                let src = std::fs::read_to_string(&path).ok();
+                let theme = src
+                    .as_deref()
+                    .filter(|_| path.extension().is_some_and(|e| e == "json"))
+                    .and_then(|s| serde_json::from_str::<ThemeSet>(s).ok());
+                match theme {
+                    Some(_) => {
+                        view.update_state(
+                            &parse_path("studio.theme_json").unwrap(),
+                            Json::String(src.unwrap_or_default()),
+                            cx,
+                        );
+                        view.update_state(&parse_path("studio.tab").unwrap(), Json::from(4), cx);
+                    }
+                    None => {
+                        load_file(path, view, shared.clone(), cx);
+                        view.update_state(&parse_path("studio.tab").unwrap(), Json::from(1), cx);
+                    }
+                }
             }
         }
         // #148 — the project tree's right-click actions.
@@ -853,6 +986,9 @@ fn dispatch(
             }
         }
         "persist_preview_base" => save_prefs(view),
+        // Preferences → Files — bound `studio.files_*` changes flush to
+        // `~/.gpui-forge/settings.toml` on every control change.
+        "persist_prefs" => save_prefs(view),
         "source_changed" => reload(view, shared, cx),
         // copy_snippet/insert_component: registry hooks
         "place_component" => place_component(view, args, shared, cx),
@@ -911,10 +1047,6 @@ fn starter(name: &str) -> Option<(&'static str, &'static str)> {
         "forge" | "gallery.forge.forge.yaml" => ("gallery.forge.forge.yaml", GALLERY_FORGE),
         "blank" | "blank.forge.yaml" => ("blank.forge.yaml", BLANK),
         "ely" | "ely-demo.forge.yaml" => ("../../examples/demos/ely-demo.forge.yaml", EXAMPLE_ELY),
-        "gc" | "gc-showcase.forge.yaml" => (
-            "../../examples/showcases/gc-showcase.forge.yaml",
-            EXAMPLE_GC,
-        ),
         "gflow" | "gflow-demo.forge.yaml" => {
             ("../../examples/demos/gflow-demo.forge.yaml", EXAMPLE_GFLOW)
         }
@@ -933,9 +1065,9 @@ fn starter(name: &str) -> Option<(&'static str, &'static str)> {
             ("../../examples/demos/math-demo.forge.yaml", EXAMPLE_MATH)
         }
         "hig" | "hig-demo.forge.yaml" => ("../../examples/demos/hig-demo.forge.yaml", EXAMPLE_HIG),
-        "gpui02" | "gpui02-showcase.forge.yaml" => (
-            "../../examples/showcases/gpui02-showcase.forge.yaml",
-            EXAMPLE_GPUI02,
+        "guise" | "guise-showcase.forge.yaml" => (
+            "../../examples/showcases/guise-showcase.forge.yaml",
+            EXAMPLE_GUISE,
         ),
         "bezel" | "bezel-showcase.forge.yaml" => (
             "../../examples/showcases/bezel-showcase.forge.yaml",
@@ -1297,7 +1429,7 @@ fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<F
     // `load` for file-backed docs (also seeds the host's base_dir). Unsaved
     // documents go over `source` — the editor buffer is the document.
     let file = shared.borrow().file.clone();
-    // One host binary per base — `forge-preview-gpui02` for gpui02 docs, and
+    // One host binary per base — `forge-preview-guise` for guise docs, and
     // the plain `forge-preview` stays the gpui-kit host (#96).
     let base = get_path(view.state(), &parse_path("studio.doc_base").unwrap())
         .and_then(Json::as_str)
@@ -2476,10 +2608,36 @@ fn save_prefs(view: &ForgeView) {
         .and_then(|j| j.as_str())
         .unwrap_or_default()
         .to_owned();
+    // `forge.Files` options — the Preferences → Files page binds these.
+    let files = |key: &str| {
+        view.state()
+            .get("studio")
+            .and_then(|s| s.get(key))
+            .cloned()
+            .unwrap_or(Json::Null)
+    };
     if let Some(f) = prefs_file() {
         let _ = std::fs::create_dir_all(f.parent().unwrap());
         let mut body =
             format!("theme = \"{theme}\"\ndark = {dark}\ntheme_preview = \"{preview_base}\"\n");
+        let bool_pref = |v: &Json| {
+            if v.as_bool().unwrap_or(false) {
+                "true"
+            } else {
+                "false"
+            }
+        };
+        body += &format!(
+            "files_search = {}\nfiles_icons = {}\nfiles_hidden = {}\n",
+            bool_pref(&files("files_search")),
+            bool_pref(&files("files_icons")),
+            bool_pref(&files("files_hidden")),
+        );
+        let folders = files("files_folders");
+        let folders = folders.as_str().unwrap_or("tree");
+        let highlights = files("files_highlights");
+        let highlights = highlights.as_str().unwrap_or_default();
+        body += &format!("files_folders = \"{folders}\"\nfiles_highlights = \"{highlights}\"\n");
         // #150 — last observed geometry, when the poll task has seen any.
         if let Some(w) = *LAST_WINDOW.lock().unwrap() {
             body += &format!(
@@ -2705,56 +2863,31 @@ fn load_source(
     }
 }
 
-/// #148 — scan the project dir into `studio.files` for the sidebar's
-/// `forge.Files`: folders plus `*.forge.yaml`, dirs first, VCS and build
-/// noise skipped, depth- and entry-capped so a giant tree can't stall the UI.
+/// #148 — point the sidebar's `forge.Files` at `dir` and bust its scan cache:
+/// the component reads the filesystem itself, so the host only names the
+/// folder and bumps `studio.files_nonce` when the contents changed.
 fn refresh_files(view: &mut ForgeView, dir: &std::path::Path, cx: &mut Context<ForgeView>) {
-    const SKIP: &[&str] = &["target", "node_modules", "dist", "vendor", "build"];
-    fn scan(dir: &std::path::Path, depth: usize, budget: &mut usize) -> Vec<Json> {
-        if depth > 6 || *budget == 0 {
-            return Vec::new();
-        }
-        let Ok(rd) = std::fs::read_dir(dir) else {
-            return Vec::new();
-        };
-        let mut entries: Vec<(String, PathBuf, bool)> = rd
-            .filter_map(|e| e.ok())
-            .filter_map(|e| {
-                let name = e.file_name().to_string_lossy().into_owned();
-                let path = e.path();
-                let is_dir = path.is_dir();
-                if name.starts_with('.') || SKIP.contains(&name.as_str()) {
-                    return None;
-                }
-                if !is_dir && !name.ends_with(".forge.yaml") {
-                    return None;
-                }
-                Some((name, path, is_dir))
-            })
-            .collect();
-        entries.sort_by(|a, b| b.2.cmp(&a.2).then_with(|| a.0.cmp(&b.0)));
-        entries
-            .into_iter()
-            .filter_map(|(name, path, is_dir)| {
-                if *budget == 0 {
-                    return None;
-                }
-                *budget -= 1;
-                Some(json!({
-                    "name": name,
-                    "path": path.display().to_string(),
-                    "dir": is_dir,
-                    "children": if is_dir { scan(&path, depth + 1, budget) } else { Vec::<Json>::new() },
-                }))
-            })
-            .collect()
-    }
-    let mut budget = 400usize;
-    let entries = scan(dir, 0, &mut budget);
-    view.update_state(&parse_path("studio.files").unwrap(), json!(entries), cx);
     view.update_state(
         &parse_path("studio.project_dir").unwrap(),
         Json::String(dir.display().to_string()),
+        cx,
+    );
+    let name = dir
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_else(|| dir.display().to_string());
+    view.update_state(
+        &parse_path("studio.project_name").unwrap(),
+        Json::String(name),
+        cx,
+    );
+    let nonce = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or_default();
+    view.update_state(
+        &parse_path("studio.files_nonce").unwrap(),
+        Json::from(nonce),
         cx,
     );
 }

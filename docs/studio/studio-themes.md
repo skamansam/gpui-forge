@@ -33,7 +33,7 @@ foreign card instead of silently degrading:
 
 - **native** — gpui-kit and the same-process libraries paint the theme
   directly.
-- **approximate** — gpui02 and iced map the resolved palette onto their own
+- **approximate** — guise and iced map the resolved palette onto their own
   semantic slots (guise `with_*` overrides, iced `Theme::custom`).
 - **dark/light only** — bezel and adabraka accept no custom colors. Their
   cards carry a small `follow studio / dark / light` selector — a per-pane

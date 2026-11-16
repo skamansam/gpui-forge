@@ -7,22 +7,22 @@ mod gpui_kit;
 #[cfg(feature = "base-gpui-kit")]
 pub use gpui_kit::*;
 
-#[cfg(all(feature = "base-gpui02", not(feature = "base-gpui-kit")))]
-mod gpui02;
-#[cfg(all(feature = "base-gpui02", not(feature = "base-gpui-kit")))]
-pub use gpui02::*;
+#[cfg(all(feature = "base-guise", not(feature = "base-gpui-kit")))]
+mod guise;
+#[cfg(all(feature = "base-guise", not(feature = "base-gpui-kit")))]
+pub use guise::*;
 
 #[cfg(all(
     feature = "base-bezel",
     not(feature = "base-gpui-kit"),
-    not(feature = "base-gpui02"),
+    not(feature = "base-guise"),
     not(feature = "base-adabraka")
 ))]
 mod bezel;
 #[cfg(all(
     feature = "base-bezel",
     not(feature = "base-gpui-kit"),
-    not(feature = "base-gpui02"),
+    not(feature = "base-guise"),
     not(feature = "base-adabraka")
 ))]
 pub use bezel::*;
@@ -30,7 +30,7 @@ pub use bezel::*;
 #[cfg(all(
     feature = "base-ratatui",
     not(feature = "base-gpui-kit"),
-    not(feature = "base-gpui02"),
+    not(feature = "base-guise"),
     not(feature = "base-bezel"),
     not(feature = "base-adabraka")
 ))]
@@ -38,7 +38,7 @@ mod ratatui;
 #[cfg(all(
     feature = "base-ratatui",
     not(feature = "base-gpui-kit"),
-    not(feature = "base-gpui02"),
+    not(feature = "base-guise"),
     not(feature = "base-bezel"),
     not(feature = "base-adabraka")
 ))]
@@ -47,7 +47,7 @@ pub use ratatui::*;
 #[cfg(all(
     feature = "base-iced",
     not(feature = "base-gpui-kit"),
-    not(feature = "base-gpui02"),
+    not(feature = "base-guise"),
     not(feature = "base-bezel"),
     not(feature = "base-adabraka"),
     not(feature = "base-ratatui")
@@ -56,7 +56,7 @@ mod iced;
 #[cfg(all(
     feature = "base-iced",
     not(feature = "base-gpui-kit"),
-    not(feature = "base-gpui02"),
+    not(feature = "base-guise"),
     not(feature = "base-bezel"),
     not(feature = "base-adabraka"),
     not(feature = "base-ratatui")

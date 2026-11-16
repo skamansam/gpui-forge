@@ -1,5 +1,5 @@
 {
-  "$id": "https://gpui-forge.rudeboy.dev/schema/0.1/gpui02.json",
+  "$id": "https://gpui-forge.rudeboy.dev/schema/0.1/guise.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": true,
   "definitions": {
@@ -3214,7 +3214,7 @@
       "type": "string"
     },
     "base": {
-      "const": "gpui02",
+      "const": "guise",
       "description": "Base component system — fixed for this schema."
     },
     "forge": {
@@ -3249,7 +3249,7 @@
     },
     "use": {
       "additionalProperties": {
-        "pattern": "^(gpui-video-player|gpui-symbols|ferrum-flow|rhythm-gpui|gpui02)(\\s+\\S+)?$",
+        "pattern": "^(gpui-video-player|gpui-symbols|ferrum-flow|rhythm-gpui|guise)(\\s+\\S+)?$",
         "type": "string"
       },
       "description": "Import alias → `<library-id> [<version-req>]`.",
@@ -3263,6 +3263,6 @@
     "forge",
     "root"
   ],
-  "title": "Forge document (gpui02)",
+  "title": "Forge document (guise)",
   "type": "object"
 }

@@ -1,6 +1,6 @@
-//! `forge-preview-bezel` — the out-of-process preview host for the gpui02 base
+//! `forge-preview-bezel` — the out-of-process preview host for the guise base
 //! (crates.io bezel-gpui + bezel-ui). Same wire protocol as `forge-preview`.
-//! Studio spawns this binary for `base: gpui02` documents (#96).
+//! Studio spawns this binary for `base: guise` documents (#96).
 
 use bezel::gpui::prelude::*;
 use bezel::gpui::*;
@@ -25,7 +25,7 @@ fn main() {
                 app_id: Some("forge-preview-bezel".into()),
                 window_bounds: Some(WindowBounds::Windowed(bounds)),
                 titlebar: Some(TitlebarOptions {
-                    title: Some("Forge Preview · gpui02".into()),
+                    title: Some("Forge Preview · guise".into()),
                     appears_transparent: true,
                     traffic_light_position: None,
                 }),

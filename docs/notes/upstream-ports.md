@@ -8,13 +8,13 @@ Crates on `gpui 0.2` go through the Vanilla GPUI 0.2 base (#96). Crates on
 | Library | Upstream GPUI | Path to support | Status |
 |---|---|---|---|
 | ely-core | gpui-pre 0.3.10 | **done** — forge-lib-ely adapter | shipped |
-| gpui-video-player | gpui-pre (feature) | adapter (#77), gpui-kit + gpui02 arms. GStreamer system dep | shipped |
+| gpui-video-player | gpui-pre (feature) | adapter (#77), gpui-kit + guise arms. GStreamer system dep | shipped |
 | zorite-markdown/editor | gpui 0.2 | adapter (#78). GPL-3.0 stays opt-in per feature | shipped |
 | hig-gpui | gpui-kit 0.7.3 | landed — vendored gpui-kit 0.8 bump + forge-lib-hig (#90) | shipped |
 | gpui-flow | Zed git | landed — vendored gpui-pre 0.3.10 retarget + forge-lib-flow (#89) | shipped |
-| ferrum-flow | gpui 0.2 | landed — forge-lib-gpui02 `ferrum` feature (#86) | shipped |
-| rhythm-gpui | gpui 0.2 | landed — forge-lib-gpui02 `rhythm` feature (#87) | shipped |
-| gpui-symbols | gpui 0.2 | landed — forge-lib-gpui02 `symbols` feature (#88) | shipped |
+| ferrum-flow | gpui 0.2 | landed — forge-lib-guise `ferrum` feature (#86) | shipped |
+| rhythm-gpui | gpui 0.2 | landed — forge-lib-guise `rhythm` feature (#87) | shipped |
+| gpui-symbols | gpui 0.2 | landed — forge-lib-guise `symbols` feature (#88) | shipped |
 | Base GPUI | Zed git | landed — vendored gpui-pre 0.3.10 retarget + forge-lib-base (#85) | shipped |
 | Bezel | Zed git | landed — twin + host + `forge build` (#94) | shipped |
 | adabraka-ui | adabraka-gpui 0.5 | landed — nested workspace + vendored fix (#95) | shipped |

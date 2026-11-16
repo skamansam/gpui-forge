@@ -5,8 +5,8 @@ use forge_spec::yaml;
 const GPUI_KIT: &str = include_str!("../../../catalogs/gpui-kit.catalog.yaml");
 const SPEC: &str = include_str!("../../../docs/format/forge-yaml.md");
 const ELY: &str = "catalog: \"0.1\"
-library: ely-gpui-components
-version: 0.4.0
+library: ely-core
+version: 0.2.0
 bases:
   gpui-kit: \"^0.8\"
 elements:
@@ -47,7 +47,7 @@ fn check(src: &str) -> Vec<String> {
 }
 
 fn doc(body: &str) -> String {
-    format!("forge: \"0.1\"\nuse:\n  ely: ely-gpui-components\nroot:\n{body}")
+    format!("forge: \"0.1\"\nuse:\n  ely: ely-core\nroot:\n{body}")
 }
 
 /// Asserts exactly one error starting with `expected`, or none when `expected` is empty.
@@ -77,7 +77,7 @@ fn unknown_element() {
     );
     assert_one(
         "  ely.Card:\n",
-        "5:3: `Card` is not an element of `ely-gpui-components`",
+        "5:3: `Card` is not an element of `ely-core`",
     );
 }
 
@@ -187,7 +187,7 @@ fn imported_children_resolve_by_library() {
         "",
     );
     let errors = check(
-        "forge: \"0.1\"\nuse:\n  ui: ely-gpui-components\nroot:\n  ui.Group:\n  children:\n    - ui.Badge: new\n    - Button: no\n",
+        "forge: \"0.1\"\nuse:\n  ui: ely-core\nroot:\n  ui.Group:\n  children:\n    - ui.Badge: new\n    - Button: no\n",
     );
     assert_eq!(errors.len(), 1, "{errors:#?}");
     assert!(

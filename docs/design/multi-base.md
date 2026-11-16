@@ -8,7 +8,7 @@ bases (#99).
 ## Goal
 
 A Forge document renders against a **base component system** — gpui-kit
-(default), gpui02 (vanilla GPUI 0.2.2), Bezel (Zed f16f96), adabraka-ui,
+(default), guise (vanilla GPUI 0.2.2), Bezel (Zed f16f96), adabraka-ui,
 ratatui (TUI), and iced (Elm-style). Third-party **libraries**
 Third-party **libraries** (gpui-video-player, zorite widgets, Ely components…)
 bolt onto a base through adapter crates with their own element namespaces.

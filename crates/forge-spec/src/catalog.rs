@@ -13,7 +13,7 @@ pub const CATALOG_VERSION: &str = "0.1";
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Catalog {
-    /// Library id, e.g. `gpui-kit`, `ely-gpui-components`.
+    /// Library id, e.g. `gpui-kit`, `ely-core`.
     pub library: String,
     pub name: Option<String>,
     /// Version of the library this manifest describes.

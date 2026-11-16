@@ -315,14 +315,14 @@ previewSelector: &previewSelector
             - forge.Preview#preview-gpui-base:
               doc: ../../examples/demos/base-demo.forge.yaml
               style: {height: 480px}
-          case gpui02:
+          case guise:
             # Foreign bases open their own window — a different gpui
             # generation can't composite into this canvas.
-            - forge.Preview#preview-gpui02:
-              remote: gpui02
-              base: gpui02
-              doc: ../../examples/showcases/gpui02-showcase.forge.yaml
-              placeholder: "rendered in a separate window — the gpui02 host can't embed"
+            - forge.Preview#preview-guise:
+              remote: guise
+              base: guise
+              doc: ../../examples/showcases/guise-showcase.forge.yaml
+              placeholder: "rendered in a separate window — the guise host can't embed"
               style: {height: 480px}
             - Text: "theme: approximate — guise semantic overrides only"
               style: {size: xs, color: $theme.warning}
@@ -584,19 +584,28 @@ body: &body
               style:
                 grow: true
                 height: full
+                min-height: 0
                 padding: 8px
                 gap: 8px
-                overflow: scroll
               children:
                 - Label: Project
                   style: {weight: semibold, size: sm}
-                - Text: "{$studio.project_dir}"
+                - Text: "{$studio.project_name}"
                   style: {size: xs, color: $theme.muted_foreground}
                 - forge.Files#files:
-                  of: studio.files
+                  root: "{$studio.project_dir}"
+                  filter: ["*.forge.yaml", "*.json"]
+                  nonce: $studio.files_nonce
+                  search: $studio.files_search
+                  icons: $studio.files_icons
+                  hidden: $studio.files_hidden
+                  folders: $studio.files_folders
+                  highlights: $studio.files_highlights
                   selected: bind $studio.file_selected
                   on select: open_path($studio.file_selected)
+                  on open: open_path($studio.file_selected)
                   placeholder: no .forge.yaml files here
+                  style: {grow: true, min-height: 0, min-width: 0}
         - ResizablePanel:
           children:
             - HStack#workspace:
@@ -635,9 +644,11 @@ body: &body
 # ============================================================================
 # NOTE: dialogs only need IDs so they can be opened with `open_dialog("ID")`
 Dialog#preferences:
+  title: Forge Studio Preferences
+  resizable: true
   style:
-    width: 400px
-    height: 300px
+    width: 680px
+    height: 600px
     padding: 16px
     gap: 16px
     radius: 8px
@@ -646,23 +657,58 @@ Dialog#preferences:
     border-style: solid
     border-color: $theme.border
   children:
-    - Text: "Preferences"
+    - VStack:
       style:
-        size: lg
-        weight: semibold
-    - Settings:
+        grow: true
+        min-height: 0
       children:
-        - SettingPage: Theme
-          children:
-            - SettingsGroup: Theme
-              children:
-                - SettingItem: Select theme
-                  children:
-                    - Select#prefs_theme:
-                      options: $studio.all_themes
-                      value: bind $studio.theme
-                      placeholder: pick a theme
-                      on change: apply_theme_name($studio.theme)
+      - Settings:
+        style:
+          grow: true
+          min-height: 0
+        children:
+          - SettingPage: Theme
+            children:
+              - SettingsGroup: Theme
+                children:
+                  - SettingItem: Select theme
+                    children:
+                      - Select#prefs_theme:
+                        options: $studio.all_themes
+                        value: bind $studio.theme
+                        placeholder: pick a theme
+                        on change: apply_theme_name($studio.theme)
+          - SettingPage: Files
+            children:
+              - SettingsGroup: Project tree
+                children:
+                  - SettingItem: Search bar
+                    children:
+                      - Switch:
+                        checked: bind $studio.files_search
+                        on change: persist_prefs()
+                  - SettingItem: File icons
+                    children:
+                      - Switch:
+                        checked: bind $studio.files_icons
+                        on change: persist_prefs()
+                  - SettingItem: Hidden files
+                    children:
+                      - Switch:
+                        checked: bind $studio.files_hidden
+                        on change: persist_prefs()
+                  - SettingItem: Folders open
+                    children:
+                      - Select#prefs_files_folders:
+                        options: [tree, navigate]
+                        value: bind $studio.files_folders
+                        on change: persist_prefs()
+                  - SettingItem: Highlights
+                    children:
+                      - Input:
+                        value: bind $studio.files_highlights
+                        placeholder: "*.forge.yaml = bold; *.json = green"
+                        on change: persist_prefs()
 
 # ============================================================================
 # THE NEW PROJECT DIALOG

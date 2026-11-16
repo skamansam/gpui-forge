@@ -1,6 +1,6 @@
-//! `forge-preview-gpui02` — the out-of-process preview host for the gpui02 base
+//! `forge-preview-guise` — the out-of-process preview host for the guise base
 //! (crates.io gpui 0.2.2 + guise). Same wire protocol as `forge-preview`.
-//! Studio spawns this binary for `base: gpui02` documents (#96).
+//! Studio spawns this binary for `base: guise` documents (#96).
 
 use gpui::prelude::*;
 use gpui::*;
@@ -22,10 +22,10 @@ fn main() {
         let bounds = Bounds::centered(None, size(px(800.0), px(600.0)), cx);
         cx.open_window(
             WindowOptions {
-                app_id: Some("forge-preview-gpui02".into()),
+                app_id: Some("forge-preview-guise".into()),
                 window_bounds: Some(WindowBounds::Windowed(bounds)),
                 titlebar: Some(TitlebarOptions {
-                    title: Some("Forge Preview · gpui02".into()),
+                    title: Some("Forge Preview · guise".into()),
                     appears_transparent: true,
                     traffic_light_position: None,
                 }),
@@ -34,11 +34,11 @@ fn main() {
             move |_, cx| {
                 cx.new(move |cx| {
                     let mut view = ForgeView::new(check::catalogs());
-                    // gpui02-base adapters (#86-88) — namespaced elements on
+                    // guise-base adapters (#86-88) — namespaced elements on
                     // foreign-base docs render through these.
-                    view.register_library(forge_lib_gpui02::Ferrum::new());
-                    view.register_library(forge_lib_gpui02::Rhythm);
-                    view.register_library(forge_lib_gpui02::Symbols);
+                    view.register_library(forge_lib_guise::Ferrum::new());
+                    view.register_library(forge_lib_guise::Rhythm);
+                    view.register_library(forge_lib_guise::Symbols);
                     view.set_dnd(true, cx);
                     // Fired hooks and state writes go out over stdout — same
                     // contract as the gpui-kit host.

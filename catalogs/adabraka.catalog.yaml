@@ -15,7 +15,7 @@ elements:
     icon: rows-3
     group: Layout
     summary: Vertical flex container.
-    component: adabraka_ui::stack::VStack
+    component: adabraka_ui::layout::VStack
     canvas: VStack
     children: any
 
@@ -23,7 +23,7 @@ elements:
     icon: columns-3
     group: Layout
     summary: Horizontal flex container.
-    component: adabraka_ui::stack::HStack
+    component: adabraka_ui::layout::HStack
     canvas: HStack
     children: any
 
@@ -31,7 +31,7 @@ elements:
     icon: square-stack
     group: Layout
     summary: shadcn-style card — header, content, footer sections.
-    component: adabraka_ui::card::Card
+    component: adabraka_ui::display::card::Card
     canvas: GroupBox
     children: any
 
@@ -39,7 +39,7 @@ elements:
     icon: pilcrow
     group: Display
     summary: A run of text.
-    component: adabraka_ui::text::Text
+    component: adabraka_ui::components::text::Text
     canvas: Text
     content: text
     props:
@@ -51,7 +51,7 @@ elements:
     icon: badge
     group: Display
     summary: Small status chip.
-    component: adabraka_ui::badge::Badge
+    component: adabraka_ui::display::badge::Badge
     canvas:
       element: Tag
       props: {text: label}
@@ -69,7 +69,7 @@ elements:
     icon: circle-user
     group: Display
     summary: User avatar with image or initials fallback.
-    component: adabraka_ui::avatar::Avatar
+    component: adabraka_ui::components::avatar::Avatar
     canvas: Avatar
     props:
       src: string
@@ -79,7 +79,7 @@ elements:
     icon: mouse-pointer-click
     group: Input
     summary: shadcn button variants.
-    component: adabraka_ui::button::Button
+    component: adabraka_ui::components::button::Button
     canvas: Button
     content: label
     props:
@@ -102,7 +102,7 @@ elements:
     icon: text-cursor-input
     group: Input
     summary: Single-line text input.
-    component: adabraka_ui::input::Input
+    component: adabraka_ui::components::input::Input
     canvas: Input
     props:
       placeholder: string
@@ -114,7 +114,7 @@ elements:
     icon: square-check
     group: Input
     summary: Labelled checkbox.
-    component: adabraka_ui::checkbox::Checkbox
+    component: adabraka_ui::components::checkbox::Checkbox
     canvas: Checkbox
     content: label
     props:
@@ -129,7 +129,7 @@ elements:
     icon: toggle-left
     group: Input
     summary: On/off toggle.
-    component: adabraka_ui::switch::Switch
+    component: adabraka_ui::components::animated_switch::AnimatedSwitch
     canvas: Switch
     props:
       checked:
@@ -142,7 +142,7 @@ elements:
     icon: chevrons-up-down
     group: Input
     summary: Dropdown pick-one input.
-    component: adabraka_ui::select::Select
+    component: adabraka_ui::components::select::Select
     canvas: Select
     props:
       options: string
@@ -155,7 +155,7 @@ elements:
     icon: rectangle-horizontal
     group: Feedback
     summary: Progress bar, 0–100.
-    component: adabraka_ui::progress::Progress
+    component: adabraka_ui::components::progress::ProgressBar
     canvas: Progress
     props:
       value: number
@@ -164,7 +164,7 @@ elements:
     icon: triangle-alert
     group: Feedback
     summary: shadcn alert — title + description, default/destructive.
-    component: adabraka_ui::alert::Alert
+    component: adabraka_ui::components::alert::Alert
     canvas:
       element: Alert
       props: {text: message}
@@ -183,8 +183,281 @@ elements:
     icon: app-window
     group: Windows
     summary: Modal dialog.
-    component: adabraka_ui::dialog::Dialog
+    component: adabraka_ui::overlays::dialog::Dialog
     canvas: Dialog
     props:
       title: string
     children: any
+  Accordion:
+    icon: accordion
+    group: Components
+    summary: "Accordion — adabraka-ui, via Accordion."
+    component: adabraka_ui::display::accordion::Accordion
+    canvas: Accordion
+    children: any
+  AlertDialog:
+    icon: shield-alert
+    group: Components
+    summary: "AlertDialog — adabraka-ui, via AlertDialog."
+    component: adabraka_ui::overlays::alert_dialog::AlertDialog
+    canvas: AlertDialog
+  AreaChart:
+    icon: chart-area
+    group: Components
+    summary: "AreaChart — adabraka-ui, via LineChart."
+    component: adabraka_ui::charts::area_chart::AreaChart
+    canvas: LineChart
+  AvatarGroup:
+    icon: users
+    group: Components
+    summary: "AvatarGroup — adabraka-ui, via AvatarGroup."
+    component: adabraka_ui::components::avatar_group::AvatarGroup
+    canvas: AvatarGroup
+    children: any
+  BarChart:
+    icon: chart-bar
+    group: Components
+    summary: "BarChart — adabraka-ui, via BarChart."
+    component: adabraka_ui::charts::bar_chart::BarChart
+    canvas: BarChart
+  BottomSheet:
+    icon: panel-bottom
+    group: Components
+    summary: "BottomSheet — adabraka-ui, via Sheet."
+    component: adabraka_ui::overlays::bottom_sheet::BottomSheet
+    canvas: Sheet
+    children: any
+  Breadcrumbs:
+    icon: chevrons-right
+    group: Components
+    summary: "Breadcrumbs — adabraka-ui, via Breadcrumb."
+    component: adabraka_ui::navigation::breadcrumbs::Breadcrumbs
+    canvas: Breadcrumb
+    children: any
+  Calendar:
+    icon: calendar
+    group: Components
+    summary: "Calendar — adabraka-ui, via Calendar."
+    component: adabraka_ui::components::calendar::Calendar
+    canvas: Calendar
+  ColorPicker:
+    icon: pipette
+    group: Components
+    summary: "ColorPicker — adabraka-ui, via ColorPicker."
+    component: adabraka_ui::components::color_picker::ColorPicker
+    canvas: ColorPicker
+  Combobox:
+    icon: chevrons-up-down
+    group: Components
+    summary: "Combobox — adabraka-ui, via Combobox."
+    component: adabraka_ui::components::combobox::Combobox
+    canvas: Combobox
+  CommandPalette:
+    icon: terminal
+    group: Components
+    summary: "CommandPalette — adabraka-ui, via Command."
+    component: adabraka_ui::overlays::command_palette::CommandPalette
+    canvas: Command
+    children: any
+  ContextMenu:
+    icon: mouse-pointer-click
+    group: Components
+    summary: "ContextMenu — adabraka-ui, via ContextMenu."
+    component: adabraka_ui::overlays::context_menu::ContextMenu
+    canvas: ContextMenu
+    children: any
+  CopyButton:
+    icon: clipboard
+    group: Components
+    summary: "CopyButton — adabraka-ui, via Clipboard."
+    component: adabraka_ui::components::copy_button::CopyButton
+    canvas: Clipboard
+  DataTable:
+    icon: table
+    group: Components
+    summary: "DataTable — adabraka-ui, via DataTable."
+    component: adabraka_ui::display::data_table::DataTable
+    canvas: DataTable
+    children: any
+  DatePicker:
+    icon: calendar-days
+    group: Components
+    summary: "DatePicker — adabraka-ui, via DatePicker."
+    component: adabraka_ui::components::date_picker::DatePicker
+    canvas: DatePicker
+  DonutChart:
+    icon: chart-pie
+    group: Components
+    summary: "DonutChart — adabraka-ui, via PieChart."
+    component: adabraka_ui::charts::donut_chart::DonutChart
+    canvas: PieChart
+  Drawer:
+    icon: panel-left
+    group: Components
+    summary: "Drawer — adabraka-ui, via Sheet."
+    component: adabraka_ui::components::drawer_navigation::DrawerNavigation
+    canvas: Sheet
+    children: any
+  Dropdown:
+    icon: chevron-down
+    group: Components
+    summary: "Dropdown — adabraka-ui, via DropdownMenu."
+    component: adabraka_ui::components::dropdown::Dropdown
+    canvas: DropdownMenu
+    children: any
+  Editor:
+    icon: code
+    group: Components
+    summary: "Editor — adabraka-ui, via Editor."
+    component: adabraka_ui::components::editor::Editor
+    canvas: Editor
+  ExpandableCard:
+    icon: chevrons-down-up
+    group: Components
+    summary: "ExpandableCard — adabraka-ui, via Collapsible."
+    component: adabraka_ui::components::expandable_card::ExpandableCard
+    canvas: Collapsible
+    children: any
+  FloatingActionButton:
+    icon: circle-plus
+    group: Components
+    summary: "FloatingActionButton — adabraka-ui, via Button."
+    component: adabraka_ui::components::floating_action_button::FloatingActionButton
+    canvas: Button
+  FileTree:
+    icon: folder-tree
+    group: Components
+    summary: "FileTree — adabraka-ui, via Tree."
+    component: adabraka_ui::navigation::file_tree::FileTree
+    canvas: Tree
+    children: any
+  Form:
+    icon: clipboard-list
+    group: Components
+    summary: "Form — adabraka-ui, via Form."
+    component: adabraka_ui::components::form::Form
+    canvas: Form
+    children: any
+  Gauge:
+    icon: gauge
+    group: Components
+    summary: "Gauge — adabraka-ui, via ProgressCircle."
+    component: adabraka_ui::charts::gauge::Gauge
+    canvas: ProgressCircle
+  HoverCard:
+    icon: message-square
+    group: Components
+    summary: "HoverCard — adabraka-ui, via HoverCard."
+    component: adabraka_ui::overlays::hover_card::HoverCard
+    canvas: HoverCard
+    children: any
+  InfiniteScroll:
+    icon: infinity
+    group: Components
+    summary: "InfiniteScroll — adabraka-ui, via List."
+    component: adabraka_ui::components::infinite_scroll::InfiniteScroll
+    canvas: List
+    children: any
+  InlineEdit:
+    icon: pencil
+    group: Components
+    summary: "InlineEdit — adabraka-ui, via Input."
+    component: adabraka_ui::components::inline_edit::InlineEdit
+    canvas: Input
+  KBD:
+    icon: keyboard
+    group: Components
+    summary: "KBD — adabraka-ui, via Kbd."
+    component: adabraka_ui::components::kbd::KBD
+    canvas: Kbd
+  Pagination:
+    icon: ellipsis
+    group: Components
+    summary: "Pagination — adabraka-ui, via Pagination."
+    component: adabraka_ui::components::pagination::Pagination
+    canvas: Pagination
+  Popover:
+    icon: message-circle
+    group: Components
+    summary: "Popover — adabraka-ui, via Popover."
+    component: adabraka_ui::overlays::popover::Popover
+    canvas: Popover
+    children: any
+  RadioGroup:
+    icon: circle-dot
+    group: Components
+    summary: "RadioGroup — adabraka-ui, via RadioGroup."
+    component: adabraka_ui::components::radio::RadioGroup
+    canvas: RadioGroup
+    children: any
+  Rating:
+    icon: star
+    group: Components
+    summary: "Rating — adabraka-ui, via Rating."
+    component: adabraka_ui::components::rating::Rating
+    canvas: Rating
+  Sheet:
+    icon: panel-right
+    group: Components
+    summary: "Sheet — adabraka-ui, via Sheet."
+    component: adabraka_ui::overlays::sheet::Sheet
+    canvas: Sheet
+    children: any
+  Sidebar:
+    icon: panel-left
+    group: Components
+    summary: "Sidebar — adabraka-ui, via Sidebar."
+    component: adabraka_ui::navigation::sidebar::Sidebar
+    canvas: Sidebar
+    children: any
+  Skeleton:
+    icon: loader
+    group: Components
+    summary: "Skeleton — adabraka-ui, via Skeleton."
+    component: adabraka_ui::components::skeleton::Skeleton
+    canvas: Skeleton
+  Slider:
+    icon: sliders-horizontal
+    group: Components
+    summary: "Slider — adabraka-ui, via Slider."
+    component: adabraka_ui::components::slider::Slider
+    canvas: Slider
+  Stepper:
+    icon: list-ordered
+    group: Components
+    summary: "Stepper — adabraka-ui, via Stepper."
+    component: adabraka_ui::components::stepper::Stepper
+    canvas: Stepper
+    children: any
+  Table:
+    icon: table
+    group: Components
+    summary: "Table — adabraka-ui, via Table."
+    component: adabraka_ui::display::table::Table
+    canvas: Table
+    children: any
+  Tabs:
+    icon: folder
+    group: Components
+    summary: "Tabs — adabraka-ui, via Tabs."
+    component: adabraka_ui::navigation::tabs::Tabs
+    canvas: Tabs
+    children: any
+  Textarea:
+    icon: text
+    group: Components
+    summary: "Textarea — adabraka-ui, via Textarea."
+    component: adabraka_ui::components::textarea::Textarea
+    canvas: Textarea
+  Toast:
+    icon: bell
+    group: Components
+    summary: "Toast — adabraka-ui, via Notification."
+    component: adabraka_ui::overlays::toast::ToastItem
+    canvas: Notification
+  Toggle:
+    icon: toggle-left
+    group: Components
+    summary: "Toggle — adabraka-ui, via Switch."
+    component: adabraka_ui::components::toggle::Toggle
+    canvas: Switch

@@ -14,7 +14,7 @@ elements:
     icon: terminal
     group: Media
     summary: Terminal emulator grid — runs a shell or command on a pty.
-    component: bezel_terminal::TerminalElement
+    component: bezel_terminal::view::TerminalElement
     children: none
     props:
       command:

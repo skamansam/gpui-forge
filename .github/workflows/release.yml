@@ -72,7 +72,7 @@ jobs:
       - name: Build foreign-base preview hosts (best-effort)
         shell: bash
         run: |
-          for base in gpui02 bezel ratatui iced; do
+          for base in guise bezel ratatui iced; do
             if cargo build --release --locked -p forge-preview \
                 --no-default-features --features "base-$base" \
                 --target "${{ matrix.target }}"; then
@@ -87,7 +87,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p dist
-          for bin in forge forge-studio forge-preview forge-preview-gpui02 \
+          for bin in forge forge-studio forge-preview forge-preview-guise \
                      forge-preview-bezel forge-preview-ratatui forge-preview-iced; do
             src="target/${{ matrix.target }}/release/$bin"
             [ -f "$src" ] && cp "$src" dist/
@@ -100,7 +100,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force dist | Out-Null
-          $bins = 'forge','forge-studio','forge-preview','forge-preview-gpui02',
+          $bins = 'forge','forge-studio','forge-preview','forge-preview-guise',
                   'forge-preview-bezel','forge-preview-ratatui','forge-preview-iced'
           foreach ($bin in $bins) {
             $src = "target/${{ matrix.target }}/release/$bin.exe"

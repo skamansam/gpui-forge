@@ -15,8 +15,7 @@ fn catalogs() -> Vec<Catalog> {
         "gpui-kit",
         "forge",
         "ely",
-        "gc",
-        "gpui02",
+        "guise",
         "adabraka",
         "bezel",
         "ratatui",
@@ -45,8 +44,7 @@ fn catalogs() -> Vec<Catalog> {
             "gpui-kit" => include_str!("../../../catalogs/gpui-kit.catalog.yaml"),
             "forge" => include_str!("../../../catalogs/forge.catalog.yaml"),
             "ely" => include_str!("../../../catalogs/ely.catalog.yaml"),
-            "gc" => include_str!("../../../catalogs/gc.catalog.yaml"),
-            "gpui02" => include_str!("../../../catalogs/gpui02.catalog.yaml"),
+            "guise" => include_str!("../../../catalogs/guise.catalog.yaml"),
             "adabraka" => include_str!("../../../catalogs/adabraka.catalog.yaml"),
             "bezel" => include_str!("../../../catalogs/bezel.catalog.yaml"),
             "ratatui" => include_str!("../../../catalogs/ratatui.catalog.yaml"),
@@ -81,7 +79,7 @@ fn catalogs() -> Vec<Catalog> {
 fn bases() -> Vec<Base> {
     [
         include_str!("../../../bases/gpui-kit.base.yaml"),
-        include_str!("../../../bases/gpui02.base.yaml"),
+        include_str!("../../../bases/guise.base.yaml"),
         include_str!("../../../bases/adabraka.base.yaml"),
         include_str!("../../../bases/bezel.base.yaml"),
         include_str!("../../../bases/ratatui.base.yaml"),
@@ -319,19 +317,14 @@ fn shipped_docs_validate() {
             "gpui-kit",
         ),
         (
-            "gc-showcase",
-            include_str!("../../../examples/showcases/gc-showcase.forge.yaml"),
-            "gpui-kit",
-        ),
-        (
             "gpui-kit-showcase",
             include_str!("../../../examples/showcases/gpui-kit-showcase.forge.yaml"),
             "gpui-kit",
         ),
         (
-            "gpui02-showcase",
-            include_str!("../../../examples/showcases/gpui02-showcase.forge.yaml"),
-            "gpui02",
+            "guise-showcase",
+            include_str!("../../../examples/showcases/guise-showcase.forge.yaml"),
+            "guise",
         ),
         (
             "iced-showcase",
@@ -364,8 +357,8 @@ fn published_schemas_are_fresh() {
             include_str!("../../../site/static/schema/0.1/gpui-kit.json"),
         ),
         (
-            "gpui02",
-            include_str!("../../../site/static/schema/0.1/gpui02.json"),
+            "guise",
+            include_str!("../../../site/static/schema/0.1/guise.json"),
         ),
         (
             "iced",

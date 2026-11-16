@@ -16,7 +16,7 @@ File extension: `.forge.yaml` (`.forge.json` for JSON).
 forge: "0.1"
 base: gpui-kit
 use:
-  ely: ely-gpui-components ^0.4
+  ely: ely-core ^0.2
 meta:
   title: Login
 
@@ -61,9 +61,9 @@ build or run time:
 |---|---|
 | `gpui-video-player` | GStreamer 1.14+ and its plugins — [install guide](https://github.com/GStreamer/gstreamer-rs#installation) (Debian: `libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev`. macOS: `brew install gstreamer`. Windows: the MSVC runtime+devel MSIs) |
 | `iced` | A GPU the app can open a surface on — wgpu needs Vulkan/Metal/DX12 (the web canvas targets WebGL2) |
-| `gpui-kit`, `bezel`, `adabraka`, `gpui02`, `ratatui` | No system deps — pure Rust |
+| `gpui-kit`, `bezel`, `adabraka`, `guise`, `ratatui` | No system deps — pure Rust |
 
-Everything else (`ely-core`, `gpui-component`, `gpui-flow`, `base-gpui`,
+Everything else (`ely-core`, `gpui-kit`, `gpui-flow`, `base-gpui`,
 `gpui-apple-hig`, `gpui-pdf`, `gpui-whiteboard`, `ratex-gpui`) is pure Rust
 and builds anywhere the base does.
 
@@ -317,7 +317,7 @@ login.forge.yaml:9:9: duplicate id `email` (first defined at 6:9)
 ```yaml
 forge: "0.1"
 use:
-  ely: ely-gpui-components ^0.4
+  ely: ely-core ^0.2
 
 root:
   VStack .settings:

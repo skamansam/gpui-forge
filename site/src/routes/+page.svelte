@@ -37,7 +37,7 @@
 		}
 	];
 
-	const bases = ['gpui-kit', 'ratatui', 'iced', 'bezel', 'gpui02', 'adabraka'];
+	const bases = ['gpui-kit', 'ratatui', 'iced', 'bezel', 'guise', 'adabraka'];
 	const libs = ['ely', 'gpui-component', 'gpui-flow', 'base-gpui', 'video', 'apple-hig', 'pdf', 'whiteboard', 'ratex'];
 </script>
 

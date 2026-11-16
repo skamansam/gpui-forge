@@ -23,7 +23,7 @@ Document
 
 Import
   alias   : Ident                  // namespace used in element names, e.g. "ely"
-  library : LibraryId              // catalog manifest id, e.g. "ely-gpui-components"
+  library : LibraryId              // catalog manifest id, e.g. "ely-core"
   version : VersionReq?            // semver requirement, e.g. "^0.4"
 
 Node
@@ -110,7 +110,7 @@ Everything else is catalog validation — element existence (`kit.Button`), prop
 ```text
 Document {
   version: "0.1", base: Some("gpui-kit"),
-  imports: [Import { alias: "ely", library: "ely-gpui-components", version: Some("^0.4") }],
+  imports: [Import { alias: "ely", library: "ely-core", version: Some("^0.4") }],
   meta: { title: "Login" },
   root: Node {
     element: VStack, id: Some("root"),

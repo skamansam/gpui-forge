@@ -15,10 +15,8 @@ pub fn catalogs() -> Vec<Catalog> {
             .expect("bundled forge catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/ely.catalog.yaml"))
             .expect("bundled ely catalog is valid"),
-        catalog::from_yaml(include_str!("../../../catalogs/gc.catalog.yaml"))
-            .expect("bundled gc catalog is valid"),
-        catalog::from_yaml(include_str!("../../../catalogs/gpui02.catalog.yaml"))
-            .expect("bundled gpui02 catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/guise.catalog.yaml"))
+            .expect("bundled guise catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/adabraka.catalog.yaml"))
             .expect("bundled adabraka catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/bezel.catalog.yaml"))
@@ -68,13 +66,13 @@ pub fn catalogs() -> Vec<Catalog> {
     ]
 }
 
-/// The gpui02 build's catalogs: its own library plus the Forge intrinsics and
+/// The guise build's catalogs: its own library plus the Forge intrinsics and
 /// the libraries compatible with this base (video, #77).
-#[cfg(all(feature = "base-gpui02", not(feature = "base-gpui-kit")))]
+#[cfg(all(feature = "base-guise", not(feature = "base-gpui-kit")))]
 pub fn catalogs() -> Vec<Catalog> {
     vec![
-        catalog::from_yaml(include_str!("../../../catalogs/gpui02.catalog.yaml"))
-            .expect("bundled gpui02 catalog is valid"),
+        catalog::from_yaml(include_str!("../../../catalogs/guise.catalog.yaml"))
+            .expect("bundled guise catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/forge.catalog.yaml"))
             .expect("bundled forge catalog is valid"),
         catalog::from_yaml(include_str!("../../../catalogs/video.catalog.yaml"))
@@ -92,7 +90,7 @@ pub fn catalogs() -> Vec<Catalog> {
 #[cfg(all(
     feature = "base-bezel",
     not(feature = "base-gpui-kit"),
-    not(feature = "base-gpui02"),
+    not(feature = "base-guise"),
     not(feature = "base-adabraka")
 ))]
 pub fn catalogs() -> Vec<Catalog> {
@@ -126,7 +124,7 @@ pub fn catalogs() -> Vec<Catalog> {
 #[cfg(all(
     feature = "base-ratatui",
     not(feature = "base-gpui-kit"),
-    not(feature = "base-gpui02"),
+    not(feature = "base-guise"),
     not(feature = "base-bezel"),
     not(feature = "base-adabraka")
 ))]
@@ -143,7 +141,7 @@ pub fn catalogs() -> Vec<Catalog> {
 #[cfg(all(
     feature = "base-iced",
     not(feature = "base-gpui-kit"),
-    not(feature = "base-gpui02"),
+    not(feature = "base-guise"),
     not(feature = "base-bezel"),
     not(feature = "base-adabraka"),
     not(feature = "base-ratatui")
@@ -165,8 +163,8 @@ pub fn bases() -> Vec<Base> {
     vec![
         Base::from_yaml(include_str!("../../../bases/gpui-kit.base.yaml"))
             .expect("bundled gpui-kit base manifest is valid"),
-        Base::from_yaml(include_str!("../../../bases/gpui02.base.yaml"))
-            .expect("bundled gpui02 base manifest is valid"),
+        Base::from_yaml(include_str!("../../../bases/guise.base.yaml"))
+            .expect("bundled guise base manifest is valid"),
         Base::from_yaml(include_str!("../../../bases/adabraka.base.yaml"))
             .expect("bundled adabraka base manifest is valid"),
         Base::from_yaml(include_str!("../../../bases/bezel.base.yaml"))

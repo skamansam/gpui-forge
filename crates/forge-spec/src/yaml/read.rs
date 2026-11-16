@@ -361,7 +361,7 @@ impl Reader<'_> {
                 _ => self.hint(
                     at,
                     format!("invalid import `{text}`"),
-                    "write `<library-id> [<version-req>]`, e.g. `ely-gpui-components ^0.4`",
+                    "write `<library-id> [<version-req>]`, e.g. `ely-core ^0.2`",
                 ),
             }
         }

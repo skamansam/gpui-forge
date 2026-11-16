@@ -27,7 +27,7 @@ bases:                    # bases this library works on, with a version requirem
 elements:
   Button:
     summary: Clickable button.
-    component: gpui_component::button::Button   # implementing type, for docs and adapter authors
+    component: gpui_kit::component::button::Button   # implementing type — must resolve against the real upstream source (`cargo xtask components --check` verifies)
     content: label        # `Button: Sign in` sets `label`
     props:
       label: string       # shorthand for `{ type: string }`

@@ -111,3 +111,52 @@ elements:
       value: string
     events:
       change:
+  BarChart:
+    icon: circle-dot
+    group: Components
+    summary: "BarChart — ratatui, via BarChart."
+    canvas: BarChart
+    children: any
+
+  Calendar:
+    icon: circle-dot
+    group: Components
+    summary: "Calendar — ratatui, via Calendar."
+    canvas: Calendar
+    children: any
+
+  Chart:
+    icon: circle-dot
+    group: Components
+    summary: "Chart — ratatui, via LineChart."
+    canvas: LineChart
+    children: any
+
+  Sparkline:
+    icon: circle-dot
+    group: Components
+    summary: "Sparkline — ratatui, via LineChart."
+    canvas: LineChart
+    children: any
+
+  Canvas:
+    icon: circle-dot
+    group: Components
+    summary: "Canvas — ratatui, via Box."
+    canvas: Box
+    children: any
+
+  Logo:
+    icon: circle-dot
+    group: Components
+    summary: "Logo — ratatui, via Image."
+    canvas: Image
+    children: any
+
+  Mascot:
+    icon: circle-dot
+    group: Components
+    summary: "Mascot — ratatui, via Image."
+    canvas: Image
+    children: any
+

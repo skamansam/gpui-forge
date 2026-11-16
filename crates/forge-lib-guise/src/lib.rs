@@ -7,7 +7,7 @@
 //! - `symbols` — `use: sf: gpui-symbols` → `sf.Icon` (SF Symbols, macOS)
 //!
 //! All are off by default: their crates pin crates.io `gpui 0.2.x` and can only
-//! link under the `base-gpui02` runtime arm, which the feature forwards.
+//! link under the `base-guise` runtime arm, which the feature forwards.
 //! `kit::gpui` re-exports that same gpui build, so the adapter's types always
 //! unify with the runtime's.
 

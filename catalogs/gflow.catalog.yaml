@@ -1,7 +1,7 @@
 # yaml-language-server: $schema=../schema/catalog-0.1.json
 # Catalog manifest for the gpui-flow adapter (forge-lib-flow) —
 # `use: gflow: gpui-flow` on the gpui-kit base (#89). Alias is `gflow` so it
-# can't be confused with the gpui02 base's `flow` (ferrum-flow) adapter.
+# can't be confused with the guise base's `flow` (ferrum-flow) adapter.
 catalog: "0.1"
 library: gpui-flow
 name: gpui-flow

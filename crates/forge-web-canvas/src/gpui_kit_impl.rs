@@ -76,7 +76,6 @@ pub fn start(dark: bool, assets: String) {
                 // Flow (their views don't paint on the web platform. The
                 // elements fall back to "not provided by this adapter yet").
                 view.register_library(forge_lib_ely::Ely::new());
-                view.register_library(forge_lib_gpui_component::GpuiComponent);
                 view.register_library(forge_lib_zorite::Pdf::with_asset_resolver(|src| {
                     // Doc-relative `src:` has no filesystem on wasm — bundled
                     // demo assets resolve by basename instead.

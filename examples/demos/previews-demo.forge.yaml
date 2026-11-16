@@ -30,7 +30,7 @@ root:
     - Select:
       options:
         - gpui-kit
-        - gpui02
+        - guise
         - bezel
       value: bind $sel
     - match: $sel
@@ -41,11 +41,11 @@ root:
           doc: ./ely-demo.forge.yaml
           style:
             height: 480px
-      case gpui02:
+      case guise:
         - forge.Preview#pane-02:
-          remote: gpui02
-          base: gpui02
-          doc: ../showcases/gpui02-showcase.forge.yaml
+          remote: guise
+          base: guise
+          doc: ../showcases/guise-showcase.forge.yaml
           style:
             height: 480px
       case bezel:

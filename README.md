@@ -106,7 +106,7 @@ Six core pillars drive the project:
   <ul>
     <li><a href="https://www.rust-lang.org/">Rust</a> (2024 edition workspace)</li>
     <li><a href="https://www.gpui.rs/">GPUI</a> — via per-base builds: <code>gpui-pre</code>, <code>gpui 0.2</code>, Bezel and adabraka forks</li>
-    <li><a href="https://github.com/longbridge/gpui-component">gpui-kit / gpui-component</a> — the default component library</li>
+    <li><a href="https://github.com/longbridge/gpui-kit">gpui-kit</a> — the default component library</li>
     <li><a href="https://github.com/saphyr-rs/saphyr">saphyr</a> — YAML; <code>serde</code>/<code>serde_json</code> — JSON &amp; state</li>
   </ul>
 </details>
@@ -152,11 +152,11 @@ Six core pillars drive the project:
   it (`--codegen` bakes the document into Rust); `forge skeleton` emits a
   *kept* multi-doc crate — `docs::DOCS` registry + `store::seed()` merged
   from every document's `state:` — as a launching pad you own.
-- **Six bases, one format** — gpui-kit, gpui02 (vanilla GPUI 0.2), Bezel,
+- **Six bases, one format** — gpui-kit, guise (vanilla GPUI 0.2), Bezel,
   adabraka-ui, plus non-GPUI ratatui and iced. Same document, per-base
   catalog, runtime adapter, preview host and generated-app template.
 - **Adapter ecosystem** — `use:` pulls in adapter crates (Ely components,
-  gpui-component, video player, PDF, whiteboard, math, HIG, flow, Base GPUI,
+  gpui-kit (gc compat), video player, PDF, whiteboard, math, HIG, flow, Base GPUI,
   and more); validation rejects base-incompatible libraries.
 - **Web parity** — `forge-web` reuses the same runtime compiled to WASM, so
   the browser editor previews exactly what the app renders.
@@ -203,7 +203,7 @@ compatible with it. Within a base you can mix and match libraries freely.
 | Base | GPUI build | Base library | Web/WASM |
 |---|---|---|---|
 | **gpui-kit** (default) | `gpui-pre =0.3.10` | [gpui-kit](https://github.com/longbridge/gpui-kit) | yes |
-| **gpui02** — vanilla GPUI 0.2 | crates.io `gpui 0.2.x` | [guise](https://github.com/wess/guise) | no |
+| **guise** — vanilla GPUI 0.2 | crates.io `gpui 0.2.x` | [guise](https://github.com/wess/guise) | no |
 | **Bezel** | `bezel-gpui 0.3.x` (fork) | [Bezel](https://github.com/crabtalk/bezel) | yes |
 | **adabraka-ui** | `adabraka-gpui` (fork) | [adabraka-ui](https://github.com/Augani/adabraka-ui) | no (nightly Rust) |
 
@@ -294,6 +294,19 @@ forge preview               # build + launch in one step
 cargo test --workspace             # default base: gpui-kit
 cargo fmt --check && cargo clippy  # lint
 ```
+
+Upstream-drift check — compares pinned versions with crates.io and resolves
+every catalog `component:` path against the real upstream source:
+
+```bash
+cargo xtask components --check
+```
+
+Fails on outdated packages (unless `pin`ned), on `component:` paths that no
+longer resolve upstream, and writes `drift-report.md` with `--report <path>`.
+Policy lives in `drift.toml` (package aliases, vendored trees, pins, surface
+scope). The `Drift` workflow runs it on every PR and weekly, posting a
+sticky report comment.
 
 <!-- Deployment -->
 ### :triangular_flag_on_post: Deployment
@@ -444,7 +457,7 @@ Docs: [https://gpui-forge.rudeboy.dev](https://gpui-forge.rudeboy.dev)
 ## :gem: Acknowledgements
 
 - [GPUI](https://www.gpui.rs/) and the [Zed](https://zed.dev/) team — the framework everything renders through
-- [gpui-component / gpui-kit](https://github.com/longbridge/gpui-component) — the default component library
+- [gpui-kit](https://github.com/longbridge/gpui-kit) — the default component library
 - [Workbench](https://github.com/workbenchdev/Workbench) — the inspiration for Studio
 - [Devin](https://devin.ai) — the agent that wrote most of this code
 - [saphyr](https://github.com/saphyr-rs/saphyr) — lossless-ish YAML for the document format

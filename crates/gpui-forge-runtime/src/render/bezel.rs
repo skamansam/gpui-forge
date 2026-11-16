@@ -2,7 +2,7 @@
 //!
 //! Same public contract as the gpui-kit twin: hosts drive `set_document`,
 //! `update_state`, `fire_call`, `preview`, pick/place/dnd flags and sinks
-//! identically. Element rendering maps the gpui02 catalog onto guise widgets
+//! identically. Element rendering maps the guise catalog onto guise widgets
 //! where their API is stable and gpui primitives elsewhere — `forge.*`
 //! intrinsics and two-way input widgets are stubs until the adapter port.
 

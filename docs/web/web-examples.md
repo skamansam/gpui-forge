@@ -10,7 +10,7 @@ way to see what a document looks like — and what each widget set offers.
   These also show the same view hand-written in gpui-kit Rust, so you can
   compare the YAML with the code it replaces.
 - **Widget-set showcases** — one demo per registered library and base:
-  `ely`, `gc` (gpui-component), `gflow`, `base`, `video`, `hig`, `pdf`,
+  `ely`, `gflow`, `base`, `video`, `hig`, `pdf`,
   `whiteboard`, `math`, plus the `gpui-kit` base itself.
 
 ## How each one renders
@@ -23,7 +23,7 @@ The page picks a canvas per example, matching what the
 - **`base: ratatui`** docs draw a terminal frame via `TuiCanvas` — three demos
   ship: the showcase, a dashboard (tabs + gauges + a table), and a forms demo
   (inputs + lists).
-- **Native-only bases** (`iced`, `bezel`, `gpui02`, `adabraka`) show their
+- **Native-only bases** (`iced`, `bezel`, `guise`, `adabraka`) show their
   source with a "native only" note — no black canvas pretending to render.
   Open them in [Studio](studio.md) to run them for real.
 

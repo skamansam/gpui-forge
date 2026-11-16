@@ -7,17 +7,17 @@ publish.workspace = true
 repository.workspace = true
 
 # One base per binary — `cargo build -p forge-preview` produces `forge-preview`
-# (gpui-kit); `--no-default-features --features base-gpui02` produces
-# `forge-preview-gpui02`.
+# (gpui-kit); `--no-default-features --features base-guise` produces
+# `forge-preview-guise`.
 [[bin]]
 name = "forge-preview"
 path = "src/main_gpui_kit.rs"
 required-features = ["base-gpui-kit"]
 
 [[bin]]
-name = "forge-preview-gpui02"
-path = "src/main_gpui02.rs"
-required-features = ["base-gpui02"]
+name = "forge-preview-guise"
+path = "src/main_guise.rs"
+required-features = ["base-guise"]
 
 [[bin]]
 name = "forge-preview-bezel"
@@ -40,21 +40,20 @@ base-gpui-kit = [
     "dep:gpui-kit",
     "gpui-forge-runtime/base-gpui-kit",
     "dep:forge-lib-ely",
-    "dep:forge-lib-gpui-component",
     "dep:forge-lib-video",
     "dep:forge-lib-zorite",
     "dep:forge-lib-hig",
     "dep:forge-lib-base",
     "dep:forge-lib-flow",
 ]
-base-gpui02 = [
+base-guise = [
     "dep:gpui",
     "dep:guise-ui",
-    "gpui-forge-runtime/base-gpui02",
-    "dep:forge-lib-gpui02",
-    "forge-lib-gpui02/ferrum",
-    "forge-lib-gpui02/rhythm",
-    "forge-lib-gpui02/symbols",
+    "gpui-forge-runtime/base-guise",
+    "dep:forge-lib-guise",
+    "forge-lib-guise/ferrum",
+    "forge-lib-guise/rhythm",
+    "forge-lib-guise/symbols",
 ]
 base-bezel = ["dep:bezel", "gpui-forge-runtime/base-bezel"]
 base-ratatui = ["dep:ratatui", "dep:crossterm", "gpui-forge-runtime/base-ratatui"]
@@ -62,11 +61,10 @@ base-iced = ["dep:iced", "gpui-forge-runtime/base-iced"]
 
 [dependencies]
 gpui-forge-runtime = { path = "../gpui-forge-runtime", default-features = false }
-forge-lib-gpui02 = { path = "../forge-lib-gpui02", optional = true, default-features = false }
+forge-lib-guise = { path = "../forge-lib-guise", optional = true, default-features = false }
 # The gpui-kit host registers the same adapter set Studio does — same-base
 # docs preview out of process with `alias.Name` elements intact.
 forge-lib-ely = { path = "../forge-lib-ely", optional = true }
-forge-lib-gpui-component = { path = "../forge-lib-gpui-component", optional = true }
 forge-lib-video = { path = "../forge-lib-video", optional = true }
 forge-lib-zorite = { path = "../forge-lib-zorite", optional = true }
 forge-lib-hig = { path = "../forge-lib-hig", optional = true }

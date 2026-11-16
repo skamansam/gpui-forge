@@ -7,7 +7,7 @@ publish.workspace = true
 repository.workspace = true
 
 # Two variants (#77): `base-gpui-kit` links the crate's `gpui-pre` feature
-# (gpui_pre =0.3.9 — the gpui-kit base's pin); `base-gpui02` links its `gpui`
+# (gpui_pre =0.3.9 — the gpui-kit base's pin); `base-guise` links its `gpui`
 # (crates.io 0.2) feature for the Vanilla GPUI 0.2 base. Requires GStreamer
 # 1.14+ and its plugins at build and run time.
 [features]
@@ -17,10 +17,10 @@ base-gpui-kit = [
     "gpui-video-player/gpui-pre",
     "gpui-forge-runtime/base-gpui-kit",
 ]
-base-gpui02 = [
+base-guise = [
     "dep:gpui-video-player",
     "gpui-video-player/gpui",
-    "gpui-forge-runtime/base-gpui02",
+    "gpui-forge-runtime/base-guise",
 ]
 
 [dependencies]

@@ -136,3 +136,108 @@ elements:
     component: iced::widget::Scrollable
     canvas: GroupBox
     children: any
+  Canvas:
+    icon: circle-dot
+    group: Components
+    summary: "Canvas — iced, via Box."
+    canvas: Box
+    children: any
+
+  ComboBox:
+    icon: circle-dot
+    group: Components
+    summary: "ComboBox — iced, via Combobox."
+    canvas: Combobox
+    children: any
+
+  Image:
+    icon: circle-dot
+    group: Components
+    summary: "Image — iced, via Image."
+    canvas: Image
+    children: any
+
+  KeyedColumn:
+    icon: circle-dot
+    group: Components
+    summary: "KeyedColumn — iced, via VStack."
+    canvas: VStack
+    children: any
+
+  Markdown:
+    icon: circle-dot
+    group: Components
+    summary: "Markdown — iced, via TextView."
+    canvas: TextView
+    children: any
+
+  PaneGrid:
+    icon: circle-dot
+    group: Components
+    summary: "PaneGrid — iced, via Resizable."
+    canvas: Resizable
+    children: any
+
+  PickList:
+    icon: circle-dot
+    group: Components
+    summary: "PickList — iced, via Select."
+    canvas: Select
+    children: any
+
+  Radio:
+    icon: circle-dot
+    group: Components
+    summary: "Radio — iced, via RadioGroup."
+    canvas: RadioGroup
+    children: any
+
+  Rule:
+    icon: circle-dot
+    group: Components
+    summary: "Rule — iced, via Separator."
+    canvas: Separator
+    children: any
+
+  Space:
+    icon: circle-dot
+    group: Components
+    summary: "Space — iced, via Box."
+    canvas: Box
+    children: any
+
+  Stack:
+    icon: circle-dot
+    group: Components
+    summary: "Stack — iced, via Box."
+    canvas: Box
+    children: any
+
+  Svg:
+    icon: circle-dot
+    group: Components
+    summary: "Svg — iced, via Image."
+    canvas: Image
+    children: any
+
+  Table:
+    icon: circle-dot
+    group: Components
+    summary: "Table — iced, via Table."
+    canvas: Table
+    children: any
+
+  TextEditor:
+    icon: circle-dot
+    group: Components
+    summary: "TextEditor — iced, via Editor."
+    canvas: Editor
+    children: any
+
+  VerticalSlider:
+    icon: circle-dot
+    group: Components
+    summary: "VerticalSlider — iced, via Slider."
+    canvas: Slider
+    children: any
+

@@ -143,9 +143,9 @@ fn main() {
 }
 "#;
 
-/// The gpui02 app's bootstrap: crates.io `gpui` + guise, `Theme::init` for the
+/// The guise app's bootstrap: crates.io `gpui` + guise, `Theme::init` for the
 /// guise global the components panic without (#96).
-const APP_MAIN_GPUI02: &str = r#"use gpui_forge_runtime::render::ForgeView;
+const APP_MAIN_GUISE: &str = r#"use gpui_forge_runtime::render::ForgeView;
 use gpui::prelude::*;
 use gpui::*;
 
@@ -321,7 +321,7 @@ fn main() -> iced::Result {
 
 fn app_main(base_id: &str) -> &'static str {
     match base_id {
-        "gpui02" => APP_MAIN_GPUI02,
+        "guise" => APP_MAIN_GUISE,
         "bezel" => APP_MAIN_BEZEL,
         "ratatui" => APP_MAIN_RATATUI,
         "iced" => APP_MAIN_ICED,
@@ -634,7 +634,7 @@ document = "app.forge.yaml"
 # dir = "assets"
 
 # [libraries]
-# ely-gpui-components = "^0.4"
+# ely-core = "^0.2"
 "#
         ),
     );
@@ -1664,14 +1664,6 @@ fn lib_wiring(library: &str, root: &Path, base_id: &str) -> Option<(String, Stri
             "use forge_lib_ely::Ely;".to_string(),
             "    view.register_library(Ely::new());".to_string(),
         ),
-        "gpui-component" => (
-            format!(
-                "forge-lib-gpui-component = {{ path = \"{}\" }}",
-                r("crates/forge-lib-gpui-component")
-            ),
-            "use forge_lib_gpui_component::GpuiComponent;".to_string(),
-            "    view.register_library(GpuiComponent);".to_string(),
-        ),
         "base-gpui" => (
             format!(
                 "forge-lib-base = {{ path = \"{}\" }}",
@@ -1742,26 +1734,26 @@ fn lib_wiring(library: &str, root: &Path, base_id: &str) -> Option<(String, Stri
         ),
         "ferrum-flow" => (
             format!(
-                "forge-lib-gpui02 = {{ path = \"{}\", features = [\"ferrum\"] }}",
-                r("crates/forge-lib-gpui02")
+                "forge-lib-guise = {{ path = \"{}\", features = [\"ferrum\"] }}",
+                r("crates/forge-lib-guise")
             ),
-            "use forge_lib_gpui02::Ferrum;".to_string(),
+            "use forge_lib_guise::Ferrum;".to_string(),
             "    view.register_library(Ferrum::new());".to_string(),
         ),
         "rhythm-gpui" => (
             format!(
-                "forge-lib-gpui02 = {{ path = \"{}\", features = [\"rhythm\"] }}",
-                r("crates/forge-lib-gpui02")
+                "forge-lib-guise = {{ path = \"{}\", features = [\"rhythm\"] }}",
+                r("crates/forge-lib-guise")
             ),
-            "use forge_lib_gpui02::Rhythm;".to_string(),
+            "use forge_lib_guise::Rhythm;".to_string(),
             "    view.register_library(Rhythm::new());".to_string(),
         ),
         "gpui-symbols" => (
             format!(
-                "forge-lib-gpui02 = {{ path = \"{}\", features = [\"symbols\"] }}",
-                r("crates/forge-lib-gpui02")
+                "forge-lib-guise = {{ path = \"{}\", features = [\"symbols\"] }}",
+                r("crates/forge-lib-guise")
             ),
-            "use forge_lib_gpui02::Symbols;".to_string(),
+            "use forge_lib_guise::Symbols;".to_string(),
             "    view.register_library(Symbols);".to_string(),
         ),
         _ => return None,

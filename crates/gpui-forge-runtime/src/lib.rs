@@ -7,13 +7,13 @@ const _: () = {
     let bases = cfg!(feature = "base-gpui-kit") as usize
         + cfg!(feature = "base-bezel") as usize
         + cfg!(feature = "base-adabraka") as usize
-        + cfg!(feature = "base-gpui02") as usize
+        + cfg!(feature = "base-guise") as usize
         + cfg!(feature = "base-ratatui") as usize
         + cfg!(feature = "base-iced") as usize;
     assert!(
         bases <= 1,
         "gpui-forge-runtime: enable at most one base feature: \
-         base-gpui-kit, base-bezel, base-adabraka, base-gpui02, base-ratatui or base-iced. \
+         base-gpui-kit, base-bezel, base-adabraka, base-guise, base-ratatui or base-iced. \
          Use `default-features = false` when selecting a non-default base; \
          no base is valid for consumers that only need check/base/forge_spec."
     );
@@ -28,7 +28,7 @@ compile_error!(
 
 #[cfg(any(
     feature = "base-gpui-kit",
-    feature = "base-gpui02",
+    feature = "base-guise",
     feature = "base-bezel",
     feature = "base-ratatui",
     feature = "base-iced"

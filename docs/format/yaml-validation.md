@@ -48,7 +48,7 @@ element names, per-element props, events, content types, `use:` libraries and
 
 ```text
 https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
-https://gpui-forge.rudeboy.dev/schema/0.1/gpui02.json
+https://gpui-forge.rudeboy.dev/schema/0.1/guise.json
 https://gpui-forge.rudeboy.dev/schema/0.1/adabraka.json
 https://gpui-forge.rudeboy.dev/schema/0.1/bezel.json
 https://gpui-forge.rudeboy.dev/schema/0.1/ratatui.json

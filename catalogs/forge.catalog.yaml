@@ -88,14 +88,75 @@ elements:
     children: none
 
   Files:
-    summary: Project file tree — reads a JSON listing from state (`of:`) with
-      `[{name, path, dir, children}]` entries; file rows write `selected` and
-      fire `select`, folders expand.
+    summary: File tree. Two listing modes — `of:` renders a JSON
+      `[{name, path, dir, children}]` listing from state, `root:` scans a
+      directory itself (`filter:` globs file names, `depth:`/`hidden:` bound
+      the scan, `nonce:` or the refresh button rescans). `search:` adds a
+      filter box; `query:` exposes its text. `icons:`/`icon-map:` theme the
+      rows. `folders:` picks in-place navigation over tree expansion;
+      `highlights:` styles rows by file glob. The tree virtualizes — give it
+      a bounded slot (`grow` plus `min-height 0` inside a fixed-height
+      column); its own scrollbar then handles overflow. File rows write
+      `selected` and fire `select` on click, `open` on double-click; folders
+      expand (tree) or enter (navigate).
     component: gpui_forge_runtime::render::ForgeView
     props:
       of:
         type: string
         summary: State path holding the file listing — default `studio.files`.
+          Takes precedence over `root:` when set.
+      root:
+        type: string
+        summary: Directory to scan — literal or `{$binding}`; the element
+          reads the filesystem itself (no host glue needed).
+      filter:
+        type: list<string>
+        summary: Glob(s) limiting file names — `"*.forge.yaml"` or
+          `[*.rs, *.toml]`; a comma-separated string works too. Dirs always pass.
+      depth:
+        type: number
+        default: 6
+        summary: Max directory depth for a `root:` scan.
+      hidden:
+        type: bool
+        default: false
+        summary: Include dotfiles in a `root:` scan.
+      nonce:
+        type: string
+        summary: Cache-bust token — any changing value (`{$path}` to a number
+          or timestamp the host bumps) forces a rescan.
+      folders:
+        type: enum
+        values: [tree, navigate]
+        default: tree
+        summary: "`tree` expands folders in place; `navigate` enters a folder
+          in the same panel (flat listing, `..` row climbs back, clamped
+          under `root:`). `root:` mode only."
+      highlights:
+        type: map
+        summary: "{file-glob: text-style} — e.g. {\"*.forge.yaml\": bold,
+          \"*.json\": green}. A style is a shorthand string (font weights,
+          `italic`, `underline`, named colors, `#hex`, `$theme.*`), a map
+          `{weight, italic, underline, color}`, or a bound JSON object /
+          `\"glob = style\"` lines. First matching glob wins; styles the
+          label text, not the row background."
+      search:
+        type: bool
+        default: false
+        summary: Show a filter box above the tree — matches file names, keeps
+          ancestor folders.
+      query:
+        type: string
+        bindable: true
+        summary: The search text — bind it to read or preseed the filter.
+      icons:
+        type: bool
+        default: true
+        summary: Show file-type icons on rows.
+      icon-map:
+        type: map
+        summary: "{extension-or-key: icon-name} overrides for the built-in
+          icon table; `dir`, `dir-open` and `file` rename the structural glyphs."
       placeholder:
         type: string
         summary: Shown while the listing is empty.
@@ -105,6 +166,7 @@ elements:
         summary: Absolute path of the clicked file.
     events:
       select: string
+      open: string
     children: none
 
   Palette:

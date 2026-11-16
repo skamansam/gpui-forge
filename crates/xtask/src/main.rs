@@ -2,6 +2,8 @@
 //! Wraps the base-matrix feature flags and per-base host builds so nobody
 //! memorizes `--no-default-features --features base-<id>` incantations.
 
+mod components;
+
 use std::path::Path;
 use std::process::Command;
 
@@ -87,6 +89,8 @@ fn usage() -> ! {
     eprintln!("  xtask check-base <base>  clippy the runtime under a base feature");
     eprintln!("  xtask check-bases        check-base for every registered base");
     eprintln!("  xtask schemas [--check]  regenerate site/static/schema/0.1/*.json");
+    eprintln!("  xtask components         upstream-drift report (versions + components)");
+    eprintln!("      [--check] [--format github] [--report <path>]");
     std::process::exit(2)
 }
 
@@ -208,6 +212,7 @@ fn main() {
             }
         }
         Some("schemas") => schemas_cmd(&args[1..]),
+        Some("components") | Some("drift") => components::run(&args[1..]),
         Some("host") => {
             let requested: Vec<&str> = args[1..].iter().map(String::as_str).collect();
             let targets: Vec<String> = if requested.is_empty() {
@@ -247,7 +252,7 @@ fn main() {
             }
             let Some(doc) = doc else { usage() };
             let example = match base.as_str() {
-                "gpui02" => "render_gpui02",
+                "guise" => "render_guise",
                 _ => "render",
             };
             let mut cargo = vec!["run", "-p", "gpui-forge-runtime"];

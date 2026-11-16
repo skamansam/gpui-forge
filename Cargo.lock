@@ -3789,7 +3789,6 @@ checksum = "aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b"
 name = "forge-cli"
 version = "0.9.1"
 dependencies = [
- "forge-lib-gpui-component",
  "gpui-forge-runtime",
  "serde",
  "serde_json",
@@ -3846,15 +3845,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "forge-lib-gpui-component"
-version = "0.9.1"
-dependencies = [
- "gpui-component",
- "gpui-forge-runtime",
-]
-
-[[package]]
-name = "forge-lib-gpui02"
+name = "forge-lib-guise"
 version = "0.9.1"
 dependencies = [
  "ferrum-flow",
@@ -3910,8 +3901,7 @@ dependencies = [
  "forge-lib-base",
  "forge-lib-ely",
  "forge-lib-flow",
- "forge-lib-gpui-component",
- "forge-lib-gpui02",
+ "forge-lib-guise",
  "forge-lib-hig",
  "forge-lib-video",
  "forge-lib-zorite",
@@ -3948,7 +3938,6 @@ dependencies = [
  "forge-lib-base",
  "forge-lib-ely",
  "forge-lib-flow",
- "forge-lib-gpui-component",
  "forge-lib-hig",
  "forge-lib-video",
  "forge-lib-zorite",
@@ -3975,7 +3964,6 @@ dependencies = [
  "console_error_panic_hook",
  "forge-lib-base",
  "forge-lib-ely",
- "forge-lib-gpui-component",
  "forge-lib-hig",
  "forge-lib-zorite",
  "forge-spec",
@@ -14841,6 +14829,13 @@ checksum = "ec7a2a501ed189703dba8b08142f057e887dfc4b2cc4db2d343ac6376ba3e0b9"
 [[package]]
 name = "xtask"
 version = "0.1.0"
+dependencies = [
+ "forge-spec",
+ "serde",
+ "serde_json",
+ "syn 3.0.9",
+ "toml 0.8.23",
+]
 
 [[package]]
 name = "y4m"

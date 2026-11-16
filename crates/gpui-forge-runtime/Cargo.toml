@@ -12,7 +12,7 @@ default = ["base-gpui-kit"]
 base-gpui-kit = ["dep:gpui-kit", "dep:gpui-base", "dep:forge-term"]
 base-bezel = ["dep:bezel"]
 base-adabraka = []
-base-gpui02 = ["dep:gpui", "dep:guise-ui"]
+base-guise = ["dep:gpui", "dep:guise-ui"]
 base-ratatui = ["dep:ratatui"]
 base-iced = ["dep:iced"]
 
@@ -20,9 +20,9 @@ base-iced = ["dep:iced"]
 forge-spec.workspace = true
 gpui-kit = { workspace = true, optional = true }
 # Editor squiggles (#128): DiagnosticSet lives in gpui-base, which gpui-kit's
-# gpui-component builds on — pinned to the same release line.
+# gpui-kit builds on — pinned to the same release line.
 gpui-base = { version = "=0.8.1", optional = true }
-# gpui02 base (#96): crates.io gpui 0.2.2 + guise — a second, unrelated GPUI
+# guise base (#96): crates.io gpui 0.2.2 + guise — a second, unrelated GPUI
 # graph; only one `base-*` may be enabled per build.
 gpui = { version = "=0.2.2", optional = true }
 guise-ui = { version = "1.10", optional = true }
@@ -49,12 +49,12 @@ name = "render"
 path = "examples/render.rs"
 required-features = ["base-gpui-kit"]
 
-# `cargo run -p gpui-forge-runtime --no-default-features --features base-gpui02
-#  --example render_gpui02 -- <doc.forge.yaml>`
+# `cargo run -p gpui-forge-runtime --no-default-features --features base-guise
+#  --example render_guise -- <doc.forge.yaml>`
 [[example]]
-name = "render_gpui02"
-path = "examples/render_gpui02.rs"
-required-features = ["base-gpui02"]
+name = "render_guise"
+path = "examples/render_guise.rs"
+required-features = ["base-guise"]
 
 # The integration test exercises `ForgeView` inside a live App — only
 # meaningful under the kit base.

@@ -1,13 +1,13 @@
 # yaml-language-server: $schema=../schema/catalog-0.1.json
-# Catalog manifest for the gpui-symbols adapter (forge-lib-gpui02 `symbols`
-# feature) — `use: sf: gpui-symbols` on the gpui02 base (#88). macOS only.
+# Catalog manifest for the gpui-symbols adapter (forge-lib-guise `symbols`
+# feature) — `use: sf: gpui-symbols` on the guise base (#88). macOS only.
 catalog: "0.1"
 library: gpui-symbols
 name: gpui-symbols
 version: 0.6.1
 license: Apache-2.0
 bases:
-  gpui02: "*"
+  guise: "*"
 
 elements:
   Icon:

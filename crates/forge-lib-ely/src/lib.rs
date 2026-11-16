@@ -6,13 +6,26 @@ use ely_core::buttons::{
 use ely_core::data_display::{
     Avatar, Badge, KpiCard, Meter, QrCode, Statistic, Tag, TimelineItem, TrendIndicator, UsageBar,
 };
+use ely_core::feedback::Notification;
 use ely_core::feedback::{Alert, Banner, Callout, EmptyState, InlineMessage, StatusMessage};
+use ely_core::forms::{
+    Checkbox, Choice, ChoiceChips, Form, HotkeyInput, InlineEdit, Knob, MultiSelect, NumberInput,
+    PinInput, Radio, RadioCard, Select, Slider,
+};
 use ely_core::forms::{Rating, Stepper, Switch};
 use ely_core::layout::{AspectRatio, Container, ZStack};
+use ely_core::layout::{Collapsible, Fieldset, Panel, Section, Sidebar};
+use ely_core::lists::{GroupedList, ListItem};
+use ely_core::motion::{ProgressBar, Reorder, Skeleton};
 use ely_core::motion::{Spinner, SpinnerStyle};
+use ely_core::navigation::{NavItem, Pagination};
+use ely_core::primitives::Disclosure;
 use ely_core::primitives::{Divider, Icon, IconName, Severity};
+use ely_core::shell::Toolbar;
 use ely_core::theme::{ContainerSize, ControlSize, IconSize};
 use ely_core::typography::{Caption, Heading, Label, Overline, Paragraph, Subtitle, Title};
+use ely_core::typography::{Code, CopyableText, NumberText, PercentText};
+
 use gpui_forge_runtime::base::kit::*;
 use gpui_forge_runtime::forge_spec::catalog::{self, Catalog};
 use gpui_forge_runtime::forge_spec::{Node, Value};
@@ -292,8 +305,118 @@ impl ForgeLibrary for Ely {
                 )
                 .into_any_element(),
             ),
+            "Collapsible" => {
+                Some(Collapsible::new(key.to_string(), prop_bool(node, "open")).into_any_element())
+            }
+            "Disclosure" => {
+                Some(Disclosure::new(key.to_string(), prop_bool(node, "open")).into_any_element())
+            }
+            "Sidebar" => {
+                Some(Sidebar::new(key.to_string(), prop_bool(node, "collapsed")).into_any_element())
+            }
+            "Radio" => {
+                Some(Radio::new(key.to_string(), prop_bool(node, "checked")).into_any_element())
+            }
+            "RadioCard" => Some(
+                RadioCard::new(
+                    key.to_string(),
+                    prop_bool(node, "checked"),
+                    prop_str(node, "title"),
+                )
+                .into_any_element(),
+            ),
+            "Checkbox" => {
+                Some(Checkbox::new(key.to_string(), prop_bool(node, "checked")).into_any_element())
+            }
+            "Slider" => Some(
+                Slider::new(key.to_string(), prop_num(node, "value").unwrap_or(0.0))
+                    .into_any_element(),
+            ),
+            "Knob" => Some(
+                Knob::new(key.to_string(), prop_num(node, "value").unwrap_or(0.0))
+                    .into_any_element(),
+            ),
+            "ProgressBar" => Some(
+                ProgressBar::new(
+                    key.to_string(),
+                    prop_num(node, "value").unwrap_or(0.0) as f32,
+                )
+                .into_any_element(),
+            ),
+            "NumberInput" => Some(
+                NumberInput::new(key.to_string(), prop_num(node, "value").unwrap_or(0.0))
+                    .into_any_element(),
+            ),
+            "Pagination" => Some(
+                Pagination::new(
+                    key.to_string(),
+                    prop_num(node, "page").unwrap_or(1.0) as usize,
+                    prop_num(node, "pages").unwrap_or(1.0) as usize,
+                )
+                .into_any_element(),
+            ),
+            "PinInput" => Some(
+                PinInput::new(
+                    key.to_string(),
+                    prop_num(node, "length").unwrap_or(4.0).max(1.0) as usize,
+                )
+                .into_any_element(),
+            ),
+            "ListItem" => {
+                Some(ListItem::new(key.to_string(), prop_str(node, "title")).into_any_element())
+            }
+            "GroupedList" => Some(GroupedList::new(key.to_string()).into_any_element()),
+            "Form" => Some(Form::new(key.to_string()).into_any_element()),
+            "Skeleton" => Some(Skeleton::new(key.to_string()).into_any_element()),
+            "Reorder" => Some(Reorder::new(key.to_string()).into_any_element()),
+            "Toolbar" => Some(Toolbar::new().into_any_element()),
+            "Panel" => Some(Panel::new(prop_str(node, "title")).into_any_element()),
+            "Fieldset" => Some(Fieldset::new(prop_str(node, "title")).into_any_element()),
+            "Section" => Some(Section::new(prop_str(node, "title")).into_any_element()),
+            "Code" => Some(Code::new(prop_str(node, "text")).into_any_element()),
+            "CopyableText" => {
+                Some(CopyableText::new(key.to_string(), prop_str(node, "text")).into_any_element())
+            }
+            "PercentText" => {
+                Some(PercentText::new(prop_num(node, "value").unwrap_or(0.0)).into_any_element())
+            }
+            "NumberText" => {
+                Some(NumberText::new(prop_num(node, "value").unwrap_or(0.0)).into_any_element())
+            }
+            "InlineEdit" => {
+                Some(InlineEdit::new(key.to_string(), prop_str(node, "value")).into_any_element())
+            }
+            "NavItem" => Some(
+                NavItem::new(key.to_string(), icon_of(node), prop_str(node, "label"))
+                    .into_any_element(),
+            ),
+            "Notification" => Some(
+                Notification::new(key.to_string(), icon_of(node), prop_str(node, "title"))
+                    .into_any_element(),
+            ),
+            "HotkeyInput" => Some(HotkeyInput::new(key.to_string(), None).into_any_element()),
+            "Select" => Some(Select::new(key.to_string(), choices(node)).into_any_element()),
+            "MultiSelect" => {
+                Some(MultiSelect::new(key.to_string(), choices(node)).into_any_element())
+            }
+            "ChoiceChips" => {
+                Some(ChoiceChips::new(key.to_string(), choices(node)).into_any_element())
+            }
             _ => None,
         }
+    }
+}
+
+fn choices(node: &Node) -> Vec<Choice> {
+    match prop(node, "options") {
+        Some(Value::List(items)) => items
+            .iter()
+            .filter_map(|v| match v {
+                Value::String(s) | Value::Enum(s) => Some(Choice::new(s.clone(), s.clone())),
+                _ => None,
+            })
+            .collect(),
+        _ => Vec::new(),
     }
 }
 

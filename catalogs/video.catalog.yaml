@@ -8,7 +8,7 @@ version: 0.1.3
 license: MIT
 bases:
   gpui-kit: "*"
-  gpui02: "*"
+  guise: "*"
 
 elements:
   Player:

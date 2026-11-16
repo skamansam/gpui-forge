@@ -1,0 +1,46 @@
+# Upstream-drift policy for `cargo xtask components` — maps the *Rust crate
+# name* used in catalog `component:` paths to where that crate's source and
+# version come from.
+#
+# Fields per `[crates.<lib-name>]`:
+#   package   crates.io package (default: the lib name with `_` → `-`)
+#   vendored  source tree under the repo (for crates not on crates.io)
+#   local     workspace crate — component paths check against its own src
+#   skip      don't check this crate at all (the reason, for the report)
+#   pin       intentional non-latest version — reported, not a failure
+#   surface   restrict the "not cataloged" report to a module subtree
+#             (e.g. "iced::widget" — default: every reachable public item)
+#   ignore    export names to never list as "not cataloged" (non-widget types)
+
+# The published package is `guise-ui`; the library name is `guise`.
+[crates.guise]
+package = "guise-ui"
+
+# Vendored upstreams — not on crates.io.
+[crates.base_gpui]
+vendored = "vendor/base-gpui"
+
+[crates.gpui_apple_hig]
+vendored = "vendor/gpui-apple-hig"
+
+[crates.gpui_flow]
+vendored = "vendor/gpui-flow"
+
+# Forge's own crates — component paths into them are checked against the
+# workspace source directly (no crates.io lookup, no version check).
+[crates.gpui_forge_runtime]
+local = "crates/gpui-forge-runtime"
+
+[crates.forge]
+skip = "forge intrinsics — schema elements, not a Rust crate"
+
+[crates.my_lib]
+skip = "template catalog — synthetic example"
+
+# iced and ratatui surface their widgets from a module, not the crate root —
+# the root union still works, but scoping keeps the "not cataloged" list clean.
+[crates.iced]
+surface = "iced::widget"
+
+[crates.ratatui]
+surface = "ratatui::widgets"

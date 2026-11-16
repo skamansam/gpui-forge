@@ -29,7 +29,7 @@ import ratatuiForms from '../../../examples/demos/ratatui-forms.forge.yaml?raw';
 import gpuiKitShowcase from '../../../examples/showcases/gpui-kit-showcase.forge.yaml?raw';
 import icedShowcase from '../../../examples/showcases/iced-showcase.forge.yaml?raw';
 import bezelShowcase from '../../../examples/showcases/bezel-showcase.forge.yaml?raw';
-import gpui02Showcase from '../../../examples/showcases/gpui02-showcase.forge.yaml?raw';
+import guiseShowcase from '../../../examples/showcases/guise-showcase.forge.yaml?raw';
 import adabrakaShowcase from '../../../examples/showcases/adabraka-showcase.forge.yaml?raw';
 
 export type Showcase = {
@@ -150,11 +150,11 @@ export const showcases: Showcase[] = [
 		yaml: bezelShowcase
 	},
 	{
-		slug: 'gpui02-showcase',
+		slug: 'guise-showcase',
 		base: 'native',
 		title: 'GPUI 0.2 · guise',
-		summary: '`base: gpui02` — Vanilla GPUI 0.2 + guise; native only.',
-		yaml: gpui02Showcase
+		summary: '`base: guise` — Vanilla GPUI 0.2 + guise; native only.',
+		yaml: guiseShowcase
 	},
 	{
 		slug: 'adabraka-showcase',

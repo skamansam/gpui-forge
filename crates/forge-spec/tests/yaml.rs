@@ -52,8 +52,8 @@ fn reads_the_login_example() {
     assert_eq!(doc.version, "0.1");
     assert_eq!(doc.base.as_deref(), Some("gpui-kit"));
     assert_eq!(doc.imports[0].alias, "ely");
-    assert_eq!(doc.imports[0].library, "ely-gpui-components");
-    assert_eq!(doc.imports[0].version.as_deref(), Some("^0.4"));
+    assert_eq!(doc.imports[0].library, "ely-core");
+    assert_eq!(doc.imports[0].version.as_deref(), Some("^0.2"));
     assert_eq!(doc.meta, vec![("title".into(), "Login".into())]);
 
     let root = &doc.root;
@@ -111,7 +111,7 @@ fn canonical_output_is_stable() {
 forge: "0.1"
 base: gpui-kit
 use:
-  ely: ely-gpui-components ^0.4
+  ely: ely-core ^0.2
 meta:
   title: 'Login: step 1'
 

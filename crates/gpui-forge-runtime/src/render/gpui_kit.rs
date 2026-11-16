@@ -20,36 +20,59 @@ use gpui_kit::component::TitleBar;
 use gpui_kit::component::WindowExt;
 use gpui_kit::component::accordion::Accordion;
 use gpui_kit::component::alert::{Alert, AlertVariant};
+use gpui_kit::component::attachment::{
+    Attachment, AttachmentContent, AttachmentDescription, AttachmentTitle,
+};
 use gpui_kit::component::avatar::{Avatar, AvatarGroup};
 use gpui_kit::component::badge::Badge;
 use gpui_kit::component::breadcrumb::{Breadcrumb, BreadcrumbItem};
+use gpui_kit::component::bubble::{Bubble, BubbleVariant};
 use gpui_kit::component::button::{Button, ButtonVariant, ButtonVariants};
 use gpui_kit::component::calendar::{Calendar, CalendarState};
+use gpui_kit::component::carousel::{
+    Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPagination, CarouselPrevious,
+    CarouselState,
+};
+use gpui_kit::component::chart::{BarChart, LineChart, PieChart};
 use gpui_kit::component::checkbox::Checkbox;
+use gpui_kit::component::clipboard::Clipboard;
 use gpui_kit::component::collapsible::Collapsible;
 use gpui_kit::component::color_picker::{ColorPicker, ColorPickerEvent, ColorPickerState};
+use gpui_kit::component::combobox::{Combobox, ComboboxEvent, ComboboxState};
+use gpui_kit::component::command::{Command, CommandGroup, CommandItem, CommandState};
 use gpui_kit::component::date_picker::{DatePicker, DatePickerState};
 use gpui_kit::component::description_list::{DescriptionItem, DescriptionList};
+use gpui_kit::component::dialog::AlertDialog;
+use gpui_kit::component::diff::{Diff, DiffFile, DiffState};
 use gpui_kit::component::empty::{
     Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyMediaVariant, EmptyTitle,
 };
 use gpui_kit::component::form::{Field, Form};
 use gpui_kit::component::group_box::{GroupBox, GroupBoxVariant, GroupBoxVariants};
+use gpui_kit::component::hover_card::HoverCard;
 use gpui_kit::component::input::{
     Editor, EditorState, Input, InputEvent, InputState, NumberInput, OtpEvent, OtpInput, OtpState,
     Textarea, TextareaState,
+};
+use gpui_kit::component::input::{
+    InputGroup, InputGroupAddon, InputGroupAddonAlignment, InputGroupButton, InputGroupText,
 };
 use gpui_kit::component::kbd::Kbd;
 use gpui_kit::component::label::Label;
 use gpui_kit::component::link::Link;
 use gpui_kit::component::list::{List, ListDelegate, ListEvent, ListItem, ListState};
+use gpui_kit::component::marker::{Marker, MarkerAlignment, MarkerContent, MarkerVariant};
 use gpui_kit::component::menu::{ContextMenuExt as _, DropdownMenu as _, PopupMenuItem};
 use gpui_kit::component::message::{
-    Message, MessageAvatar, MessageContent, MessageFooter, MessageHeader,
+    Message, MessageAlignment, MessageAvatar, MessageContent, MessageFooter, MessageHeader,
 };
-use gpui_kit::component::notification::NotificationType;
+use gpui_kit::component::notification::{Notification, NotificationType};
 use gpui_kit::component::pagination::Pagination;
+use gpui_kit::component::popover::Popover;
 use gpui_kit::component::progress::{Progress, ProgressCircle};
+use gpui_kit::component::questionnaire::{
+    Questionnaire, QuestionnaireChoiceDefinition, QuestionnaireItemDefinition, QuestionnaireState,
+};
 use gpui_kit::component::radio::{Radio, RadioGroup};
 use gpui_kit::component::rating::Rating;
 use gpui_kit::component::resizable::{ResizablePanel, h_resizable, resizable_panel, v_resizable};
@@ -57,6 +80,7 @@ use gpui_kit::component::scroll::ScrollableElement as _;
 use gpui_kit::component::select::{Select, SelectEvent, SelectState};
 use gpui_kit::component::separator::Separator;
 use gpui_kit::component::setting::{SettingGroup, SettingItem, SettingPage, Settings};
+use gpui_kit::component::shimmer::ShimmerText;
 use gpui_kit::component::sidebar::{Sidebar, SidebarCollapsible, SidebarMenu, SidebarMenuItem};
 use gpui_kit::component::skeleton::Skeleton;
 use gpui_kit::component::slider::{Slider, SliderEvent, SliderState, SliderValue};
@@ -69,11 +93,14 @@ use gpui_kit::component::table::{
     Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader,
 };
 use gpui_kit::component::tag::{Tag, TagVariant};
+use gpui_kit::component::text::TextView;
 use gpui_kit::component::time_field::{TimeField, TimeFieldState};
 use gpui_kit::component::toolbar::Toolbar;
 use gpui_kit::component::tooltip::Tooltip;
 use gpui_kit::component::tree::{Tree, TreeItem, TreeState};
-use gpui_kit::component::{ActiveTheme, Disableable, Icon, IndexPath, Sizable, Size, v_flex};
+use gpui_kit::component::{
+    ActiveTheme, Disableable, FocusTrapElement, Icon, IndexPath, Selectable, Sizable, Size, v_flex,
+};
 use gpui_kit::{prelude::*, *};
 use serde_json::Value as Json;
 
@@ -190,7 +217,24 @@ pub struct ForgeView {
     time_fields: HashMap<String, Entity<TimeFieldState>>,
     lists: HashMap<String, Entity<ListState<ForgeListDelegate>>>,
     trees: HashMap<String, Entity<TreeState>>,
+    /// `forge.Files` `root:` scans — keyed by `key|root|filter|depth|hidden|nonce`
+    /// so a `nonce:` bump (or the refresh button) is what rescans.
+    files_cache: HashMap<String, Vec<Json>>,
+    /// `forge.Files` search text per element key — the `query:` prop can also
+    /// bind it into document state for hosts to read.
+    files_queries: HashMap<String, String>,
+    /// `forge.Files` `folders: navigate` — current directory per element key.
+    /// Always clamped back under `root:` at render time, so a project switch
+    /// or a removed folder self-heals without explicit resets.
+    files_nav: HashMap<String, String>,
     selects: HashMap<String, Entity<SelectState<Options>>>,
+    comboboxes: HashMap<String, Entity<ComboboxState<Vec<SharedString>>>>,
+    carousels: HashMap<String, Entity<CarouselState>>,
+    commands: HashMap<String, Entity<CommandState>>,
+    questionnaires: HashMap<String, Entity<QuestionnaireState>>,
+    /// `Diff` state per element key, with the patch text it was built from —
+    /// `set_files` is only re-parsed when the `patch:` input changes.
+    diffs: HashMap<String, (String, Entity<DiffState>)>,
     tabs: HashMap<String, usize>,
     previews: HashMap<String, Entity<ForgeView>>,
     /// `forge.Preview` id → the `doc:` src it has loaded — skips re-parsing
@@ -295,7 +339,15 @@ impl ForgeView {
             time_fields: HashMap::new(),
             lists: HashMap::new(),
             trees: HashMap::new(),
+            files_cache: HashMap::new(),
+            files_queries: HashMap::new(),
+            files_nav: HashMap::new(),
             selects: HashMap::new(),
+            comboboxes: HashMap::new(),
+            carousels: HashMap::new(),
+            commands: HashMap::new(),
+            questionnaires: HashMap::new(),
+            diffs: HashMap::new(),
             tabs: HashMap::new(),
             preview_bounds: HashMap::new(),
             #[cfg(not(target_arch = "wasm32"))]
@@ -338,6 +390,11 @@ impl ForgeView {
         self.lists.clear();
         self.trees.clear();
         self.selects.clear();
+        self.comboboxes.clear();
+        self.carousels.clear();
+        self.commands.clear();
+        self.questionnaires.clear();
+        self.diffs.clear();
         self.subscriptions.clear();
         cx.notify();
     }
@@ -905,30 +962,257 @@ impl ForgeView {
             .into_any_element()
     }
 
-    /// `forge.Files` (#148) — a project file tree. `of:` names the state path
-    /// holding Studio's JSON listing (`[{name, path, dir, children}]`); file
-    /// rows write `bind selected` and fire `select`, folders just expand.
-    /// Directory ids carry a trailing `/` so the click handler can skip them.
-    fn files(&mut self, node: &Node, key: &str, cx: &mut Context<Self>) -> AnyElement {
-        let of = self
-            .prop_text(node, "of")
-            .unwrap_or_else(|| "studio.files".into());
+    /// `forge.Files` (#148) — a file tree. Two listing modes: `of:` names a
+    /// state path holding a JSON listing (`[{name, path, dir, children}]`),
+    /// `root:` names a directory the element scans itself — `filter:` globs
+    /// limit file names, `depth:`/`hidden:` bound the scan, and a `nonce:`
+    /// prop or the refresh button busts the cache after out-of-band changes.
+    /// `search:` adds a filter box whose text `query:` exposes. `icons:` and
+    /// `icon-map:` theme the rows. File rows write `bind selected` and fire
+    /// `select`, folders just expand. Directory ids carry a trailing `/` so
+    /// the click handler can skip them.
+    fn files(
+        &mut self,
+        node: &Node,
+        key: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
         let sel = self.two_way(node, "selected");
-        let data = parse_path(&of)
-            .ok()
-            .and_then(|p| get_path(self.state(), &p).cloned())
-            .unwrap_or(Json::Null);
-        let mut items = Vec::new();
-        if let Some(entries) = data.as_array() {
-            Self::files_data(entries, &mut items);
-        }
-        if items.is_empty() {
-            return placeholder(
-                self.prop_text(node, "placeholder")
-                    .unwrap_or_else(|| "no files".into()),
-                cx,
+        let show_icons = self.prop(node, "icons").map_or(true, |v| self.truthy(v));
+        let icon_map = self
+            .prop(node, "icon-map")
+            .map(|v| self.icon_map(v))
+            .unwrap_or_default();
+        let empty_text = self
+            .prop_text(node, "placeholder")
+            .unwrap_or_else(|| "no files".into());
+        let root = self.prop_text(node, "root").filter(|r| !r.is_empty());
+        // `folders: navigate` — dir rows enter the folder in place instead of
+        // expanding (`tree`, the default, expands in place). Only meaningful
+        // in `root:` mode; the current dir is clamped under `root:` so project
+        // switches and removed folders reset to the root.
+        let navigate =
+            root.is_some() && self.prop_text(node, "folders").as_deref() == Some("navigate");
+        let current = if navigate {
+            let root_str = root.clone().unwrap_or_default();
+            Some(
+                self.files_nav
+                    .get(key)
+                    .filter(|cur| std::path::Path::new(cur.as_str()).starts_with(root_str.as_str()))
+                    .cloned()
+                    .unwrap_or(root_str),
+            )
+        } else {
+            None
+        };
+        // `of:` is an explicit state listing — when set it always wins over
+        // `root:`; absent, `root:` scans the filesystem itself.
+        let (data, cache_key) = if root.is_some() && self.prop(node, "of").is_none() {
+            let filters = self
+                .prop(node, "filter")
+                .map(|v| match v {
+                    Value::List(_) | Value::Binding { .. } => self.list(v),
+                    _ => self
+                        .text(v)
+                        .split(',')
+                        .map(|s| s.trim().to_owned())
+                        .filter(|s| !s.is_empty())
+                        .collect(),
+                })
+                .unwrap_or_default();
+            let depth = self
+                .prop(node, "depth")
+                .and_then(|v| self.number(v))
+                .unwrap_or(6.0) as usize;
+            let hidden = self.prop_bool(node, "hidden");
+            let nonce = self
+                .prop(node, "nonce")
+                .map(|v| self.text(v))
+                .unwrap_or_default();
+            let scan_root = current
+                .clone()
+                .unwrap_or_else(|| root.clone().unwrap_or_default());
+            // Navigate mode lists one folder flat — `depth:` still applies to
+            // the scan's child collection, but only the top level is shown.
+            let depth = if navigate { 1 } else { depth };
+            let cache_key = format!("{key}|{scan_root}|{filters:?}|{depth}|{hidden}|{nonce}");
+            let entries = match self.files_cache.get(&cache_key) {
+                Some(entries) => entries.clone(),
+                None => {
+                    let mut budget = 400usize;
+                    let entries = scan_files(
+                        std::path::Path::new(&scan_root),
+                        &filters,
+                        depth,
+                        hidden,
+                        &mut budget,
+                    );
+                    self.files_cache.insert(cache_key.clone(), entries.clone());
+                    entries
+                }
+            };
+            (entries, Some(cache_key))
+        } else {
+            let of = self
+                .prop_text(node, "of")
+                .unwrap_or_else(|| "studio.files".into());
+            let data = parse_path(&of)
+                .ok()
+                .and_then(|p| get_path(self.state(), &p).cloned())
+                .unwrap_or(Json::Null);
+            (data.as_array().cloned().unwrap_or_default(), None)
+        };
+
+        // `query:` exposes the search text to the host; without it the
+        // component keeps the query in `files_queries` keyed by element.
+        let query_path = self.two_way(node, "query");
+        let query = match &query_path {
+            Some(path) => self
+                .lookup(path)
+                .and_then(|j| j.as_str())
+                .unwrap_or_default()
+                .to_owned(),
+            None => self.files_queries.get(key).cloned().unwrap_or_default(),
+        };
+        let mut entries = if query.is_empty() {
+            data
+        } else {
+            filter_listing(&data, &query)
+        };
+        // Navigate mode — a `..` row climbs back toward `root:`. Injected
+        // after search-filtering so it survives queries.
+        if let (Some(root), Some(current)) = (&root, &current)
+            && current != root
+        {
+            let parent = std::path::Path::new(current)
+                .parent()
+                .map(|p| p.display().to_string())
+                .unwrap_or_else(|| root.clone());
+            entries.insert(
+                0,
+                serde_json::json!({"name": "..", "path": parent, "dir": true, "children": []}),
             );
         }
+        let highlights = self
+            .prop(node, "highlights")
+            .map(|v| self.highlights(v, cx))
+            .unwrap_or_default();
+        let mut items = Vec::new();
+        Self::files_data(&entries, &mut items);
+
+        // Search field + refresh button — the field is a real `InputState`
+        // like the `Input` arm's, so it's keyboard-focusable and cleanable.
+        let mut header = Vec::new();
+        if self.prop_bool(node, "search") {
+            let search_key = format!("{key}-search");
+            let state = match self.inputs.get(&search_key) {
+                Some(state) => state.clone(),
+                None => {
+                    let state = cx.new(|cx| {
+                        InputState::new(window, cx)
+                            .placeholder("filter files…")
+                            .default_value(query.clone())
+                    });
+                    let path = query_path.clone();
+                    let state_key = key.to_owned();
+                    let subscription = cx.subscribe(&state, move |this, state, event, cx| {
+                        if let InputEvent::Change = event {
+                            let value = state.read(cx).value().to_string();
+                            this.files_queries.insert(state_key.clone(), value.clone());
+                            if let Some(path) = &path {
+                                this.write(path, Json::String(value), cx);
+                            }
+                            cx.notify();
+                        }
+                    });
+                    self.subscriptions.push(subscription);
+                    self.inputs.insert(search_key, state.clone());
+                    state
+                }
+            };
+            // `query: bind` is controlled — external writes (clears, preseeds)
+            // push into the cached state, same sync as the `Input` arm.
+            if query_path.is_some() && state.read(cx).value() != query {
+                state.update(cx, |s, cx| s.set_value(query.clone(), window, cx));
+            }
+            header.push(
+                div()
+                    .flex_1()
+                    .min_w_0()
+                    .child(Input::new(&state).cleanable(true))
+                    .into_any_element(),
+            );
+        }
+        if let Some(cache_key) = cache_key {
+            let weak = cx.entity().downgrade();
+            header.push(
+                Button::new(SharedString::from(format!("{key}-refresh")))
+                    .icon(icon("rotate-ccw"))
+                    .with_variant(ButtonVariant::Ghost)
+                    .with_size(size("small"))
+                    .tooltip("refresh")
+                    .on_click(move |_, _, cx| {
+                        try_update(&weak, cx, "files refresh", |this, cx| {
+                            this.files_cache.remove(&cache_key);
+                            cx.notify();
+                        })
+                        .ok();
+                    })
+                    .into_any_element(),
+            );
+        }
+
+        let tree = if items.is_empty() {
+            placeholder(
+                if query.is_empty() {
+                    empty_text
+                } else {
+                    format!("nothing matching `{query}`")
+                },
+                cx,
+            )
+        } else {
+            self.files_tree(
+                node, key, sel, show_icons, icon_map, highlights, navigate, items, cx,
+            )
+        };
+        // The `Tree` virtualizes rows off a uniform_list — it needs a
+        // bounded slot or its scroll viewport is empty and nothing paints.
+        // `size_full` on the column + `flex_1/min_h_0` on the tree slot lets
+        // a bounded parent pass its height through; unbounded parents fall
+        // back to content height and the list just renders every row.
+        v_flex()
+            .size_full()
+            .gap_1()
+            .when(!header.is_empty(), |v| {
+                v.child(
+                    div()
+                        .flex()
+                        .flex_row()
+                        .items_center()
+                        .gap_2()
+                        .children(header),
+                )
+            })
+            .child(div().flex_1().min_h_0().child(tree))
+            .into_any_element()
+    }
+
+    /// The `Tree` half of `forge.Files` — rows carry the click/select/context
+    /// wiring; `files` wraps it with the search header when needed.
+    fn files_tree(
+        &mut self,
+        node: &Node,
+        key: &str,
+        sel: Option<Path>,
+        show_icons: bool,
+        icon_map: Vec<(String, String)>,
+        highlights: Vec<(String, FileHighlight)>,
+        navigate: bool,
+        items: Vec<TreeItem>,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
         let state = match self.trees.get(key) {
             Some(state) => {
                 state.update(cx, |state, cx| {
@@ -944,6 +1228,7 @@ impl ForgeView {
         };
         let weak = cx.entity().downgrade();
         let files_node = node.clone();
+        let nav_key = key.to_owned();
         Tree::new(&state, move |ix, entry, selected, _, _cx| {
             let mut item = ListItem::new(ix);
             let path = entry.item().id.to_string();
@@ -951,19 +1236,69 @@ impl ForgeView {
             let sel = sel.clone();
             let files_node = files_node.clone();
             let weak = weak.clone();
+            let nav_weak = weak.clone();
             let menu_weak = weak.clone();
+            let nav_key = nav_key.clone();
+            let nav_path = path.clone();
+            let highlight = highlights
+                .iter()
+                .find(|(pattern, _)| glob_match(pattern, entry.item().label.as_str()))
+                .map(|(_, h)| *h);
             let row = div()
                 .id(format!("files-row-{}", entry.item().id))
                 .flex()
                 .flex_row()
                 .items_center()
+                .gap_1p5()
+                .when_some(highlight, |d, hl| {
+                    let d = match hl.weight {
+                        Some(w) => d.font_weight(w),
+                        None => d,
+                    };
+                    let d = if hl.italic { d.italic() } else { d };
+                    let d = if hl.underline { d.underline() } else { d };
+                    match hl.color {
+                        Some(c) => d.text_color(c),
+                        None => d,
+                    }
+                })
+                .when(show_icons, |d| {
+                    d.child(
+                        icon(&file_icon(
+                            entry.item().label.as_str(),
+                            is_dir,
+                            entry.is_expanded(),
+                            &icon_map,
+                        ))
+                        .with_size(size("small")),
+                    )
+                })
                 .when(!is_dir, |d| {
-                    d.on_mouse_down(MouseButton::Left, move |_, _, cx| {
+                    d.on_mouse_down(MouseButton::Left, move |e, _, cx| {
+                        let clicks = e.click_count;
                         try_update(&weak, cx, "event", |this, cx| {
                             if let Some(p) = &sel {
                                 this.write(p, Json::String(path.clone()), cx);
                             }
-                            this.fire(&files_node, "select", cx);
+                            // Single click selects, double fires `open` —
+                            // hosts that don't distinguish can wire both to
+                            // the same hook.
+                            if clicks >= 2 {
+                                this.fire(&files_node, "open", cx);
+                            } else {
+                                this.fire(&files_node, "select", cx);
+                            }
+                        })
+                        .ok();
+                    })
+                })
+                .when(is_dir && navigate, |d| {
+                    d.on_mouse_down(MouseButton::Left, move |_, _, cx| {
+                        let dir = nav_path.trim_end_matches('/').to_owned();
+                        let key = nav_key.clone();
+                        try_update(&nav_weak, cx, "files-nav", move |this, cx| {
+                            this.files_nav.insert(key, dir);
+                            cx.notify();
                         })
                         .ok();
                     })
@@ -2478,6 +2813,108 @@ impl ForgeView {
         }
     }
 
+    /// Shared `Input`/`InputGroupInput` backing state — placeholder+masked key
+    /// the cache, `value:` is the initial default, `value: bind` subscribes for
+    /// change/submit events and the two-way write-back.
+    fn input_state(
+        &mut self,
+        node: &Node,
+        key: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Entity<InputState> {
+        let placeholder = self.prop_text(node, "placeholder").unwrap_or_default();
+        let masked = self.prop_bool(node, "masked");
+        let state_key = format!("{key}|{placeholder}|{masked}");
+        let value = self.prop_text(node, "value").unwrap_or_default();
+        if let Some(state) = self.inputs.get(&state_key) {
+            return state.clone();
+        }
+        let state = cx.new(|cx| {
+            InputState::new(window, cx)
+                .placeholder(placeholder)
+                .masked(masked)
+                .default_value(value.clone())
+        });
+        let path = self.two_way(node, "value");
+        let changed = node.clone();
+        let subscription = cx.subscribe(&state, move |this, state, event, cx| match event {
+            InputEvent::Change => {
+                if let Some(path) = &path {
+                    let value = state.read(cx).value().to_string();
+                    this.write(path, Json::String(value), cx);
+                }
+                this.fire(&changed, "change", cx);
+            }
+            InputEvent::PressEnter { .. } => this.fire(&changed, "submit", cx),
+            _ => {}
+        });
+        self.subscriptions.push(subscription);
+        self.inputs.insert(state_key, state.clone());
+        state
+    }
+
+    /// Same deal as `input_state`, for `Textarea`/`InputGroupTextarea`.
+    fn textarea_state(
+        &mut self,
+        node: &Node,
+        key: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> Entity<TextareaState> {
+        let placeholder = self.prop_text(node, "placeholder").unwrap_or_default();
+        let state_key = format!("{key}|{placeholder}");
+        let value = self.prop_text(node, "value").unwrap_or_default();
+        if let Some(state) = self.textareas.get(&state_key) {
+            return state.clone();
+        }
+        let rows = self.prop(node, "rows").and_then(|v| self.number(v));
+        let state = cx.new(|cx| {
+            let state = TextareaState::new(window, cx)
+                .placeholder(placeholder)
+                .default_value(value.clone());
+            match rows {
+                Some(rows) => state.rows(rows as usize),
+                None => state,
+            }
+        });
+        let path = self.two_way(node, "value");
+        let changed = node.clone();
+        let subscription = cx.subscribe(&state, move |this, state, event, cx| {
+            if let InputEvent::Change = event {
+                if let Some(path) = &path {
+                    let value = state.read(cx).value().to_string();
+                    this.write(path, Json::String(value), cx);
+                }
+                this.fire(&changed, "change", cx);
+            }
+        });
+        self.subscriptions.push(subscription);
+        self.textareas.insert(state_key, state.clone());
+        state
+    }
+
+    /// `{key: icon-name}` override table — `icon-map:` accepts a style map
+    /// inline or a `{$path}` to a JSON object.
+    fn icon_map(&self, value: &Value) -> Vec<(String, String)> {
+        match value {
+            Value::Map(entries) => entries
+                .iter()
+                .map(|(k, v)| (k.clone(), self.text(v)))
+                .collect(),
+            Value::Binding { path, .. } => self
+                .lookup(path)
+                .and_then(Json::as_object)
+                .map(|m| {
+                    m.iter()
+                        .filter_map(|(k, v)| v.as_str().map(|s| (k.clone(), s.to_owned())))
+                        .collect()
+                })
+                .unwrap_or_default(),
+            _ => Vec::new(),
+        }
+    }
+
     fn render_node(
         &mut self,
         node: &Node,
@@ -2753,7 +3190,7 @@ impl ForgeView {
                     }
                 }
                 (Some("forge"), "Palette") => self.palette(node, key, cx),
-                (Some("forge"), "Files") => self.files(node, key, cx),
+                (Some("forge"), "Files") => self.files(node, key, window, cx),
                 (Some("forge"), "Showcase") => self.showcase(node, key, window, cx),
                 (Some("forge"), "Vars") => self.vars(node, key, window, cx),
                 _ => {
@@ -2808,7 +3245,7 @@ impl ForgeView {
             out
         };
         // #145 — compat canvas: a same-named foreign element (a `Badge` in a
-        // gpui02 doc) reaches the kit dispatch before the fallback lookup, so
+        // guise doc) reaches the kit dispatch before the fallback lookup, so
         // the document base's `canvas:` map applies here — retargets and prop
         // renames included. Identity self-maps are skipped; chained maps
         // resolve for a few hops, and the mapped clone keeps path/id/children.
@@ -2965,38 +3402,8 @@ impl ForgeView {
                     .into_any_element()
             }
             "Input" => {
-                let placeholder = self.prop_text(node, "placeholder").unwrap_or_default();
-                let masked = self.prop_bool(node, "masked");
-                let state_key = format!("{key}|{placeholder}|{masked}");
                 let value = self.prop_text(node, "value").unwrap_or_default();
-                let state = match self.inputs.get(&state_key) {
-                    Some(state) => state.clone(),
-                    None => {
-                        let state = cx.new(|cx| {
-                            InputState::new(window, cx)
-                                .placeholder(placeholder)
-                                .masked(masked)
-                                .default_value(value.clone())
-                        });
-                        let path = self.two_way(node, "value");
-                        let changed = node.clone();
-                        let subscription =
-                            cx.subscribe(&state, move |this, state, event, cx| match event {
-                                InputEvent::Change => {
-                                    if let Some(path) = &path {
-                                        let value = state.read(cx).value().to_string();
-                                        this.write(path, Json::String(value), cx);
-                                    }
-                                    this.fire(&changed, "change", cx);
-                                }
-                                InputEvent::PressEnter { .. } => this.fire(&changed, "submit", cx),
-                                _ => {}
-                            });
-                        self.subscriptions.push(subscription);
-                        self.inputs.insert(state_key, state.clone());
-                        state
-                    }
-                };
+                let state = self.input_state(node, key, window, cx);
                 // `value: bind` is controlled — external writes (theme pickers,
                 // doc loads) push into the cached state. `set_value` emits no
                 // events. A static `value:` stays a one-time default.
@@ -3011,38 +3418,8 @@ impl ForgeView {
                     .into_any_element()
             }
             "Textarea" => {
-                let placeholder = self.prop_text(node, "placeholder").unwrap_or_default();
-                let state_key = format!("{key}|{placeholder}");
                 let value = self.prop_text(node, "value").unwrap_or_default();
-                let state = match self.textareas.get(&state_key) {
-                    Some(state) => state.clone(),
-                    None => {
-                        let rows = self.prop(node, "rows").and_then(|v| self.number(v));
-                        let state = cx.new(|cx| {
-                            let state = TextareaState::new(window, cx)
-                                .placeholder(placeholder)
-                                .default_value(value.clone());
-                            match rows {
-                                Some(rows) => state.rows(rows as usize),
-                                None => state,
-                            }
-                        });
-                        let path = self.two_way(node, "value");
-                        let changed = node.clone();
-                        let subscription = cx.subscribe(&state, move |this, state, event, cx| {
-                            if let InputEvent::Change = event {
-                                if let Some(path) = &path {
-                                    let value = state.read(cx).value().to_string();
-                                    this.write(path, Json::String(value), cx);
-                                }
-                                this.fire(&changed, "change", cx);
-                            }
-                        });
-                        self.subscriptions.push(subscription);
-                        self.textareas.insert(state_key, state.clone());
-                        state
-                    }
-                };
+                let state = self.textarea_state(node, key, window, cx);
                 // Same controlled-bind sync as `Input` — see that arm.
                 if matches!(self.prop(node, "value"), Some(Value::Binding { .. }))
                     && state.read(cx).value() != value
@@ -3173,7 +3550,7 @@ impl ForgeView {
                     element
                 }
             }
-            "Checkbox" | "Switch" => {
+            "Checkbox" | "Switch" | "Toggle" | "SwitchButton" => {
                 let label = self.prop_text(node, "label");
                 let checked = self.prop_bool(node, "checked");
                 let disabled = self.prop_bool(node, "disabled");
@@ -4052,7 +4429,7 @@ impl ForgeView {
                 }
                 message.into_any_element()
             }
-            "Table" => {
+            "Table" | "DataTable" => {
                 let mut table = Table::new();
                 for (i, child) in node.children.iter().enumerate() {
                     let key = format!("{key}/{i}");
@@ -4176,7 +4553,7 @@ impl ForgeView {
                 }
                 sidebar.into_any_element()
             }
-            "List" => {
+            "List" | "VirtualList" => {
                 let state = match self.lists.get(key) {
                     Some(state) => state.clone(),
                     None => {
@@ -4289,6 +4666,663 @@ impl ForgeView {
                     item.selected(selected)
                 })
                 .into_any_element()
+            }
+            "Grid" | "GridLayout" => {
+                // CSS-grid display; `columns:` sets the track count.
+                let kids = children(self, window, cx);
+                styled = true;
+                let mut el = div().grid();
+                if let Some(cols) = self.prop(node, "columns").and_then(|v| self.number(v)) {
+                    el = el.grid_cols(cols as u16);
+                }
+                container(el, &node.style, id, kids, &mut self.scroll_handles, cx)
+            }
+            "Scrollable" => {
+                // A styled column that always scrolls — `overflow` style entries
+                // still win if the document sets them.
+                let kids = children(self, window, cx);
+                styled = true;
+                let mut entries = node.style.clone();
+                if !entries.iter().any(|(k, _)| k.starts_with("overflow")) {
+                    entries.push(("overflow".to_owned(), Value::Enum("scroll".to_owned())));
+                }
+                container(v_flex(), &entries, id, kids, &mut self.scroll_handles, cx)
+            }
+            "TextView" => {
+                let text = self
+                    .prop_text(node, "text")
+                    .or_else(|| node.content.as_ref().map(|v| self.text(v)))
+                    .unwrap_or_default();
+                match self.prop_text(node, "format").as_deref() {
+                    Some("html") | Some("Html") => TextView::html(id, text).into_any_element(),
+                    _ => TextView::markdown(id, text).into_any_element(),
+                }
+            }
+            "Shimmer" => {
+                let text = self
+                    .prop_text(node, "text")
+                    .or_else(|| node.content.as_ref().map(|v| self.text(v)))
+                    .unwrap_or_default();
+                ShimmerText::new(text).into_any_element()
+            }
+            "Marker" => {
+                let variant = match self.prop_text(node, "variant").as_deref() {
+                    Some("separator") | Some("Separator") => MarkerVariant::Separator,
+                    Some("border") | Some("Border") => MarkerVariant::Border,
+                    _ => MarkerVariant::Plain,
+                };
+                let mut marker = Marker::new()
+                    .id(id)
+                    .with_variant(variant)
+                    .loading(self.prop_bool(node, "loading"));
+                match self.prop_text(node, "alignment").as_deref() {
+                    Some("center") | Some("Center") => {
+                        marker = marker.alignment(MarkerAlignment::Center)
+                    }
+                    Some("end") | Some("End") => marker = marker.alignment(MarkerAlignment::End),
+                    _ => {}
+                }
+                if let Some(text) = self
+                    .prop_text(node, "text")
+                    .or_else(|| node.content.as_ref().map(|v| self.text(v)))
+                {
+                    marker = marker.content(MarkerContent::new().text(text));
+                }
+                marker.into_any_element()
+            }
+            "Bubble" => {
+                let kids = children(self, window, cx);
+                let variant = match self.prop_text(node, "variant").as_deref() {
+                    Some("secondary") | Some("Secondary") => BubbleVariant::Secondary,
+                    Some("muted") | Some("Muted") => BubbleVariant::Muted,
+                    Some("tinted") | Some("Tinted") => BubbleVariant::Tinted,
+                    Some("outline") | Some("Outline") => BubbleVariant::Outline,
+                    Some("ghost") | Some("Ghost") => BubbleVariant::Ghost,
+                    Some("destructive") | Some("Destructive") => BubbleVariant::Destructive,
+                    _ => BubbleVariant::Filled,
+                };
+                let mut bubble = Bubble::new().with_variant(variant);
+                if matches!(
+                    self.prop_text(node, "align").as_deref(),
+                    Some("end") | Some("right") | Some("End")
+                ) {
+                    bubble = bubble.alignment(MessageAlignment::End);
+                }
+                bubble.children(kids).into_any_element()
+            }
+            "Notification" => {
+                let message = self.prop_text(node, "message").unwrap_or_default();
+                let mut note = match self.prop_text(node, "type").as_deref() {
+                    Some("success") | Some("Success") => Notification::success(message.clone()),
+                    Some("warning") | Some("Warning") => Notification::warning(message.clone()),
+                    Some("error") | Some("Error") => Notification::error(message.clone()),
+                    _ => Notification::info(message.clone()),
+                };
+                if let Some(title) = self.prop_text(node, "title") {
+                    note = note.title(title);
+                }
+                if let Some(name) = self.prop_text(node, "icon") {
+                    note = note.icon(icon(&name));
+                }
+                // `Notification` is a `Render` view, not an element — wrap it
+                // in an entity so it joins the tree.
+                cx.new(|_| note).into_any_element()
+            }
+            "Clipboard" => {
+                let value = self
+                    .prop_text(node, "value")
+                    .or_else(|| node.content.as_ref().map(|v| self.text(v)))
+                    .unwrap_or_default();
+                Clipboard::new(id).value(value).into_any_element()
+            }
+            "Attachment" => {
+                let title = self
+                    .prop_text(node, "title")
+                    .unwrap_or_else(|| "file".into());
+                let mut content = AttachmentContent::new().title(AttachmentTitle::new(title));
+                if let Some(description) = self.prop_text(node, "description") {
+                    content = content.description(AttachmentDescription::new(description));
+                }
+                Attachment::new().content(content).into_any_element()
+            }
+            "Popover" => {
+                // Deferred render: the content builder runs inside
+                // `Context<PopoverState>` at open time, so the body nodes go
+                // through `try_update` to re-enter ForgeView and render live —
+                // bindings inside the popover stay reactive.
+                let trigger_kid = node.children.first().cloned();
+                let body_nodes: Vec<Node> = node.children.iter().skip(1).cloned().collect();
+                let weak_pop = weak.clone();
+                let body_key = format!("{key}/popover");
+                let mut popover = Popover::new(id);
+                if let Some(anchor_name) = self.prop_text(node, "anchor") {
+                    popover = popover.anchor(anchor(&anchor_name));
+                }
+                if let Some(trigger) = trigger_kid {
+                    let els = self.expand(&trigger, &format!("{key}/trigger"), window, cx);
+                    popover = popover.trigger(SelectableAny::new(
+                        div().flex().children(els).into_any_element(),
+                    ));
+                }
+                popover
+                    .content(move |_, window, cx| {
+                        try_update(&weak_pop, cx, "popover", |view, cx| {
+                            let els: Vec<AnyElement> = body_nodes
+                                .iter()
+                                .enumerate()
+                                .flat_map(|(i, n)| {
+                                    view.expand(n, &format!("{body_key}/{i}"), window, cx)
+                                })
+                                .collect();
+                            v_flex().gap_2().children(els)
+                        })
+                        .ok()
+                        .unwrap_or_else(v_flex)
+                    })
+                    .into_any_element()
+            }
+            "HoverCard" => {
+                let trigger_kid = node.children.first().cloned();
+                let body_nodes: Vec<Node> = node.children.iter().skip(1).cloned().collect();
+                let weak_card = weak.clone();
+                let body_key = format!("{key}/hover");
+                let mut card = HoverCard::new(id);
+                if let Some(anchor_name) = self.prop_text(node, "anchor") {
+                    card = card.anchor(anchor(&anchor_name));
+                }
+                if let Some(trigger) = trigger_kid {
+                    let els = self.expand(&trigger, &format!("{key}/trigger"), window, cx);
+                    card = card.trigger(div().flex().children(els));
+                }
+                card.content(move |_, window, cx| {
+                    try_update(&weak_card, cx, "hover-card", |view, cx| {
+                        let els: Vec<AnyElement> = body_nodes
+                            .iter()
+                            .enumerate()
+                            .flat_map(|(i, n)| {
+                                view.expand(n, &format!("{body_key}/{i}"), window, cx)
+                            })
+                            .collect();
+                        v_flex().gap_2().children(els)
+                    })
+                    .ok()
+                    .unwrap_or_else(v_flex)
+                })
+                .into_any_element()
+            }
+            "AlertDialog" => {
+                let mut dialog = AlertDialog::new(cx);
+                if self.prop_bool(node, "confirm") {
+                    dialog = dialog.confirm();
+                }
+                if let Some(trigger) = node.children.first().cloned() {
+                    let els = self.expand(&trigger, &format!("{key}/trigger"), window, cx);
+                    dialog = dialog.trigger(div().flex().children(els));
+                }
+                if let Some(title) = self.prop_text(node, "title") {
+                    dialog = dialog.title(title);
+                }
+                if let Some(ok) = self.prop_text(node, "ok-text") {
+                    dialog = dialog.ok_text(ok);
+                }
+                if let Some(cancel) = self.prop_text(node, "cancel-text") {
+                    dialog = dialog.cancel_text(cancel);
+                }
+                if let Some(description) = self
+                    .prop_text(node, "description")
+                    .or_else(|| node.content.as_ref().map(|v| self.text(v)))
+                {
+                    dialog = dialog.description(description);
+                }
+                let ok_node = node.clone();
+                let weak_ok = weak.clone();
+                dialog = dialog.on_ok(move |_, _, cx| {
+                    try_update(&weak_ok, cx, "event", |view, cx| {
+                        view.fire(&ok_node, "ok", cx)
+                    })
+                    .is_ok()
+                });
+                let cancel_node = node.clone();
+                let weak_cancel = weak.clone();
+                dialog = dialog.on_cancel(move |_, _, cx| {
+                    try_update(&weak_cancel, cx, "event", |view, cx| {
+                        view.fire(&cancel_node, "cancel", cx)
+                    })
+                    .is_ok()
+                });
+                dialog.into_any_element()
+            }
+            "DropdownButton" => {
+                // Same shape as DropdownMenu — a button that opens a PopupMenu
+                // built from `MenuItem`/`MenuSeparator` children.
+                let mut mapped = node.clone();
+                mapped.element.name = "DropdownMenu".into();
+                return self.render_node(&mapped, key, window, cx);
+            }
+            "ContextMenu" => {
+                let kids = children(self, window, cx);
+                let items: Vec<(String, Option<String>, bool, bool, Node)> = node
+                    .children
+                    .iter()
+                    .filter(|c| {
+                        matches!(
+                            c.element.name.as_str(),
+                            "MenuItem" | "MenuSeparator" | "ContextMenuItem"
+                        )
+                    })
+                    .map(|c| {
+                        let label = self
+                            .prop_text(c, "label")
+                            .or_else(|| c.content.as_ref().map(|v| self.text(v)))
+                            .unwrap_or_default();
+                        (
+                            label,
+                            self.prop_text(c, "icon"),
+                            self.prop_bool(c, "disabled"),
+                            self.prop_bool(c, "checked"),
+                            c.clone(),
+                        )
+                    })
+                    .collect();
+                let weak_menu = weak.clone();
+                div()
+                    .flex()
+                    .id(id)
+                    .children(kids)
+                    .context_menu(move |menu, _, _| {
+                        let mut menu = menu;
+                        for (label, icon_name, disabled, checked, child) in &items {
+                            if child.element.name.as_str() == "MenuSeparator" {
+                                menu = menu.separator();
+                                continue;
+                            }
+                            let mut item = PopupMenuItem::new(label.clone());
+                            if let Some(name) = icon_name {
+                                item = item.icon(icon(name));
+                            }
+                            item = item.disabled(*disabled).checked(*checked);
+                            let weak = weak_menu.clone();
+                            let child = child.clone();
+                            item = item.on_click(move |_, _, cx| {
+                                try_update(&weak, cx, "event", |this, cx| {
+                                    this.fire(&child, "click", cx)
+                                })
+                                .ok();
+                            });
+                            menu = menu.item(item);
+                        }
+                        menu
+                    })
+                    .into_any_element()
+            }
+            "Combobox" => {
+                let options: Vec<SharedString> = self
+                    .prop(node, "options")
+                    .map(|v| self.value_json(v))
+                    .and_then(|v| v.as_array().cloned())
+                    .map(|items| {
+                        items
+                            .iter()
+                            .filter_map(|v| v.as_str().map(SharedString::from))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                let placeholder = self.prop_text(node, "placeholder");
+                let state = match self.comboboxes.get(key) {
+                    Some(state) => state.clone(),
+                    None => {
+                        let state = cx
+                            .new(|cx| ComboboxState::new(options.clone(), Vec::new(), window, cx));
+                        let path = self.two_way(node, "value");
+                        let changed = node.clone();
+                        let subscription = cx.subscribe(&state, move |this, _state, event, cx| {
+                            let values = match event {
+                                ComboboxEvent::Change(values) | ComboboxEvent::Confirm(values) => {
+                                    values
+                                }
+                            };
+                            if let Some(path) = &path {
+                                this.write(
+                                    path,
+                                    Json::Array(
+                                        values
+                                            .iter()
+                                            .map(|v| Json::String(v.to_string()))
+                                            .collect(),
+                                    ),
+                                    cx,
+                                );
+                            }
+                            this.fire(&changed, "change", cx);
+                        });
+                        self.subscriptions.push(subscription);
+                        self.comboboxes.insert(key.to_owned(), state.clone());
+                        state
+                    }
+                };
+                Combobox::new(&state)
+                    .when_some(placeholder, |c, p| c.placeholder(p))
+                    .into_any_element()
+            }
+            "Carousel" => {
+                let count = node.children.len();
+                let vertical = self.prop_bool(node, "vertical");
+                let item_width = self
+                    .prop(node, "item-width")
+                    .and_then(|v| self.number(v))
+                    .map(|n| px(n as f32));
+                let state = match self.carousels.get(key) {
+                    Some(state) => state.clone(),
+                    None => {
+                        let state = cx.new(|_| {
+                            CarouselState::new(count).with_axis(if vertical {
+                                Axis::Vertical
+                            } else {
+                                Axis::Horizontal
+                            })
+                        });
+                        self.carousels.insert(key.to_owned(), state.clone());
+                        state
+                    }
+                };
+                state.update(cx, |state, cx| state.set_item_count(count, cx));
+                let mut items = Vec::new();
+                for (i, child) in node.children.iter().enumerate() {
+                    for el in self.expand(child, &format!("{key}/{i}"), window, cx) {
+                        let item =
+                            CarouselItem::new(SharedString::from(format!("{id}.{i}")), i, &state)
+                                .child(el);
+                        items.push(match item_width {
+                            Some(width) => item.w(width),
+                            None => item,
+                        });
+                    }
+                }
+                let mut carousel =
+                    Carousel::new(id, &state).child(CarouselContent::new(&state).children(items));
+                if self.prop_bool(node, "controls") {
+                    carousel = carousel
+                        .child(CarouselPrevious::new(&state))
+                        .child(CarouselNext::new(&state));
+                }
+                if self.prop_bool(node, "pagination") {
+                    carousel = carousel.child(CarouselPagination::new());
+                }
+                carousel.into_any_element()
+            }
+            "Diff" => {
+                let patch = self
+                    .prop_text(node, "patch")
+                    .or_else(|| node.content.as_ref().map(|v| self.text(v)))
+                    .unwrap_or_default();
+                let entry = self.diffs.entry(key.to_owned()).or_insert_with(|| {
+                    (String::new(), cx.new(|cx| DiffState::new(Vec::new(), cx)))
+                });
+                if entry.0 != patch {
+                    entry.1.update(cx, |state, cx| {
+                        state.set_files(DiffFile::parse(&patch).unwrap_or_default(), cx)
+                    });
+                    entry.0 = patch.clone();
+                }
+                let state = entry.1.clone();
+                Diff::new(&state)
+                    .line_number(!matches!(
+                        self.prop(node, "line-numbers"),
+                        Some(Value::Bool(false))
+                    ))
+                    .into_any_element()
+            }
+            "Command" => {
+                let state = match self.commands.get(key) {
+                    Some(state) => state.clone(),
+                    None => {
+                        let state = cx.new(|cx| CommandState::new(window, cx));
+                        self.commands.insert(key.to_owned(), state.clone());
+                        state
+                    }
+                };
+                let command_item = |this: &Self, child: &Node| {
+                    let label = this
+                        .prop_text(child, "label")
+                        .or_else(|| child.content.as_ref().map(|v| this.text(v)))
+                        .unwrap_or_default();
+                    let mut item = CommandItem::new().label(label);
+                    if let Some(name) = this.prop_text(child, "icon") {
+                        item = item.icon(icon(&name));
+                    }
+                    item
+                };
+                let mut command = Command::new(&state);
+                for child in &node.children {
+                    match child.element.name.as_str() {
+                        "CommandItem" | "MenuItem" => {
+                            command = command.item(command_item(self, child));
+                        }
+                        "CommandGroup" => {
+                            let mut group = CommandGroup::new();
+                            if let Some(t) = self.prop_text(child, "title") {
+                                group = group.label(t);
+                            }
+                            group = group.items(
+                                child
+                                    .children
+                                    .iter()
+                                    .filter(|c| c.element.name == "CommandItem")
+                                    .map(|c| command_item(self, c)),
+                            );
+                            command = command.group(group);
+                        }
+                        "CommandSeparator" | "MenuSeparator" => {
+                            command = command.separator();
+                        }
+                        _ => {}
+                    }
+                }
+                if let Some(placeholder) = self.prop_text(node, "placeholder") {
+                    command = command.placeholder(placeholder);
+                }
+                let select_node = node.clone();
+                let weak_sel = weak.clone();
+                command
+                    .on_select(move |_, _, cx| {
+                        try_update(&weak_sel, cx, "event", |this, cx| {
+                            this.fire(&select_node, "select", cx)
+                        })
+                        .ok();
+                    })
+                    .into_any_element()
+            }
+            "Questionnaire" => {
+                let items: Vec<QuestionnaireItemDefinition> = node
+                    .children
+                    .iter()
+                    .filter(|c| c.element.name == "QuestionnaireItem")
+                    .enumerate()
+                    .map(|(i, child)| {
+                        let name = self
+                            .prop_text(child, "name")
+                            .unwrap_or_else(|| format!("item-{i}"));
+                        let label = self
+                            .prop_text(child, "title")
+                            .or_else(|| child.content.as_ref().map(|v| self.text(v)))
+                            .unwrap_or_else(|| name.clone());
+                        let mut def = QuestionnaireItemDefinition::new(name, label)
+                            .with_required(self.prop_bool(child, "required"))
+                            .with_multiple(self.prop_bool(child, "multiple"));
+                        if let Some(d) = self.prop_text(child, "description") {
+                            def = def.with_description(d);
+                        }
+                        for option in &child.children {
+                            if option.element.name != "QuestionnaireChoice" {
+                                continue;
+                            }
+                            let value = self
+                                .prop_text(option, "value")
+                                .or_else(|| self.prop_text(option, "label"))
+                                .or_else(|| option.content.as_ref().map(|v| self.text(v)))
+                                .unwrap_or_default();
+                            let choice_label = self
+                                .prop_text(option, "label")
+                                .unwrap_or_else(|| value.clone());
+                            let mut choice =
+                                QuestionnaireChoiceDefinition::new(value, choice_label)
+                                    .with_default_selected(self.prop_bool(option, "selected"));
+                            if let Some(d) = self.prop_text(option, "description") {
+                                choice = choice.with_description(d);
+                            }
+                            def = def.with_choice(choice);
+                        }
+                        def
+                    })
+                    .collect();
+                let state = match self.questionnaires.get(key) {
+                    Some(state) => state.clone(),
+                    None => {
+                        let state = cx.new(|cx| {
+                            QuestionnaireState::new(items.clone(), cx).unwrap_or_else(|_| {
+                                QuestionnaireState::new(
+                                    vec![QuestionnaireItemDefinition::new("_", "_")],
+                                    cx,
+                                )
+                                .unwrap_or_else(|_| unreachable!())
+                            })
+                        });
+                        self.questionnaires.insert(key.to_owned(), state.clone());
+                        state
+                    }
+                };
+                Questionnaire::new(&state).into_any_element()
+            }
+            "LineChart" | "BarChart" | "PieChart" => {
+                // `data:` is a plain `[number]` series — Line/Bar get
+                // (index, value) pairs, Pie consumes the value directly.
+                let data: Vec<f64> = self
+                    .prop(node, "data")
+                    .map(|v| self.value_json(v))
+                    .and_then(|v| v.as_array().cloned())
+                    .map(|items| items.iter().filter_map(|v| v.as_f64()).collect())
+                    .unwrap_or_default();
+                let pairs: Vec<(SharedString, f64)> = data
+                    .iter()
+                    .enumerate()
+                    .map(|(i, v)| (SharedString::from(i.to_string()), *v))
+                    .collect();
+                match node.element.name.as_str() {
+                    "BarChart" => BarChart::new(pairs)
+                        .band(|p| p.0.clone())
+                        .value(|p| p.1)
+                        .into_any_element(),
+                    "PieChart" => PieChart::new(data).value(|v| *v as f32).into_any_element(),
+                    _ => LineChart::new(pairs)
+                        .x(|p| p.0.clone())
+                        .y(|p| p.1)
+                        .into_any_element(),
+                }
+            }
+            "InputGroup" => {
+                // Slot-based: input children feed `.input()`, addons `.addon()`.
+                let mut group = InputGroup::new(id.clone())
+                    .disabled(self.prop_bool(node, "disabled"))
+                    .invalid(self.prop_bool(node, "invalid"));
+                for (i, child) in node.children.iter().enumerate() {
+                    let ckey = format!("{key}/{i}");
+                    match child.element.name.as_str() {
+                        "Input" | "InputGroupInput" => {
+                            let state = self.input_state(child, &ckey, window, cx);
+                            group = group.input(Input::new(&state));
+                        }
+                        "Textarea" | "InputGroupTextarea" => {
+                            let state = self.textarea_state(child, &ckey, window, cx);
+                            group = group.input(Textarea::new(&state));
+                        }
+                        "InputGroupAddon" => {
+                            let alignment = match self.prop_text(child, "align").as_deref() {
+                                Some("end") | Some("InlineEnd") => {
+                                    InputGroupAddonAlignment::InlineEnd
+                                }
+                                Some("block-start") | Some("BlockStart") => {
+                                    InputGroupAddonAlignment::BlockStart
+                                }
+                                Some("block-end") | Some("BlockEnd") => {
+                                    InputGroupAddonAlignment::BlockEnd
+                                }
+                                _ => InputGroupAddonAlignment::InlineStart,
+                            };
+                            let kids = self.expand(child, &ckey, window, cx);
+                            group = group.addon(
+                                InputGroupAddon::new(SharedString::from(format!("{id}.{i}")))
+                                    .align(alignment)
+                                    .children(kids),
+                            );
+                        }
+                        _ => {}
+                    }
+                }
+                group.into_any_element()
+            }
+            "InputGroupAddon" => {
+                let alignment = match self.prop_text(node, "align").as_deref() {
+                    Some("end") | Some("InlineEnd") => InputGroupAddonAlignment::InlineEnd,
+                    Some("block-start") | Some("BlockStart") => {
+                        InputGroupAddonAlignment::BlockStart
+                    }
+                    Some("block-end") | Some("BlockEnd") => InputGroupAddonAlignment::BlockEnd,
+                    _ => InputGroupAddonAlignment::InlineStart,
+                };
+                InputGroupAddon::new(id)
+                    .align(alignment)
+                    .children(children(self, window, cx))
+                    .into_any_element()
+            }
+            "InputGroupText" => {
+                let mut group = InputGroupText::new();
+                if let Some(text) = self
+                    .prop_text(node, "text")
+                    .or_else(|| node.content.as_ref().map(|v| self.text(v)))
+                {
+                    group = group.child(text);
+                }
+                group
+                    .children(children(self, window, cx))
+                    .into_any_element()
+            }
+            "InputGroupButton" => {
+                let mut button = InputGroupButton::new(id);
+                if let Some(name) = self.prop_text(node, "icon") {
+                    button = button.icon(icon(&name));
+                }
+                if let Some(label) = self.prop_text(node, "label") {
+                    button = button.label(label);
+                }
+                let clicked = node.clone();
+                let weak_btn = weak.clone();
+                button
+                    .on_click(move |_, _, cx| {
+                        try_update(&weak_btn, cx, "event", |this, cx| {
+                            this.fire(&clicked, "click", cx)
+                        })
+                        .ok();
+                    })
+                    .into_any_element()
+            }
+            "InputGroupInput" => {
+                let mut mapped = node.clone();
+                mapped.element.name = "Input".into();
+                return self.render_node(&mapped, key, window, cx);
+            }
+            "InputGroupTextarea" => {
+                let mut mapped = node.clone();
+                mapped.element.name = "Textarea".into();
+                return self.render_node(&mapped, key, window, cx);
+            }
+            "FocusTrap" => {
+                let kids = children(self, window, cx);
+                let handle = cx.focus_handle();
+                v_flex()
+                    .id(id.clone())
+                    .children(kids)
+                    .focus_trap(SharedString::from(format!("{id}-trap")), &handle)
+                    .into_any_element()
             }
             other => {
                 // #145 — compat canvas: an element name the kit catalog doesn't
@@ -4587,6 +5621,184 @@ impl Render for ForgeView {
     }
 }
 
+/// A sized wrapper `open_dialog` puts around a `Dialog#id { resizable: true }`
+/// view: the declaration's `width`/`height` become the initial extent and a
+/// bottom-right wedge grip drags the card larger or smaller.
+///
+/// Drag tracking registers `window.on_mouse_event` from a `canvas` paint
+/// callback — `on_mouse_event` asserts the Paint draw phase, and `canvas`
+/// paint is the only paint-phase hook an element tree gets. Window-level
+/// listeners are needed because the pointer leaves the 16px grip within a
+/// pixel or two of a drag (the same reason `resizable_panel` and scrollbars
+/// listen window-wide).
+/// `Popover::trigger` requires `Selectable` — this wrapper satisfies the bound
+/// for arbitrary rendered content. The flag is inert: the popover only uses it
+/// for open-state styling, which Forge triggers leave to the child.
+struct SelectableAny {
+    element: AnyElement,
+    selected: bool,
+}
+
+impl SelectableAny {
+    fn new(element: AnyElement) -> Self {
+        Self {
+            element,
+            selected: false,
+        }
+    }
+}
+
+impl Selectable for SelectableAny {
+    fn selected(mut self, selected: bool) -> Self {
+        self.selected = selected;
+        self
+    }
+
+    fn is_selected(&self) -> bool {
+        self.selected
+    }
+}
+
+impl IntoElement for SelectableAny {
+    type Element = AnyElement;
+
+    fn into_element(self) -> Self::Element {
+        self.element
+    }
+}
+
+/// A dialog-sized container with a bottom-right corner grip that drags the
+/// overlay wider/taller. `open_dialog` wraps `Dialog#id` declarations that opt
+/// in with `resizable: true`; the declared `width`/`height` become the initial
+/// size and the inner root style is rewritten to `full` so content tracks the
+/// drag.
+pub struct ResizableDialog {
+    child: Entity<ForgeView>,
+    size: gpui::Size<Pixels>,
+    min: gpui::Size<Pixels>,
+    drag: Option<ResizeDrag>,
+}
+
+#[derive(Clone, Copy)]
+struct ResizeDrag {
+    pointer: Point<Pixels>,
+    size: gpui::Size<Pixels>,
+}
+
+impl ResizableDialog {
+    /// `size` is the dialog's initial extent; `min` is the smallest the grip
+    /// will shrink it to.
+    pub fn new(
+        child: Entity<ForgeView>,
+        size: gpui::Size<Pixels>,
+        min: gpui::Size<Pixels>,
+    ) -> Self {
+        Self {
+            child,
+            size,
+            min,
+            drag: None,
+        }
+    }
+}
+
+impl Render for ResizableDialog {
+    fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let wedge_color = cx.theme().muted_foreground;
+        let weak = cx.entity().downgrade();
+        div()
+            .relative()
+            .w(self.size.width)
+            .h(self.size.height)
+            .overflow_hidden()
+            .child(self.child.clone())
+            .child(
+                div()
+                    .id("forge-dialog-resize")
+                    .absolute()
+                    .right_0()
+                    .bottom_0()
+                    .w(px(16.))
+                    .h(px(16.))
+                    .cursor(CursorStyle::ResizeUpLeftDownRight)
+                    .on_mouse_down(MouseButton::Left, {
+                        let weak = weak.clone();
+                        move |event: &MouseDownEvent, _window, cx| {
+                            weak.update(cx, |this, cx| {
+                                this.drag = Some(ResizeDrag {
+                                    pointer: event.position,
+                                    size: this.size,
+                                });
+                                cx.notify();
+                            })
+                            .ok();
+                        }
+                    }),
+            )
+            .child(
+                canvas(
+                    |_bounds, _window, _cx| {},
+                    move |bounds, (), window, _cx| {
+                        window.on_mouse_event({
+                            let weak = weak.clone();
+                            move |event: &MouseMoveEvent, phase, window, cx| {
+                                if !phase.bubble() || !event.dragging() {
+                                    return;
+                                }
+                                weak.update(cx, |this, cx| {
+                                    let Some(drag) = this.drag else {
+                                        return;
+                                    };
+                                    let viewport = window.viewport_size();
+                                    let w = f32::from(
+                                        drag.size.width + event.position.x - drag.pointer.x,
+                                    );
+                                    let h = f32::from(
+                                        drag.size.height + event.position.y - drag.pointer.y,
+                                    );
+                                    this.size = gpui::size(
+                                        px(w.clamp(
+                                            f32::from(this.min.width),
+                                            f32::from(viewport.width) - 24.,
+                                        )),
+                                        px(h.clamp(
+                                            f32::from(this.min.height),
+                                            f32::from(viewport.height) - 24.,
+                                        )),
+                                    );
+                                    cx.notify();
+                                })
+                                .ok();
+                            }
+                        });
+                        window.on_mouse_event({
+                            let weak = weak.clone();
+                            move |_event: &MouseUpEvent, phase, _window, cx| {
+                                if phase.bubble() {
+                                    weak.update(cx, |this, cx| {
+                                        if this.drag.take().is_some() {
+                                            cx.notify();
+                                        }
+                                    })
+                                    .ok();
+                                }
+                            }
+                        });
+                        // Corner wedge affordance.
+                        let right = bounds.right();
+                        let bottom = bounds.bottom();
+                        let mut wedge = gpui::Path::new(point(right - px(11.), bottom));
+                        wedge.line_to(point(right, bottom - px(11.)));
+                        wedge.line_to(point(right, bottom));
+                        window.paint_path(wedge, wedge_color);
+                    },
+                )
+                .absolute()
+                .inset_0(),
+            )
+    }
+}
+
 /// Applies `style` to a container. `overflow: scroll` needs an element id, so a scrolling
 /// container is stateful.
 fn container(
@@ -4631,7 +5843,7 @@ fn wrap(
     handles: &mut HashMap<String, ScrollHandle>,
     cx: &App,
 ) -> AnyElement {
-    // Always wrap leaves in a block `div` — gpui-component roots are
+    // Always wrap leaves in a block `div` — gpui-kit roots are
     // `size_full()` (Select, DatePicker, …). Bare in a flex column that
     // `height: 100%` steals the column's free space from siblings; inside a
     // block wrapper it resolves against the leaf's own slot instead.
@@ -4710,6 +5922,20 @@ fn placeholder(message: String, cx: &App) -> AnyElement {
         .into_any_element()
 }
 
+/// `anchor:` prop names → the popover/hover-card anchor corner.
+fn anchor(name: &str) -> Anchor {
+    match name {
+        "top-left" | "TopLeft" => Anchor::TopLeft,
+        "top" | "top-center" | "TopCenter" => Anchor::TopCenter,
+        "top-right" | "TopRight" => Anchor::TopRight,
+        "bottom" | "bottom-center" | "BottomCenter" => Anchor::BottomCenter,
+        "bottom-right" | "BottomRight" => Anchor::BottomRight,
+        "left" | "left-center" | "LeftCenter" => Anchor::LeftCenter,
+        "right" | "right-center" | "RightCenter" => Anchor::RightCenter,
+        _ => Anchor::TopLeft,
+    }
+}
+
 fn icon(name: &str) -> Icon {
     Icon::empty().path(format!("icons/{name}.svg"))
 }
@@ -4736,6 +5962,336 @@ fn alert_variant(name: &str) -> AlertVariant {
         "error" | "danger" => AlertVariant::Error,
         _ => AlertVariant::Info,
     }
+}
+
+/// Text styling a `forge.Files` `highlights:` glob applies to matching rows —
+/// font (weight/italic/underline) and text color, not row background.
+#[derive(Clone, Copy, Default)]
+struct FileHighlight {
+    weight: Option<FontWeight>,
+    italic: bool,
+    underline: bool,
+    color: Option<Hsla>,
+}
+
+impl ForgeView {
+    /// `highlights:` — `{glob: style}` pairs. A style is a shorthand string
+    /// (`"bold green"`, `"italic #ffcc00"`, `"underline $theme.success"`), a
+    /// map (`{weight: bold, italic: true, underline: true, color: ...}`), or —
+    /// for bindings — a JSON object/string in the same shapes. A bare string
+    /// prop also reads as `"glob = style; glob = style"` lines.
+    fn highlights(&self, value: &Value, cx: &App) -> Vec<(String, FileHighlight)> {
+        match value {
+            Value::Map(entries) => entries
+                .iter()
+                .filter_map(|(k, v)| self.highlight_spec(v, cx).map(|h| (k.clone(), h)))
+                .collect(),
+            Value::Binding { path, .. } => match self.lookup(path) {
+                Some(Json::Object(m)) => m
+                    .iter()
+                    .filter_map(|(k, v)| self.highlight_json(v, cx).map(|h| (k.clone(), h)))
+                    .collect(),
+                Some(Json::String(s)) => self.highlight_lines(s, cx),
+                _ => Vec::new(),
+            },
+            Value::List(items) => items
+                .iter()
+                .flat_map(|i| self.highlight_lines(&self.text(i), cx))
+                .collect(),
+            other => self.highlight_lines(&self.text(other), cx),
+        }
+    }
+
+    /// `"glob = style; glob = style"` / newline-separated shorthand lines.
+    fn highlight_lines(&self, text: &str, cx: &App) -> Vec<(String, FileHighlight)> {
+        text.split([';', '\n'])
+            .filter_map(|line| {
+                let (glob, spec) = line.split_once('=')?;
+                let glob = glob.trim();
+                (!glob.is_empty()).then(|| (glob.to_owned(), self.highlight_tokens(spec, cx)))
+            })
+            .collect()
+    }
+
+    /// A `Value::String` shorthand or `Value::Map` `{weight, italic, underline, color}`.
+    fn highlight_spec(&self, value: &Value, cx: &App) -> Option<FileHighlight> {
+        match value {
+            Value::String(s) | Value::Enum(s) => Some(self.highlight_tokens(s, cx)),
+            Value::Map(entries) => {
+                let mut hl = FileHighlight::default();
+                for (k, v) in entries {
+                    match k.as_str() {
+                        "weight" => hl.weight = Some(font_weight(&self.text(v))),
+                        "italic" => hl.italic = self.truthy(v),
+                        "underline" => hl.underline = self.truthy(v),
+                        "color" => hl.color = self.highlight_color(&self.text(v), cx),
+                        _ => {}
+                    }
+                }
+                Some(hl)
+            }
+            _ => None,
+        }
+    }
+
+    /// JSON spec from a bound object — string shorthand or `{weight, color, ...}`.
+    fn highlight_json(&self, value: &Json, cx: &App) -> Option<FileHighlight> {
+        match value {
+            Json::String(s) => Some(self.highlight_tokens(s, cx)),
+            Json::Object(m) => {
+                let mut hl = FileHighlight::default();
+                for (k, v) in m {
+                    match k.as_str() {
+                        "weight" => hl.weight = v.as_str().map(|w| font_weight(w)),
+                        "italic" => hl.italic = v.as_bool().unwrap_or(false),
+                        "underline" => hl.underline = v.as_bool().unwrap_or(false),
+                        "color" => hl.color = v.as_str().and_then(|c| self.highlight_color(c, cx)),
+                        _ => {}
+                    }
+                }
+                Some(hl)
+            }
+            _ => None,
+        }
+    }
+
+    /// Space/comma separated words: font weights, `italic`, `underline`, named
+    /// colors, `#hex`, and `$theme.*`/bare theme tokens.
+    fn highlight_tokens(&self, spec: &str, cx: &App) -> FileHighlight {
+        let mut hl = FileHighlight::default();
+        for word in spec.split(|c: char| c.is_whitespace() || c == ',') {
+            let word = word.trim();
+            if word.is_empty() {
+                continue;
+            }
+            match word {
+                "italic" => hl.italic = true,
+                "underline" => hl.underline = true,
+                "thin" | "light" | "medium" | "normal" | "semibold" | "bold" | "black" => {
+                    hl.weight = Some(font_weight(word))
+                }
+                _ => hl.color = hl.color.or(self.highlight_color(word, cx)),
+            }
+        }
+        hl
+    }
+
+    /// A color word → `Hsla`: named hues, `#hex`, `$theme.x` or a bare theme
+    /// token (`success`, `muted_foreground`, …).
+    fn highlight_color(&self, word: &str, cx: &App) -> Option<Hsla> {
+        if let Some(hex) = word.strip_prefix('#') {
+            return parse_hex(hex).map(Hsla::from);
+        }
+        let word = word.strip_prefix('$').unwrap_or(word);
+        let word = word.strip_prefix("theme.").unwrap_or(word);
+        let named = match word {
+            "red" => Some(hsla(0.0, 0.72, 0.55, 1.0)),
+            "orange" => Some(hsla(0.07, 0.9, 0.55, 1.0)),
+            "yellow" => Some(hsla(0.13, 0.85, 0.55, 1.0)),
+            "green" => Some(hsla(0.38, 0.55, 0.48, 1.0)),
+            "teal" | "cyan" => Some(hsla(0.5, 0.6, 0.45, 1.0)),
+            "blue" => Some(hsla(0.6, 0.7, 0.58, 1.0)),
+            "indigo" => Some(hsla(0.66, 0.55, 0.62, 1.0)),
+            "purple" | "violet" => Some(hsla(0.75, 0.5, 0.62, 1.0)),
+            "pink" => Some(hsla(0.92, 0.65, 0.62, 1.0)),
+            "gray" | "grey" => Some(hsla(0.0, 0.0, 0.5, 1.0)),
+            _ => None,
+        };
+        named.or_else(|| {
+            parse_path(word)
+                .ok()
+                .and_then(|p| color(&Value::Token(p), cx))
+        })
+    }
+}
+
+/// `font_weight` word → gpui `FontWeight` — mirrors `style()`'s `weight:` table.
+fn font_weight(word: &str) -> FontWeight {
+    match word {
+        "thin" => FontWeight::THIN,
+        "light" => FontWeight::LIGHT,
+        "medium" => FontWeight::MEDIUM,
+        "semibold" => FontWeight::SEMIBOLD,
+        "bold" => FontWeight::BOLD,
+        "black" => FontWeight::BLACK,
+        _ => FontWeight::NORMAL,
+    }
+}
+
+/// `#rgb` / `#rrggbb` / `#rrggbbaa` → `Rgba`. No alpha channel means opaque.
+fn parse_hex(hex: &str) -> Option<Rgba> {
+    let hex = match hex.len() {
+        3 | 4 => hex.chars().map(|c| format!("{c}{c}")).collect::<String>(),
+        _ => hex.to_owned(),
+    };
+    if hex.len() != 6 && hex.len() != 8 {
+        return None;
+    }
+    let byte = |i: usize| u8::from_str_radix(&hex[i..i + 2], 16).ok();
+    Some(Rgba {
+        r: byte(0)? as f32 / 255.0,
+        g: byte(2)? as f32 / 255.0,
+        b: byte(4)? as f32 / 255.0,
+        a: if hex.len() == 8 {
+            byte(6)? as f32 / 255.0
+        } else {
+            1.0
+        },
+    })
+}
+
+/// Lucide icon for a `forge.Files` row: folders swap open/closed, files get a
+/// glyph by extension, unknowns fall back to a plain `file`. `icon_map`
+/// (`{ext-or-key: icon}`) overrides the built-in table; `dir`, `dir-open`
+/// and `file` rename the structural glyphs.
+fn file_icon(name: &str, is_dir: bool, expanded: bool, icon_map: &[(String, String)]) -> String {
+    let custom = |key: &str| {
+        icon_map
+            .iter()
+            .find(|(k, _)| k == key)
+            .map(|(_, i)| i.clone())
+    };
+    if is_dir {
+        let key = if expanded { "dir-open" } else { "dir" };
+        return custom(key)
+            .unwrap_or_else(|| if expanded { "folder-open" } else { "folder" }.to_owned());
+    }
+    if let Some(i) = name
+        .rsplit('.')
+        .next()
+        .map(str::to_lowercase)
+        .and_then(|ext| custom(&ext))
+    {
+        return i;
+    }
+    if name.ends_with(".forge.yaml") {
+        return "file-braces".to_owned();
+    }
+    let ext = name.rsplit('.').next().unwrap_or_default();
+    match ext {
+        "rs" | "py" | "js" | "jsx" | "ts" | "tsx" | "go" | "c" | "cc" | "cpp" | "h" | "hpp"
+        | "java" | "kt" | "rb" | "swift" | "cs" | "fs" | "ex" | "exs" | "erl" | "hrl" | "hs"
+        | "ml" | "mli" | "clj" | "cljs" | "scala" | "dart" | "r" | "m" | "mm" | "pl" | "pm"
+        | "php" | "vim" | "el" | "lisp" | "scm" | "rkt" | "nim" | "cr" | "d" | "pas" | "jl"
+        | "groovy" | "lua" | "zig" | "v" | "sv" | "proto" | "graphql" | "gql" | "css" | "scss"
+        | "less" | "html" | "htm" | "vue" | "svelte" | "astro" | "sql" | "wasm" => "file-code",
+        "yaml" | "yml" | "json" | "toml" | "xml" | "kdl" | "ini" | "cfg" | "conf" => "file-braces",
+        "md" | "markdown" | "txt" | "rst" | "adoc" | "org" | "tex" | "pdf" | "rtf" | "doc"
+        | "docx" | "odt" | "epub" => "file-text",
+        "png" | "jpg" | "jpeg" | "gif" | "svg" | "webp" | "bmp" | "ico" | "tif" | "tiff"
+        | "avif" | "heic" | "heif" => "file-image",
+        "mp3" | "wav" | "ogg" | "flac" | "m4a" | "aac" | "opus" | "mid" => "file-music",
+        "mp4" | "mov" | "mkv" | "webm" | "avi" | "wmv" | "m4v" | "mpg" | "mpeg" => "file-play",
+        "zip" | "tar" | "gz" | "tgz" | "bz2" | "xz" | "7z" | "rar" | "zst" | "lz4" | "jar"
+        | "war" | "apk" | "dmg" | "iso" => "file-archive",
+        "csv" | "tsv" | "xls" | "xlsx" | "ods" => "file-spreadsheet",
+        "sh" | "bash" | "zsh" | "fish" | "ps1" | "bat" | "cmd" | "exe" | "msi" | "com"
+        | "appimage" | "bin" | "run" => "file-terminal",
+        "env" | "key" | "pem" | "crt" | "cer" | "p12" | "pub" | "asc" | "gpg" | "secret"
+        | "lock" => "file-lock",
+        _ => match name {
+            "Makefile" | "Dockerfile" | "Containerfile" | "Justfile" | "Taskfile" | "Procfile"
+            | "Vagrantfile" | "Gemfile" | "Rakefile" => "file-terminal",
+            _ => "file",
+        },
+    }
+    .to_owned()
+}
+
+/// `forge.Files` `root:` scan — folders plus `filter:`-globbed files, dirs
+/// first, VCS/build noise skipped, depth- and entry-capped so a huge tree
+/// can't stall the render.
+pub fn scan_files(
+    dir: &std::path::Path,
+    filters: &[String],
+    depth: usize,
+    hidden: bool,
+    budget: &mut usize,
+) -> Vec<Json> {
+    const SKIP: &[&str] = &["target", "node_modules", "dist", "build", "out"];
+    if depth == 0 || *budget == 0 {
+        return Vec::new();
+    }
+    let Ok(rd) = std::fs::read_dir(dir) else {
+        return Vec::new();
+    };
+    let mut entries: Vec<(String, std::path::PathBuf, bool)> = rd
+        .filter_map(|e| e.ok())
+        .filter_map(|e| {
+            let name = e.file_name().to_string_lossy().into_owned();
+            let path = e.path();
+            let is_dir = path.is_dir();
+            if (!hidden && name.starts_with('.')) || SKIP.contains(&name.as_str()) {
+                return None;
+            }
+            if !is_dir && !filters.is_empty() && !filters.iter().any(|f| glob_match(f, &name)) {
+                return None;
+            }
+            Some((name, path, is_dir))
+        })
+        .collect();
+    entries.sort_by(|a, b| b.2.cmp(&a.2).then_with(|| a.0.cmp(&b.0)));
+    entries
+        .into_iter()
+        .filter_map(|(name, path, is_dir)| {
+            if *budget == 0 {
+                return None;
+            }
+            *budget -= 1;
+            Some(serde_json::json!({
+                "name": name,
+                "path": path.display().to_string(),
+                "dir": is_dir,
+                "children": if is_dir {
+                    scan_files(&path, filters, depth - 1, hidden, budget)
+                } else {
+                    Vec::<Json>::new()
+                },
+            }))
+        })
+        .collect()
+}
+
+/// `forge.Files` search — name-substring filter over the listing JSON. A file
+/// keeps itself on a hit, a dir keeps itself (and its whole subtree) on a hit
+/// or survives with filtered children so matches stay under their folders.
+pub fn filter_listing(entries: &[Json], query: &str) -> Vec<Json> {
+    let q = query.to_lowercase();
+    entries
+        .iter()
+        .filter_map(|e| {
+            let name = e["name"].as_str().unwrap_or_default();
+            if name.to_lowercase().contains(&q) {
+                return Some(e.clone());
+            }
+            if e["dir"].as_bool().unwrap_or(false) {
+                let children = e["children"]
+                    .as_array()
+                    .map(|c| filter_listing(c, query))
+                    .unwrap_or_default();
+                if !children.is_empty() {
+                    let mut e = e.clone();
+                    e["children"] = Json::from(children);
+                    return Some(e);
+                }
+            }
+            None
+        })
+        .collect()
+}
+
+/// Tiny glob matcher for `forge.Files` `filter:` — `*` spans any run of
+/// characters, `?` matches one. Comparison is ASCII case-insensitive.
+pub fn glob_match(pattern: &str, name: &str) -> bool {
+    fn inner(p: &[u8], n: &[u8]) -> bool {
+        match p.first() {
+            None => n.is_empty(),
+            Some(b'*') => (0..=n.len()).any(|i| inner(&p[1..], &n[i..])),
+            Some(b'?') => !n.is_empty() && inner(&p[1..], &n[1..]),
+            Some(&c) => !n.is_empty() && c.eq_ignore_ascii_case(&n[0]) && inner(&p[1..], &n[1..]),
+        }
+    }
+    inner(pattern.as_bytes(), name.as_bytes())
 }
 
 /// `forge.Showcase` sample props — a declared `default` wins. Otherwise a

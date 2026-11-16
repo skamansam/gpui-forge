@@ -22,7 +22,7 @@ document = "app.forge.yaml"
 # dir = "assets"
 
 # [libraries]
-# ely-gpui-components = "^0.4"
+# ely-core = "^0.2"
 ```
 
 ## `[package]` — app metadata

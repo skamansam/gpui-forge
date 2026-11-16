@@ -1,6 +1,6 @@
 //! Adapter for `gpui-flow` (`use: gflow: gpui-flow` → `gflow.*` elements) —
 //! #89. React-Flow-style node editor on the gpui-kit base. Alias is `gflow`
-//! so it can't be confused with the gpui02 base's `flow` (ferrum-flow).
+//! so it can't be confused with the guise base's `flow` (ferrum-flow).
 //!
 //! `gflow.Canvas` is an `Entity<FlowGraph>` cached per node key (same shape
 //! as the ferrum adapter). Its `FlowState` starts from the `graph` map prop.

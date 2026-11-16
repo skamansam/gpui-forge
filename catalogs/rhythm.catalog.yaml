@@ -1,13 +1,13 @@
 # yaml-language-server: $schema=../schema/catalog-0.1.json
-# Catalog manifest for the rhythm-gpui adapter (forge-lib-gpui02 `rhythm`
-# feature) — `use: rhythm: rhythm-gpui` on the gpui02 base (#87).
+# Catalog manifest for the rhythm-gpui adapter (forge-lib-guise `rhythm`
+# feature) — `use: rhythm: rhythm-gpui` on the guise base (#87).
 catalog: "0.1"
 library: rhythm-gpui
 name: rhythm-gpui
 version: 0.2.0
 license: MIT
 bases:
-  gpui02: "*"
+  guise: "*"
 
 elements:
   Frame:

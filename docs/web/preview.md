@@ -14,12 +14,12 @@ The editor swaps the canvas based on the document's `base:`:
 |---|---|
 | `gpui-kit` | Real gpui-kit widgets in an iframe — needs WebGL2/WebGPU |
 | `ratatui` | `TuiCanvas` — the terminal frame drawn as a monospace cell grid, straight from `TestBackend` |
-| `iced`, `bezel`, `gpui02`, `adabraka` | No web renderer that paints yet — the source editor still works |
+| `iced`, `bezel`, `guise`, `adabraka` | No web renderer that paints yet — the source editor still works |
 
 ## What renders (gpui-kit)
 
 - **Elements:** every element in the gpui-kit catalog, plus the wasm-viable
-  `use:` libraries — `ely`, `gc` (gpui-component), `hig`, `base`, `zorite`'s
+  `use:` libraries — `ely`, `hig`, `base`, `zorite`'s
   math.
 - **Graceful placeholders:** libraries that can't run in a browser. They render a
   truthful "not provided by this adapter yet" element. Instead of a black

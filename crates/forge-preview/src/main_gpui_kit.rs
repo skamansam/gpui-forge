@@ -75,7 +75,6 @@ fn main() {
                         // Same adapter set as the Studio shell — `alias.Name`
                         // elements render in the remote preview too.
                         view.register_library(forge_lib_ely::Ely::new());
-                        view.register_library(forge_lib_gpui_component::GpuiComponent);
                         view.register_library(forge_lib_video::VideoPlayer::new());
                         view.register_library(forge_lib_zorite::Pdf::new());
                         view.register_library(forge_lib_zorite::Whiteboard::new());

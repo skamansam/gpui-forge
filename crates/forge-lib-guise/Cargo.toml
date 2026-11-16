@@ -1,23 +1,23 @@
 [package]
-name = "forge-lib-gpui02"
+name = "forge-lib-guise"
 description = "Adapters for gpui-0.2 libraries — the Vanilla GPUI 0.2 base (#86, #87, #88)."
 version.workspace = true
 edition.workspace = true
 publish.workspace = true
 repository.workspace = true
 
-# Every adapter targets the gpui02 base only — their crates pin crates.io
+# Every adapter targets the guise base only — their crates pin crates.io
 # `gpui 0.2.x`, which cannot coexist with the gpui-kit base's gpui-pre build.
 # Features stay OFF by default so `cargo check --workspace` never pulls the
-# base-gpui02 runtime arm into the default graph; a gpui02 app enables them.
+# base-guise runtime arm into the default graph; a guise app enables them.
 [features]
-ferrum = ["dep:ferrum-flow", "gpui-forge-runtime/base-gpui02"]
-rhythm = ["dep:rhythm-gpui", "rhythm-gpui/gpui", "gpui-forge-runtime/base-gpui02"]
+ferrum = ["dep:ferrum-flow", "gpui-forge-runtime/base-guise"]
+rhythm = ["dep:rhythm-gpui", "rhythm-gpui/gpui", "gpui-forge-runtime/base-guise"]
 symbols = [
     "dep:gpui-symbols",
     "gpui-symbols/component",
     "gpui-symbols/cache",
-    "gpui-forge-runtime/base-gpui02",
+    "gpui-forge-runtime/base-guise",
 ]
 
 [dependencies]

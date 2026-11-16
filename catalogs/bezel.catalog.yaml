@@ -16,7 +16,7 @@ elements:
     icon: rows-3
     group: Layout
     summary: Vertical flex container.
-    component: bezel::VStack
+    component: bezel::ui::stack::column
     canvas: VStack
     children: any
 
@@ -24,7 +24,7 @@ elements:
     icon: columns-3
     group: Layout
     summary: Horizontal flex container.
-    component: bezel::HStack
+    component: bezel::ui::stack::row
     canvas: HStack
     children: any
 
@@ -32,7 +32,7 @@ elements:
     icon: pilcrow
     group: Display
     summary: A run of text.
-    component: bezel::Text
+    component: bezel::ui::widgets::Content
     canvas: Text
     content: text
     props:
@@ -44,7 +44,7 @@ elements:
     icon: mouse-pointer-click
     group: Input
     summary: Clickable button.
-    component: bezel::Button
+    component: bezel::ui::widgets::Button
     canvas: Button
     content: label
     props:
@@ -59,7 +59,7 @@ elements:
     icon: text-cursor-input
     group: Input
     summary: Single-line text input.
-    component: bezel::Input
+    component: bezel::ui::input
     canvas: Input
     props:
       placeholder: string
@@ -71,6 +71,6 @@ elements:
     icon: square-stack
     group: Display
     summary: Bordered surface grouping related content.
-    component: bezel::Card
+    component: bezel::ui::surface::Surface
     canvas: GroupBox
     children: any
