@@ -216,12 +216,12 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] AccordionItem
 - [x] ActionBar
 - [x] Activity
-- [ ] ActivityBar
+- [x] ActivityBar
 - [x] ActivityFeed
 - [ ] ActivityItem
 - [ ] Aggregate
 - [x] Alert
-- [ ] AlertDialog
+- [x] AlertDialog
 - [x] Anchor
 - [ ] AnimatePresence
 - [ ] AnimatedGradient
@@ -262,12 +262,12 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] Collapsible
 - [x] ColorSwatch
 - [ ] Column
-- [ ] ColumnShell
+- [x] ColumnShell
 - [ ] Command
 - [x] Comparison
 - [ ] Confetti
 - [x] ConfirmButton
-- [ ] ConfirmDialog
+- [x] ConfirmDialog
 - [x] ConnectionStatus
 - [ ] Connectivity
 - [x] Container
@@ -284,7 +284,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] DateRangePicker
 - [x] DateTimePicker
 - [x] DescriptionList
-- [ ] Dialog
+- [x] Dialog
 - [x] DirectoryListing
 - [ ] Disableable
 - [x] Dock
@@ -318,7 +318,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Finder
 - [ ] Flash
 - [ ] Flip
-- [ ] FloatingToolbar
+- [x] FloatingToolbar
 - [ ] Folder
 - [x] FontPicker
 - [x] Frame
@@ -353,7 +353,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] LOCALES
 - [x] Label
 - [ ] LazyLoad
-- [ ] Lightbox
+- [x] Lightbox
 - [x] Link
 - [x] List
 - [x] ListInput
@@ -377,7 +377,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] Notification
 - [x] NotificationCenter
 - [x] NumberInput
-- [ ] OfflineIndicator
+- [x] OfflineIndicator
 - [ ] OnClimb
 - [ ] OnFold
 - [x] OverflowMenu
@@ -394,7 +394,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] PasswordInput
 - [ ] Paste
 - [x] PathInput
-- [ ] Peek
+- [x] Peek
 - [x] PhoneInput
 - [ ] Pick
 - [ ] PieItem
@@ -403,7 +403,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Presence
 - [x] ProgressBar
 - [ ] ProgressRing
-- [ ] PromptDialog
+- [x] PromptDialog
 - [x] PropertyGrid
 - [x] PropertyGroup
 - [ ] Pulse
@@ -437,7 +437,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] SelectableList
 - [ ] Shake
 - [x] Sheet
-- [ ] ShellColumn
+- [x] ShellColumn
 - [ ] Shimmer
 - [ ] ShimmerText
 - [x] SignaturePad
@@ -461,8 +461,8 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Stagger
 - [x] Stars
 - [x] Statistic
-- [ ] StatusBar
-- [ ] StatusBarItem
+- [x] StatusBar
+- [x] StatusBarItem
 - [x] StatusMessage
 - [x] Steps
 - [x] StickyHeader
@@ -472,7 +472,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] SwipeableListItem
 - [x] SyncStatus
 - [ ] Syntax
-- [ ] TabBar
+- [x] TabBar
 - [ ] TabPlacement
 - [ ] Table
 - [x] TableOfContents
@@ -484,7 +484,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] Timeline
 - [x] TimelineItem
 - [x] Title
-- [ ] TitleBar
+- [x] TitleBar
 - [x] Toast
 - [x] ToastViewport
 - [x] Toaster
@@ -493,8 +493,8 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] ToggleItem
 - [ ] Tone
 - [x] Toolbar
-- [ ] ToolbarGroup
-- [ ] ToolbarSeparator
+- [x] ToolbarGroup
+- [x] ToolbarSeparator
 - [ ] Tooltip
 - [ ] Tour
 - [x] Transform
@@ -506,8 +506,8 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] TrendIndicator
 - [ ] Typewriter
 - [ ] TypingIndicator
-- [ ] UpdateBanner
-- [ ] UpdateDialog
+- [x] UpdateBanner
+- [x] UpdateDialog
 - [ ] Upload
 - [x] UploadList
 - [x] UrlInput
@@ -518,14 +518,14 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] WORKSPACE_VERSION
 - [x] Watermark
 - [x] Well
-- [ ] WindowControls
+- [x] WindowControls
 - [ ] WindowManager
 - [ ] WindowTab
 - [x] Wizard
 - [ ] Workspace
 - [x] YearPicker
 - [x] ZStack
-- [ ] ZoomControl
+- [x] ZoomControl
 - [ ] ZoomStep
 - [x] Divider
 - [x] CopyButton
@@ -568,6 +568,31 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] GoToLine
 - [x] NavigationMenu
 - [x] TabOverflowMenu
+
+- [x] CrashReporter
+- [x] HoverCard
+- [x] Popover
+- [x] ResizeBorder
+- [x] Vibrancy
+- [x] WindowSwitcher
+
+- [ ] MenuBar — menu items need a boxed gpui `Action`, not declarative handlers
+- [ ] Tour — TourStep needs live `Bounds<Pixels>` of a target element
+- [ ] Spotlight — same: step target is a `Bounds<Pixels>`, no doc-level geometry
+- [ ] TourStep — value type holding a `Bounds<Pixels>` target
+- [ ] WindowTab — descriptor consumed by TabBar, not standalone
+- [ ] ActivityItem — descriptor consumed by ActivityBar children
+- [ ] WindowManager — app-level window host registry, not a widget
+- [ ] Hosted — wrapper type for `open`-spawned window content
+- [ ] MiniWindow — spawns a real hosted window, not in-tree render
+- [ ] Corner — window-corner value type
+- [ ] AboutDialog — `.open()` spawns a hosted window, not an element
+- [ ] SplashScreen — `.open()` spawns a hosted window, not an element
+- [ ] Sections (navigation) — scroll-state entity backing TOC/Anchor, not a widget
+- [ ] DragRegion/drag_region — helper fn, not a component
+- [ ] media_button — helper fn, not a component
+- [ ] menu_under — helper fn, not a component
+- [ ] guard_close — window-lifecycle helper fn, not a component
 
 ## guise Components
 

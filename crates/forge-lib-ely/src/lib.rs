@@ -54,12 +54,20 @@ use ely_core::navigation::{
     NavGroup, NavItem, NavigationMenu, Pagination, Sections as TocSections, Steps, TabOverflowMenu,
     TabPlacement, TableOfContents, Tabs, Wizard,
 };
-use ely_core::overlays::Slide;
+use ely_core::overlays::{
+    AlertDialog, ConfirmDialog, Dialog, FloatingToolbar, HoverCard, Lightbox, Peek, Popover,
+    PromptDialog, Slide,
+};
 use ely_core::primitives::Disclosure;
 use ely_core::primitives::{Divider, Icon, IconName, Place, Severity};
-use ely_core::shell::Connectivity;
-use ely_core::shell::Toolbar;
+use ely_core::shell::{
+    ActivityBar, ActivityItem, ColumnShell, Connectivity, CrashReporter, OfflineIndicator,
+    ResizeBorder, ShellColumn, StatusBar, StatusBarItem, TabBar, TitleBar, Toolbar, ToolbarGroup,
+    ToolbarSeparator, UpdateBanner, UpdateDialog, UpdateState, Vibrancy, WindowControls,
+    WindowSwitcher, WindowTab, ZoomControl, ZoomStep,
+};
 use ely_core::theme::AvatarSize;
+use ely_core::theme::Platform;
 use ely_core::theme::{ContainerSize, ControlSize, IconSize, TextSize};
 use ely_core::typography::{Caption, Heading, Label, Overline, Paragraph, Subtitle, Title};
 use ely_core::typography::{Code, CopyableText, NumberText, PercentText};
@@ -529,6 +537,25 @@ enum Kind {
     Radio,
 }
 
+fn platform_of(node: &Node) -> Option<Platform> {
+    match prop_str(node, "platform").as_str() {
+        "Mac" | "macOS" => Some(Platform::Mac),
+        "Windows" => Some(Platform::Windows),
+        "Linux" => Some(Platform::Linux),
+        _ => None,
+    }
+}
+
+fn update_state_of(node: &Node) -> UpdateState {
+    match prop_str(node, "state").as_str() {
+        s if s.starts_with("Downloading:") => {
+            UpdateState::Downloading(s.trim_start_matches("Downloading:").parse().unwrap_or(0.0))
+        }
+        "Ready" => UpdateState::Ready,
+        _ => UpdateState::Available,
+    }
+}
+
 fn icon_named(name: &str) -> Option<IconName> {
     IconName::ALL.iter().copied().find(|i| i.name() == name)
 }
@@ -838,7 +865,6 @@ impl ForgeLibrary for Ely {
             "Form" => Some(Form::new(key.to_string()).into_any_element()),
             "Skeleton" => Some(Skeleton::new(key.to_string()).into_any_element()),
             "Reorder" => Some(Reorder::new(key.to_string()).into_any_element()),
-            "Toolbar" => Some(Toolbar::new().into_any_element()),
             "Panel" => Some(Panel::new(prop_str(node, "title")).into_any_element()),
             "Fieldset" => Some(Fieldset::new(prop_str(node, "title")).into_any_element()),
             "Section" => Some(Section::new(prop_str(node, "title")).into_any_element()),
@@ -3088,6 +3114,508 @@ impl ForgeLibrary for Ely {
                         .map(|v| v.into_any_element()),
                 );
                 Some(a.into_any_element())
+            }
+            "Dialog" => {
+                let on_close = {
+                    let h = handler(view, node, "close", cx);
+                    move |w: &mut Window, cx: &mut App| {
+                        if let Some(h) = &h {
+                            h(w, cx)
+                        }
+                    }
+                };
+                let mut d = Dialog::new(key.to_string(), prop_str(node, "title"), on_close);
+                if let Some(t) = prop_str_opt(node, "detail") {
+                    d = d.detail(t);
+                }
+                for label in prop_list(node, "actions") {
+                    let run = fire_str(view, node, &format!("action:{label}"), cx).map(Rc::new);
+                    let id = format!("{key}/action");
+                    d = d.action(move |close| {
+                        let run = run.clone();
+                        Button::new(id.clone(), label.clone()).on_click(
+                            move |_e: &ClickEvent, w, cx| {
+                                if let Some(run) = &run {
+                                    run(String::new(), w, cx);
+                                }
+                                close(w, cx);
+                            },
+                        )
+                    });
+                }
+                d.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(d.into_any_element())
+            }
+            "AlertDialog" => {
+                let on_close = {
+                    let h = handler(view, node, "close", cx);
+                    move |w: &mut Window, cx: &mut App| {
+                        if let Some(h) = &h {
+                            h(w, cx)
+                        }
+                    }
+                };
+                let mut d = AlertDialog::new(
+                    key.to_string(),
+                    severity_of(node),
+                    prop_str(node, "title"),
+                    prop_str(node, "message"),
+                    on_close,
+                );
+                if let Some(l) = prop_str_opt(node, "label") {
+                    d = d.label(l);
+                }
+                Some(d.into_any_element())
+            }
+            "ConfirmDialog" => {
+                let on_close = {
+                    let h = handler(view, node, "close", cx);
+                    move |w: &mut Window, cx: &mut App| {
+                        if let Some(h) = &h {
+                            h(w, cx)
+                        }
+                    }
+                };
+                let mut d = ConfirmDialog::new(
+                    key.to_string(),
+                    prop_str(node, "title"),
+                    prop_str(node, "message"),
+                    on_close,
+                );
+                if let Some(l) = prop_str_opt(node, "confirm") {
+                    d = d.confirm(l);
+                }
+                if prop_bool(node, "destructive") {
+                    d = d.destructive();
+                }
+                if let Some(h) = handler(view, node, "confirm", cx) {
+                    d = d.on_confirm(h);
+                }
+                Some(d.into_any_element())
+            }
+            "PromptDialog" => {
+                let on_close = {
+                    let h = handler(view, node, "close", cx);
+                    move |w: &mut Window, cx: &mut App| {
+                        if let Some(h) = &h {
+                            h(w, cx)
+                        }
+                    }
+                };
+                let mut d = PromptDialog::new(
+                    key.to_string(),
+                    prop_str(node, "title"),
+                    &self.field(node, key, view, _window, cx),
+                    on_close,
+                );
+                if let Some(l) = prop_str_opt(node, "label") {
+                    d = d.label(l);
+                }
+                if let Some(l) = prop_str_opt(node, "submit") {
+                    d = d.submit(l);
+                }
+                if let Some(h) = change_str(view, node, "submit", cx) {
+                    d = d.on_submit(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                Some(d.into_any_element())
+            }
+            "FloatingToolbar" => {
+                let mut f = FloatingToolbar::new(
+                    key.to_string(),
+                    &self.field(node, key, view, _window, cx),
+                );
+                f.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(f.into_any_element())
+            }
+            "Peek" => {
+                let on_close = {
+                    let h = handler(view, node, "close", cx);
+                    move |w: &mut Window, cx: &mut App| {
+                        if let Some(h) = &h {
+                            h(w, cx)
+                        }
+                    }
+                };
+                let mut p = Peek::new(
+                    key.to_string(),
+                    prop_str(node, "title"),
+                    prop_bool(node, "open"),
+                    on_close,
+                );
+                p.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(p.into_any_element())
+            }
+            "HoverCard" => {
+                let children = self.child_views(node, key, cx);
+                let (trigger, content) = (
+                    children
+                        .first()
+                        .map(|v| v.clone().into_any_element())
+                        .unwrap_or_else(|| {
+                            gpui::div()
+                                .child(prop_str(node, "label"))
+                                .into_any_element()
+                        }),
+                    children.get(1).cloned(),
+                );
+                let card =
+                    HoverCard::new(key.to_string(), trigger, move |_w, _cx| match &content {
+                        Some(v) => v.clone().into_any_element(),
+                        None => gpui::div().into_any_element(),
+                    });
+                Some(card.into_any_element())
+            }
+            "Popover" => {
+                let content = self.child_views(node, key, cx).into_iter().next();
+                let p = Popover::new(key.to_string(), prop_str(node, "label"), move |_w, _cx| {
+                    match &content {
+                        Some(v) => v.clone().into_any_element(),
+                        None => gpui::div().into_any_element(),
+                    }
+                });
+                Some(p.into_any_element())
+            }
+            "Lightbox" => {
+                let slides = prop_list(node, "slides").into_iter().filter_map(|e| {
+                    let mut p = e.splitn(2, '|');
+                    let source = p.next()?.trim().to_owned();
+                    let caption = p.next().unwrap_or("").trim().to_owned();
+                    Some(Slide::new(
+                        ImageSource::from(std::path::PathBuf::from(source)),
+                        caption,
+                    ))
+                });
+                let on_close = {
+                    let h = handler(view, node, "close", cx);
+                    move |w: &mut Window, cx: &mut App| {
+                        if let Some(h) = &h {
+                            h(w, cx)
+                        }
+                    }
+                };
+                let mut l = Lightbox::new(
+                    key.to_string(),
+                    slides,
+                    prop_num(node, "at").unwrap_or(0.0) as usize,
+                    on_close,
+                );
+                if let Some(h) = fire_str(view, node, "step", cx) {
+                    l = l.on_step(move |i, w, cx| h(i.to_string(), w, cx));
+                }
+                Some(l.into_any_element())
+            }
+            "ActivityBar" => {
+                let mut b = ActivityBar::new(key.to_string());
+                for (i, child) in node.children.iter().enumerate() {
+                    let mut item = ActivityItem::new(
+                        format!("{key}/{i}"),
+                        prop_str_opt(child, "icon")
+                            .and_then(|n| icon_named(&n))
+                            .unwrap_or(IconName::Circle),
+                        prop_str(child, "label"),
+                    );
+                    if let Some(c) = prop_num(child, "badge") {
+                        item = item.badge(c.max(0.0) as u32);
+                    }
+                    b = if prop_str(child, "slot") == "footer" {
+                        b.footer(item)
+                    } else {
+                        b.item(item)
+                    };
+                }
+                if let Some(sel) = prop_str_opt(node, "selected") {
+                    b = b.selected(sel);
+                }
+                if let Some(h) = change_str(view, node, "select", cx) {
+                    b = b.on_select(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                Some(b.into_any_element())
+            }
+            "StatusBarItem" => {
+                let mut item = StatusBarItem::new(key.to_string());
+                if let Some(v) = self.child_views(node, key, cx).into_iter().next() {
+                    item = item.leading(v);
+                }
+                if let Some(i) = prop_str_opt(node, "icon").and_then(|n| icon_named(&n)) {
+                    item = item.icon(i);
+                }
+                if let Some(l) = prop_str_opt(node, "label") {
+                    item = item.label(l);
+                }
+                if let Some(t) = prop_str_opt(node, "tooltip") {
+                    item = item.tooltip(t);
+                }
+                if let Some(h) = handler(view, node, "click", cx) {
+                    item = item.on_click(move |_e: &ClickEvent, w, cx| h(w, cx));
+                }
+                Some(item.into_any_element())
+            }
+            "StatusBar" => {
+                let mut bar = StatusBar::new();
+                for (i, child) in node.children.iter().enumerate() {
+                    let v = self.child_view(child, &format!("{key}/{i}"), cx);
+                    bar = if prop_str(child, "slot") == "right" {
+                        bar.right(v)
+                    } else {
+                        bar.left(v)
+                    };
+                }
+                Some(bar.into_any_element())
+            }
+            "Toolbar" => {
+                let mut t = Toolbar::new();
+                t.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(t.into_any_element())
+            }
+            "ToolbarGroup" => {
+                let mut g = ToolbarGroup::new();
+                g.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(g.into_any_element())
+            }
+            "ToolbarSeparator" => Some(ToolbarSeparator.into_any_element()),
+            "TitleBar" => {
+                let mut t = TitleBar::new(key.to_string());
+                if let Some(title) = prop_str_opt(node, "title") {
+                    t = t.title(title);
+                }
+                if let Some(p) = platform_of(node) {
+                    t = t.platform(p);
+                }
+                if let Some(h) = handler(view, node, "close", cx) {
+                    t = t.on_close(h);
+                }
+                for (i, child) in node.children.iter().enumerate() {
+                    let v = self.child_view(child, &format!("{key}/{i}"), cx);
+                    if prop_str(child, "slot") == "action" {
+                        t = t.action(v);
+                    }
+                }
+                t.extend(
+                    node.children
+                        .iter()
+                        .enumerate()
+                        .filter(|(_, c)| prop_str(c, "slot") != "action")
+                        .map(|(i, c)| {
+                            self.child_view(c, &format!("{key}/{i}"), cx)
+                                .into_any_element()
+                        }),
+                );
+                Some(t.into_any_element())
+            }
+            "WindowControls" => {
+                let mut c = WindowControls::new(key.to_string());
+                if let Some(p) = platform_of(node) {
+                    c = c.platform(p);
+                }
+                if let Some(h) = handler(view, node, "close", cx) {
+                    c = c.on_close(h);
+                }
+                Some(c.into_any_element())
+            }
+            "ColumnShell" => {
+                let mut sh = ColumnShell::new(key.to_string());
+                for (i, child) in node.children.iter().enumerate() {
+                    let mut col = ShellColumn::new(format!("{key}/{i}"));
+                    if let Some(t) = prop_str_opt(child, "title") {
+                        col = col.title(t);
+                    }
+                    if let Some(w) = prop_num(child, "width") {
+                        col = col.width(px(w as f32));
+                    }
+                    col.extend(std::iter::once(
+                        self.child_view(child, &format!("{key}/{i}/body"), cx)
+                            .into_any_element(),
+                    ));
+                    sh = sh.column(col);
+                }
+                if let Some(p) = platform_of(node) {
+                    sh = sh.platform(p);
+                }
+                if prop_bool(node, "glass") {
+                    sh = sh.glass();
+                }
+                if let Some(h) = handler(view, node, "close", cx) {
+                    sh = sh.on_close(h);
+                }
+                Some(sh.into_any_element())
+            }
+            "ShellColumn" => {
+                let mut col = ShellColumn::new(key.to_string());
+                if let Some(t) = prop_str_opt(node, "title") {
+                    col = col.title(t);
+                }
+                if let Some(w) = prop_num(node, "width") {
+                    col = col.width(px(w as f32));
+                }
+                for (i, child) in node.children.iter().enumerate() {
+                    let v = self.child_view(child, &format!("{key}/{i}"), cx);
+                    match prop_str(child, "slot").as_str() {
+                        "leading" => col = col.leading(v),
+                        "action" => col = col.action(v),
+                        _ => col.extend(std::iter::once(v.into_any_element())),
+                    }
+                }
+                let mut sh = ColumnShell::new(format!("{key}/shell"));
+                sh = sh.column(col);
+                Some(sh.into_any_element())
+            }
+            "CrashReporter" => {
+                let mut c = CrashReporter::new(
+                    prop_str(node, "name"),
+                    prop_str(node, "summary"),
+                    prop_str(node, "report"),
+                )
+                .details(prop_bool(node, "details"));
+                if let Some(h) = handler(view, node, "send", cx) {
+                    c = c.on_send(h);
+                }
+                if let Some(h) = handler(view, node, "dismiss", cx) {
+                    c = c.on_dismiss(h);
+                }
+                Some(c.into_any_element())
+            }
+            "OfflineIndicator" => {
+                let state = match prop_str(node, "state").as_str() {
+                    "Offline" => Connectivity::Offline,
+                    "Reconnecting" => Connectivity::Reconnecting,
+                    _ => Connectivity::Online,
+                };
+                Some(OfflineIndicator::new(key.to_string(), state).into_any_element())
+            }
+            "ZoomControl" => {
+                let mut z = ZoomControl::new(key.to_string());
+                if let Some(h) = change_str(view, node, "zoom", cx) {
+                    let percent = prop_num(node, "percent").unwrap_or(100.0) as u32;
+                    z = z.owned(percent, move |step, w, cx| {
+                        h(
+                            match step {
+                                ZoomStep::Out => "Out",
+                                ZoomStep::In => "In",
+                                ZoomStep::Reset => "Reset",
+                            }
+                            .to_string(),
+                            w,
+                            cx,
+                        )
+                    });
+                }
+                Some(z.into_any_element())
+            }
+            "WindowSwitcher" => {
+                let on_close = {
+                    let h = handler(view, node, "close", cx);
+                    move |w: &mut Window, cx: &mut App| {
+                        if let Some(h) = &h {
+                            h(w, cx)
+                        }
+                    }
+                };
+                Some(WindowSwitcher::new(key.to_string(), on_close).into_any_element())
+            }
+            "TabBar" => {
+                let mut bar = TabBar::new(key.to_string());
+                for e in prop_list(node, "tabs") {
+                    let mut p = e.splitn(3, '|');
+                    let (id, title) =
+                        (p.next().unwrap_or("").trim(), p.next().unwrap_or("").trim());
+                    let mut tab = WindowTab::new(id, title);
+                    if let Some(i) = p.next().and_then(|n| icon_named(n.trim())) {
+                        tab = tab.icon(i);
+                    }
+                    bar = bar.tab(tab);
+                }
+                if let Some(sel) = prop_str_opt(node, "selected") {
+                    bar = bar.selected(sel);
+                }
+                if let Some(h) = change_str(view, node, "select", cx) {
+                    bar = bar.on_select(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                if let Some(h) = fire_str(view, node, "close", cx) {
+                    bar = bar.on_close(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                if let Some(h) = handler(view, node, "add", cx) {
+                    bar = bar.on_add(h);
+                }
+                if let Some(h) = fire_str(view, node, "reorder", cx) {
+                    bar = bar.on_reorder(move |a, b, w, cx| h(format!("{a}|{b}"), w, cx));
+                }
+                Some(bar.into_any_element())
+            }
+            "UpdateBanner" => {
+                let mut u = UpdateBanner::new(
+                    key.to_string(),
+                    prop_str(node, "version"),
+                    update_state_of(node),
+                );
+                if let Some(h) = handler(view, node, "download", cx) {
+                    u = u.on_download(h);
+                }
+                if let Some(h) = handler(view, node, "restart", cx) {
+                    u = u.on_restart(h);
+                }
+                if let Some(h) = handler(view, node, "later", cx) {
+                    u = u.on_later(h);
+                }
+                Some(u.into_any_element())
+            }
+            "UpdateDialog" => {
+                let mut u = UpdateDialog::new(
+                    prop_str(node, "name"),
+                    prop_str(node, "current"),
+                    prop_str(node, "version"),
+                    update_state_of(node),
+                );
+                for note in prop_list(node, "notes") {
+                    u = u.note(note);
+                }
+                if let Some(h) = handler(view, node, "download", cx) {
+                    u = u.on_download(h);
+                }
+                if let Some(h) = handler(view, node, "restart", cx) {
+                    u = u.on_restart(h);
+                }
+                if let Some(h) = handler(view, node, "later", cx) {
+                    u = u.on_later(h);
+                }
+                Some(u.into_any_element())
+            }
+            "Vibrancy" => {
+                let mut v = Vibrancy::new();
+                v.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|e| e.into_any_element()),
+                );
+                Some(v.into_any_element())
+            }
+            "ResizeBorder" => {
+                let mut r = ResizeBorder::new();
+                r.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|e| e.into_any_element()),
+                );
+                Some(r.into_any_element())
             }
             _ => None,
         }
