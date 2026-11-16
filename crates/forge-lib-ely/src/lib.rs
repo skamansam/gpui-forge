@@ -22,15 +22,20 @@ use ely_core::forms::{
     PinInput, Radio, RadioCard, Select, Slider,
 };
 use ely_core::forms::{Rating, Stepper, Switch};
-use ely_core::layout::{AspectRatio, Container, ZStack};
-use ely_core::layout::{Collapsible, Fieldset, Panel, Section, Sidebar};
+use ely_core::layout::{
+    Accordion, AccordionItem, AppShell, AspectRatio, Card, CardHeader, Container, Dock, DockPanel,
+    DockSide, Drawer, FloatingPanel, Frame, Masonry, MasterDetail, Page, PaneGroup, PaneId,
+    ScrollArea, ScrollShadow, ScrollToTop, SimpleGrid, SplitPane, StickyHeader, Viewport, Well,
+    ZStack,
+};
+use ely_core::layout::{Collapsible, Fieldset, Panel, Section, Sheet, Sidebar};
 use ely_core::lists::{GroupedList, ListItem};
 use ely_core::motion::{ProgressBar, Reorder, Skeleton};
 use ely_core::motion::{Spinner, SpinnerStyle};
 use ely_core::navigation::{NavItem, Pagination};
 use ely_core::overlays::Slide;
 use ely_core::primitives::Disclosure;
-use ely_core::primitives::{Divider, Icon, IconName, Severity};
+use ely_core::primitives::{Divider, Icon, IconName, Place, Severity};
 use ely_core::shell::Connectivity;
 use ely_core::shell::Toolbar;
 use ely_core::theme::AvatarSize;
@@ -66,6 +71,12 @@ pub struct Ely {
     views: RefCell<HashMap<String, AnyView>>,
     /// One `Entity<Toaster>` per `ToastViewport` element key.
     toasters: RefCell<HashMap<String, Entity<Toaster>>>,
+    /// Shared scroll handles — `handle:` props link `ScrollArea` to
+    /// `ScrollShadow`/`ScrollToTop`/`StickyHeader`.
+    handles: RefCell<HashMap<String, ScrollHandle>>,
+    /// `Entity<PaneGroup>` and `Entity<Dock>` per element key.
+    panes: RefCell<HashMap<String, Entity<PaneGroup>>>,
+    docks: RefCell<HashMap<String, Entity<Dock>>>,
 }
 
 /// Renders one Forge child in its own entity update — the ely widgets'
@@ -94,6 +105,9 @@ impl Ely {
             texts: RefCell::new(HashMap::new()),
             views: RefCell::new(HashMap::new()),
             toasters: RefCell::new(HashMap::new()),
+            handles: RefCell::new(HashMap::new()),
+            panes: RefCell::new(HashMap::new()),
+            docks: RefCell::new(HashMap::new()),
         }
     }
 
@@ -144,6 +158,16 @@ impl Ely {
         let t = cx.new(|_| Toaster::default());
         toasters.insert(key.to_owned(), t.clone());
         t
+    }
+
+    /// The named (or per-key) scroll handle shared between a `ScrollArea` and
+    /// its scroll aids.
+    fn handle(&self, name: &str) -> ScrollHandle {
+        self.handles
+            .borrow_mut()
+            .entry(name.to_owned())
+            .or_insert_with(ScrollHandle::new)
+            .clone()
     }
 
     /// Render every child of `node` as proxies, keyed `{key}/{i}`.
@@ -1240,6 +1264,425 @@ impl ForgeLibrary for Ely {
                     }
                 }
                 Some(ToastViewport::new(key.to_string(), &toaster).into_any_element())
+            }
+            "Accordion" => {
+                let mut a = Accordion::new(key.to_string());
+                if prop_bool(node, "multiple") {
+                    a = a.multiple();
+                }
+                if prop_bool(node, "first_open") {
+                    a = a.first_open();
+                }
+                for (i, child) in node.children.iter().enumerate() {
+                    let mut item = AccordionItem::new(prop_str(child, "title"));
+                    item.extend(
+                        self.child_views(child, &format!("{key}/{i}"), cx)
+                            .into_iter()
+                            .map(|v| v.into_any_element()),
+                    );
+                    a = a.item(item);
+                }
+                Some(a.into_any_element())
+            }
+            "SimpleGrid" => {
+                let mut g = SimpleGrid::new(
+                    key.to_string(),
+                    px(prop_num(node, "min").unwrap_or(160.0) as f32),
+                    px(prop_num(node, "gap").unwrap_or(8.0) as f32),
+                );
+                g.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(g.into_any_element())
+            }
+            "Masonry" => {
+                let mut m = Masonry::new(
+                    key.to_string(),
+                    prop_num(node, "columns").unwrap_or(2.0).max(1.0) as usize,
+                    px(prop_num(node, "gap").unwrap_or(8.0) as f32),
+                );
+                m.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(m.into_any_element())
+            }
+            "Page" => {
+                let mut p = Page::new(prop_str(node, "title"));
+                if let Some(s) = prop_str_opt(node, "subtitle") {
+                    p = p.subtitle(s);
+                }
+                let mut body = Vec::new();
+                for (i, child) in node.children.iter().enumerate() {
+                    let el = self
+                        .child_view(child, &format!("{key}/{i}"), cx)
+                        .into_any_element();
+                    if prop_str(child, "slot") == "actions" {
+                        p = p.action(el);
+                    } else {
+                        body.push(el);
+                    }
+                }
+                p.extend(body);
+                Some(p.into_any_element())
+            }
+            "AppShell" => {
+                let mut shell = AppShell::new();
+                let mut body = Vec::new();
+                for (i, child) in node.children.iter().enumerate() {
+                    let el = self
+                        .child_view(child, &format!("{key}/{i}"), cx)
+                        .into_any_element();
+                    match prop_str(child, "slot").as_str() {
+                        "title_bar" | "header" => shell = shell.title_bar(el),
+                        "sidebar" => shell = shell.sidebar(el),
+                        "status_bar" | "footer" => shell = shell.status_bar(el),
+                        _ => body.push(el),
+                    }
+                }
+                shell.extend(body);
+                Some(shell.into_any_element())
+            }
+            "MasterDetail" => {
+                let (Some(master), Some(detail)) = (node.children.first(), node.children.get(1))
+                else {
+                    return None;
+                };
+                Some(
+                    MasterDetail::new(
+                        key.to_string(),
+                        self.child_view(master, &format!("{key}/0"), cx),
+                        self.child_view(detail, &format!("{key}/1"), cx),
+                        px(prop_num(node, "min").unwrap_or(160.0) as f32),
+                    )
+                    .into_any_element(),
+                )
+            }
+            "PaneGroup" => {
+                let fresh = !self.panes.borrow().contains_key(key);
+                let group = {
+                    let mut panes = self.panes.borrow_mut();
+                    panes
+                        .entry(key.to_owned())
+                        .or_insert_with(|| {
+                            let views = self.child_views(node, key, cx);
+                            cx.new(|_| {
+                                PaneGroup::new(move |id: PaneId, _, _| {
+                                    views
+                                        .get(id.saturating_sub(1) as usize)
+                                        .or_else(|| views.last())
+                                        .cloned()
+                                        .map(|v| v.into_any_element())
+                                        .unwrap_or_else(|| div().into_any_element())
+                                })
+                            })
+                        })
+                        .clone()
+                };
+                if fresh {
+                    let axis = match prop_str(node, "axis").as_str() {
+                        "vertical" | "Vertical" => Axis::Vertical,
+                        _ => Axis::Horizontal,
+                    };
+                    let extra = (prop_num(node, "panes").unwrap_or(1.0) as u64).saturating_sub(1);
+                    group.update(cx, |pg, cx| {
+                        for _ in 0..extra {
+                            let first = pg.panes().first().copied().unwrap_or(1);
+                            pg.split(first, axis, cx);
+                        }
+                    });
+                }
+                Some(group.into_any_element())
+            }
+            "Dock" => {
+                let fresh = !self.docks.borrow().contains_key(key);
+                let dock = {
+                    let mut docks = self.docks.borrow_mut();
+                    docks
+                        .entry(key.to_owned())
+                        .or_insert_with(|| {
+                            let center_view = node
+                                .children
+                                .first()
+                                .map(|c| self.child_view(c, &format!("{key}/center"), cx));
+                            let views = self.child_views(node, key, cx);
+                            let panel_ids: Vec<String> =
+                                node.children.iter().map(|c| prop_str(c, "panel")).collect();
+                            cx.new(|cx| {
+                                let center = move |_: &mut Window, _: &mut App| -> AnyElement {
+                                    center_view
+                                        .clone()
+                                        .map(|v| v.into_any_element())
+                                        .unwrap_or_else(|| div().into_any_element())
+                                };
+                                let views = views.clone();
+                                let content = move |id: &SharedString,
+                                                    _: &mut Window,
+                                                    _: &mut App|
+                                      -> AnyElement {
+                                    views
+                                        .iter()
+                                        .enumerate()
+                                        .find_map(|(i, v)| {
+                                            (panel_ids.get(i).is_some_and(|p| p == id.as_str()))
+                                                .then(|| v.clone().into_any_element())
+                                        })
+                                        .unwrap_or_else(|| div().into_any_element())
+                                };
+                                Dock::new(center, content, cx)
+                            })
+                        })
+                        .clone()
+                };
+                if fresh {
+                    for entry in prop_list(node, "panels") {
+                        let mut parts = entry.splitn(4, '|');
+                        let (Some(id), Some(title)) = (parts.next(), parts.next()) else {
+                            continue;
+                        };
+                        let panel = DockPanel {
+                            id: id.trim().into(),
+                            title: title.trim().into(),
+                            icon: parts
+                                .next()
+                                .and_then(|n| icon_named(n.trim()))
+                                .unwrap_or(IconName::Square),
+                        };
+                        let side = match parts.next().map(str::trim) {
+                            Some("right") => DockSide::Right,
+                            Some("top") => DockSide::Top,
+                            Some("bottom") => DockSide::Bottom,
+                            _ => DockSide::Left,
+                        };
+                        dock.update(cx, |d, _| d.add(panel, side));
+                    }
+                }
+                Some(dock.into_any_element())
+            }
+            "Sheet" => {
+                let close = handler(view, node, "close", cx);
+                let mut s = Sheet::new(
+                    key.to_string(),
+                    match prop_str(node, "side").as_str() {
+                        "Left" | "left" => Place::Left,
+                        "Top" | "top" => Place::Top,
+                        "Bottom" | "bottom" => Place::Bottom,
+                        _ => Place::Right,
+                    },
+                    prop_str(node, "title"),
+                    move |w, cx| {
+                        if let Some(h) = &close {
+                            h(w, cx);
+                        }
+                    },
+                );
+                s.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(s.into_any_element())
+            }
+            "Drawer" => {
+                let close = handler(view, node, "close", cx);
+                let mut d = Drawer::new(key.to_string(), move |w, cx| {
+                    if let Some(h) = &close {
+                        h(w, cx);
+                    }
+                });
+                d.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(d.into_any_element())
+            }
+            "FloatingPanel" => {
+                let mut p = FloatingPanel::new(
+                    key.to_string(),
+                    prop_str(node, "title"),
+                    point(
+                        px(prop_num(node, "x").unwrap_or(80.0) as f32),
+                        px(prop_num(node, "y").unwrap_or(80.0) as f32),
+                    ),
+                );
+                if let Some(h) = change_str(view, node, "move", cx) {
+                    p = p.on_move(move |pt, w, cx| {
+                        h(format!("{},{}", f32::from(pt.x), f32::from(pt.y)), w, cx)
+                    });
+                }
+                p.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(p.into_any_element())
+            }
+            "SplitPane" => {
+                let mut s = SplitPane::new(
+                    key.to_string(),
+                    match prop_str(node, "axis").as_str() {
+                        "vertical" | "Vertical" => Axis::Vertical,
+                        _ => Axis::Horizontal,
+                    },
+                    px(prop_num(node, "min").unwrap_or(120.0) as f32),
+                );
+                for v in self.child_views(node, key, cx) {
+                    s = s.pane(v);
+                }
+                let sizes = prop_floats(node, "sizes");
+                if !sizes.is_empty() {
+                    s = s.sizes(&sizes);
+                }
+                if let Some(h) = change_str(view, node, "resize", cx) {
+                    s = s.on_resize(move |sizes, w, cx| {
+                        h(
+                            sizes
+                                .iter()
+                                .map(|f| f.to_string())
+                                .collect::<Vec<_>>()
+                                .join(","),
+                            w,
+                            cx,
+                        )
+                    });
+                }
+                Some(s.into_any_element())
+            }
+            "ScrollArea" => {
+                let mut a = ScrollArea::new(key.to_string());
+                if prop_bool(node, "vertical") {
+                    a = a.vertical();
+                }
+                if prop_bool(node, "shadows") {
+                    a = a.shadows();
+                }
+                let name = prop_str(node, "handle");
+                if !name.is_empty() {
+                    a = a.track_scroll(&self.handle(&name));
+                }
+                a.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(a.into_any_element())
+            }
+            "ScrollShadow" => {
+                let name = prop_str(node, "handle");
+                let h = self.handle(if name.is_empty() { key } else { &name });
+                Some(ScrollShadow::new(&h).into_any_element())
+            }
+            "ScrollToTop" => {
+                let name = prop_str(node, "handle");
+                let h = self.handle(if name.is_empty() { key } else { &name });
+                Some(ScrollToTop::new(key.to_string(), &h).into_any_element())
+            }
+            "StickyHeader" => {
+                let name = prop_str(node, "handle");
+                let h = self.handle(if name.is_empty() { key } else { &name });
+                let head = node
+                    .children
+                    .first()
+                    .map(|c| self.child_view(c, &format!("{key}/head"), cx));
+                let mut s = StickyHeader::new(key.to_string(), &h, move |_, _| {
+                    head.clone()
+                        .map(|v| v.into_any_element())
+                        .unwrap_or_else(|| div().into_any_element())
+                });
+                for v in self.child_views(
+                    &Node {
+                        children: node.children.iter().skip(1).cloned().collect(),
+                        ..node.clone()
+                    },
+                    &format!("{key}/body"),
+                    cx,
+                ) {
+                    s.extend([v.into_any_element()]);
+                }
+                Some(s.into_any_element())
+            }
+            "Viewport" => {
+                let content = node
+                    .children
+                    .first()
+                    .map(|c| self.child_view(c, &format!("{key}/0"), cx));
+                let mut v = Viewport::new(key.to_string(), move |t, _, _| {
+                    let inner = content
+                        .clone()
+                        .map(|v| v.into_any_element())
+                        .unwrap_or_else(|| div().into_any_element());
+                    div()
+                        .relative()
+                        .size_full()
+                        .child(
+                            div()
+                                .absolute()
+                                .left(t.offset.x)
+                                .top(t.offset.y)
+                                .child(inner),
+                        )
+                        .into_any_element()
+                });
+                if let (Some(min), Some(max)) =
+                    (prop_num(node, "min_zoom"), prop_num(node, "max_zoom"))
+                {
+                    v = v.zoom_range(min as f32, max as f32);
+                }
+                Some(v.into_any_element())
+            }
+            "Card" => {
+                let mut c = Card::new();
+                let mut body = Vec::new();
+                for (i, child) in node.children.iter().enumerate() {
+                    let k = format!("{key}/{i}");
+                    match prop_str(child, "slot").as_str() {
+                        "header" => {
+                            let mut h = CardHeader::new(prop_str(child, "title"));
+                            if let Some(d) = prop_str_opt(child, "description") {
+                                h = h.description(d);
+                            }
+                            c = c.header(h);
+                        }
+                        "footer" => {
+                            c = c.footer(self.child_view(child, &k, cx));
+                        }
+                        _ => body.push(self.child_view(child, &k, cx).into_any_element()),
+                    }
+                }
+                c.extend(body);
+                Some(c.into_any_element())
+            }
+            "CardHeader" => {
+                let mut h = CardHeader::new(prop_str(node, "title"));
+                if let Some(d) = prop_str_opt(node, "description") {
+                    h = h.description(d);
+                }
+                if let Some(child) = node.children.first() {
+                    h = h.action(self.child_view(child, &format!("{key}/0"), cx));
+                }
+                Some(h.into_any_element())
+            }
+            "Frame" => {
+                let mut f = Frame::new();
+                f.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(f.into_any_element())
+            }
+            "Well" => {
+                let mut w = Well::new();
+                w.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(w.into_any_element())
             }
             _ => None,
         }

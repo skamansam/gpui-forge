@@ -989,3 +989,189 @@ elements:
     children: none
     props:
       toasts: list<string>  # "severity|title|body"
+
+  Accordion:
+    icon: chevrons-up-down
+    group: Layout
+    summary: Folding sections — children are AccordionItem elements.
+    component: ely_core::layout::Accordion
+    props:
+      multiple: {type: bool, default: false}
+      first_open: {type: bool, default: false}
+
+  AccordionItem:
+    icon: chevron-down
+    group: Layout
+    summary: One folding section (child of Accordion); `title` is its header.
+    component: ely_core::layout::AccordionItem
+    props: {title: string}
+
+  SimpleGrid:
+    icon: grid-2x2
+    group: Layout
+    summary: Auto-fit grid — columns sized to `min`.
+    component: ely_core::layout::SimpleGrid
+    props:
+      min: {type: number, default: 160}
+      gap: {type: number, default: 8}
+
+  Masonry:
+    icon: layout-dashboard
+    group: Layout
+    summary: Column-balanced masonry of its children.
+    component: ely_core::layout::Masonry
+    props:
+      columns: {type: number, default: 2}
+      gap: {type: number, default: 8}
+
+  Page:
+    icon: file
+    group: Layout
+    summary: Titled page — `slot: actions` children go to the header.
+    component: ely_core::layout::Page
+    props:
+      title: string
+      subtitle: string
+
+  AppShell:
+    icon: app-window
+    group: Layout
+    summary: Window frame — children take `slot:` title_bar, sidebar, status_bar, or default body.
+    component: ely_core::layout::AppShell
+
+  MasterDetail:
+    icon: columns-2
+    group: Layout
+    summary: Resizable 36/64 master-detail split; first child is master.
+    component: ely_core::layout::MasterDetail
+    props:
+      min: {type: number, default: 160}
+
+  PaneGroup:
+    icon: layout-template
+    group: Layout
+    summary: Split-pane workspace — `panes` splits after creation; children are pane content by index.
+    component: ely_core::layout::PaneGroup
+    props:
+      panes: {type: number, default: 1}
+      axis: {type: enum, values: [Horizontal, Vertical], default: Horizontal}
+
+  Dock:
+    icon: panel-left
+    group: Layout
+    summary: Docking layout — children[0] is the center; `panel` prop names each panel child.
+    component: ely_core::layout::Dock
+    props:
+      panels: list<string>  # "id|title|icon|side" — sides: left, right, top, bottom
+
+  Sheet:
+    icon: panel-right
+    group: Layout
+    summary: Edge-anchored sheet with a title bar; close event dismisses.
+    component: ely_core::layout::Sheet
+    props:
+      side: {type: enum, values: [Left, Right, Top, Bottom], default: Right}
+      title: string
+    events:
+      close:
+
+  Drawer:
+    icon: panel-bottom-open
+    group: Layout
+    summary: Dismissable drawer; close event fires on dismiss.
+    component: ely_core::layout::Drawer
+    events:
+      close:
+
+  FloatingPanel:
+    icon: picture-in-picture-2
+    group: Layout
+    summary: Draggable floating panel; move fires with "x,y".
+    component: ely_core::layout::FloatingPanel
+    props:
+      title: string
+      x: {type: number, default: 80}
+      y: {type: number, default: 80}
+    events:
+      move:
+
+  SplitPane:
+    icon: separator-vertical
+    group: Layout
+    summary: Resizable pane split; `sizes` are relative weights.
+    component: ely_core::layout::SplitPane
+    props:
+      axis: {type: enum, values: [Horizontal, Vertical], default: Horizontal}
+      min: {type: number, default: 120}
+      sizes: list<string>   # relative weights, e.g. ["1","2"]
+    events:
+      resize:
+
+  ScrollArea:
+    icon: scroll
+    group: Layout
+    summary: Scrolling region; `handle` names it for the scroll aids.
+    component: ely_core::layout::ScrollArea
+    props:
+      vertical: {type: bool, default: false}
+      shadows: {type: bool, default: false}
+      handle: string
+
+  ScrollShadow:
+    icon: shadow
+    group: Layout
+    summary: Edge fades tracking a named scroll handle.
+    component: ely_core::layout::ScrollShadow
+    children: none
+    props: {handle: string}
+
+  ScrollToTop:
+    icon: arrow-up-to-line
+    group: Layout
+    summary: Back-to-top button for a named scroll handle.
+    component: ely_core::layout::ScrollToTop
+    children: none
+    props: {handle: string}
+
+  StickyHeader:
+    icon: pin
+    group: Layout
+    summary: Child[0] is the pinning header; the rest is section body. Needs a `handle`.
+    component: ely_core::layout::StickyHeader
+    props: {handle: string}
+
+  Viewport:
+    icon: move
+    group: Layout
+    summary: Pannable/zoomable canvas; the child renders at the pan offset.
+    component: ely_core::layout::Viewport
+    props:
+      min_zoom: number
+      max_zoom: number
+
+  Card:
+    icon: square
+    group: Layout
+    summary: Flat surface — `slot: header` child makes a CardHeader, `slot: footer` docks below.
+    component: ely_core::layout::Card
+
+  CardHeader:
+    icon: heading
+    group: Layout
+    summary: Titled card header — the first child renders as its action.
+    component: ely_core::layout::CardHeader
+    props:
+      title: string
+      description: string
+
+  Frame:
+    icon: square-dashed
+    group: Layout
+    summary: Bordered raised container.
+    component: ely_core::layout::Frame
+
+  Well:
+    icon: square-chevron-down
+    group: Layout
+    summary: Recessed container on the sunken tone.
+    component: ely_core::layout::Well
