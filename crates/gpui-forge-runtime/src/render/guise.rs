@@ -40,6 +40,28 @@ static PENDING_ERRORS: std::sync::Mutex<Vec<String>> = std::sync::Mutex::new(Vec
 
 /// `weak.update` wrapped in `catch_unwind` — a reentrant entity update panics
 /// inside gpui, and this converts it into a reported error instead of a crash.
+/// A view that defers to `ForgeView::render_node` — lazy-content widgets
+/// (`Tabs`, `Accordion`) take `Fn(&mut Window, &mut App) -> E` builders, and
+/// calling `render_node` through `weak.update` inside the parent's render
+/// would re-borrow ForgeView. The proxy is its own entity, so its render
+/// runs in a separate update once the parent borrow is released.
+struct ProxyView {
+    forge: WeakEntity<ForgeView>,
+    node: Node,
+    key: String,
+}
+
+impl Render for ProxyView {
+    fn render(&mut self, window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
+        let node = self.node.clone();
+        let key = self.key.clone();
+        try_update(&self.forge, &mut **cx, "proxy", move |view, cx| {
+            view.render_node(&node, &key, window, cx)
+        })
+        .unwrap_or_else(|_| div().into_any_element())
+    }
+}
+
 fn try_update<F, R>(weak: &WeakEntity<ForgeView>, cx: &mut App, what: &str, f: F) -> Result<R, ()>
 where
     F: FnOnce(&mut ForgeView, &mut Context<ForgeView>) -> R,
@@ -489,6 +511,60 @@ impl ForgeView {
             .iter()
             .copied()
             .find(|n| norm(n.name()) == want)
+    }
+
+    /// Slash-separated option paths ("a/b/c") → a nested `TreeNode` forest —
+    /// siblings keep first-seen order, ids are the joined path.
+    fn tree_of(prefix: &str, paths: &[String]) -> Vec<guise::data::TreeNode> {
+        let mut grouped: Vec<(String, Vec<String>)> = Vec::new();
+        for p in paths {
+            let mut it = p.splitn(2, '/');
+            let head = it.next().unwrap_or("").trim().to_string();
+            let rest = it.next().map(str::trim).unwrap_or("").to_string();
+            if head.is_empty() {
+                continue;
+            }
+            match grouped.iter_mut().find(|(h, _)| *h == head) {
+                Some((_, g)) => {
+                    if !rest.is_empty() {
+                        g.push(rest);
+                    }
+                }
+                None => grouped.push((head, if rest.is_empty() { vec![] } else { vec![rest] })),
+            }
+        }
+        grouped
+            .into_iter()
+            .map(|(head, subs)| {
+                let id = if prefix.is_empty() {
+                    head.clone()
+                } else {
+                    format!("{prefix}/{head}")
+                };
+                let mut n = guise::data::TreeNode::new(id.clone(), head);
+                if !subs.is_empty() {
+                    n = n.children(Self::tree_of(&id, &subs));
+                }
+                n
+            })
+            .collect()
+    }
+
+    /// Doc child → `AnyView` proxy for `Fn(&mut Window, &mut App) -> E`
+    /// content slots (Tabs, Accordion).
+    fn proxy_for(
+        &self,
+        node: &Node,
+        key: &str,
+        forge: &WeakEntity<ForgeView>,
+        cx: &mut App,
+    ) -> AnyView {
+        cx.new(|_| ProxyView {
+            forge: forge.clone(),
+            node: node.clone(),
+            key: key.to_owned(),
+        })
+        .into()
     }
 
     /// `#RRGGBB` / `#RRGGBBAA` hex → `Hsla` — the ColorInput value prop.
@@ -2257,6 +2333,393 @@ impl ForgeView {
                     inner = inner.child(self.render_node(child, &k, window, cx));
                 }
                 f.child(inner).into_any_element()
+            }
+            "Accordion" => {
+                if !self.views.contains_key(key) {
+                    let weak = cx.entity().downgrade();
+                    let mut items: Vec<(String, AnyView)> = Vec::new();
+                    for (i, child) in node.children.iter().enumerate() {
+                        let label = self.prop_text(child, "label");
+                        let label = if label.is_empty() {
+                            let t = self.node_text(child);
+                            if t.is_empty() {
+                                format!("Item {}", i + 1)
+                            } else {
+                                t
+                            }
+                        } else {
+                            label
+                        };
+                        let k = format!("{key}/{i}");
+                        items.push((label, self.proxy_for(child, &k, &weak, &mut **cx)));
+                    }
+                    let multiple = self.prop_bool(node, "multiple", false);
+                    let open = self.num(node, "open", -1.0) as i64;
+                    let entity = cx.new(|cx| {
+                        let mut a = guise::data::Accordion::new(cx);
+                        for (label, proxy) in items {
+                            a = a.item(label, move |_, _| proxy.clone());
+                        }
+                        if multiple {
+                            a = a.multiple(true);
+                        }
+                        if open >= 0 {
+                            a = a.default_open(open as usize);
+                        }
+                        a
+                    });
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "Tabs" => {
+                if !self.views.contains_key(key) {
+                    let weak = cx.entity().downgrade();
+                    let mut items: Vec<(String, AnyView)> = Vec::new();
+                    for (i, child) in node.children.iter().enumerate() {
+                        let label = self.prop_text(child, "label");
+                        let label = if label.is_empty() {
+                            format!("Tab {}", i + 1)
+                        } else {
+                            label
+                        };
+                        let k = format!("{key}/{i}");
+                        items.push((label, self.proxy_for(child, &k, &weak, &mut **cx)));
+                    }
+                    let active = self.num(node, "active", 0.0) as usize;
+                    let entity = cx.new(|cx| {
+                        let mut t = guise::data::Tabs::new(cx);
+                        for (label, proxy) in items {
+                            t = t.tab(label, move |_, _| proxy.clone());
+                        }
+                        t.active(active)
+                    });
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "TabBar" => {
+                if !self.views.contains_key(key) {
+                    let options = self.options_of(node, "options");
+                    let strings: Vec<String> = options.iter().map(|s| s.to_string()).collect();
+                    let active = self.num(node, "active", 0.0) as usize;
+                    let add = self.prop_bool(node, "add_button", false);
+                    let entity = cx.new(|cx| {
+                        let mut t = guise::data::TabBar::new(cx)
+                            .tabs(options.clone())
+                            .active(active);
+                        if add {
+                            t = t.with_add_button(true);
+                        }
+                        t
+                    });
+                    let calls = self.events_for(node, "change");
+                    let binding = Self::binding_of(node, "value");
+                    self.subscriptions.push(cx.subscribe(
+                        &entity,
+                        move |view, _w, e: &guise::data::TabBarEvent, cx| {
+                            let value = match e {
+                                guise::data::TabBarEvent::Select(i)
+                                | guise::data::TabBarEvent::Close(i) => {
+                                    strings.get(*i).cloned().unwrap_or_default()
+                                }
+                                guise::data::TabBarEvent::Add => String::new(),
+                            };
+                            for (name, args) in &calls {
+                                view.fire_call(name, args.clone(), cx);
+                            }
+                            if let Some(p) = &binding {
+                                view.write(p, Json::String(value.clone()), cx);
+                            }
+                        },
+                    ));
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "Table" => {
+                let head = self.options_of(node, "head");
+                let head = if head.is_empty() {
+                    self.options_of(node, "options")
+                } else {
+                    head
+                };
+                let mut t = guise::data::Table::new();
+                if !head.is_empty() {
+                    t = t.head(head);
+                }
+                for r in self.prop_text(node, "rows").split(';') {
+                    let cells: Vec<SharedString> = r
+                        .split(',')
+                        .map(|s| SharedString::from(s.trim().to_owned()))
+                        .filter(|s| !s.is_empty())
+                        .collect();
+                    if !cells.is_empty() {
+                        t = t.row(cells);
+                    }
+                }
+                if self.prop_bool(node, "striped", false) {
+                    t = t.striped(true);
+                }
+                if self.prop_bool(node, "hover", false) {
+                    t = t.highlight_on_hover(true);
+                }
+                if self.prop_bool(node, "border", false) {
+                    t = t.with_border(true);
+                }
+                t.into_any_element()
+            }
+            "TableView" => {
+                if !self.views.contains_key(key) {
+                    let heads: Vec<String> = {
+                        let h = self.options_of(node, "head");
+                        if h.is_empty() {
+                            self.options_of(node, "options")
+                                .iter()
+                                .map(|s| s.to_string())
+                                .collect()
+                        } else {
+                            h.iter().map(|s| s.to_string()).collect()
+                        }
+                    };
+                    let rows: Vec<Vec<String>> = self
+                        .prop_text(node, "rows")
+                        .split(';')
+                        .map(|r| {
+                            r.split(',')
+                                .map(|s| s.trim().to_owned())
+                                .filter(|s| !s.is_empty())
+                                .collect()
+                        })
+                        .filter(|r: &Vec<String>| !r.is_empty())
+                        .collect();
+                    let cols: Vec<guise::data::Column<Vec<String>>> = heads
+                        .iter()
+                        .enumerate()
+                        .map(|(i, h)| {
+                            guise::data::Column::new(h.clone()).text(move |row: &Vec<String>| {
+                                SharedString::from(row.get(i).cloned().unwrap_or_default())
+                            })
+                        })
+                        .collect();
+                    let multi = self.prop_bool(node, "multiple", false);
+                    let selectable = self.prop_bool(node, "selectable", multi);
+                    let entity = cx.new(|cx| {
+                        let mut t = guise::data::TableView::<Vec<String>>::new(cx)
+                            .columns(cols)
+                            .rows(rows);
+                        if selectable {
+                            t = t.selection_mode(if multi {
+                                guise::data::SelectionMode::Multi
+                            } else {
+                                guise::data::SelectionMode::Single
+                            });
+                        }
+                        t
+                    });
+                    let calls = self.events_for(node, "change");
+                    let binding = Self::binding_of(node, "value");
+                    self.subscriptions.push(cx.subscribe(
+                        &entity,
+                        move |view, _w, e: &guise::data::TableViewEvent, cx| {
+                            for (name, args) in &calls {
+                                view.fire_call(name, args.clone(), cx);
+                            }
+                            if let Some(p) = &binding {
+                                let sel = match e {
+                                    guise::data::TableViewEvent::SelectionChanged(ix) => {
+                                        ix.iter().map(|i| Json::from(*i)).collect::<Vec<Json>>()
+                                    }
+                                    _ => Vec::new(),
+                                };
+                                view.write(p, Json::Array(sel), cx);
+                            }
+                        },
+                    ));
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "List" => {
+                let mut l = guise::data::List::new()
+                    .items(self.options_of(node, "options"))
+                    .size(self.size_of(node, "size"));
+                if self.prop_bool(node, "ordered", false) {
+                    l = l.ordered(true);
+                }
+                if let Some(i) = Self::icon_of(&self.prop_text(node, "icon")) {
+                    l = l.icon(i);
+                }
+                l.into_any_element()
+            }
+            "VirtualList" => {
+                let items: Vec<String> = self
+                    .options_of(node, "options")
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect();
+                let n = items.len();
+                let h = self.num(node, "height", 240.0) as f32;
+                guise::data::VirtualList::new(
+                    SharedString::from(key.to_owned()),
+                    n,
+                    move |ix, _, _| guise::Text::new(items[ix].clone()),
+                )
+                .height(h)
+                .into_any_element()
+            }
+            "TreeView" => {
+                if !self.views.contains_key(key) {
+                    let paths: Vec<String> = self
+                        .options_of(node, "options")
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect();
+                    let nodes = Self::tree_of("", &paths);
+                    let height = self.num(node, "height", 0.0) as f32;
+                    let expanded = self.prop_bool(node, "expanded", false);
+                    let entity = cx.new(|cx| {
+                        let mut t = guise::data::TreeView::new(cx).nodes(nodes);
+                        if height > 0.0 {
+                            t = t.height(height);
+                        }
+                        if expanded {
+                            t = t.default_expanded(true);
+                        }
+                        t
+                    });
+                    let calls = self.events_for(node, "change");
+                    let binding = Self::binding_of(node, "value");
+                    self.subscriptions.push(cx.subscribe(
+                        &entity,
+                        move |view, _w, e: &guise::data::TreeViewEvent, cx| {
+                            let value = match e {
+                                guise::data::TreeViewEvent::Selected(id)
+                                | guise::data::TreeViewEvent::Activated(id)
+                                | guise::data::TreeViewEvent::Toggled(id, _)
+                                | guise::data::TreeViewEvent::ContextMenu(id, _) => id.to_string(),
+                            };
+                            for (name, args) in &calls {
+                                view.fire_call(name, args.clone(), cx);
+                            }
+                            if let Some(p) = &binding {
+                                view.write(p, Json::String(value.clone()), cx);
+                            }
+                        },
+                    ));
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "DataView" => {
+                if !self.views.contains_key(key) {
+                    let items: Vec<String> = self
+                        .options_of(node, "options")
+                        .iter()
+                        .map(|s| s.to_string())
+                        .collect();
+                    let strings = items.clone();
+                    let height = self.num(node, "height", 0.0) as f32;
+                    let cols = self.num(node, "columns", 0.0) as usize;
+                    let entity = cx.new(|cx| {
+                        let signal = guise::reactive::Signal::new(&mut **cx, items);
+                        let mut dv = guise::data::DataView::<String>::new(cx, &signal)
+                            .item(|s: &String, _i, _w, _cx| guise::Text::new(s.clone()))
+                            .selectable();
+                        if height > 0.0 {
+                            dv = dv.height(height);
+                        }
+                        if cols > 0 {
+                            dv = dv.layout(guise::data::DataViewLayout::Grid(cols));
+                        }
+                        dv
+                    });
+                    let calls = self.events_for(node, "change");
+                    let binding = Self::binding_of(node, "value");
+                    self.subscriptions.push(cx.subscribe(
+                        &entity,
+                        move |view, _w, e: &guise::data::DataViewEvent, cx| {
+                            let value = match e {
+                                guise::data::DataViewEvent::Selected(i) => {
+                                    strings.get(*i).cloned().unwrap_or_default()
+                                }
+                            };
+                            for (name, args) in &calls {
+                                view.fire_call(name, args.clone(), cx);
+                            }
+                            if let Some(p) = &binding {
+                                view.write(p, Json::String(value.clone()), cx);
+                            }
+                        },
+                    ));
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "Avatar" => {
+                let mut a = guise::data::Avatar::new({
+                    let t = self.prop_text(node, "text");
+                    if t.is_empty() {
+                        self.node_text(node)
+                    } else {
+                        t
+                    }
+                })
+                .size(self.size_of(node, "size"))
+                .radius(self.size_of(node, "radius"));
+                if let Some(c) = self.color_of(node, "color") {
+                    a = a.color(c);
+                }
+                if let Some(v) = Self::variant_of(node, "variant") {
+                    a = a.variant(v);
+                }
+                a.into_any_element()
+            }
+            "AvatarGroup" => {
+                let mut g = guise::data::AvatarGroup::new()
+                    .avatars(self.options_of(node, "options"))
+                    .size(self.size_of(node, "size"));
+                let limit = self.num(node, "limit", 0.0) as usize;
+                if limit > 0 {
+                    g = g.limit(limit);
+                }
+                g.into_any_element()
+            }
+            "Timeline" => {
+                let mut t = guise::data::Timeline::new();
+                let options = self.prop_text(node, "options");
+                for opt in options.split(',') {
+                    let opt = opt.trim();
+                    if opt.is_empty() {
+                        continue;
+                    }
+                    t = match opt.split_once('|') {
+                        Some((title, desc)) => {
+                            t.item_desc(title.trim().to_owned(), desc.trim().to_owned())
+                        }
+                        None => t.item(opt.to_owned()),
+                    };
+                }
+                let active = self.num(node, "active", 0.0) as usize;
+                if active > 0 {
+                    t = t.active(active);
+                }
+                if let Some(c) = self.color_of(node, "color") {
+                    t = t.color(c);
+                }
+                t.into_any_element()
             }
             _ => placeholder(format!("{} — no guise renderer", node.element.name)),
         }

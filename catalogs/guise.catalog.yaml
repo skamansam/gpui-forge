@@ -855,3 +855,153 @@ elements:
       size: string
     events:
       change: Fires on selection; writes the option text to a bound value.
+
+  Accordion:
+    icon: chevrons-down-up
+    group: Data
+    summary: Collapsible panels — each child's `label` prop is its header.
+    component: guise::data::Accordion
+    children: any
+    props:
+      multiple:
+        type: bool
+        default: false
+      open: number  # initially-open index
+
+  Tabs:
+    icon: folder
+    group: Data
+    summary: Tabbed panels — each child's `label` prop is its tab title.
+    component: guise::data::Tabs
+    children: any
+    props:
+      active: number
+
+  TabBar:
+    icon: app-window
+    group: Data
+    summary: Standalone tab strip with optional add button.
+    component: guise::data::TabBar
+    props:
+      options: string  # tab labels, comma-separated
+      active: number
+      add_button:
+        type: bool
+        default: false
+    events:
+      change: Fires on select/close/add; writes the tab label to a bound value.
+
+  Table:
+    icon: table
+    group: Data
+    summary: Static styled table — head cells plus semicolon-separated rows.
+    component: guise::data::Table
+    props:
+      head: string     # head cells, comma-separated
+      rows: string     # "a,b;c,d"
+      striped:
+        type: bool
+        default: false
+      hover:
+        type: bool
+        default: false
+      border:
+        type: bool
+        default: false
+
+  TableView:
+    icon: sheet
+    group: Data
+    summary: Sortable/selectable data table over text rows.
+    component: guise::data::TableView
+    props:
+      head: string     # column titles, comma-separated
+      rows: string     # "a,b;c,d"
+      selectable:
+        type: bool
+        default: false
+      multiple:
+        type: bool
+        default: false
+    events:
+      change: Fires on selection; writes selected row indices to a bound value.
+
+  List:
+    icon: list
+    group: Data
+    summary: Simple bulleted or ordered list.
+    component: guise::data::List
+    props:
+      options: string  # items, comma-separated
+      ordered:
+        type: bool
+        default: false
+      icon: string
+      size: string
+
+  VirtualList:
+    icon: rows-3
+    group: Data
+    summary: Windowed list — renders only visible rows.
+    component: guise::data::VirtualList
+    props:
+      options: string  # items, comma-separated
+      height: number
+
+  TreeView:
+    icon: list-tree
+    group: Data
+    summary: Nested tree — options are slash-separated paths ("a/b/c").
+    component: guise::data::TreeView
+    props:
+      options: string  # paths, comma-separated
+      height: number
+      expanded:
+        type: bool
+        default: false
+    events:
+      change: Fires on select/activate/toggle; writes the node id to a bound value.
+
+  DataView:
+    icon: layout-grid
+    group: Data
+    summary: Signal-backed selectable item view (list or grid).
+    component: guise::data::DataView
+    props:
+      options: string  # items, comma-separated
+      height: number
+      columns: number  # >0 switches to grid layout
+    events:
+      change: Fires on selection; writes the item to a bound value.
+
+  Avatar:
+    icon: circle-user
+    group: Data
+    summary: Initials avatar chip.
+    component: guise::data::Avatar
+    props:
+      text: string
+      color: string
+      variant: string
+      size: string
+      radius: string
+
+  AvatarGroup:
+    icon: users
+    group: Data
+    summary: Overlapping avatar stack with overflow count.
+    component: guise::data::AvatarGroup
+    props:
+      options: string  # initials, comma-separated
+      limit: number
+      size: string
+
+  Timeline:
+    icon: git-commit-vertical
+    group: Data
+    summary: Vertical timeline — options are "Title | description".
+    component: guise::data::Timeline
+    props:
+      options: string  # items, comma-separated
+      active: number
+      color: string
