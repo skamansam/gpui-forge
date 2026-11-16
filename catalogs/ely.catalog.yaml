@@ -477,12 +477,6 @@ elements:
     component: ely_core::motion::Skeleton
     children: any
 
-  Reorder:
-    icon: circle-dot
-    group: Motion
-    summary: "Reorder — `use: ely`."
-    component: ely_core::motion::Reorder
-    children: any
 
   Toolbar:
     icon: wrench
