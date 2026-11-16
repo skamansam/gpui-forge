@@ -796,20 +796,20 @@ github: https://crates.io/crates/ferrum-flow
 > `use: flow: ferrum-flow` (guise feature-gated adapter).
 
 - [x] Canvas
-- [ ] ActiveNodeDrag
-- [ ] Command
-- [ ] CompositeCommand
-- [ ] ContextMenuCanvasExtra
-- [ ] CreateEdge
-- [ ] CreatePort
-- [ ] GraphChange
-- [ ] GraphOp
-- [ ] HistoryProvider
-- [ ] LocalHistory
-- [ ] NODE_DRAG_TICK_INTERVAL
-- [ ] NodeRenderer
-- [ ] ToastLevel
-- [ ] ToastMessage
+- [ ] ActiveNodeDrag — in-flight drag state behind Flow's node dragging
+- [ ] Command — undo/redo command trait — app supplies implementations
+- [ ] CompositeCommand — batch of `Command`s — internal undo machinery
+- [ ] ContextMenuCanvasExtra — context-menu payload for Flow's canvas
+- [ ] CreateEdge — command/descriptor used to insert edges
+- [ ] CreatePort — command/descriptor used to insert ports
+- [ ] GraphChange — change record in the graph history log
+- [ ] GraphOp — enum — graph mutation ops behind `Flow`
+- [ ] HistoryProvider — trait — pluggable undo backends for Flow
+- [ ] LocalHistory — default in-memory `HistoryProvider` impl
+- [ ] NODE_DRAG_TICK_INTERVAL — const — drag-update cadence
+- [ ] NodeRenderer — trait — app-supplied node body renderer for Flow
+- [ ] ToastLevel — enum — toast severity for Flow's notices
+- [ ] ToastMessage — notice value type for Flow's toast overlay
 
 ## base-gpui Components
 
@@ -837,8 +837,8 @@ github: https://github.com/cijiugechu/gpui-video-player
 > `use: video: gpui-video-player` — GStreamer 1.14+ required.
 
 - [x] Player
-- [ ] Video
-- [ ] VideoElement
+- [ ] Video — engine handle (Arc<RwLock<Internal>>) owning the GStreamer pipeline — not an element
+- [ ] VideoElement — needs a live `Video` handle + GStreamer runtime — can't be constructed declaratively
 
 ## apple-hig Components
 
@@ -904,12 +904,12 @@ github: https://github.com/packetThrower/zorite
 > `use: pdf: gpui-pdf` — opt-in zorite adapter (`forge-lib-zorite` `pdf` feature).
 
 - [x] Viewer
-- [ ] LinkTarget
-- [ ] NormPoint
-- [ ] NormRect
-- [ ] OutlineItem
-- [ ] PageText
-- [ ] PdfLink
+- [ ] LinkTarget — link destination value type for PdfView
+- [ ] NormPoint — normalized-coordinate point for hit testing
+- [ ] NormRect — normalized-coordinate rect for hit testing
+- [ ] OutlineItem — document-outline node consumed by PdfView
+- [ ] PageText — extracted page text value type
+- [ ] PdfLink — link annotation value type
 
 ## whiteboard Components
 
@@ -929,8 +929,8 @@ github: https://github.com/packetThrower/zorite
 
 - [x] Tex
 - [x] Editor
-- [ ] MathEditor
-- [ ] MathNav
+- [ ] MathEditor — `impl Render` entity — needs Entity<MathEditor> + keymap/editor setup
+- [ ] MathNav — enum — editor navigation ops
 
 ## rhythm Components
 
@@ -940,9 +940,9 @@ github: https://crates.io/crates/rhythm-gpui
 > `use: rhythm: rhythm-gpui` (guise feature-gated adapter).
 
 - [x] Frame
-- [ ] DropCapRhythm
-- [ ] FontRhythm
-- [ ] Rhythm
+- [ ] DropCapRhythm — typography metric struct, not a widget
+- [ ] FontRhythm — typography metric struct, not a widget
+- [ ] Rhythm — typography metric struct, not a widget
 
 ## gpui-symbols Components
 
@@ -952,9 +952,9 @@ github: https://github.com/AprilNEA/gpui-symbols
 > `use: symbols: gpui-symbols` (guise feature-gated adapter).
 
 - [x] Icon
-- [ ] SfSymbol
-- [ ] SymbolScale
-- [ ] SymbolWeight
+- [ ] SfSymbol — rasterizer — `render()` yields RenderImage; `Icon` wraps it
+- [ ] SymbolScale — enum — small/medium/large for SfSymbol
+- [ ] SymbolWeight — enum — stroke weight for SfSymbol
 
 ## ratatui Components
 
@@ -964,32 +964,32 @@ github: https://github.com/ratatui/ratatui
 > ratatui-flavor base — `[x]` widgets render via `canvas:` mappings; the catalog also provides `VStack`/`HStack`/`Input` analogues ratatui lacks.
 
 - [x] BarChart
-- [ ] Bar
-- [ ] BarGroup
+- [ ] Bar — bar value type consumed by BarChart
+- [ ] BarGroup — grouping descriptor for BarChart
 - [x] Block
 - [x] Calendar
 - [x] Canvas
 - [x] Chart
-- [ ] Circle
-- [ ] Clear
-- [ ] Fill
+- [ ] Circle — canvas shape — needs a Canvas draw context
+- [x] Clear — ratatui arm — clears its rect
+- [ ] Fill — layout constraint (`Constraint::Fill`), not a widget
 - [x] Gauge
-- [ ] Line
+- [ ] Line — canvas shape — needs a Canvas draw context
 - [x] List
-- [ ] ListItem
+- [ ] ListItem — row value type for `List`
 - [x] Logo
-- [ ] Map
+- [ ] Map — canvas map layer — needs a Canvas draw context
 - [x] Mascot
 - [x] Paragraph
-- [ ] Points
-- [ ] Rectangle
-- [ ] Row
-- [ ] Cell
+- [ ] Points — canvas shape — needs a Canvas draw context
+- [ ] Rectangle — canvas shape — needs a Canvas draw context
+- [ ] Row — row descriptor for `Table`
+- [ ] Cell — cell descriptor inside `Row`
 - [ ] Scrollbar — internal part of `ScrollArea`
 - [x] Sparkline
 - [x] Table
 - [x] Tabs
-- [ ] World
+- [ ] World — map dataset for the canvas `Map` layer
 
 ## iced Components
 
@@ -1004,24 +1004,24 @@ github: https://github.com/iced-rs/iced
 - [x] Column
 - [x] ComboBox
 - [x] Container
-- [ ] Float
+- [ ] Float — widget wrapper needing an anchor+overlay callback
 - [x] Image
 - [x] KeyedColumn
-- [ ] Lazy
+- [ ] Lazy — widget wrapper keyed on a caller-supplied closure
 - [x] Markdown
-- [ ] MouseArea
+- [x] MouseArea — iced arm — child wrapper + click hooks
 - [x] PaneGrid
 - [x] PickList
-- [ ] Pin
+- [ ] Pin — widget wrapper anchoring children — Elm overlay semantics
 - [x] ProgressBar
-- [ ] QRCode
+- [ ] QRCode — behind iced's `qr_code` cargo feature, not enabled on the runtime dep
 - [x] Radio
 - [ ] Responsive — generic viewport switch — takes a layout closure, not props
 - [x] Row
 - [x] Rule
 - [x] Scrollable
-- [ ] Sensor
-- [ ] Shader
+- [ ] Sensor — widget wrapper emitting window/resize sensor events
+- [ ] Shader — widget wrapper taking a wgpu shader Program
 - [x] Slider
 - [x] Space
 - [x] Stack
@@ -1031,7 +1031,7 @@ github: https://github.com/iced-rs/iced
 - [x] TextEditor
 - [x] TextInput
 - [x] Toggler
-- [ ] Tooltip
+- [x] Tooltip — iced arm — child + `tip`/`position` props
 - [x] VerticalSlider
 
 ## bezel Components
@@ -1077,114 +1077,114 @@ github: https://crates.io/crates/adabraka-ui
 - [x] Alert — → shared arm
 - [x] Dialog — → Dialog
 - [x] Accordion
-- [ ] AccordionItem
+- [ ] AccordionItem — item descriptor for `Accordion`
 - [x] AlertDialog
-- [ ] AnimatedCounter
-- [ ] AnimatedList
-- [ ] AnimatedPresence
-- [ ] AnimatedSwitch
-- [ ] AnimatedText
+- [x] AnimatedCounter — cataloged as `AnimatedCounter` (canvas: mapping)
+- [x] AnimatedList — cataloged as `AnimatedList` (canvas: mapping)
+- [x] AnimatedPresence — cataloged as `AnimatedPresence` (canvas: mapping)
+- [ ] AnimatedSwitch — implemented as `Switch` (component path maps to animated_switch::AnimatedSwitch)
+- [x] AnimatedText — cataloged as `AnimatedText` (canvas: mapping)
 - [x] AreaChart
-- [ ] AreaChartSeries
+- [ ] AreaChartSeries — series value type for `AreaChart`
 - [x] AvatarGroup
-- [ ] AvatarItem
+- [ ] AvatarItem — row value type for `AvatarGroup`
 - [x] BarChart
-- [ ] BarChartData
-- [ ] BarChartSeries
+- [ ] BarChartData — data value type for `BarChart`
+- [ ] BarChartSeries — series value type for `BarChart`
 - [x] BottomSheet
-- [ ] BreadcrumbItem
+- [ ] BreadcrumbItem — item descriptor for `Breadcrumbs`
 - [x] Breadcrumbs
 - [x] Calendar
 - [x] ColorPicker
-- [ ] ColumnDef
+- [ ] ColumnDef — column descriptor for `DataTable`
 - [x] Combobox
-- [ ] Command
-- [ ] Confetti
+- [ ] Command — palette item descriptor for `CommandPalette`
+- [x] Confetti — cataloged as `Confetti` (canvas: mapping)
 - [x] ContextMenu
-- [ ] ContextMenuItem
+- [ ] ContextMenuItem — menu item descriptor for `ContextMenu`
 - [x] CopyButton
-- [ ] CropArea
+- [x] CropArea — cataloged as `CropArea` (canvas: mapping)
 - [x] DataTable
-- [ ] DateFormat
+- [ ] DateFormat — format enum for `DatePicker`
 - [x] DatePicker
-- [ ] Dock
+- [x] Dock — cataloged as `Dock` (canvas: mapping)
 - [x] DonutChart
-- [ ] DragData
+- [ ] DragData — payload wrapper behind DropZone/Draggable
 - [ ] Draggable — drag-source primitive — `SortableList` covers reorderable lists
-- [ ] DrawerNavigation
-- [ ] DrawerSide
-- [ ] DropZone
+- [x] DrawerNavigation — cataloged as `DrawerNavigation` (canvas: mapping)
+- [ ] DrawerSide — enum — drawer anchor side
+- [x] DropZone — cataloged as `DropZone` (canvas: mapping)
 - [x] Dropdown
-- [ ] DropdownItem
+- [ ] DropdownItem — item descriptor for `Dropdown`
 - [x] Editor
-- [ ] EditorLanguage
+- [ ] EditorLanguage — prelude alias for editor `Language` enum
 - [x] ExpandableCard
-- [ ] FileNode
+- [ ] FileNode — node value type for `FileTree`
 - [x] FileTree
 - [x] FloatingActionButton
 - [x] Form
 - [x] Gauge
-- [ ] GlassMorphism
-- [ ] HotkeyInput
+- [x] GlassMorphism — cataloged as `GlassMorphism` (canvas: mapping)
+- [x] HotkeyInput — cataloged as `HotkeyInput` (canvas: mapping)
 - [x] HoverCard
 - [x] InfiniteScroll
 - [x] InlineEdit
 - [x] KBD
-- [ ] LabelSide
-- [ ] LayoutAnimation
-- [ ] LineChart
-- [ ] LineChartPoint
-- [ ] LineChartSeries
-- [ ] MagneticButton
-- [ ] Marquee
-- [ ] Meteors
-- [ ] NavigationMenu
-- [ ] NavigationMenuItem
-- [ ] NumberInput
-- [ ] PopoverMenu
-- [ ] PopoverMenuItem
-- [ ] RadarChart
-- [ ] RadarDataset
-- [ ] Radio
+- [ ] LabelSide — enum — toggle label side
+- [ ] LayoutAnimation — enum for layout-transition presets
+- [x] LineChart — cataloged as `LineChartAda` (canvas: mapping)
+- [ ] LineChartPoint — point value type for LineChart
+- [ ] LineChartSeries — series value type for LineChart
+- [x] MagneticButton — cataloged as `MagneticButton` (canvas: mapping)
+- [x] Marquee — cataloged as `Marquee` (canvas: mapping)
+- [x] Meteors — cataloged as `Meteors` (canvas: mapping)
+- [x] NavigationMenu — cataloged as `NavigationMenuWidget` (canvas: mapping)
+- [ ] NavigationMenuItem — item descriptor for NavigationMenu
+- [x] NumberInput — cataloged as `NumberInputField` (canvas: mapping)
+- [x] PopoverMenu — cataloged as `PopoverMenu` (canvas: mapping)
+- [ ] PopoverMenuItem — item descriptor for PopoverMenu
+- [x] RadarChart — cataloged as `RadarChartAda` (canvas: mapping)
+- [ ] RadarDataset — dataset value type for RadarChart
+- [x] Radio — cataloged as `Radio` (canvas: mapping)
 - [x] RadioGroup
-- [ ] RadioLayout
-- [ ] RangeSlider
+- [ ] RadioLayout — enum — radio group layout
+- [x] RangeSlider — cataloged as `RangeSlider` (canvas: mapping)
 - [x] Rating
-- [ ] ResizablePanel
-- [ ] ResizablePanelGroup
-- [ ] RichBlock
-- [ ] RichInline
-- [ ] SearchInput
-- [ ] SegmentedNav
-- [ ] SelectOption
-- [ ] Separator
+- [x] ResizablePanel — cataloged as `ResizablePanel` (canvas: mapping)
+- [x] ResizablePanelGroup — cataloged as `ResizablePanelGroup` (canvas: mapping)
+- [ ] RichBlock — rich-text block AST for RichText
+- [ ] RichInline — rich-text inline AST for RichText
+- [x] SearchInput — cataloged as `SearchInput` (canvas: mapping)
+- [x] SegmentedNav — cataloged as `SegmentedNav` (canvas: mapping)
+- [ ] SelectOption — option descriptor for `Select`/`Combobox`
+- [x] Separator — cataloged as `Separator` (canvas: mapping)
 - [x] Sheet
-- [ ] SheetSide
+- [ ] SheetSide — enum — sheet anchor edge
 - [x] Skeleton
 - [x] Slider
-- [ ] SliderAxis
-- [ ] SortableList
-- [ ] Spinner
-- [ ] Spotlight
-- [ ] StatusBar
-- [ ] StatusItem
-- [ ] TabItem
+- [ ] SliderAxis — enum — slider orientation
+- [x] SortableList — cataloged as `SortableList` (canvas: mapping)
+- [x] Spinner — cataloged as `Spinner` (canvas: mapping)
+- [x] Spotlight — cataloged as `Spotlight` (canvas: mapping)
+- [x] StatusBar — cataloged as `StatusBarWidget` (canvas: mapping)
+- [ ] StatusItem — item descriptor for StatusBar
+- [ ] TabItem — item descriptor for `Tabs`
 - [x] Table
-- [ ] TableColumn
-- [ ] TableRow
+- [ ] TableColumn — column descriptor for `Table`
+- [ ] TableRow — row descriptor for `Table`
 - [x] Tabs
-- [ ] TagInput
-- [ ] TextAnimation
-- [ ] TextReveal
-- [ ] ThemeTokens
-- [ ] TiltCard
-- [ ] ToastItem
-- [ ] ToastManager
+- [x] TagInput — cataloged as `TagInput` (canvas: mapping)
+- [ ] TextAnimation — animation enum for `AnimatedText`
+- [x] TextReveal — cataloged as `TextReveal` (canvas: mapping)
+- [ ] ThemeTokens — design-token struct consumed by the theme system
+- [x] TiltCard — cataloged as `TiltCard` (canvas: mapping)
+- [ ] ToastItem — toast descriptor consumed by ToastManager
+- [ ] ToastManager — overlay host entity (Render, not RenderOnce) — mounted once at app root
 - [x] Toggle
-- [ ] TreeList
-- [ ] TreeNode
-- [ ] TypeWriter
-- [ ] ViewRouter
+- [x] TreeList — cataloged as `TreeList` (canvas: mapping)
+- [ ] TreeNode — node value type for TreeList/FileTree
+- [x] TypeWriter — cataloged as `TypeWriter` (canvas: mapping)
+- [x] ViewRouter — cataloged as `ViewRouter` (canvas: mapping)
 
 ## forge built-ins
 

@@ -34,7 +34,6 @@ use gpui_kit::component::carousel::{
     CarouselState,
 };
 use gpui_kit::component::chart::{BarChart, LineChart, PieChart, RadarChart, SankeyChart};
-use gpui_kit::component::plot::shape::SankeyLink;
 use gpui_kit::component::checkbox::Checkbox;
 use gpui_kit::component::clipboard::Clipboard;
 use gpui_kit::component::collapsible::Collapsible;
@@ -69,6 +68,7 @@ use gpui_kit::component::message::{
 };
 use gpui_kit::component::notification::{Notification, NotificationType};
 use gpui_kit::component::pagination::Pagination;
+use gpui_kit::component::plot::shape::SankeyLink;
 use gpui_kit::component::popover::Popover;
 use gpui_kit::component::progress::{Progress, ProgressCircle};
 use gpui_kit::component::questionnaire::{

@@ -10,8 +10,8 @@ use crate::render::{get_path, set_path};
 use forge_spec::catalog::Catalog;
 use forge_spec::{Document, Node, Path, Segment, Unit, Value};
 use iced::widget::{
-    button, checkbox, column, container, progress_bar, row, scrollable, slider, text, text_input,
-    toggler,
+    button, checkbox, column, container, mouse_area, progress_bar, row, scrollable, slider, text,
+    text_input, toggler, tooltip,
 };
 use iced::{Element, Length};
 use serde_json::Value as Json;
@@ -491,6 +491,38 @@ impl ForgeView {
             "Progress" => {
                 let value = self.num(node, "value", 0.0) as f32;
                 progress_bar(0.0..=100.0, value).into()
+            }
+            "MouseArea" => {
+                let calls = self.events_for(node, "click");
+                let content = node
+                    .children
+                    .iter()
+                    .map(|c| self.render_node(c))
+                    .collect::<Vec<_>>()
+                    .pop()
+                    .unwrap_or_else(|| text("").into());
+                let mut m = mouse_area(content);
+                if !calls.is_empty() {
+                    m = m.on_press(Message::Hooks(calls));
+                }
+                m.into()
+            }
+            "Tooltip" => {
+                let tip = self.prop_text(node, "tip");
+                let position = match self.prop_text(node, "position").as_str() {
+                    "bottom" => iced::widget::tooltip::Position::Bottom,
+                    "left" => iced::widget::tooltip::Position::Left,
+                    "right" => iced::widget::tooltip::Position::Right,
+                    _ => iced::widget::tooltip::Position::Top,
+                };
+                let content = node
+                    .children
+                    .iter()
+                    .map(|c| self.render_node(c))
+                    .collect::<Vec<_>>()
+                    .pop()
+                    .unwrap_or_else(|| text("").into());
+                tooltip(content, text(tip), position).into()
             }
             _ => {
                 let msg = format!("{} — no iced renderer", node.element.name);

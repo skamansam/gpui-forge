@@ -160,3 +160,11 @@ elements:
     canvas: Image
     children: any
 
+
+  Clear:
+    icon: eraser
+    group: Components
+    summary: Clears its area (ratatui `Clear` reset widget).
+    component: ratatui::widgets::Clear
+    canvas: Clear
+    children: none

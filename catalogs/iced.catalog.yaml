@@ -241,3 +241,27 @@ elements:
     canvas: Slider
     children: any
 
+
+  MouseArea:
+    icon: mouse-pointer
+    group: Components
+    summary: Pointer-event wrapper — routes `on click` to hooks.
+    component: iced::widget::MouseArea
+    canvas: MouseArea
+    children: any
+    events:
+      click:
+
+  Tooltip:
+    icon: message-square
+    group: Components
+    summary: Hover tooltip over the child element.
+    component: iced::widget::Tooltip
+    canvas: Tooltip
+    children: any
+    props:
+      tip: string
+      position:
+        type: enum
+        values: [top, bottom, left, right]
+        default: top

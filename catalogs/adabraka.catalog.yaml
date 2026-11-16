@@ -461,3 +461,340 @@ elements:
     summary: "Toggle — adabraka-ui, via Switch."
     component: adabraka_ui::components::toggle::Toggle
     canvas: Switch
+
+  # --- Batch 2: widgets mapped to nearest base element ---
+
+  Radio:
+    icon: circle-dot
+    group: Input
+    summary: Single radio option.
+    component: adabraka_ui::components::radio::Radio
+    canvas: Radio
+    props:
+      label: string
+      selected:
+        type: bool
+        default: false
+    events:
+      change:
+
+  RangeSlider:
+    icon: sliders-horizontal
+    group: Input
+    summary: Dual-thumb range slider.
+    component: adabraka_ui::components::range_slider::RangeSlider
+    canvas: Slider
+    props:
+      min: { type: number, default: 0 }
+      max: { type: number, default: 100 }
+    events:
+      change:
+
+
+  NumberInputField:
+    icon: hash
+    group: Input
+    summary: Numeric stepper input.
+    component: adabraka_ui::components::number_input::NumberInput
+    canvas: NumberInput
+    props:
+      min: { type: number }
+      max: { type: number }
+      step: { type: number, default: 1 }
+    events:
+      change:
+
+  SearchInput:
+    icon: search
+    group: Input
+    summary: Search box with suggestions.
+    component: adabraka_ui::components::search_input::SearchInput
+    canvas: Input
+    props:
+      placeholder: string
+    events:
+      change:
+
+  Separator:
+    icon: minus
+    group: Layout
+    summary: Horizontal/vertical rule.
+    component: adabraka_ui::components::separator::Separator
+    canvas: Separator
+
+  Spinner:
+    icon: loader-circle
+    group: Feedback
+    summary: Loading spinner.
+    component: adabraka_ui::components::spinner::Spinner
+    canvas: Spinner
+
+  StatusBarWidget:
+    icon: panel-bottom
+    group: Navigation
+    summary: App status bar with items.
+    component: adabraka_ui::navigation::status_bar::StatusBar
+    canvas: StatusBar
+    children: any
+
+  Dock:
+    icon: layout-grid
+    group: Navigation
+    summary: macOS-style magnifying icon dock.
+    component: adabraka_ui::components::dock::Dock
+    canvas: Toolbar
+    children: any
+
+  Marquee:
+    icon: gallery-horizontal
+    group: Motion
+    summary: Infinitely scrolling content strip.
+    component: adabraka_ui::components::marquee::Marquee
+    canvas: Scrollable
+    children: any
+
+  Confetti:
+    icon: party-popper
+    group: Motion
+    summary: Confetti particle burst overlay.
+    component: adabraka_ui::components::confetti::Confetti
+    canvas: Box
+
+  Meteors:
+    icon: cloud-rain
+    group: Motion
+    summary: Meteor-shower background effect.
+    component: adabraka_ui::components::meteors::Meteors
+    canvas: Box
+
+  TiltCard:
+    icon: rotate-3d
+    group: Motion
+    summary: 3D-tilt hover card.
+    component: adabraka_ui::components::tilt_card::TiltCard
+    canvas: Card
+    children: any
+
+  TypeWriter:
+    icon: type
+    group: Motion
+    summary: Typewriter text animation.
+    component: adabraka_ui::components::type_writer::TypeWriter
+    canvas: Text
+    content: text
+    props:
+      text: string
+      speed: { type: number, default: 50 }
+
+  AnimatedCounter:
+    icon: timer
+    group: Motion
+    summary: Count-up animated number.
+    component: adabraka_ui::components::animated_counter::AnimatedCounter
+    canvas: Text
+    props:
+      value: { type: number }
+      duration: { type: number, default: 1000 }
+
+  AnimatedText:
+    icon: sparkles
+    group: Motion
+    summary: Per-character animated text.
+    component: adabraka_ui::components::animated_text::AnimatedText
+    canvas: Text
+    content: text
+    props:
+      text: string
+
+  TextReveal:
+    icon: eye
+    group: Motion
+    summary: Scroll/entrance text reveal.
+    component: adabraka_ui::components::text_reveal::TextReveal
+    canvas: Text
+    content: text
+    props:
+      text: string
+
+  AnimatedList:
+    icon: list
+    group: Motion
+    summary: Stagger-animated list.
+    component: adabraka_ui::components::animated_list::AnimatedList
+    canvas: List
+    children: any
+
+  AnimatedPresence:
+    icon: ghost
+    group: Motion
+    summary: Animate child mount/unmount transitions.
+    component: adabraka_ui::components::animated_presence::AnimatedPresence
+    canvas: Box
+    children: any
+
+  Spotlight:
+    icon: flashlight
+    group: Overlays
+    summary: Spotlight-style search overlay.
+    component: adabraka_ui::components::spotlight::Spotlight
+    canvas: Command
+    props:
+      placeholder: string
+    events:
+      change:
+
+  SortableList:
+    icon: arrow-up-down
+    group: Data
+    summary: Drag-to-reorder list.
+    component: adabraka_ui::components::sortable_list::SortableList
+    canvas: List
+    children: any
+    events:
+      change:
+
+  TreeList:
+    icon: network
+    group: Data
+    summary: Expandable tree view.
+    component: adabraka_ui::navigation::tree::TreeList
+    canvas: Tree
+    children: any
+
+  DrawerNavigation:
+    icon: panel-left
+    group: Navigation
+    summary: Slide-out navigation drawer.
+    component: adabraka_ui::components::drawer_navigation::DrawerNavigation
+    canvas: Sidebar
+    children: any
+
+  SegmentedNav:
+    icon: layout-panel-top
+    group: Navigation
+    summary: Segmented navigation control.
+    component: adabraka_ui::components::segmented_nav::SegmentedNav
+    canvas: Tabs
+    props:
+      options: list<string>
+    events:
+      change:
+
+  NavigationMenuWidget:
+    icon: menu
+    group: Navigation
+    summary: Horizontal nav with dropdown items.
+    component: adabraka_ui::components::navigation_menu::NavigationMenu
+    canvas: Toolbar
+    children: any
+
+  PopoverMenu:
+    icon: square-menu
+    group: Overlays
+    summary: Popover-hosted menu.
+    component: adabraka_ui::overlays::popover_menu::PopoverMenu
+    canvas: Popover
+    children: any
+
+  DropZone:
+    icon: square-dashed
+    group: Input
+    summary: Drag-and-drop target area.
+    component: adabraka_ui::components::drag_drop::DropZone
+    canvas: GroupBox
+    children: any
+    events:
+      change:
+
+  HotkeyInput:
+    icon: keyboard
+    group: Input
+    summary: Keybinding capture input.
+    component: adabraka_ui::components::hotkey_input::HotkeyInput
+    canvas: Input
+    events:
+      change:
+
+  TagInput:
+    icon: tags
+    group: Input
+    summary: Multi-tag token input.
+    component: adabraka_ui::components::tag_input::TagInput
+    canvas: Input
+    props:
+      placeholder: string
+    events:
+      change:
+
+  LineChartAda:
+    icon: chart-line
+    group: Charts
+    summary: Multi-series line chart.
+    component: adabraka_ui::charts::line_chart::LineChart
+    canvas: LineChart
+    props:
+      data: list<number>
+
+  RadarChartAda:
+    icon: radar
+    group: Charts
+    summary: Radar/spider chart.
+    component: adabraka_ui::charts::radar_chart::RadarChart
+    canvas: RadarChart
+    props:
+      data: list<number>
+
+  GlassMorphism:
+    icon: droplets
+    group: Display
+    summary: Frosted-glass surface.
+    component: adabraka_ui::components::glass_morphism::GlassMorphism
+    canvas: Card
+    children: any
+
+  MagneticButton:
+    icon: magnet
+    group: Motion
+    summary: Cursor-attracting button.
+    component: adabraka_ui::components::magnetic_button::MagneticButton
+    canvas: Button
+    content: label
+    props:
+      label: string
+    events:
+      click:
+
+  ViewRouter:
+    icon: route
+    group: Navigation
+    summary: Declarative view switcher.
+    component: adabraka_ui::components::view_router::ViewRouter
+    canvas: Tabs
+    children: any
+
+  ResizablePanelGroup:
+    icon: columns-3
+    group: Layout
+    summary: Group of drag-resizable panels.
+    component: adabraka_ui::components::resizable::ResizablePanelGroup
+    canvas: Resizable
+    children: any
+
+  ResizablePanel:
+    icon: panel-right
+    group: Layout
+    summary: Single panel in a ResizablePanelGroup.
+    component: adabraka_ui::components::resizable::ResizablePanel
+    canvas: ResizablePanel
+    children: any
+    props:
+      default-size: { type: number }
+
+  CropArea:
+    icon: crop
+    group: Input
+    summary: Interactive image-crop region.
+    component: adabraka_ui::components::crop_area::CropArea
+    canvas: GroupBox
+    children: any
+

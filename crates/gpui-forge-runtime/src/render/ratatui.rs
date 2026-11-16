@@ -13,7 +13,9 @@ use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::text::{Line, Span};
-use ratatui::widgets::{Block, BorderType, Borders, Gauge, List, ListItem, Paragraph, Tabs, Wrap};
+use ratatui::widgets::{
+    Block, BorderType, Borders, Clear, Gauge, List, ListItem, Paragraph, Tabs, Wrap,
+};
 use serde_json::Value as Json;
 use std::collections::HashMap;
 use std::rc::Rc;
@@ -470,6 +472,9 @@ impl ForgeView {
                     Block::default().borders(Borders::TOP),
                     Rect { height: 1, ..area },
                 );
+            }
+            "Clear" => {
+                frame.render_widget(Clear, area);
             }
             "Button" => {
                 let label = format!("[ {} ]", self.node_text(node));
