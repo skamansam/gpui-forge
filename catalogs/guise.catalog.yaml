@@ -1262,3 +1262,276 @@ elements:
         default: false
     events:
       change: Fires on step change; writes the index to a bound value.
+
+  LineChart:
+    icon: chart-line
+    group: Charts
+    summary: Line chart over a numeric series.
+    component: guise::chart::LineChart
+    props:
+      values: string  # comma-separated numbers
+      color: string
+      stroke: number
+      fill:
+        type: bool
+        default: false
+      axis:
+        type: bool
+        default: false
+      hover:
+        type: bool
+        default: false
+
+  BarChart:
+    icon: chart-bar
+    group: Charts
+    summary: Bar chart — values are "label:value" or plain numbers.
+    component: guise::chart::BarChart
+    props:
+      values: string  # comma-separated
+      color: string
+      gap: number
+      axis:
+        type: bool
+        default: false
+      hover:
+        type: bool
+        default: false
+      width: number
+      height: number
+
+  PieChart:
+    icon: chart-pie
+    group: Charts
+    summary: Pie/donut chart — values are "label:value".
+    component: guise::chart::PieChart
+    props:
+      values: string  # comma-separated
+      size: number
+      donut: number   # inner fraction, e.g. 0.6
+
+  AreaChart:
+    icon: chart-area
+    group: Charts
+    summary: Filled area chart over a numeric series.
+    component: guise::chart::AreaChart
+    props:
+      values: string  # comma-separated
+      labels: string  # x labels, comma-separated
+      overlaid:
+        type: bool
+        default: false
+      axis:
+        type: bool
+        default: false
+      width: number
+      height: number
+
+  ScatterChart:
+    icon: chart-scatter
+    group: Charts
+    summary: XY scatter — values are "x,y;x,y" points.
+    component: guise::chart::ScatterChart
+    props:
+      values: string
+      hover:
+        type: bool
+        default: false
+      width: number
+      height: number
+
+  Sparkline:
+    icon: activity
+    group: Charts
+    summary: Compact inline trend line.
+    component: guise::chart::Sparkline
+    props:
+      values: string  # comma-separated
+      height: number
+      full_width:
+        type: bool
+        default: false
+
+  ScrollArea:
+    icon: scroll
+    group: Layout
+    summary: Scrollable region with styled scrollbar.
+    component: guise::ScrollArea
+    children: any
+    props:
+      max_height: number
+      fill:
+        type: bool
+        default: false
+      scrollbar:
+        type: bool
+        default: true
+      horizontal:
+        type: bool
+        default: false
+
+  SimpleGrid:
+    icon: grid-3x3
+    group: Layout
+    summary: Equal-width column grid.
+    component: guise::layout::SimpleGrid
+    children: any
+    props:
+      cols:
+        type: number
+        default: 2
+      spacing: string
+
+  AppShell:
+    icon: layout-template
+    group: Layout
+    summary: "App frame — children with `slot: header|navbar|aside|footer` fill shell slots; others form the main column."
+    component: guise::layout::AppShell
+    children: any
+
+  Anchor:
+    icon: link-2
+    group: Typography
+    summary: Link-styled clickable text.
+    component: guise::Anchor
+    content: label
+    props:
+      label: string
+      color: string
+      size: string
+    events:
+      click: Fires on click.
+
+  About:
+    icon: info
+    group: Display
+    summary: About dialog content — name, version, build, tagline, credits.
+    component: guise::About
+    props:
+      name:
+        type: string
+        required: true
+      version: string
+      build: string   # "release" or "development"
+      build_date: string
+      tagline: string
+      credits: string
+
+  WindowControls:
+    icon: minus
+    group: Chrome
+    summary: Native-style window buttons (min/max/close).
+    component: guise::WindowControls
+    props:
+      button_width: number
+      height: number
+
+  Markdown:
+    icon: file-text
+    group: Content
+    summary: Rendered markdown view.
+    component: guise::markdown::Markdown
+    props:
+      text: string
+      size: string
+      color: string   # accent
+      max_lines: number
+
+  SortableList:
+    icon: list-ordered
+    group: Data
+    summary: Drag-to-reorder list — items from options.
+    component: guise::SortableList
+    props:
+      options: string  # items, comma-separated
+      gap: number
+    events:
+      change: Fires on reorder; writes [from, to] to a bound value.
+
+  SplitPanel:
+    icon: columns-2
+    group: Layout
+    summary: Resizable two-pane split — first two children fill the panes.
+    component: guise::SplitPanel
+    children: any
+    props:
+      direction: string  # horizontal | vertical
+      ratio: number
+    events:
+      change: Fires on resize; writes the ratio to a bound value.
+
+  Carousel:
+    icon: gallery-horizontal
+    group: Data
+    summary: Paged slide view — each child is a slide.
+    component: guise::Carousel
+    children: any
+    props:
+      no_wrap:
+        type: bool
+        default: false
+      height: number
+    events:
+      change: Fires on slide change; writes the index to a bound value.
+
+  MarkdownEditor:
+    icon: square-pen
+    group: Content
+    summary: Markdown source editor.
+    component: guise::markdown::MarkdownEditor
+    props:
+      value: string
+      placeholder: string
+      rows: number
+      readonly:
+        type: bool
+        default: false
+    events:
+      change: Fires on edit/link-click; writes the text to a bound value.
+
+  Editor:
+    icon: code-2
+    group: Content
+    summary: Code editor with syntax highlighting.
+    component: guise::editor::Editor
+    props:
+      value: string
+      language: string  # rust, sql, json, toml, python, js, ts, go, c, markdown
+      placeholder: string
+      readonly:
+        type: bool
+        default: false
+    events:
+      change: Fires on edit/run; writes the text to a bound value.
+
+  VideoView:
+    icon: video
+    group: Media
+    summary: Video surface — frames pushed via its VideoFeed handle.
+    component: guise::video::VideoView
+    props:
+      fit: string   # contain | cover | stretch
+      background: string  # "#RRGGBB"
+      width: number
+      height: number
+      radius: string
+      placeholder: string
+
+  WebView:
+    icon: globe
+    group: Media
+    summary: Embedded web view.
+    component: guise::WebView
+    props:
+      url: string
+      html: string
+      init_script: string
+      radius: string
+      bordered:
+        type: bool
+        default: false
+      transparent:
+        type: bool
+        default: false
+    events:
+      change: Fires on title/url/message; writes the payload to a bound value.

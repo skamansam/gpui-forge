@@ -502,6 +502,39 @@ impl ForgeView {
             .collect()
     }
 
+    /// Comma-separated f32 list — chart data series.
+    fn floats_of(&self, node: &Node, name: &str) -> Vec<f32> {
+        self.prop_text(node, name)
+            .split(',')
+            .filter_map(|s| s.trim().parse().ok())
+            .collect()
+    }
+
+    /// "label:value,label:value" → chart entries; plain numbers get
+    /// positional labels.
+    fn entries_of(&self, node: &Node, name: &str) -> Vec<(SharedString, f32)> {
+        self.prop_text(node, name)
+            .split(',')
+            .enumerate()
+            .filter_map(|(i, o)| {
+                let o = o.trim();
+                if o.is_empty() {
+                    return None;
+                }
+                Some(match o.split_once(':') {
+                    Some((l, v)) => (
+                        SharedString::from(l.trim().to_owned()),
+                        v.trim().parse().unwrap_or(0.0),
+                    ),
+                    None => (
+                        SharedString::from(format!("{}", i + 1)),
+                        o.parse().unwrap_or(0.0),
+                    ),
+                })
+            })
+            .collect()
+    }
+
     /// Kebab- or PascalCase lucide name → `IconName` — `IconName::all` is a
     /// ~2k entry name table, scanned once per render.
     fn icon_of(s: &str) -> Option<guise::IconName> {
@@ -3487,6 +3520,561 @@ impl ForgeView {
                             }
                             if let Some(p) = &binding {
                                 view.write(p, Json::from(v), cx);
+                            }
+                        },
+                    ));
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "LineChart" => {
+                let mut c = guise::chart::LineChart::new(self.floats_of(node, "values"));
+                if let Some(cv) = self.color_of(node, "color") {
+                    c = c.color(cv);
+                }
+                let stroke = self.num(node, "stroke", 0.0) as f32;
+                if stroke > 0.0 {
+                    c = c.stroke(stroke);
+                }
+                if self.prop_bool(node, "fill", false) {
+                    c = c.fill();
+                }
+                if self.prop_bool(node, "axis", false) {
+                    c = c.axis();
+                }
+                if self.prop_bool(node, "hover", false) {
+                    c = c.hover();
+                }
+                c.into_any_element()
+            }
+            "BarChart" => {
+                let entries = self.entries_of(node, "values");
+                let mut c = guise::chart::BarChart::entries(entries);
+                if let Some(cv) = self.color_of(node, "color") {
+                    c = c.color(cv);
+                }
+                let gap = self.num(node, "gap", 0.0) as f32;
+                if gap > 0.0 {
+                    c = c.gap(gap);
+                }
+                if self.prop_bool(node, "axis", false) {
+                    c = c.axis();
+                }
+                if self.prop_bool(node, "hover", false) {
+                    c = c.hover();
+                }
+                let w = self.num(node, "width", 0.0) as f32;
+                if w > 0.0 {
+                    c = c.width(w);
+                }
+                let h = self.num(node, "height", 0.0) as f32;
+                if h > 0.0 {
+                    c = c.height(h);
+                }
+                c.into_any_element()
+            }
+            "PieChart" => {
+                let entries = self.entries_of(node, "values");
+                let mut c = guise::chart::PieChart::entries(entries);
+                let size = self.num(node, "size", 0.0) as f32;
+                if size > 0.0 {
+                    c = c.size(size);
+                }
+                let donut = self.num(node, "donut", 0.0) as f32;
+                if donut > 0.0 {
+                    c = c.donut(donut);
+                }
+                c.into_any_element()
+            }
+            "AreaChart" => {
+                let mut c = guise::chart::AreaChart::new(self.floats_of(node, "values"));
+                if self.prop_bool(node, "overlaid", false) {
+                    c = c.overlaid();
+                }
+                if self.prop_bool(node, "axis", false) {
+                    c = c.axis();
+                }
+                let labels = self.options_of(node, "labels");
+                if !labels.is_empty() {
+                    c = c.labels(labels);
+                }
+                let w = self.num(node, "width", 0.0) as f32;
+                if w > 0.0 {
+                    c = c.width(w);
+                }
+                let h = self.num(node, "height", 0.0) as f32;
+                if h > 0.0 {
+                    c = c.height(h);
+                }
+                c.into_any_element()
+            }
+            "ScatterChart" => {
+                let points: Vec<(f32, f32)> = self
+                    .prop_text(node, "values")
+                    .split(';')
+                    .filter_map(|p| {
+                        let mut it = p.split(',');
+                        match (it.next(), it.next()) {
+                            (Some(x), Some(y)) => {
+                                Some((x.trim().parse().ok()?, y.trim().parse().ok()?))
+                            }
+                            _ => None,
+                        }
+                    })
+                    .collect();
+                let mut c = guise::chart::ScatterChart::new(points);
+                if self.prop_bool(node, "hover", false) {
+                    c = c.hover();
+                }
+                let w = self.num(node, "width", 0.0) as f32;
+                if w > 0.0 {
+                    c = c.width(w);
+                }
+                let h = self.num(node, "height", 0.0) as f32;
+                if h > 0.0 {
+                    c = c.height(h);
+                }
+                c.into_any_element()
+            }
+            "Sparkline" => {
+                let mut c = guise::chart::Sparkline::new(self.floats_of(node, "values"));
+                if self.prop_bool(node, "full_width", false) {
+                    c = c.full_width();
+                }
+                let h = self.num(node, "height", 0.0) as f32;
+                if h > 0.0 {
+                    c = c.height(h);
+                }
+                c.into_any_element()
+            }
+            "ScrollArea" => {
+                let mut s = guise::ScrollArea::new(SharedString::from(key.to_owned()));
+                let h = self.num(node, "max_height", 0.0) as f32;
+                if h > 0.0 {
+                    s = s.max_height(h);
+                }
+                if self.prop_bool(node, "fill", false) {
+                    s = s.fill();
+                }
+                if self.prop_bool(node, "scrollbar", true) == false {
+                    s = s.scrollbar(false);
+                }
+                if self.prop_bool(node, "horizontal", false) {
+                    s = s.horizontal(true);
+                }
+                for (i, child) in node.children.iter().enumerate() {
+                    let k = format!("{key}/{i}");
+                    s.extend([self.render_node(child, &k, window, cx)]);
+                }
+                s.into_any_element()
+            }
+            "SimpleGrid" => {
+                let mut g =
+                    guise::layout::SimpleGrid::new(self.num(node, "cols", 2.0).max(1.0) as usize)
+                        .spacing(self.size_of(node, "spacing"));
+                for (i, child) in node.children.iter().enumerate() {
+                    let k = format!("{key}/{i}");
+                    g.extend([self.render_node(child, &k, window, cx)]);
+                }
+                g.into_any_element()
+            }
+            "AppShell" => {
+                let weak = cx.entity().downgrade();
+                let mut shell = guise::layout::AppShell::new();
+                for (i, child) in node.children.iter().enumerate() {
+                    let slot = self.prop_text(child, "slot");
+                    let k = format!("{key}/{i}");
+                    let proxy = self.proxy_for(child, &k, &weak, &mut **cx);
+                    let hh = self.num(child, "height", 48.0) as f32;
+                    match slot.as_str() {
+                        "header" => shell = shell.header(hh, move |_, _| proxy.clone()),
+                        "navbar" => shell = shell.navbar(hh, move |_, _| proxy.clone()),
+                        "aside" => shell = shell.aside(hh, move |_, _| proxy.clone()),
+                        "footer" => shell = shell.footer(hh, move |_, _| proxy.clone()),
+                        _ => {
+                            shell.extend([self.render_node(child, &k, window, cx)]);
+                        }
+                    }
+                }
+                shell.into_any_element()
+            }
+            "Anchor" => {
+                let label = self.prop_text(node, "label");
+                let label = if label.is_empty() {
+                    self.node_text(node)
+                } else {
+                    label
+                };
+                let mut a = guise::Anchor::new(SharedString::from(key.to_owned()), label)
+                    .size(self.size_of(node, "size"));
+                if let Some(c) = self.color_of(node, "color") {
+                    a = a.color(c);
+                }
+                if let Some(h) = self.click_handler(node, cx) {
+                    a = a.on_click(h);
+                }
+                a.into_any_element()
+            }
+            "About" => {
+                let mut a = guise::About::new(self.prop_text(node, "name"));
+                let v = self.prop_text(node, "version");
+                if !v.is_empty() {
+                    a = a.version(v);
+                }
+                let t = self.prop_text(node, "tagline");
+                if !t.is_empty() {
+                    a = a.tagline(t);
+                }
+                let c = self.prop_text(node, "credits");
+                if !c.is_empty() {
+                    a = a.credits(c);
+                }
+                let b = self.prop_text(node, "build");
+                if !b.is_empty() {
+                    let kind = if b == "release" || b == "released" {
+                        guise::BuildKind::Released
+                    } else {
+                        guise::BuildKind::Development
+                    };
+                    a = a.build(kind, self.prop_text(node, "build_date"));
+                }
+                a.into_any_element()
+            }
+            "WindowControls" => {
+                let mut c = guise::WindowControls::new();
+                let w = self.num(node, "button_width", 0.0) as f32;
+                if w > 0.0 {
+                    c = c.button_width(w);
+                }
+                let h = self.num(node, "height", 0.0) as f32;
+                if h > 0.0 {
+                    c = c.height(h);
+                }
+                c.into_any_element()
+            }
+            "Markdown" => {
+                let src = self.prop_text(node, "text");
+                let src = if src.is_empty() {
+                    self.node_text(node)
+                } else {
+                    src
+                };
+                let mut m = guise::markdown::Markdown::new(src).size(self.size_of(node, "size"));
+                if let Some(c) = self.color_of(node, "color") {
+                    m = m.accent(c);
+                }
+                let lines = self.num(node, "max_lines", 0.0) as usize;
+                if lines > 0 {
+                    m = m.max_lines(lines);
+                }
+                m.into_any_element()
+            }
+            "SortableList" => {
+                let items: Vec<String> = self
+                    .options_of(node, "options")
+                    .iter()
+                    .map(|s| s.to_string())
+                    .collect();
+                let n = items.len();
+                let weak = cx.entity().downgrade();
+                let calls = self.events_for(node, "change");
+                let binding = Self::binding_of(node, "value");
+                let mut l = guise::SortableList::new(
+                    SharedString::from(key.to_owned()),
+                    n,
+                    move |ix, _, _| guise::Text::new(items[ix].clone()),
+                );
+                let gap = self.num(node, "gap", 0.0) as f32;
+                if gap > 0.0 {
+                    l = l.gap(gap);
+                }
+                if !calls.is_empty() || binding.is_some() {
+                    l = l.on_reorder(move |from: usize, to: usize, _w, cx| {
+                        for (name, args) in &calls {
+                            let weak = weak.clone();
+                            let name = name.clone();
+                            let args = args.clone();
+                            try_update(&weak, cx, "change", |view, cx| {
+                                view.fire_call(&name, args, cx)
+                            })
+                            .ok();
+                        }
+                        if let Some(p) = &binding {
+                            try_update(&weak, cx, "change", |view, cx| {
+                                view.write(
+                                    p,
+                                    Json::Array(vec![Json::from(from), Json::from(to)]),
+                                    cx,
+                                )
+                            })
+                            .ok();
+                        }
+                    });
+                }
+                l.into_any_element()
+            }
+            "SplitPanel" => {
+                if !self.views.contains_key(key) {
+                    let weak = cx.entity().downgrade();
+                    let mut proxies = Vec::new();
+                    for (i, child) in node.children.iter().enumerate().take(2) {
+                        let k = format!("{key}/{i}");
+                        proxies.push(self.proxy_for(child, &k, &weak, &mut **cx));
+                    }
+                    let p0 = proxies.first().cloned();
+                    let p1 = proxies.get(1).cloned();
+                    let vertical = self.prop_text(node, "direction") == "vertical";
+                    let ratio = self.num(node, "ratio", 0.0) as f32;
+                    let entity = cx.new(|cx| {
+                        let mut s = guise::SplitPanel::new(cx);
+                        if vertical {
+                            s = s.direction(guise::SplitDirection::Vertical);
+                        }
+                        if let Some(first) = p0 {
+                            s = s.first(move |_, _| first.clone());
+                        }
+                        if let Some(second) = p1 {
+                            s = s.second(move |_, _| second.clone());
+                        }
+                        if ratio > 0.0 {
+                            s = s.ratio(ratio);
+                        }
+                        s
+                    });
+                    let calls = self.events_for(node, "change");
+                    let binding = Self::binding_of(node, "value");
+                    self.subscriptions.push(cx.subscribe(
+                        &entity,
+                        move |view, _w, e: &guise::SplitPanelEvent, cx| {
+                            let v = match e {
+                                guise::SplitPanelEvent::Resized(r) => *r as f64,
+                            };
+                            for (name, args) in &calls {
+                                view.fire_call(name, args.clone(), cx);
+                            }
+                            if let Some(p) = &binding {
+                                view.write(p, Json::from(v), cx);
+                            }
+                        },
+                    ));
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "Carousel" => {
+                if !self.views.contains_key(key) {
+                    let weak = cx.entity().downgrade();
+                    let mut proxies = Vec::new();
+                    for (i, child) in node.children.iter().enumerate() {
+                        let k = format!("{key}/{i}");
+                        proxies.push(self.proxy_for(child, &k, &weak, &mut **cx));
+                    }
+                    let nowrap = self.prop_bool(node, "no_wrap", false);
+                    let height = self.num(node, "height", 0.0) as f32;
+                    let entity = cx.new(|cx| {
+                        let mut c = guise::Carousel::new(cx);
+                        for p in proxies {
+                            c = c.slide(move |_, _| p.clone());
+                        }
+                        if nowrap {
+                            c = c.no_wrap();
+                        }
+                        if height > 0.0 {
+                            c = c.height(height);
+                        }
+                        c
+                    });
+                    let calls = self.events_for(node, "change");
+                    let binding = Self::binding_of(node, "value");
+                    self.subscriptions.push(cx.subscribe(
+                        &entity,
+                        move |view, _w, e: &guise::CarouselEvent, cx| {
+                            for (name, args) in &calls {
+                                view.fire_call(name, args.clone(), cx);
+                            }
+                            if let Some(p) = &binding {
+                                view.write(p, Json::from(e.0), cx);
+                            }
+                        },
+                    ));
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "MarkdownEditor" => {
+                if !self.views.contains_key(key) {
+                    let entity = cx.new(|cx| {
+                        let mut e = guise::markdown::MarkdownEditor::new(cx);
+                        let v = self.prop_text(node, "value");
+                        if !v.is_empty() {
+                            e = e.value(&v);
+                        }
+                        let ph = self.prop_text(node, "placeholder");
+                        if !ph.is_empty() {
+                            e = e.placeholder(ph);
+                        }
+                        if self.prop_bool(node, "readonly", false) {
+                            e = e.read_only(true);
+                        }
+                        let rows = self.num(node, "rows", 0.0) as usize;
+                        if rows > 0 {
+                            e = e.rows(rows);
+                        }
+                        e
+                    });
+                    let calls = self.events_for(node, "change");
+                    let binding = Self::binding_of(node, "value");
+                    self.subscriptions.push(cx.subscribe(
+                        &entity,
+                        move |view, _w, e: &guise::markdown::MarkdownEditorEvent, cx| {
+                            let text = match e {
+                                guise::markdown::MarkdownEditorEvent::Change(t)
+                                | guise::markdown::MarkdownEditorEvent::LinkClick(t) => t.clone(),
+                            };
+                            for (name, args) in &calls {
+                                view.fire_call(name, args.clone(), cx);
+                            }
+                            if let Some(p) = &binding {
+                                view.write(p, Json::String(text), cx);
+                            }
+                        },
+                    ));
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "Editor" => {
+                if !self.views.contains_key(key) {
+                    let entity = cx.new(|cx| {
+                        let mut e = guise::editor::Editor::new(cx);
+                        let v = self.prop_text(node, "value");
+                        if !v.is_empty() {
+                            e = e.value(&v);
+                        }
+                        let lang = match self.prop_text(node, "language").as_str() {
+                            "rust" => guise::editor::Language::Rust,
+                            "sql" => guise::editor::Language::Sql,
+                            "json" => guise::editor::Language::Json,
+                            "toml" => guise::editor::Language::Toml,
+                            "python" => guise::editor::Language::Python,
+                            "javascript" | "js" => guise::editor::Language::JavaScript,
+                            "typescript" | "ts" => guise::editor::Language::TypeScript,
+                            "go" => guise::editor::Language::Go,
+                            "c" => guise::editor::Language::C,
+                            "markdown" | "md" => guise::editor::Language::Markdown,
+                            _ => guise::editor::Language::None,
+                        };
+                        e = e.language(lang);
+                        let ph = self.prop_text(node, "placeholder");
+                        if !ph.is_empty() {
+                            e = e.placeholder(ph);
+                        }
+                        if self.prop_bool(node, "readonly", false) {
+                            e = e.read_only(true);
+                        }
+                        e
+                    });
+                    let calls = self.events_for(node, "change");
+                    let binding = Self::binding_of(node, "value");
+                    self.subscriptions.push(cx.subscribe(
+                        &entity,
+                        move |view, _w, e: &guise::editor::EditorEvent, cx| {
+                            let text = match e {
+                                guise::editor::EditorEvent::Change(t)
+                                | guise::editor::EditorEvent::Run(t) => t.clone(),
+                            };
+                            for (name, args) in &calls {
+                                view.fire_call(name, args.clone(), cx);
+                            }
+                            if let Some(p) = &binding {
+                                view.write(p, Json::String(text), cx);
+                            }
+                        },
+                    ));
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "VideoView" => {
+                if !self.views.contains_key(key) {
+                    let entity = cx.new(|cx| {
+                        let mut v = guise::video::VideoView::new(cx);
+                        v = match self.prop_text(node, "fit").as_str() {
+                            "cover" => v.fit(guise::video::VideoFit::Cover),
+                            "stretch" => v.fit(guise::video::VideoFit::Stretch),
+                            _ => v.fit(guise::video::VideoFit::Contain),
+                        };
+                        if let Some(h) = Self::hsla_of(&self.prop_text(node, "background")) {
+                            v = v.background(h);
+                        }
+                        let w = self.num(node, "width", 0.0) as f32;
+                        if w > 0.0 {
+                            v = v.width(w);
+                        }
+                        let h = self.num(node, "height", 0.0) as f32;
+                        if h > 0.0 {
+                            v = v.height(h);
+                        }
+                        v = v.radius(self.size_of(node, "radius"));
+                        let ph = self.prop_text(node, "placeholder");
+                        if !ph.is_empty() {
+                            v = v.placeholder(ph);
+                        }
+                        v
+                    });
+                    self.views.insert(key.to_owned(), entity.into());
+                }
+                div()
+                    .child(self.views.get(key).unwrap().clone())
+                    .into_any_element()
+            }
+            "WebView" => {
+                if !self.views.contains_key(key) {
+                    let entity = cx.new(|cx| {
+                        let mut v = guise::WebView::new(cx)
+                            .radius(self.size_of(node, "radius"))
+                            .bordered(self.prop_bool(node, "bordered", false))
+                            .transparent(self.prop_bool(node, "transparent", false));
+                        let url = self.prop_text(node, "url");
+                        if !url.is_empty() {
+                            v = v.url(url);
+                        }
+                        let html = self.prop_text(node, "html");
+                        if !html.is_empty() {
+                            v = v.html(html);
+                        }
+                        let js = self.prop_text(node, "init_script");
+                        if !js.is_empty() {
+                            v = v.init_script(js);
+                        }
+                        v
+                    });
+                    let calls = self.events_for(node, "change");
+                    let binding = Self::binding_of(node, "value");
+                    self.subscriptions.push(cx.subscribe(
+                        &entity,
+                        move |view, _w, e: &guise::WebViewEvent, cx| {
+                            let text = match e {
+                                guise::WebViewEvent::TitleChanged(t)
+                                | guise::WebViewEvent::UrlChanged(t)
+                                | guise::WebViewEvent::Message(t) => t.to_string(),
+                                _ => String::new(),
+                            };
+                            for (name, args) in &calls {
+                                view.fire_call(name, args.clone(), cx);
+                            }
+                            if let Some(p) = &binding {
+                                view.write(p, Json::String(text.clone()), cx);
                             }
                         },
                     ));
