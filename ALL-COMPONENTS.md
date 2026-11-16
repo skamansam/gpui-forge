@@ -535,11 +535,11 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 docs: https://docs.rs/guise  
 github: https://github.com/wess/guise
 
-> Vanilla-gpui flavor base — `base: guise` on crates.io `gpui 0.2.2`. Below is every exported widget type in `guise-ui` 1.10 — `[x]` entries are mapped by `catalogs/guise.catalog.yaml` (`Stack`/`Group` surface as Forge `VStack`/`HStack`); the rest have no adapter mapping yet.
+> Vanilla-gpui flavor base — `base: guise` on crates.io `gpui 0.2.2`. Below is every exported widget type in `guise-ui` 1.10 — `[x]` entries are mapped by `catalogs/guise.catalog.yaml` (`Stack`/`Group` surface as Forge `VStack`/`HStack`); the rest are intentionally unmapped: the `ai::*` module, animation/presence primitives (`Animated`, `Collapse`, `Transition`…), infrastructure types (`OverlayHost`, `MenuColumn`, `ItemId`-keyed `PaneGroup`, `Responsive`, `Scrollbar`, `VideoFeed`/`VideoFrame`), and value types (`Date`, `Time`).
 
-- [ ] About
-- [ ] Accordion
-- [ ] ActionIcon
+- [x] About
+- [x] Accordion
+- [x] ActionIcon
 - [ ] AIChatView
 - [ ] AICitation
 - [ ] AIComposer
@@ -554,140 +554,140 @@ github: https://github.com/wess/guise
 - [ ] AITokenMeter
 - [ ] AIToolCall
 - [x] Alert
-- [ ] Anchor
+- [x] Anchor
 - [ ] Animated
 - [ ] Animator
-- [ ] AppShell
-- [ ] Autocomplete
-- [ ] Avatar
-- [ ] AvatarGroup
+- [x] AppShell
+- [x] Autocomplete
+- [x] Avatar
+- [x] AvatarGroup
 - [x] Badge
-- [ ] BarChart
-- [ ] Blockquote
-- [ ] Breadcrumbs
+- [x] BarChart
+- [x] Blockquote
+- [x] Breadcrumbs
 - [x] Button
-- [ ] Calendar
+- [x] Calendar
 - [x] Card
-- [ ] Carousel
+- [x] Carousel
 - [x] Center
 - [x] Checkbox
-- [ ] CheckboxGroup
-- [ ] Chip
-- [ ] CloseButton
-- [ ] Code
+- [x] CheckboxGroup
+- [x] Chip
+- [x] CloseButton
+- [x] Code
 - [ ] Collapse
-- [ ] ColorInput
-- [ ] Combobox
-- [ ] ConfirmModal
+- [x] ColorInput
+- [x] Combobox
+- [x] ConfirmModal
 - [x] Container
-- [ ] ContextMenu
-- [ ] CopyButton
-- [ ] DataView
+- [x] ContextMenu
+- [x] CopyButton
+- [x] DataView
 - [ ] Date
-- [ ] DatePicker
+- [x] DatePicker
 - [ ] DevTools
 - [x] Divider
 - [ ] Draggable
-- [ ] Drawer
+- [x] Drawer
 - [ ] DropTarget
-- [ ] Dropzone
-- [ ] Editor
-- [ ] Field
-- [ ] FileInput
+- [x] Dropzone
+- [x] Editor
+- [x] Field
+- [x] FileInput
 - [ ] GpuView
 - [x] Group
-- [ ] HoverCard
-- [ ] Icon
-- [ ] Image
-- [ ] Indicator
-- [ ] Kbd
-- [ ] LineChart
-- [ ] List
-- [ ] Loader
-- [ ] LoadingOverlay
-- [ ] Markdown
-- [ ] MarkdownEditor
-- [ ] Mark
-- [ ] Menu
-- [ ] MenuBar
+- [x] HoverCard
+- [x] Icon
+- [x] Image
+- [x] Indicator
+- [x] Kbd
+- [x] LineChart
+- [x] List
+- [x] Loader
+- [x] LoadingOverlay
+- [x] Markdown
+- [x] MarkdownEditor
+- [x] Mark
+- [x] Menu
+- [x] MenuBar
 - [ ] MenuColumn
-- [ ] Modal
+- [x] Modal
 - [ ] Motioned
-- [ ] NavigationMenu
-- [ ] NavLink
-- [ ] Notification
-- [ ] NumberInput
+- [x] NavigationMenu
+- [x] NavLink
+- [x] Notification
+- [x] NumberInput
 - [ ] OverlayHost
-- [ ] Pagination
+- [x] Pagination
 - [ ] PaneGroup
-- [ ] Panel
+- [x] Panel
 - [x] Paper
-- [ ] PasswordInput
-- [ ] PieChart
-- [ ] PinInput
-- [ ] Popover
+- [x] PasswordInput
+- [x] PieChart
+- [x] PinInput
+- [x] Popover
 - [ ] Presence
 - [x] Progress
-- [ ] Radio
-- [ ] RadioGroup
-- [ ] RangeSlider
-- [ ] Rating
+- [x] Radio
+- [x] RadioGroup
+- [x] RangeSlider
+- [x] Rating
 - [ ] ResizeHandles
 - [ ] Responsive
-- [ ] RingProgress
-- [ ] ScatterChart
-- [ ] ScrollArea
+- [x] RingProgress
+- [x] ScatterChart
+- [x] ScrollArea
 - [ ] Scrollbar
-- [ ] SegmentedControl
+- [x] SegmentedControl
 - [x] Select
 - [ ] Sequence
 - [ ] SettingsPage
 - [ ] SettingsRow
 - [ ] SettingsSection
 - [ ] SettingsView
-- [ ] SimpleGrid
-- [ ] Skeleton
-- [ ] Slider
-- [ ] SortableList
+- [x] SimpleGrid
+- [x] Skeleton
+- [x] Slider
+- [x] SortableList
 - [x] Space
-- [ ] Sparkline
-- [ ] SplitPanel
-- [ ] Spoiler
-- [ ] Spotlight
+- [x] Sparkline
+- [x] SplitPanel
+- [x] Spoiler
+- [x] Spotlight
 - [x] Stack
 - [ ] Stagger
-- [ ] StatusBar
-- [ ] Stepper
+- [x] StatusBar
+- [x] Stepper
 - [x] Switch
-- [ ] TabBar
-- [ ] Table
-- [ ] TableView
-- [ ] Tabs
-- [ ] TagsInput
+- [x] TabBar
+- [x] Table
+- [x] TableView
+- [x] Tabs
+- [x] TagsInput
 - [x] Text
-- [ ] TextArea
+- [x] TextArea
 - [ ] TextEdit
 - [x] TextInput
-- [ ] ThemeIcon
+- [x] ThemeIcon
 - [ ] ThemePicker
 - [ ] Time
-- [ ] TimePicker
-- [ ] Timeline
+- [x] TimePicker
+- [x] Timeline
 - [x] Title
-- [ ] ToastStack
-- [ ] Tooltip
-- [ ] Tour
-- [ ] Transfer
+- [x] ToastStack
+- [x] Tooltip
+- [x] Tour
+- [x] Transfer
 - [ ] Transition
-- [ ] TreeView
+- [x] TreeView
 - [ ] UpdateNotice
 - [ ] UpdatePrompt
 - [ ] VideoFeed
 - [ ] VideoFrame
-- [ ] VideoView
-- [ ] VirtualList
-- [ ] WebView
-- [ ] WindowControls
+- [x] VideoView
+- [x] VirtualList
+- [x] WebView
+- [x] WindowControls
 
 ## gpui-flow Components
 
