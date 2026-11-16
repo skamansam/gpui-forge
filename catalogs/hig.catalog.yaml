@@ -78,3 +78,445 @@ elements:
     children: none
     props:
       text: string
+
+  Kbd:
+    icon: keyboard
+    group: Display
+    summary: "Keyboard shortcut — `keys` text."
+    component: gpui_apple_hig::kbd::MacKbd
+    content: keys
+    children: none
+    props:
+      keys: string
+
+  Gauge:
+    icon: gauge
+    group: Display
+    summary: "Linear gauge — `value` 0-1, `label`."
+    component: gpui_apple_hig::gauge::MacGauge
+    children: none
+    props:
+      value: number
+      label: string
+
+  Chart:
+    icon: chart-column
+    group: Display
+    summary: "Bar/line chart — `type`, `title`, `points` 'label:value:color?'."
+    component: gpui_apple_hig::chart::MacChart
+    children: none
+    props:
+      type:
+        type: enum
+        values: [Bar, Line]
+      title: string
+      points: list<string>
+
+  ActivityRings:
+    icon: circles
+    group: Display
+    summary: "Concentric progress rings — `rings` 'name:progress:accent'."
+    component: gpui_apple_hig::activity_rings::MacActivityRings
+    children: none
+    props:
+      rings: list<string>
+
+  Stepper:
+    icon: plus-minus
+    group: Input
+    summary: "+/− stepper — `increment`, `decrement` events."
+    component: gpui_apple_hig::stepper::MacStepper
+    children: none
+    props:
+      disabled: bool
+    events: {increment:, decrement:}
+
+  RatingIndicator:
+    icon: star
+    group: Input
+    summary: "Star rating — `rating` value, `rate` event."
+    component: gpui_apple_hig::rating_indicator::MacRatingIndicator
+    children: none
+    props:
+      rating: number
+    events: {rate:}
+
+  PageControl:
+    icon: ellipsis
+    group: Navigation
+    summary: "Page dots — `pages`, `page`; `change` fires the index."
+    component: gpui_apple_hig::page_control::MacPageControl
+    children: none
+    props:
+      pages: number
+      page: number
+    events: {change:}
+
+  DigitEntry:
+    icon: hash
+    group: Forms
+    summary: "PIN/OTP entry — `digits`, `value`; `change`, `complete`."
+    component: gpui_apple_hig::digit_entry::MacDigitEntry
+    children: none
+    props:
+      digits: number
+      value: string
+    events: {change:, complete:}
+
+  ColorWell:
+    icon: palette
+    group: Input
+    summary: "Color swatch — `color` hex; `click`."
+    component: gpui_apple_hig::color_well::MacColorWell
+    children: none
+    props:
+      color: string
+      disabled: bool
+    events: {click:}
+
+  ImageView:
+    icon: image
+    group: Display
+    summary: "Framed image — `caption`, `mode` AspectFit/AspectFill, `width`/`height`, `radius`."
+    component: gpui_apple_hig::image_view::MacImageView
+    children: none
+    props:
+      caption: string
+      mode:
+        type: enum
+        values: [AspectFit, AspectFill]
+      width: number
+      height: number
+      radius: number
+
+  ImageWell:
+    icon: image
+    group: Input
+    summary: "Drop-target image well — `caption`; `click`."
+    component: gpui_apple_hig::image_well::MacImageWell
+    children: none
+    props:
+      caption: string
+    events: {click:}
+
+  MaterialSurface:
+    icon: layers
+    group: Layout
+    summary: "Vibrancy surface — `thickness` UltraThin..UltraThick; first child inside."
+    component: gpui_apple_hig::material::MacMaterialSurface
+    children: any
+    props:
+      thickness:
+        type: enum
+        values: [UltraThin, Thin, Regular, Thick, UltraThick]
+
+  Panel:
+    icon: panel-right
+    group: Layout
+    summary: "Floating panel — `title`, `width`; first child inside; `close`."
+    component: gpui_apple_hig::panel::MacPanel
+    children: any
+    props:
+      title: string
+      width: number
+    events: {close:}
+
+  Disclosure:
+    icon: chevron-down
+    group: Layout
+    summary: "Expandable section — `title`; first child inside; `toggle`."
+    component: gpui_apple_hig::disclosure::MacDisclosure
+    children: any
+    props:
+      title: string
+    events: {toggle:}
+
+  StatusBar:
+    icon: panel-bottom
+    group: Layout
+    summary: "Status bar — children take `slot:` leading/center/trailing."
+    component: gpui_apple_hig::status_bar::MacStatusBar
+    children: any
+
+  Window:
+    icon: app-window
+    group: Layout
+    summary: "Window chrome — `title`, `subtitle`, `width`/`height`; first child inside; `close`."
+    component: gpui_apple_hig::window::MacWindow
+    children: any
+    props:
+      title: string
+      subtitle: string
+      width: number
+      height: number
+    events: {close:}
+
+  Dialog:
+    icon: message-square-warning
+    group: Overlays
+    summary: "Alert dialog — `title`, `message`, `variant` warning/critical, `primary`/`secondary` labels; `primary`, `secondary` events."
+    component: gpui_apple_hig::dialog::MacDialog
+    children: any
+    props:
+      title: string
+      message: string
+      variant:
+        type: enum
+        values: [normal, warning, critical]
+      primary: string
+      secondary: string
+      destructive: bool
+    events: {primary:, secondary:}
+
+  Popover:
+    icon: message-circle
+    group: Overlays
+    summary: "Popover — `title`, `width`; first child inside; `close`."
+    component: gpui_apple_hig::popover::MacPopover
+    children: any
+    props:
+      title: string
+      width: number
+    events: {close:}
+
+  TextView:
+    icon: text
+    group: Input
+    summary: "Multiline text view — `text`, `placeholder`, `line_numbers`, `width`/`height`."
+    component: gpui_apple_hig::text_view::MacTextView
+    children: none
+    props:
+      text: string
+      placeholder: string
+      line_numbers: bool
+      width: number
+      height: number
+
+  Radio:
+    icon: circle-dot
+    group: Input
+    summary: "Radio button — `label`, `description`, `selected`; `click`."
+    component: gpui_apple_hig::radio::MacRadio
+    children: none
+    props:
+      label: string
+      description: string
+      selected: bool
+      disabled: bool
+    events: {click:}
+
+  ComboBox:
+    icon: chevrons-up-down
+    group: Input
+    summary: "Editable combo box — `value` (bindable), `placeholder`, `options`; `change`."
+    component: gpui_apple_hig::combo_box::MacComboBox
+    children: none
+    props:
+      value: string
+      placeholder: string
+      options: list<string>
+    events: {change:}
+
+  DatePicker:
+    icon: calendar
+    group: Input
+    summary: "Date picker — `style` Compact/Graphical/Stepper, `time`; `change` fires 'YYYY-MM-DD'."
+    component: gpui_apple_hig::picker::MacDatePicker
+    children: none
+    props:
+      style:
+        type: enum
+        values: [Compact, Graphical, Stepper]
+      time: bool
+    events: {change:}
+
+  ColumnView:
+    icon: columns-3
+    group: Data
+    summary: "Finder column view — `columns` list, each 'entry|folder?|sel?;…', `column_width`."
+    component: gpui_apple_hig::column_view::MacColumnView
+    children: none
+    props:
+      columns: list<string>
+      column_width: number
+
+  Toolbar:
+    icon: panel-top
+    group: Layout
+    summary: "Toolbar — `title`; children take `slot:` leading/center/trailing."
+    component: gpui_apple_hig::toolbar::MacToolbar
+    children: any
+    props:
+      title: string
+
+  TabBar:
+    icon: folder
+    group: Navigation
+    summary: "Tab bar — `items` 'title|badge|icon' or children with `title`/`badge`/`icon`; `selected`, `select`."
+    component: gpui_apple_hig::tab_view::MacTabBar
+    children: any
+    props:
+      items: list<string>
+      selected: number
+      disabled: bool
+    events: {select:}
+
+  SegmentedControl:
+    icon: rows-2
+    group: Input
+    summary: "Segmented control — `items` 'label|icon'; `selected`; `change`."
+    component: gpui_apple_hig::segmented::MacSegmentedControl
+    children: none
+    props:
+      items: list<string>
+      selected: number
+      disabled: bool
+    events: {change:}
+
+  Sidebar:
+    icon: panel-left
+    group: Navigation
+    summary: "Source-list sidebar — children are sections (`title`, `items`), or flat `items` 'title|icon|badge'."
+    component: gpui_apple_hig::sidebar::MacSidebar
+    children: any
+    props:
+      items: list<string>
+
+  TableView:
+    icon: table
+    group: Data
+    summary: "Table — `columns` 'name|width', `rows` 'c1|c2|…'; `selected`, `select`."
+    component: gpui_apple_hig::table_view::MacTableView
+    children: none
+    props:
+      columns: list<string>
+      rows: list<string>
+      selected: number
+    events: {select:}
+
+  OutlineView:
+    icon: list-tree
+    group: Data
+    summary: "Tree outline — `items` 'title|level|icon|open?'; `select`, `toggle`."
+    component: gpui_apple_hig::outline_view::MacOutlineView
+    children: none
+    props:
+      items: list<string>
+    events: {select:, toggle:}
+
+  SplitView:
+    icon: columns-2
+    group: Layout
+    summary: "Two-pane split — `leading_width`; children[0] leading, [1] trailing."
+    component: gpui_apple_hig::split_view::MacSplitView
+    children: any
+    props:
+      leading_width: number
+
+  PathControl:
+    icon: folder-git
+    group: Navigation
+    summary: "Path breadcrumb — `items` 'title|icon'; `select`."
+    component: gpui_apple_hig::path_control::MacPathControl
+    children: none
+    props:
+      items: list<string>
+      disabled: bool
+    events: {select:}
+
+  PopupButton:
+    icon: chevron-down
+    group: Input
+    summary: "Pop-up menu button — `items` 'title|icon|shortcut'; `selected`; `change`."
+    component: gpui_apple_hig::popup_button::MacPopupButton
+    children: none
+    props:
+      items: list<string>
+      selected: number
+      disabled: bool
+    events: {change:}
+
+  PullDownButton:
+    icon: chevron-down
+    group: Input
+    summary: "Pull-down action menu — `title`, `items` 'title|icon|shortcut'; `select`."
+    component: gpui_apple_hig::popup_button::MacPullDownButton
+    children: none
+    props:
+      title: string
+      items: list<string>
+      disabled: bool
+    events: {select:}
+
+  ContextMenu:
+    icon: menu
+    group: Overlays
+    summary: "Context menu — `items` 'title|icon', `width`; `select`."
+    component: gpui_apple_hig::context_menu::MacContextMenu
+    children: none
+    props:
+      items: list<string>
+      width: number
+    events: {select:}
+
+  MenuBar:
+    icon: panel-top
+    group: Navigation
+    summary: "App menu bar — `app` name, `menus` list; `select`."
+    component: gpui_apple_hig::menu_bar::MacMenuBar
+    children: none
+    props:
+      app: string
+      menus: list<string>
+    events: {select:}
+
+  SettingsGroup:
+    icon: settings
+    group: Forms
+    summary: "Settings pane — `title`; children are rows (`title`/`subtitle`/`icon`/`color`, first grandchild = control)."
+    component: gpui_apple_hig::settings::MacSettingsGroup
+    children: any
+    props:
+      title: string
+
+  TextField:
+    icon: text-cursor-input
+    group: Forms
+    summary: "Text field — `placeholder`, `value`."
+    component: gpui_apple_hig::text_field::MacTextField
+    children: none
+    props:
+      placeholder: string
+      value: string
+
+  SecureField:
+    icon: lock
+    group: Forms
+    summary: "Password field — `placeholder`, `value`."
+    component: gpui_apple_hig::text_field::MacSecureField
+    children: none
+    props:
+      placeholder: string
+      value: string
+
+  SearchField:
+    icon: search
+    group: Forms
+    summary: "Search field — `hint` shortcut hint, `value`."
+    component: gpui_apple_hig::search_field::MacSearchField
+    children: none
+    props:
+      hint: string
+      value: string
+
+  TokenField:
+    icon: tags
+    group: Forms
+    summary: "Token field — `tokens` 'title|accent', `placeholder`; `remove`."
+    component: gpui_apple_hig::token_field::MacTokenField
+    children: none
+    props:
+      tokens: list<string>
+      placeholder: string
+      disabled: bool
+    events: {remove:}

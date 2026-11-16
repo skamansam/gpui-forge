@@ -847,54 +847,54 @@ github: https://crates.io/crates/gpui-apple-hig
 
 > `use: hig: gpui-apple-hig` — rendered by `forge-lib-hig`. `[x]` = reachable as `hig.<note>` (forge element name).
 
-- [ ] AppleAppearance
-- [ ] AppleColors
-- [ ] MAC_TRAFFIC_LIGHT_CLEARANCE
-- [ ] MONO_FONT_NAME
-- [ ] MacAccentColor
-- [ ] MacActivityRings
+- [ ] AppleAppearance — theme enum — light/dark, set on the window not an element
+- [ ] AppleColors — semantic color token table — theme values, not widgets
+- [ ] MAC_TRAFFIC_LIGHT_CLEARANCE — window-layout constant (px offset)
+- [ ] MONO_FONT_NAME — font-name constant
+- [ ] MacAccentColor — accent-color enum — set via `color`/`accent` props
+- [x] MacActivityRings — hig.ActivityRings
 - [x] MacBadge — hig.Badge
 - [x] MacButton — hig.Button
-- [ ] MacChart
-- [ ] MacChartDataPoint
+- [x] MacChart — hig.Chart
+- [ ] MacChartDataPoint — chart point value type — built from `points` props
 - [x] MacCheckbox — hig.Checkbox
-- [ ] MacColumnData
-- [ ] MacColumnView
-- [ ] MacContextMenu
-- [ ] MacDatePicker
-- [ ] MacDialog
-- [ ] MacGauge
-- [ ] MacImageView
-- [ ] MacKbd
-- [ ] MacMenuBar
-- [ ] MacMenuBarMenu
-- [ ] MacMenuItem
-- [ ] MacOutlineItem
-- [ ] MacOutlineView
-- [ ] MacPanel
-- [ ] MacPathControl
-- [ ] MacPathItem
-- [ ] MacPopover
-- [ ] MacPopupButton
+- [ ] MacColumnData — column-view column value type — built from `columns` props
+- [x] MacColumnView — hig.ColumnView
+- [x] MacContextMenu — hig.ContextMenu
+- [x] MacDatePicker — hig.DatePicker
+- [x] MacDialog — hig.Dialog
+- [x] MacGauge — hig.Gauge
+- [x] MacImageView — hig.ImageView
+- [x] MacKbd — hig.Kbd
+- [x] MacMenuBar — hig.MenuBar
+- [ ] MacMenuBarMenu — menu name descriptor — built from `menus` props
+- [ ] MacMenuItem — menu item descriptor — built from `items` props
+- [ ] MacOutlineItem — outline row descriptor — built from `items` props
+- [x] MacOutlineView — hig.OutlineView
+- [x] MacPanel — hig.Panel
+- [x] MacPathControl — hig.PathControl
+- [ ] MacPathItem — path segment descriptor — built from `items` props
+- [x] MacPopover — hig.Popover
+- [x] MacPopupButton — hig.PopupButton
 - [x] MacProgress — hig.Progress
-- [ ] MacPullDownButton
-- [ ] MacRingMetric
-- [ ] MacSegment
-- [ ] MacSegmentedControl
-- [ ] MacSettingsGroup
-- [ ] MacSettingsRow
-- [ ] MacSidebar
-- [ ] MacSidebarItem
-- [ ] MacSidebarSection
+- [x] MacPullDownButton — hig.PullDownButton
+- [ ] MacRingMetric — ring value type — built from `rings` props
+- [ ] MacSegment — segment descriptor — built from `items` props
+- [x] MacSegmentedControl — hig.SegmentedControl
+- [x] MacSettingsGroup — hig.SettingsGroup
+- [ ] MacSettingsRow — settings row descriptor — children of SettingsGroup build it
+- [x] MacSidebar — hig.Sidebar
+- [ ] MacSidebarItem — sidebar row descriptor — built from `items`/children
+- [ ] MacSidebarSection — sidebar section descriptor — children group items
 - [x] MacSpinner — hig.Spinner
 - [x] MacSwitch — hig.Switch
-- [ ] MacTabBar
-- [ ] MacTabItem
-- [ ] MacTableColumn
-- [ ] MacTableRow
-- [ ] MacTableView
-- [ ] MacToolbar
-- [ ] SYSTEM_FONT_NAME
+- [x] MacTabBar — hig.TabBar
+- [ ] MacTabItem — tab descriptor — built from `items`/children props
+- [ ] MacTableColumn — column descriptor — built from `columns` props
+- [ ] MacTableRow — row value type — built from `rows` props
+- [x] MacTableView — hig.TableView
+- [x] MacToolbar — hig.Toolbar
+- [ ] SYSTEM_FONT_NAME — font-name constant
 
 ## pdf Components
 
