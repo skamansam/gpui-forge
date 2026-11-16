@@ -12,7 +12,7 @@ elements:
   Button:
     icon: mouse-pointer-click
     group: Buttons
-    summary: Ely button — variant Primary/Secondary/Outline/Ghost/Subtle/Success/Danger/Link.
+    summary: "Ely button — variant Primary/Secondary/Outline/Ghost/Subtle/Success/Danger/Link."
     component: ely_core::buttons::Button
     content: label
     children: none
@@ -33,7 +33,7 @@ elements:
   IconButton:
     icon: mouse-pointer-2
     group: Buttons
-    summary: Ely icon-only button.
+    summary: "Ely icon-only button."
     component: ely_core::buttons::IconButton
     children: none
     props:
@@ -48,7 +48,7 @@ elements:
   Badge:
     icon: badge
     group: Display
-    summary: Ely status badge.
+    summary: "Ely status badge."
     component: ely_core::data_display::Badge
     content: label
     children: none
@@ -58,7 +58,7 @@ elements:
   Divider:
     icon: minus
     group: Layout
-    summary: Ely horizontal/vertical rule.
+    summary: "Ely horizontal/vertical rule."
     component: ely_core::primitives::Divider
     children: none
     props:
@@ -70,7 +70,7 @@ elements:
   Alert:
     icon: circle-alert
     group: Feedback
-    summary: Ely severity alert with title + optional body.
+    summary: "Ely severity alert with title + optional body."
     component: ely_core::feedback::Alert
     content: title
     children: none
@@ -90,7 +90,7 @@ elements:
   StatusMessage:
     icon: info
     group: Feedback
-    summary: Ely one-line status text with optional icon.
+    summary: "Ely one-line status text with optional icon."
     component: ely_core::feedback::StatusMessage
     content: text
     children: none
@@ -101,7 +101,7 @@ elements:
   Spinner:
     icon: loader-circle
     group: Feedback
-    summary: Ely activity spinner.
+    summary: "Ely activity spinner."
     component: ely_core::motion::Spinner
     children: none
     props:
@@ -117,7 +117,7 @@ elements:
   Heading:
     icon: heading
     group: Type
-    summary: Ely heading (level 1-6).
+    summary: "Ely heading (level 1-6)."
     component: ely_core::typography::Heading
     content: text
     children: none
@@ -130,7 +130,7 @@ elements:
   Avatar:
     icon: circle-user
     group: Display
-    summary: Ely user avatar.
+    summary: "Ely user avatar."
     component: ely_core::data_display::Avatar
     content: name
     children: none
@@ -140,7 +140,7 @@ elements:
   Paragraph:
     icon: text
     group: Type
-    summary: Ely body text.
+    summary: "Ely body text."
     component: ely_core::typography::Paragraph
     content: text
     children: none
@@ -150,7 +150,7 @@ elements:
   Title:
     icon: type
     group: Type
-    summary: Ely page title.
+    summary: "Ely page title."
     component: ely_core::typography::Title
     content: text
     children: none
@@ -160,20 +160,20 @@ elements:
   CopyButton:
     icon: clipboard
     group: Buttons
-    summary: Ely copy-to-clipboard button.
+    summary: "Ely copy-to-clipboard button."
     component: ely_core::buttons::CopyButton
     children: none
     props: {label: string, text: string, tooltip: string}
   SegmentedControl:
     icon: columns-4
     group: Buttons
-    summary: Ely segmented control — options as children.
+    summary: "Ely segmented control — options as children."
     component: ely_core::buttons::SegmentedControl
     children: any
   ToggleButton:
     icon: toggle-left
     group: Buttons
-    summary: Ely toggle button.
+    summary: "Ely toggle button."
     component: ely_core::buttons::ToggleButton
     content: label
     children: none
@@ -182,49 +182,49 @@ elements:
   TrendIndicator:
     icon: trending-up
     group: Display
-    summary: Ely change indicator (up/down arrow + value).
+    summary: "Ely change indicator (up/down arrow + value)."
     component: ely_core::data_display::TrendIndicator
     children: none
     props: {change: number}
   Statistic:
     icon: chart-column
     group: Display
-    summary: Ely labeled statistic.
+    summary: "Ely labeled statistic."
     component: ely_core::data_display::Statistic
     children: none
     props: {label: string, value: string}
   KpiCard:
     icon: credit-card
     group: Display
-    summary: Ely KPI card wrapping a Statistic.
+    summary: "Ely KPI card wrapping a Statistic."
     component: ely_core::data_display::KpiCard
     children: none
     props: {label: string, value: string}
   Meter:
     icon: gauge
     group: Display
-    summary: Ely 0-100 meter bar.
+    summary: "Ely 0-100 meter bar."
     component: ely_core::data_display::Meter
     children: none
     props: {label: string, value: number}
   UsageBar:
     icon: chart-bar
     group: Display
-    summary: Ely used/total usage bar.
+    summary: "Ely used/total usage bar."
     component: ely_core::data_display::UsageBar
     children: none
     props: {used: number, total: number}
   QrCode:
     icon: qr-code
     group: Display
-    summary: Ely QR code.
+    summary: "Ely QR code."
     component: ely_core::data_display::QrCode
     children: none
     props: {data: string}
   TimelineItem:
     icon: clock
     group: Display
-    summary: One timeline entry (child of Timeline); children render inside the entry body.
+    summary: "One timeline entry (child of Timeline); children render inside the entry body."
     component: ely_core::data_display::TimelineItem
     content: title
     props:
@@ -233,7 +233,7 @@ elements:
   Banner:
     icon: megaphone
     group: Feedback
-    summary: Ely severity banner.
+    summary: "Ely severity banner."
     component: ely_core::feedback::Banner
     content: text
     children: none
@@ -241,7 +241,7 @@ elements:
   Callout:
     icon: message-circle-question-mark
     group: Feedback
-    summary: Ely severity callout.
+    summary: "Ely severity callout."
     component: ely_core::feedback::Callout
     content: text
     children: none
@@ -249,7 +249,7 @@ elements:
   InlineMessage:
     icon: message-circle
     group: Feedback
-    summary: Ely inline severity message.
+    summary: "Ely inline severity message."
     component: ely_core::feedback::InlineMessage
     content: text
     children: none
@@ -257,14 +257,14 @@ elements:
   EmptyState:
     icon: ghost
     group: Feedback
-    summary: Ely empty-state placeholder.
+    summary: "Ely empty-state placeholder."
     component: ely_core::feedback::EmptyState
     children: none
     props: {title: string, body: string}
   Switch:
     icon: toggle-left
     group: Forms
-    summary: Ely on/off switch.
+    summary: "Ely on/off switch."
     component: ely_core::forms::Switch
     children: none
     props: {checked: bool}
@@ -272,7 +272,7 @@ elements:
   Rating:
     icon: star-half
     group: Forms
-    summary: Ely star rating.
+    summary: "Ely star rating."
     component: ely_core::forms::Rating
     children: none
     props: {value: number, max: number}
@@ -280,7 +280,7 @@ elements:
   Stepper:
     icon: list-ordered
     group: Forms
-    summary: Ely numeric stepper.
+    summary: "Ely numeric stepper."
     component: ely_core::forms::Stepper
     children: none
     props: {value: number, min: number, max: number}
@@ -288,7 +288,7 @@ elements:
   Tag:
     icon: tag
     group: Display
-    summary: Ely tag/chip label.
+    summary: "Ely tag/chip label."
     component: ely_core::data_display::Tag
     content: label
     children: none
@@ -296,14 +296,14 @@ elements:
   Icon:
     icon: star
     group: Display
-    summary: Ely standalone icon.
+    summary: "Ely standalone icon."
     component: ely_core::primitives::Icon
     children: none
     props: {icon: string, size: {type: enum, values: [Xs, Sm, Md, Lg, Xl, Xxl], default: Md}}
   Subtitle:
     icon: captions
     group: Type
-    summary: Ely subtitle text.
+    summary: "Ely subtitle text."
     component: ely_core::typography::Subtitle
     content: text
     children: none
@@ -311,7 +311,7 @@ elements:
   Caption:
     icon: text-cursor-input
     group: Type
-    summary: Ely caption text.
+    summary: "Ely caption text."
     component: ely_core::typography::Caption
     content: text
     children: none
@@ -319,7 +319,7 @@ elements:
   Label:
     icon: tag
     group: Type
-    summary: Ely form label text.
+    summary: "Ely form label text."
     component: ely_core::typography::Label
     content: text
     children: none
@@ -327,7 +327,7 @@ elements:
   Overline:
     icon: minus
     group: Type
-    summary: Ely overline text.
+    summary: "Ely overline text."
     component: ely_core::typography::Overline
     content: text
     children: none
@@ -335,21 +335,21 @@ elements:
   Container:
     icon: square
     group: Layout
-    summary: Ely size-constrained container.
+    summary: "Ely size-constrained container."
     component: ely_core::layout::Container
     children: any
     props: {size: {type: enum, values: [Xs, Sm, Md, Lg, Xl], default: Md}}
   AspectRatio:
     icon: crop
     group: Layout
-    summary: Ely aspect-ratio box (children fill).
+    summary: "Ely aspect-ratio box (children fill)."
     component: ely_core::layout::AspectRatio
     children: any
     props: {ratio: number}
   ZStack:
     icon: layers
     group: Layout
-    summary: Ely z-stacked layers (children overlap).
+    summary: "Ely z-stacked layers (children overlap)."
     component: ely_core::layout::ZStack
     children: any
   Collapsible:
@@ -439,7 +439,7 @@ elements:
   ListItem:
     icon: list
     group: Lists
-    summary: List row — title/description/detail text, selected/current/disabled states.
+    summary: "List row — title/description/detail text, selected/current/disabled states."
     component: ely_core::lists::ListItem
     content: title
     props:
@@ -454,7 +454,7 @@ elements:
   GroupedList:
     icon: rows-2
     group: Lists
-    summary: Grouped rows — consecutive children sharing a `group` prop form a section.
+    summary: "Grouped rows — consecutive children sharing a `group` prop form a section."
     component: ely_core::lists::GroupedList
     children: any
 
@@ -588,7 +588,7 @@ elements:
   AvatarGroup:
     icon: users
     group: Display
-    summary: Overlapping avatar stack with optional overflow count.
+    summary: "Overlapping avatar stack with optional overflow count."
     component: ely_core::data_display::AvatarGroup
     children: none
     props:
@@ -599,7 +599,7 @@ elements:
   UserChip:
     icon: user
     group: Display
-    summary: Compact user chip — avatar + name.
+    summary: "Compact user chip — avatar + name."
     component: ely_core::data_display::UserChip
     children: none
     props:
@@ -609,7 +609,7 @@ elements:
   CountBadge:
     icon: badge
     group: Display
-    summary: Numeric badge overlaid on a child (e.g. unread counts).
+    summary: "Numeric badge overlaid on a child (e.g. unread counts)."
     component: ely_core::data_display::CountBadge
     props:
       count: number
@@ -618,7 +618,7 @@ elements:
   DotBadge:
     icon: circle
     group: Display
-    summary: Status dot overlaid on a child.
+    summary: "Status dot overlaid on a child."
     component: ely_core::data_display::DotBadge
     props:
       tone: {type: enum, values: [Neutral, Accent, Info, Success, Warning, Danger], default: Accent}
@@ -626,31 +626,31 @@ elements:
   BeforeAfter:
     icon: columns-2
     group: Display
-    summary: Before/after comparison slider over two children.
+    summary: "Before/after comparison slider over two children."
     component: ely_core::data_display::BeforeAfter
 
   Changelog:
     icon: history
     group: Display
-    summary: Versioned changelog — children are Release elements.
+    summary: "Versioned changelog — children are Release elements."
     component: ely_core::data_display::Changelog
 
   Release:
     icon: tag
     group: Display
-    summary: One changelog release (child of Changelog).
+    summary: "One changelog release (child of Changelog)."
     component: ely_core::data_display::Release
     children: none
     props:
       version: string
       date: string
-      summary: string
+      summary: "string"
       changes: string  # "kind:text;kind:text" — kinds: added, changed, deprecated, removed, fixed, security
 
   Comparison:
     icon: columns-3
     group: Display
-    summary: Feature-comparison matrix; rows use "name|v1|v2…", all-yes/no cells render as check marks.
+    summary: "Feature-comparison matrix; rows use \"name|v1|v2…\", all-yes/no cells render as check marks."
     component: ely_core::data_display::Comparison
     children: none
     props:
@@ -660,13 +660,13 @@ elements:
   ActivityFeed:
     icon: activity
     group: Display
-    summary: Chronological activity stream — children are Activity elements.
+    summary: "Chronological activity stream — children are Activity elements."
     component: ely_core::data_display::ActivityFeed
 
   Activity:
     icon: zap
     group: Display
-    summary: One feed entry (child of ActivityFeed).
+    summary: "One feed entry (child of ActivityFeed)."
     component: ely_core::data_display::Activity
     children: none
     props:
@@ -679,7 +679,7 @@ elements:
   Gauge:
     icon: gauge
     group: Display
-    summary: Circular gauge for a value in [min, max].
+    summary: "Circular gauge for a value in [min, max]."
     component: ely_core::data_display::Gauge
     children: none
     props:
@@ -691,7 +691,7 @@ elements:
   DescriptionList:
     icon: list
     group: Display
-    summary: Label/value description list.
+    summary: "Label/value description list."
     component: ely_core::data_display::DescriptionList
     children: none
     props:
@@ -700,13 +700,13 @@ elements:
   PropertyGrid:
     icon: table-properties
     group: Display
-    summary: Grouped property sheet — children are PropertyGroup elements.
+    summary: "Grouped property sheet — children are PropertyGroup elements."
     component: ely_core::data_display::PropertyGrid
 
   PropertyGroup:
     icon: folder
     group: Display
-    summary: One property-sheet section (child of PropertyGrid).
+    summary: "One property-sheet section (child of PropertyGrid)."
     component: ely_core::data_display::PropertyGroup
     children: none
     props:
@@ -716,7 +716,7 @@ elements:
   Sparkline:
     icon: trending-up
     group: Display
-    summary: Tiny inline chart — line, area, or bars.
+    summary: "Tiny inline chart — line, area, or bars."
     component: ely_core::data_display::Sparkline
     children: none
     props:
@@ -726,7 +726,7 @@ elements:
   Stars:
     icon: star
     group: Display
-    summary: Read-only star rating.
+    summary: "Read-only star rating."
     component: ely_core::data_display::Stars
     children: none
     props: {score: number}
@@ -734,13 +734,13 @@ elements:
   Timeline:
     icon: git-commit-vertical
     group: Display
-    summary: Vertical timeline — children are TimelineItem elements.
+    summary: "Vertical timeline — children are TimelineItem elements."
     component: ely_core::data_display::Timeline
 
   Watermark:
     icon: stamp
     group: Display
-    summary: Repeating text watermark overlay.
+    summary: "Repeating text watermark overlay."
     component: ely_core::data_display::Watermark
     children: none
     props: {text: string}
@@ -748,7 +748,7 @@ elements:
   Gallery:
     icon: layout-grid
     group: Display
-    summary: Image gallery grid.
+    summary: "Image gallery grid."
     component: ely_core::data_display::Gallery
     children: none
     props:
@@ -758,13 +758,13 @@ elements:
   Carousel:
     icon: gallery-horizontal
     group: Display
-    summary: Horizontal slide carousel — each child is one slide.
+    summary: "Horizontal slide carousel — each child is one slide."
     component: ely_core::data_display::Carousel
 
   Barcode:
     icon: barcode
     group: Display
-    summary: 1-D barcode (Code 128 or EAN-13).
+    summary: "1-D barcode (Code 128 or EAN-13)."
     component: ely_core::data_display::Barcode
     children: none
     props:
@@ -774,7 +774,7 @@ elements:
   ActionBar:
     icon: square-menu
     group: Buttons
-    summary: Row of action buttons — docked or floating pill; children are the actions.
+    summary: "Row of action buttons — docked or floating pill; children are the actions."
     component: ely_core::buttons::ActionBar
     props:
       floating: {type: bool, default: false}
@@ -782,7 +782,7 @@ elements:
   BulkActionBar:
     icon: list-checks
     group: Buttons
-    summary: Selection bar — shows count, bulk action children, and a clear button.
+    summary: "Selection bar — shows count, bulk action children, and a clear button."
     component: ely_core::buttons::BulkActionBar
     props:
       count: number
@@ -792,7 +792,7 @@ elements:
   ConfirmButton:
     icon: shield-check
     group: Buttons
-    summary: Button that arms before confirming (second click or hold).
+    summary: "Button that arms before confirming (second click or hold)."
     component: ely_core::buttons::ConfirmButton
     children: none
     props:
@@ -805,7 +805,7 @@ elements:
   FloatingActionButton:
     icon: circle-plus
     group: Buttons
-    summary: Floating action button with optional extended label.
+    summary: "Floating action button with optional extended label."
     component: ely_core::buttons::FloatingActionButton
     children: none
     props:
@@ -818,13 +818,13 @@ elements:
   ButtonGroup:
     icon: layout-panel-left
     group: Buttons
-    summary: Joined row of buttons — children are Button elements.
+    summary: "Joined row of buttons — children are Button elements."
     component: ely_core::buttons::ButtonGroup
 
   ToggleGroup:
     icon: toggle-left
     group: Buttons
-    summary: Single/multi-select toggle strip; value binds the selection.
+    summary: "Single/multi-select toggle strip; value binds the selection."
     component: ely_core::buttons::ToggleGroup
     children: none
     props:
@@ -837,7 +837,7 @@ elements:
   QuickActions:
     icon: zap
     group: Buttons
-    summary: Compact quick-action palette; picking an action fires pick with its label.
+    summary: "Compact quick-action palette; picking an action fires pick with its label."
     component: ely_core::buttons::QuickActions
     children: none
     props:
@@ -848,7 +848,7 @@ elements:
   ShareButton:
     icon: share-2
     group: Buttons
-    summary: Shares text and/or a URL via the platform share sheet.
+    summary: "Shares text and/or a URL via the platform share sheet."
     component: ely_core::buttons::ShareButton
     children: none
     props:
@@ -860,7 +860,7 @@ elements:
   ActionSheet:
     icon: panel-bottom
     group: Buttons
-    summary: Bottom action sheet; "danger:label" entries render destructive.
+    summary: "Bottom action sheet; \"danger:label\" entries render destructive."
     component: ely_core::buttons::ActionSheet
     children: none
     props:
@@ -874,7 +874,7 @@ elements:
   Countdown:
     icon: timer
     group: Feedback
-    summary: Counts down `seconds`; fires done when it reaches zero.
+    summary: "Counts down `seconds`; fires done when it reaches zero."
     component: ely_core::feedback::Countdown
     children: none
     props:
@@ -886,7 +886,7 @@ elements:
   Timer:
     icon: alarm-clock
     group: Feedback
-    summary: Elapsed-time readout; `seconds` offsets the start.
+    summary: "Elapsed-time readout; `seconds` offsets the start."
     component: ely_core::feedback::Timer
     children: none
     props:
@@ -896,7 +896,7 @@ elements:
   ConfirmationCard:
     icon: shield-question
     group: Feedback
-    summary: Inline confirm/cancel card.
+    summary: "Inline confirm/cancel card."
     component: ely_core::feedback::ConfirmationCard
     children: none
     props:
@@ -911,7 +911,7 @@ elements:
   NotificationCenter:
     icon: bell
     group: Feedback
-    summary: Grouped notification list — children are Notification elements; `group` prop buckets them.
+    summary: "Grouped notification list — children are Notification elements; `group` prop buckets them."
     component: ely_core::feedback::NotificationCenter
     events:
       read_all:
@@ -920,7 +920,7 @@ elements:
   ResultView:
     icon: circle-check-big
     group: Feedback
-    summary: Full-area success/failure result; children render as actions.
+    summary: "Full-area success/failure result; children render as actions."
     component: ely_core::feedback::ResultView
     props:
       status: {type: enum, values: [success, failure], default: success}
@@ -930,7 +930,7 @@ elements:
   ErrorView:
     icon: octagon-alert
     group: Feedback
-    summary: Error page — preset kinds or a status code.
+    summary: "Error page — preset kinds or a status code."
     component: ely_core::feedback::ErrorView
     children: none
     props:
@@ -943,7 +943,7 @@ elements:
   ErrorBoundary:
     icon: shield
     group: Feedback
-    summary: Renders its child or an error view with retry.
+    summary: "Renders its child or an error view with retry."
     component: ely_core::feedback::ErrorBoundary
     events:
       retry:
@@ -951,7 +951,7 @@ elements:
   Suspense:
     icon: hourglass
     group: Feedback
-    summary: Shows the child when ready, the fallback (second child or `fallback` text) while waiting.
+    summary: "Shows the child when ready, the fallback (second child or `fallback` text) while waiting."
     component: ely_core::feedback::Suspense
     props:
       state: {type: enum, values: [ready, waiting, error], default: ready}
@@ -963,7 +963,7 @@ elements:
   SavingIndicator:
     icon: cloud-upload
     group: Feedback
-    summary: Autosave status line — saving, saved, or failed with retry.
+    summary: "Autosave status line — saving, saved, or failed with retry."
     component: ely_core::feedback::SavingIndicator
     children: none
     props:
@@ -974,7 +974,7 @@ elements:
   SyncStatus:
     icon: refresh-cw
     group: Feedback
-    summary: Background-sync status; `left` counts remaining items while syncing.
+    summary: "Background-sync status; `left` counts remaining items while syncing."
     component: ely_core::feedback::SyncStatus
     children: none
     props:
@@ -984,7 +984,7 @@ elements:
   ConnectionStatus:
     icon: wifi
     group: Feedback
-    summary: Online/offline/reconnecting indicator.
+    summary: "Online/offline/reconnecting indicator."
     component: ely_core::feedback::ConnectionStatus
     children: none
     props:
@@ -993,7 +993,7 @@ elements:
   ToastViewport:
     icon: message-square
     group: Feedback
-    summary: Toast stack viewport — seeds its Toaster once from `toasts`.
+    summary: "Toast stack viewport — seeds its Toaster once from `toasts`."
     component: ely_core::feedback::ToastViewport
     children: none
     props:
@@ -1002,7 +1002,7 @@ elements:
   Accordion:
     icon: chevrons-up-down
     group: Layout
-    summary: Folding sections — children are AccordionItem elements.
+    summary: "Folding sections — children are AccordionItem elements."
     component: ely_core::layout::Accordion
     props:
       multiple: {type: bool, default: false}
@@ -1011,14 +1011,14 @@ elements:
   AccordionItem:
     icon: chevron-down
     group: Layout
-    summary: One folding section (child of Accordion); `title` is its header.
+    summary: "One folding section (child of Accordion); `title` is its header."
     component: ely_core::layout::AccordionItem
     props: {title: string}
 
   SimpleGrid:
     icon: grid-2x2
     group: Layout
-    summary: Auto-fit grid — columns sized to `min`.
+    summary: "Auto-fit grid — columns sized to `min`."
     component: ely_core::layout::SimpleGrid
     props:
       min: {type: number, default: 160}
@@ -1027,7 +1027,7 @@ elements:
   Masonry:
     icon: layout-dashboard
     group: Layout
-    summary: Column-balanced masonry of its children.
+    summary: "Column-balanced masonry of its children."
     component: ely_core::layout::Masonry
     props:
       columns: {type: number, default: 2}
@@ -1045,13 +1045,13 @@ elements:
   AppShell:
     icon: app-window
     group: Layout
-    summary: Window frame — children take `slot:` title_bar, sidebar, status_bar, or default body.
+    summary: "Window frame — children take `slot:` title_bar, sidebar, status_bar, or default body."
     component: ely_core::layout::AppShell
 
   MasterDetail:
     icon: columns-2
     group: Layout
-    summary: Resizable 36/64 master-detail split; first child is master.
+    summary: "Resizable 36/64 master-detail split; first child is master."
     component: ely_core::layout::MasterDetail
     props:
       min: {type: number, default: 160}
@@ -1059,7 +1059,7 @@ elements:
   PaneGroup:
     icon: layout-template
     group: Layout
-    summary: Split-pane workspace — `panes` splits after creation; children are pane content by index.
+    summary: "Split-pane workspace — `panes` splits after creation; children are pane content by index."
     component: ely_core::layout::PaneGroup
     props:
       panes: {type: number, default: 1}
@@ -1068,7 +1068,7 @@ elements:
   Dock:
     icon: panel-left
     group: Layout
-    summary: Docking layout — children[0] is the center; `panel` prop names each panel child.
+    summary: "Docking layout — children[0] is the center; `panel` prop names each panel child."
     component: ely_core::layout::Dock
     props:
       panels: list<string>  # "id|title|icon|side" — sides: left, right, top, bottom
@@ -1076,7 +1076,7 @@ elements:
   Sheet:
     icon: panel-right
     group: Layout
-    summary: Edge-anchored sheet with a title bar; close event dismisses.
+    summary: "Edge-anchored sheet with a title bar; close event dismisses."
     component: ely_core::layout::Sheet
     props:
       side: {type: enum, values: [Left, Right, Top, Bottom], default: Right}
@@ -1087,7 +1087,7 @@ elements:
   Drawer:
     icon: panel-bottom-open
     group: Layout
-    summary: Dismissable drawer; close event fires on dismiss.
+    summary: "Dismissable drawer; close event fires on dismiss."
     component: ely_core::layout::Drawer
     events:
       close:
@@ -1095,7 +1095,7 @@ elements:
   FloatingPanel:
     icon: picture-in-picture-2
     group: Layout
-    summary: Draggable floating panel; move fires with "x,y".
+    summary: "Draggable floating panel; move fires with \"x,y\"."
     component: ely_core::layout::FloatingPanel
     props:
       title: string
@@ -1107,7 +1107,7 @@ elements:
   SplitPane:
     icon: separator-vertical
     group: Layout
-    summary: Resizable pane split; `sizes` are relative weights.
+    summary: "Resizable pane split; `sizes` are relative weights."
     component: ely_core::layout::SplitPane
     props:
       axis: {type: enum, values: [Horizontal, Vertical], default: Horizontal}
@@ -1119,7 +1119,7 @@ elements:
   ScrollArea:
     icon: scroll
     group: Layout
-    summary: Scrolling region; `handle` names it for the scroll aids.
+    summary: "Scrolling region; `handle` names it for the scroll aids."
     component: ely_core::layout::ScrollArea
     props:
       vertical: {type: bool, default: false}
@@ -1129,7 +1129,7 @@ elements:
   ScrollShadow:
     icon: shadow
     group: Layout
-    summary: Edge fades tracking a named scroll handle.
+    summary: "Edge fades tracking a named scroll handle."
     component: ely_core::layout::ScrollShadow
     children: none
     props: {handle: string}
@@ -1137,7 +1137,7 @@ elements:
   ScrollToTop:
     icon: arrow-up-to-line
     group: Layout
-    summary: Back-to-top button for a named scroll handle.
+    summary: "Back-to-top button for a named scroll handle."
     component: ely_core::layout::ScrollToTop
     children: none
     props: {handle: string}
@@ -1145,14 +1145,14 @@ elements:
   StickyHeader:
     icon: pin
     group: Layout
-    summary: Child[0] is the pinning header; the rest is section body. Needs a `handle`.
+    summary: "Child[0] is the pinning header; the rest is section body. Needs a `handle`."
     component: ely_core::layout::StickyHeader
     props: {handle: string}
 
   Viewport:
     icon: move
     group: Layout
-    summary: Pannable/zoomable canvas; the child renders at the pan offset.
+    summary: "Pannable/zoomable canvas; the child renders at the pan offset."
     component: ely_core::layout::Viewport
     props:
       min_zoom: number
@@ -1167,7 +1167,7 @@ elements:
   CardHeader:
     icon: heading
     group: Layout
-    summary: Titled card header — the first child renders as its action.
+    summary: "Titled card header — the first child renders as its action."
     component: ely_core::layout::CardHeader
     props:
       title: string
@@ -1176,19 +1176,19 @@ elements:
   Frame:
     icon: square-dashed
     group: Layout
-    summary: Bordered raised container.
+    summary: "Bordered raised container."
     component: ely_core::layout::Frame
 
   Well:
     icon: square-chevron-down
     group: Layout
-    summary: Recessed container on the sunken tone.
+    summary: "Recessed container on the sunken tone."
     component: ely_core::layout::Well
 
   Input:
     icon: text-cursor-input
     group: Forms
-    summary: Text field backed by a TextInput entity — binding + change/submit events.
+    summary: "Text field backed by a TextInput entity — binding + change/submit events."
     component: ely_core::forms::Input
     children: none
     props:
@@ -1200,7 +1200,7 @@ elements:
   PasswordInput:
     icon: key-round
     group: Forms
-    summary: Masked text field.
+    summary: "Masked text field."
     component: ely_core::forms::PasswordInput
     children: none
     props:
@@ -1212,7 +1212,7 @@ elements:
   EmailInput:
     icon: mail
     group: Forms
-    summary: Email-validating text field.
+    summary: "Email-validating text field."
     component: ely_core::forms::EmailInput
     children: none
     props:
@@ -1224,7 +1224,7 @@ elements:
   UrlInput:
     icon: link
     group: Forms
-    summary: URL-validating text field.
+    summary: "URL-validating text field."
     component: ely_core::forms::UrlInput
     children: none
     props:
@@ -1236,7 +1236,7 @@ elements:
   SearchInput:
     icon: search
     group: Forms
-    summary: Search field — `pick` fires when a suggestion is chosen.
+    summary: "Search field — `pick` fires when a suggestion is chosen."
     component: ely_core::forms::SearchInput
     children: none
     props:
@@ -1248,7 +1248,7 @@ elements:
   MaskedInput:
     icon: brackets
     group: Forms
-    summary: Pattern-masked text field.
+    summary: "Pattern-masked text field."
     component: ely_core::forms::MaskedInput
     children: none
     props:
@@ -1261,7 +1261,7 @@ elements:
   PhoneInput:
     icon: phone
     group: Forms
-    summary: Phone field with country picker — `country` is a code like US/GB/DE.
+    summary: "Phone field with country picker — `country` is a code like US/GB/DE."
     component: ely_core::forms::PhoneInput
     children: none
     props:
@@ -1274,7 +1274,7 @@ elements:
   PathInput:
     icon: folder-open
     group: Forms
-    summary: Filesystem path field — `choose` fires with the picked path.
+    summary: "Filesystem path field — `choose` fires with the picked path."
     component: ely_core::forms::PathInput
     children: none
     props:
@@ -1286,7 +1286,7 @@ elements:
   RegexInput:
     icon: regex
     group: Forms
-    summary: Regex-validating text field.
+    summary: "Regex-validating text field."
     component: ely_core::forms::RegexInput
     children: none
     props:
@@ -1298,7 +1298,7 @@ elements:
   ExpressionInput:
     icon: sigma
     group: Forms
-    summary: Expression-editing field.
+    summary: "Expression-editing field."
     component: ely_core::forms::ExpressionInput
     children: none
     props:
@@ -1310,7 +1310,7 @@ elements:
   CodeInput:
     icon: code
     group: Forms
-    summary: Syntax-aware code editing field.
+    summary: "Syntax-aware code editing field."
     component: ely_core::forms::CodeInput
     children: none
     props:
@@ -1322,7 +1322,7 @@ elements:
   JsonInput:
     icon: braces
     group: Forms
-    summary: JSON-validating editing field.
+    summary: "JSON-validating editing field."
     component: ely_core::forms::JsonInput
     children: none
     props:
@@ -1334,7 +1334,7 @@ elements:
   MentionInput:
     icon: at-sign
     group: Forms
-    summary: Field with @-mention support.
+    summary: "Field with @-mention support."
     component: ely_core::forms::MentionInput
     children: none
     props:
@@ -1346,7 +1346,7 @@ elements:
   Combobox:
     icon: chevrons-up-down
     group: Forms
-    summary: Filterable dropdown backed by a TextInput entity.
+    summary: "Filterable dropdown backed by a TextInput entity."
     component: ely_core::forms::Combobox
     children: none
     props:
@@ -1359,7 +1359,7 @@ elements:
   FontPicker:
     icon: type
     group: Forms
-    summary: Font family chooser.
+    summary: "Font family chooser."
     component: ely_core::forms::FontPicker
     children: none
     props:
@@ -1371,7 +1371,7 @@ elements:
   CronEditor:
     icon: calendar-clock
     group: Forms
-    summary: Cron schedule editor.
+    summary: "Cron schedule editor."
     component: ely_core::forms::CronEditor
     children: none
     props:
@@ -1382,7 +1382,7 @@ elements:
   TimezoneSelect:
     icon: globe
     group: Forms
-    summary: Timezone chooser backed by a TextInput entity.
+    summary: "Timezone chooser backed by a TextInput entity."
     component: ely_core::forms::TimezoneSelect
     children: none
     props:
@@ -1394,7 +1394,7 @@ elements:
   InputGroup:
     icon: panel-left
     group: Forms
-    summary: Field flanked by addons — `before`/`after` text, children become addons via `slot`.
+    summary: "Field flanked by addons — `before`/`after` text, children become addons via `slot`."
     component: ely_core::forms::InputGroup
     children: any
     props:
@@ -1406,7 +1406,7 @@ elements:
   CheckboxCard:
     icon: square-check-big
     group: Forms
-    summary: Checkbox rendered as a titled card.
+    summary: "Checkbox rendered as a titled card."
     component: ely_core::forms::CheckboxCard
     children: none
     props:
@@ -1418,7 +1418,7 @@ elements:
   CheckboxGroup:
     icon: list-checks
     group: Forms
-    summary: Group of checkboxes over `options`.
+    summary: "Group of checkboxes over `options`."
     component: ely_core::forms::CheckboxGroup
     children: none
     props:
@@ -1429,7 +1429,7 @@ elements:
   RadioGroup:
     icon: circle-dot
     group: Forms
-    summary: Radio group over `options`.
+    summary: "Radio group over `options`."
     component: ely_core::forms::RadioGroup
     children: none
     props:
@@ -1440,7 +1440,7 @@ elements:
   ListBox:
     icon: list
     group: Forms
-    summary: Scrollable list box over `options`.
+    summary: "Scrollable list box over `options`."
     component: ely_core::forms::ListBox
     children: none
     props:
@@ -1451,7 +1451,7 @@ elements:
   Cascader:
     icon: network
     group: Forms
-    summary: Hierarchical picker — `tree` entries are `/`-separated paths.
+    summary: "Hierarchical picker — `tree` entries are `/`-separated paths."
     component: ely_core::forms::Cascader
     children: none
     props:
@@ -1462,7 +1462,7 @@ elements:
   TagInput:
     icon: tags
     group: Forms
-    summary: Tag editor — `tags` seeds, `options` are suggestions.
+    summary: "Tag editor — `tags` seeds, `options` are suggestions."
     component: ely_core::forms::TagInput
     children: none
     props:
@@ -1475,7 +1475,7 @@ elements:
   RangeSlider:
     icon: sliders-horizontal
     group: Forms
-    summary: Two-thumb range slider — value is a [low, high] pair.
+    summary: "Two-thumb range slider — value is a [low, high] pair."
     component: ely_core::forms::RangeSlider
     children: none
     props:
@@ -1487,7 +1487,7 @@ elements:
   TransferList:
     icon: arrow-left-right
     group: Forms
-    summary: Dual-pane item transfer over `options`.
+    summary: "Dual-pane item transfer over `options`."
     component: ely_core::forms::TransferList
     children: none
     props:
@@ -1498,7 +1498,7 @@ elements:
   UnitInput:
     icon: ruler
     group: Forms
-    summary: Numeric field with unit picker — `units` list + `unit` selection.
+    summary: "Numeric field with unit picker — `units` list + `unit` selection."
     component: ely_core::forms::UnitInput
     children: none
     props:
@@ -1510,7 +1510,7 @@ elements:
   FieldArray:
     icon: rows-3
     group: Forms
-    summary: Repeating rows with add/remove — children render as rows.
+    summary: "Repeating rows with add/remove — children render as rows."
     component: ely_core::forms::FieldArray
     children: any
     props:
@@ -1521,7 +1521,7 @@ elements:
   KeyValueInput:
     icon: table-2
     group: Forms
-    summary: Key/value pair editor — `pairs` entries are `key|value`.
+    summary: "Key/value pair editor — `pairs` entries are `key|value`."
     component: ely_core::forms::KeyValueInput
     children: none
     props:
@@ -1532,7 +1532,7 @@ elements:
   ListInput:
     icon: list-plus
     group: Forms
-    summary: Editable list of string items.
+    summary: "Editable list of string items."
     component: ely_core::forms::ListInput
     children: none
     props:
@@ -1543,7 +1543,7 @@ elements:
   FileInput:
     icon: file-up
     group: Forms
-    summary: File picker — `paths` seeds selections.
+    summary: "File picker — `paths` seeds selections."
     component: ely_core::forms::FileInput
     children: none
     props:
@@ -1554,7 +1554,7 @@ elements:
   DropZone:
     icon: download
     group: Forms
-    summary: Drag-and-drop file target — `drop` fires with paths.
+    summary: "Drag-and-drop file target — `drop` fires with paths."
     component: ely_core::forms::DropZone
     children: none
     props:
@@ -1564,7 +1564,7 @@ elements:
   UploadList:
     icon: list-todo
     group: Forms
-    summary: Upload progress list — `uploads` entries are `name|bytes|state` (state = pct, done, or failed:why).
+    summary: "Upload progress list — `uploads` entries are `name|bytes|state` (state = pct, done, or failed:why)."
     component: ely_core::forms::UploadList
     children: none
     props:
@@ -1574,7 +1574,7 @@ elements:
   AvatarUpload:
     icon: user-round-pen
     group: Forms
-    summary: Avatar picker — `change` fires with the chosen path.
+    summary: "Avatar picker — `change` fires with the chosen path."
     component: ely_core::forms::AvatarUpload
     children: none
     props:
@@ -1585,14 +1585,14 @@ elements:
   SignaturePad:
     icon: pen-line
     group: Forms
-    summary: Freehand signature capture pad.
+    summary: "Freehand signature capture pad."
     component: ely_core::forms::SignaturePad
     children: none
 
   IconPicker:
     icon: smile
     group: Forms
-    summary: Icon chooser — `value`/`change` carry icon names.
+    summary: "Icon chooser — `value`/`change` carry icon names."
     component: ely_core::forms::IconPicker
     children: none
     props:
@@ -1602,7 +1602,7 @@ elements:
   EmojiPicker:
     icon: smile-plus
     group: Forms
-    summary: Emoji chooser — `change` fires with the emoji.
+    summary: "Emoji chooser — `change` fires with the emoji."
     component: ely_core::forms::EmojiPicker
     children: none
     props:
@@ -1612,7 +1612,7 @@ elements:
   EyeDropper:
     icon: pipette
     group: Forms
-    summary: Screen color picker — `pick` fires with a hex color.
+    summary: "Screen color picker — `pick` fires with a hex color."
     component: ely_core::forms::EyeDropper
     children: none
     props:
@@ -1622,7 +1622,7 @@ elements:
   ColorPicker:
     icon: palette
     group: Forms
-    summary: HSL color picker — values are `#rrggbb` hex strings.
+    summary: "HSL color picker — values are `#rrggbb` hex strings."
     component: ely_core::forms::ColorPicker
     children: none
     props:
@@ -1632,7 +1632,7 @@ elements:
   ColorSwatch:
     icon: square
     group: Forms
-    summary: Static color chip.
+    summary: "Static color chip."
     component: ely_core::forms::ColorSwatch
     children: none
     props:
@@ -1641,7 +1641,7 @@ elements:
   GradientEditor:
     icon: blend
     group: Forms
-    summary: Gradient stop editor — `stops` entries are `pos|#hex`.
+    summary: "Gradient stop editor — `stops` entries are `pos|#hex`."
     component: ely_core::forms::GradientEditor
     children: none
     props:
@@ -1652,7 +1652,7 @@ elements:
   Calendar:
     icon: calendar
     group: Forms
-    summary: Month calendar — `selected` ISO date, `pick` fires on day click.
+    summary: "Month calendar — `selected` ISO date, `pick` fires on day click."
     component: ely_core::forms::Calendar
     children: none
     props:
@@ -1663,7 +1663,7 @@ elements:
   DatePicker:
     icon: calendar-days
     group: Forms
-    summary: Single-date picker — `value` is an ISO `YYYY-MM-DD` string.
+    summary: "Single-date picker — `value` is an ISO `YYYY-MM-DD` string."
     component: ely_core::forms::DatePicker
     children: none
     props:
@@ -1673,7 +1673,7 @@ elements:
   DateRangePicker:
     icon: calendar-range
     group: Forms
-    summary: Start/end date range picker — ISO `start`/`end` props.
+    summary: "Start/end date range picker — ISO `start`/`end` props."
     component: ely_core::forms::DateRangePicker
     children: none
     props:
@@ -1685,7 +1685,7 @@ elements:
   WeekPicker:
     icon: calendar-fold
     group: Forms
-    summary: ISO week picker — `year` + `week` numbers.
+    summary: "ISO week picker — `year` + `week` numbers."
     component: ely_core::forms::WeekPicker
     children: none
     props:
@@ -1697,7 +1697,7 @@ elements:
   MonthPicker:
     icon: calendar-1
     group: Forms
-    summary: Month picker — `year` + `month` numbers.
+    summary: "Month picker — `year` + `month` numbers."
     component: ely_core::forms::MonthPicker
     children: none
     props:
@@ -1709,7 +1709,7 @@ elements:
   QuarterPicker:
     icon: pie-chart
     group: Forms
-    summary: Quarter picker — `year` + `quarter` numbers.
+    summary: "Quarter picker — `year` + `quarter` numbers."
     component: ely_core::forms::QuarterPicker
     children: none
     props:
@@ -1721,7 +1721,7 @@ elements:
   YearPicker:
     icon: calendar-heart
     group: Forms
-    summary: Year picker — `year` number.
+    summary: "Year picker — `year` number."
     component: ely_core::forms::YearPicker
     children: none
     props:
@@ -1732,7 +1732,7 @@ elements:
   TimePicker:
     icon: clock
     group: Forms
-    summary: Time-of-day picker — `value` is an ISO `HH:MM` string.
+    summary: "Time-of-day picker — `value` is an ISO `HH:MM` string."
     component: ely_core::forms::TimePicker
     children: none
     props:
@@ -1742,7 +1742,7 @@ elements:
   DateTimePicker:
     icon: calendar-plus
     group: Forms
-    summary: Date+time picker — `value` is an ISO `YYYY-MM-DD HH:MM` string.
+    summary: "Date+time picker — `value` is an ISO `YYYY-MM-DD HH:MM` string."
     component: ely_core::forms::DateTimePicker
     children: none
     props:
@@ -1752,7 +1752,7 @@ elements:
   DurationPicker:
     icon: timer
     group: Forms
-    summary: Duration picker — `seconds` number.
+    summary: "Duration picker — `seconds` number."
     component: ely_core::forms::DurationPicker
     children: none
     props:
@@ -1763,7 +1763,7 @@ elements:
   RelativeDatePicker:
     icon: history
     group: Forms
-    summary: Relative range picker (Today/Yesterday/Last7Days/…).
+    summary: "Relative range picker (Today/Yesterday/Last7Days/…)."
     component: ely_core::forms::RelativeDatePicker
     children: none
     props:
@@ -1776,7 +1776,7 @@ elements:
   ScrubInput:
     icon: mouse
     group: Forms
-    summary: Drag-to-scrub labeled numeric input.
+    summary: "Drag-to-scrub labeled numeric input."
     component: ely_core::forms::ScrubInput
     children: none
     props:
@@ -1787,7 +1787,7 @@ elements:
   FormSection:
     icon: section
     group: Forms
-    summary: Titled form grouping — children render inside.
+    summary: "Titled form grouping — children render inside."
     component: ely_core::forms::FormSection
     children: any
     props:
@@ -1796,7 +1796,7 @@ elements:
   FormLabel:
     icon: tag
     group: Forms
-    summary: Field label.
+    summary: "Field label."
     component: ely_core::forms::FormLabel
     content: text
     children: none
@@ -1806,7 +1806,7 @@ elements:
   FormError:
     icon: circle-alert
     group: Forms
-    summary: Field error message.
+    summary: "Field error message."
     component: ely_core::forms::FormError
     content: text
     children: none
@@ -1816,7 +1816,7 @@ elements:
   FormField:
     icon: text-select
     group: Forms
-    summary: Labeled field wrapper — children render as the control.
+    summary: "Labeled field wrapper — children render as the control."
     component: ely_core::forms::FormField
     children: any
     props:
@@ -1825,14 +1825,14 @@ elements:
   InlineForm:
     icon: align-horizontal-justify-start
     group: Forms
-    summary: Horizontal form row — children render inline.
+    summary: "Horizontal form row — children render inline."
     component: ely_core::forms::InlineForm
     children: any
 
   DirtyIndicator:
     icon: circle-dot
     group: Forms
-    summary: Unsaved-changes dot.
+    summary: "Unsaved-changes dot."
     component: ely_core::forms::DirtyIndicator
     children: none
     props:
@@ -1841,14 +1841,14 @@ elements:
   List:
     icon: list
     group: Lists
-    summary: Plain list — children render as rows.
+    summary: "Plain list — children render as rows."
     component: ely_core::lists::List
     children: any
 
   InfiniteList:
     icon: infinity
     group: Lists
-    summary: Endless list — `more` fires when scrolled near the end.
+    summary: "Endless list — `more` fires when scrolled near the end."
     component: ely_core::lists::InfiniteList
     children: any
     events: {more:}
@@ -1856,7 +1856,7 @@ elements:
   VirtualList:
     icon: rows-4
     group: Lists
-    summary: Windowed list — children supply rows by index; `count` sets total rows.
+    summary: "Windowed list — children supply rows by index; `count` sets total rows."
     component: ely_core::lists::VirtualList
     children: any
     props:
@@ -1865,7 +1865,7 @@ elements:
   Outline:
     icon: list-tree
     group: Lists
-    summary: Document outline — `items` entries are `level|title`.
+    summary: "Document outline — `items` entries are `level|title`."
     component: ely_core::lists::Outline
     children: none
     props:
@@ -1877,7 +1877,7 @@ elements:
   Sections:
     icon: layout-list
     group: Lists
-    summary: Grouped, foldable sections — children become rows under their `group` prop.
+    summary: "Grouped, foldable sections — children become rows under their `group` prop."
     component: ely_core::lists::Sections
     children: any
     props:
@@ -1887,7 +1887,7 @@ elements:
   SelectableList:
     icon: list-checks
     group: Lists
-    summary: Multi-select list over `options` — `activate` fires on double-press.
+    summary: "Multi-select list over `options` — `activate` fires on double-press."
     component: ely_core::lists::SelectableList
     children: none
     props:
@@ -1898,7 +1898,7 @@ elements:
   SortableList:
     icon: grip-vertical
     group: Lists
-    summary: Drag-to-reorder list over `options` — `reorder` fires `from|to`.
+    summary: "Drag-to-reorder list over `options` — `reorder` fires `from|to`."
     component: ely_core::lists::SortableList
     children: none
     props:
@@ -1909,7 +1909,7 @@ elements:
   SwipeableListItem:
     icon: move-horizontal
     group: Lists
-    summary: Swipeable row — first child is the content; `actions` are `label|icon|tone`.
+    summary: "Swipeable row — first child is the content; `actions` are `label|icon|tone`."
     component: ely_core::lists::SwipeableListItem
     children: any
     props:
@@ -1919,7 +1919,7 @@ elements:
   DirectoryListing:
     icon: folder
     group: Lists
-    summary: File browser — `path` breadcrumbs, `entries` are `name|size|modified` (empty size = folder).
+    summary: "File browser — `path` breadcrumbs, `entries` are `name|size|modified` (empty size = folder)."
     component: ely_core::lists::DirectoryListing
     children: none
     props:
@@ -1932,7 +1932,7 @@ elements:
   FileTree:
     icon: folder-tree
     group: Lists
-    summary: File tree — `paths` entries, `status` pairs are `path|Status` (Modified/Added/…).
+    summary: "File tree — `paths` entries, `status` pairs are `path|Status` (Modified/Added/…)."
     component: ely_core::lists::FileTree
     children: none
     props:
@@ -1943,7 +1943,7 @@ elements:
   Tree:
     icon: network
     group: Lists
-    summary: Tree view — `tree` entries are `/`-separated paths; `open`/`selected` by key.
+    summary: "Tree view — `tree` entries are `/`-separated paths; `open`/`selected` by key."
     component: ely_core::lists::Tree
     children: none
     props:
@@ -1957,7 +1957,7 @@ elements:
   TreeSelect:
     icon: square-mouse-pointer
     group: Lists
-    summary: Tree picker — `tree` entries are `/`-separated paths.
+    summary: "Tree picker — `tree` entries are `/`-separated paths."
     component: ely_core::lists::TreeSelect
     children: none
     props:
@@ -1968,7 +1968,7 @@ elements:
   DropdownMenu:
     icon: chevron-down
     group: Menus
-    summary: Button that opens a menu — `items` rows are `label|icon|keys`, `check:`/`radio:` prefixes, `@heading`, `-` separator. Rows fire `item:<label>`.
+    summary: "Button that opens a menu — `items` rows are `label|icon|keys`, `check:`/`radio:` prefixes, `@heading`, `-` separator. Rows fire `item:<label>`."
     component: ely_core::menus::DropdownMenu
     children: none
     props:
@@ -1988,7 +1988,7 @@ elements:
   ContextMenu:
     icon: mouse-pointer-click
     group: Menus
-    summary: Right-click menu around children — same `items` syntax as DropdownMenu.
+    summary: "Right-click menu around children — same `items` syntax as DropdownMenu."
     component: ely_core::menus::ContextMenu
     children: any
     props:
@@ -1997,7 +1997,7 @@ elements:
   SearchableMenu:
     icon: text-search
     group: Menus
-    summary: Button that opens a filterable menu — same `items` syntax as DropdownMenu.
+    summary: "Button that opens a filterable menu — same `items` syntax as DropdownMenu."
     component: ely_core::menus::SearchableMenu
     children: none
     props:
@@ -2007,7 +2007,7 @@ elements:
   SplitButton:
     icon: split
     group: Menus
-    summary: Button with a menu tail — `click` is the main action, `items` the menu.
+    summary: "Button with a menu tail — `click` is the main action, `items` the menu."
     component: ely_core::menus::SplitButton
     children: none
     props:
@@ -2018,7 +2018,7 @@ elements:
   PieMenu:
     icon: chart-pie
     group: Menus
-    summary: Radial menu — `items` are `label|icon`; slices fire `item:<label>`.
+    summary: "Radial menu — `items` are `label|icon`; slices fire `item:<label>`."
     component: ely_core::menus::PieMenu
     children: none
     props:
@@ -2027,7 +2027,7 @@ elements:
   Breadcrumb:
     icon: chevrons-right
     group: Navigation
-    summary: Path crumbs — `crumbs` entries are `value|label|icon`; `select` fires `index|value`.
+    summary: "Path crumbs — `crumbs` entries are `value|label|icon`; `select` fires `index|value`."
     component: ely_core::navigation::Breadcrumb
     children: none
     props:
@@ -2038,7 +2038,7 @@ elements:
   EditorTabs:
     icon: folder-tabs
     group: Navigation
-    summary: Editor tab strip — `tabs` entries are `id|title|flags` (flags: icon name, dirty, pinned, preview).
+    summary: "Editor tab strip — `tabs` entries are `id|title|flags` (flags: icon name, dirty, pinned, preview)."
     component: ely_core::navigation::EditorTabs
     children: none
     props:
@@ -2050,7 +2050,7 @@ elements:
   NavigationMenu:
     icon: compass
     group: Navigation
-    summary: Dropdown nav bar — `entries` are `Label|link,link,…`.
+    summary: "Dropdown nav bar — `entries` are `Label|link,link,…`."
     component: ely_core::navigation::NavigationMenu
     children: none
     props:
@@ -2061,7 +2061,7 @@ elements:
   TabOverflowMenu:
     icon: chevrons-down
     group: Navigation
-    summary: `…` picker for tabs — `options` are tab values.
+    summary: "`…` picker for tabs — `options` are tab values."
     component: ely_core::navigation::TabOverflowMenu
     children: none
     props:
@@ -2073,7 +2073,7 @@ elements:
   Steps:
     icon: list-ordered
     group: Navigation
-    summary: Numbered step flow — `options` are step names, `current` the step index.
+    summary: "Numbered step flow — `options` are step names, `current` the step index."
     component: ely_core::navigation::Steps
     children: none
     props:
@@ -2085,7 +2085,7 @@ elements:
   Wizard:
     icon: wand-2
     group: Navigation
-    summary: Step-by-step flow — `options` steps, `current` index, first child is the step content.
+    summary: "Step-by-step flow — `options` steps, `current` index, first child is the step content."
     component: ely_core::navigation::Wizard
     children: any
     props:
@@ -2097,7 +2097,7 @@ elements:
   Tabs:
     icon: panel-top
     group: Navigation
-    summary: Tab strip — `options` tab values, first child is the selected panel.
+    summary: "Tab strip — `options` tab values, first child is the selected panel."
     component: ely_core::navigation::Tabs
     children: any
     props:
@@ -2112,7 +2112,7 @@ elements:
   GoToLine:
     icon: arrow-down-to-line
     group: Navigation
-    summary: Jump-to-line field — `lines` is the max; `jump` fires `to|from`.
+    summary: "Jump-to-line field — `lines` is the max; `jump` fires `to|from`."
     component: ely_core::navigation::GoToLine
     children: none
     props:
@@ -2124,7 +2124,7 @@ elements:
   BackForwardNavigation:
     icon: arrow-left-right
     group: Navigation
-    summary: Back/forward history controls — `options` are places, `current` the index.
+    summary: "Back/forward history controls — `options` are places, `current` the index."
     component: ely_core::navigation::BackForwardNavigation
     children: none
     props:
@@ -2135,7 +2135,7 @@ elements:
   LoadMore:
     icon: arrow-down
     group: Navigation
-    summary: "Load more" control — `shown`/`total` counts, `loading` spinner state.
+    summary: "Load-more control — `shown`/`total` counts, `loading` spinner state."
     component: ely_core::navigation::LoadMore
     children: none
     props:
@@ -2147,7 +2147,7 @@ elements:
   NavGroup:
     icon: folder-open-dot
     group: Navigation
-    summary: Collapsible nav section — children render inside (NavItem rows).
+    summary: "Collapsible nav section — children render inside (NavItem rows)."
     component: ely_core::navigation::NavGroup
     children: any
     props:
@@ -2159,7 +2159,7 @@ elements:
   TableOfContents:
     icon: book-open
     group: Navigation
-    summary: Scroll spy — `items` entries are `depth|value|label`; shares a `toc` name with Anchors.
+    summary: "Scroll spy — `items` entries are `depth|value|label`; shares a `toc` name with Anchors."
     component: ely_core::navigation::TableOfContents
     children: none
     props:
@@ -2169,7 +2169,7 @@ elements:
   Anchor:
     icon: anchor
     group: Navigation
-    summary: Scroll target for TableOfContents — same `toc` name links them; wraps children.
+    summary: "Scroll target for TableOfContents — same `toc` name links them; wraps children."
     component: ely_core::navigation::Anchor
     children: any
     props:
