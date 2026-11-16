@@ -980,7 +980,7 @@ impl ForgeView {
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let sel = self.two_way(node, "selected");
-        let show_icons = self.prop(node, "icons").map_or(true, |v| self.truthy(v));
+        let show_icons = self.prop(node, "icons").is_none_or(|v| self.truthy(v));
         let icon_map = self
             .prop(node, "icon-map")
             .map(|v| self.icon_map(v))
@@ -1202,6 +1202,7 @@ impl ForgeView {
 
     /// The `Tree` half of `forge.Files` — rows carry the click/select/context
     /// wiring; `files` wraps it with the search header when needed.
+    #[allow(clippy::too_many_arguments)]
     fn files_tree(
         &mut self,
         node: &Node,
@@ -6110,7 +6111,7 @@ impl ForgeView {
                 let mut hl = FileHighlight::default();
                 for (k, v) in m {
                     match k.as_str() {
-                        "weight" => hl.weight = v.as_str().map(|w| font_weight(w)),
+                        "weight" => hl.weight = v.as_str().map(font_weight),
                         "italic" => hl.italic = v.as_bool().unwrap_or(false),
                         "underline" => hl.underline = v.as_bool().unwrap_or(false),
                         "color" => hl.color = v.as_str().and_then(|c| self.highlight_color(c, cx)),

@@ -1013,13 +1013,17 @@ fn calls_for(view: &ForgeView, node: &Node, event: &str) -> Vec<(String, Vec<Str
         .collect()
 }
 
+type Handler = Rc<dyn Fn(&mut Window, &mut App)>;
+type StrHandler = Rc<dyn Fn(String, &mut Window, &mut App)>;
+type IdxHandler = Rc<dyn Fn(usize, &mut Window, &mut App)>;
+
 /// A no-payload `on <event>:` handler, or `None` when the node has none.
 fn handler(
     view: &ForgeView,
     node: &Node,
     event: &str,
     cx: &mut Context<ForgeView>,
-) -> Option<Rc<dyn Fn(&mut Window, &mut App)>> {
+) -> Option<Handler> {
     let calls = calls_for(view, node, event);
     if calls.is_empty() {
         return None;
@@ -1042,7 +1046,7 @@ fn fire_str(
     node: &Node,
     event: &str,
     cx: &mut Context<ForgeView>,
-) -> Option<Rc<dyn Fn(String, &mut Window, &mut App)>> {
+) -> Option<StrHandler> {
     let calls = calls_for(view, node, event);
     if calls.is_empty() {
         return None;
@@ -1066,7 +1070,7 @@ fn fire_idx(
     node: &Node,
     event: &str,
     cx: &mut Context<ForgeView>,
-) -> Option<Rc<dyn Fn(usize, &mut Window, &mut App)>> {
+) -> Option<IdxHandler> {
     let calls = calls_for(view, node, event);
     if calls.is_empty() {
         return None;
@@ -1111,7 +1115,7 @@ fn change_str(
     node: &Node,
     event: &str,
     cx: &mut Context<ForgeView>,
-) -> Option<Rc<dyn Fn(String, &mut Window, &mut App)>> {
+) -> Option<StrHandler> {
     let path = binding_of(node, "value");
     let calls = calls_for(view, node, event);
     if path.is_none() && calls.is_empty() {

@@ -809,10 +809,10 @@ fn path_resolves(mods: &BTreeMap<String, Module>, path: &str) -> bool {
     }
     let (leaf, mod_segs) = (segs[segs.len() - 1], &segs[1..segs.len() - 1]);
     let module = mod_segs.join("::");
-    if let Some(m) = mods.get(&module) {
-        if m.items.contains(leaf) || m.reexports.contains(leaf) || m.mods.contains_key(leaf) {
-            return true;
-        }
+    if let Some(m) = mods.get(&module)
+        && (m.items.contains(leaf) || m.reexports.contains(leaf) || m.mods.contains_key(leaf))
+    {
+        return true;
     }
     // The leaf may itself be a module (`component: foo::bar`).
     let leaf_mod = if module.is_empty() {

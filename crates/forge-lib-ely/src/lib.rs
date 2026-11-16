@@ -295,7 +295,7 @@ impl Ely {
         self.handles
             .borrow_mut()
             .entry(name.to_owned())
-            .or_insert_with(ScrollHandle::new)
+            .or_default()
             .clone()
     }
 
@@ -398,13 +398,13 @@ fn calls_for(view: &ForgeView, node: &Node, event: &str) -> Vec<(String, Vec<Str
         .collect()
 }
 
+type ChangeFn = Rc<dyn Fn(Json, &mut Window, &mut App)>;
+/// Tree rows bucketed under their first path segment (`a/b` → `a` ▸ `b`).
+type Grouped<'a> = std::collections::BTreeMap<String, Vec<(&'a [String], &'a [String])>>;
+
 /// A `{{binding}}` on `value` plus `on change:` calls → callback taking the
 /// new `Json` value (for selection/toggle/entry controls).
-fn change(
-    view: &ForgeView,
-    node: &Node,
-    cx: &mut Context<ForgeView>,
-) -> Option<Rc<dyn Fn(Json, &mut Window, &mut App)>> {
+fn change(view: &ForgeView, node: &Node, cx: &mut Context<ForgeView>) -> Option<ChangeFn> {
     let path = binding_of(node, "value");
     let calls = calls_for(view, node, "change");
     if path.is_none() && calls.is_empty() {
@@ -481,7 +481,7 @@ fn tree_nodes(paths: &[String]) -> Vec<TreeNode> {
             std::collections::BTreeMap::new();
         for parts in it {
             match parts.split_first() {
-                Some((head, rest)) if rest.is_empty() => {
+                Some((head, [])) => {
                     nodes.push(TreeNode::new(head.trim(), head.trim()));
                 }
                 Some((head, rest)) => grouped.entry(head.trim()).or_default().push(rest),
@@ -3905,13 +3905,10 @@ impl ForgeLibrary for Ely {
                     it: impl Iterator<Item = (&'a [String], &'a [String])>,
                 ) -> Vec<TreeRow> {
                     let mut rows: Vec<TreeRow> = Vec::new();
-                    let mut grouped: std::collections::BTreeMap<
-                        String,
-                        Vec<(&[String], &[String])>,
-                    > = std::collections::BTreeMap::new();
+                    let mut grouped: Grouped<'a> = std::collections::BTreeMap::new();
                     for (path, cells) in it {
                         match path.split_first() {
-                            Some((head, rest)) if rest.is_empty() => rows
+                            Some((head, [])) => rows
                                 .push(TreeRow::new(head.clone(), cells.iter().map(|c| cell_of(c)))),
                             Some((head, rest)) => {
                                 grouped.entry(head.clone()).or_default().push((rest, cells))
@@ -3959,10 +3956,10 @@ impl ForgeLibrary for Ely {
                 if prop_bool(node, "search") {
                     t = t.search(&self.field(node, key, view, _window, cx));
                 }
-                if let Some(rules) = prop_num(node, "filters") {
-                    if let Some(h) = handler(view, node, "filter", cx) {
-                        t = t.filter(rules as usize, h);
-                    }
+                if let Some(rules) = prop_num(node, "filters")
+                    && let Some(h) = handler(view, node, "filter", cx)
+                {
+                    t = t.filter(rules as usize, h);
                 }
                 let columns: Vec<(SharedString, SharedString)> = prop_list(node, "columns")
                     .iter()
