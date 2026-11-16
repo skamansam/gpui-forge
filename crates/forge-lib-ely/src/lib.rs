@@ -18,10 +18,19 @@ use ely_core::feedback::{
     ToastViewport, Toaster,
 };
 use ely_core::forms::{
-    Checkbox, Choice, ChoiceChips, Form, HotkeyInput, InlineEdit, Knob, MultiSelect, NumberInput,
-    PinInput, Radio, RadioCard, Select, Slider,
+    AvatarUpload, COUNTRIES, Calendar, Cascade, Cascader, Checkbox, CheckboxCard, CheckboxGroup,
+    Choice, ChoiceChips, CodeInput, ColorPicker, ColorSwatch, Combobox, CronEditor, DatePicker,
+    DateRangePicker, DateTimePicker, DirtyIndicator, DropZone, DurationPicker, EmailInput,
+    EmojiPicker, ExpressionInput, EyeDropper, FieldArray, FileInput, FontPicker, Form, FormError,
+    FormField, FormLabel, FormSection, GradientEditor, GradientStop, HotkeyInput, IconPicker,
+    InlineEdit, InlineForm, Input, InputAddon, InputEvent, InputGroup, JsonInput, KeyValueInput,
+    Knob, ListBox, ListInput, MaskedInput, MentionInput, MonthPicker, MultiSelect, NumberInput,
+    PasswordInput, PathInput, PhoneInput, PinInput, QuarterPicker, Radio, RadioCard, RadioGroup,
+    RangeSlider, Rating, RegexInput, RelativeDatePicker, RelativeRange, ScrubInput, SearchInput,
+    Select, SignaturePad, Slider, Stepper, Switch, TagInput, TextInput, TimePicker, TimezoneSelect,
+    TransferList, UnitInput, Upload, UploadList, UploadState, UrlInput, WeekPicker, YearPicker,
+    hex as ely_hex, parse_hex,
 };
-use ely_core::forms::{Rating, Stepper, Switch};
 use ely_core::layout::{
     Accordion, AccordionItem, AppShell, AspectRatio, Card, CardHeader, Container, Dock, DockPanel,
     DockSide, Drawer, FloatingPanel, Frame, Masonry, MasterDetail, Page, PaneGroup, PaneId,
@@ -43,6 +52,7 @@ use ely_core::theme::{ContainerSize, ControlSize, IconSize, TextSize};
 use ely_core::typography::{Caption, Heading, Label, Overline, Paragraph, Subtitle, Title};
 use ely_core::typography::{Code, CopyableText, NumberText, PercentText};
 use jiff::Timestamp;
+use jiff::civil::{Date, DateTime, Time};
 use serde_json::Value as Json;
 use std::time::Duration;
 use web_time::Instant;
@@ -53,6 +63,7 @@ use gpui_forge_runtime::forge_spec::{Node, Path, Value};
 use gpui_forge_runtime::render::{ForgeLibrary, ForgeView};
 use std::cell::{Cell, RefCell};
 use std::collections::HashMap;
+use std::rc::Rc;
 use std::sync::OnceLock;
 
 /// `ely.*` adapter — register with `view.register_library(Ely)`.
@@ -118,14 +129,80 @@ impl Ely {
         key: &str,
         window: &mut Window,
         cx: &mut Context<ForgeView>,
-    ) -> Entity<ely_core::forms::TextInput> {
+    ) -> Entity<TextInput> {
         let mut texts = self.texts.borrow_mut();
         if let Some(t) = texts.get(key) {
             return t.clone();
         }
-        let t = cx.new(|cx| ely_core::forms::TextInput::new(window, cx));
+        let t = cx.new(|cx| TextInput::new(window, cx));
         texts.insert(key.to_owned(), t.clone());
         t
+    }
+
+    /// A seeded, wired `Entity<TextInput>`: placeholder/value/disabled/masked
+    /// applied once, `{{binding}}`/`on change:`/`on submit:` via a subscription.
+    fn field(
+        &self,
+        node: &Node,
+        key: &str,
+        view: &ForgeView,
+        window: &mut Window,
+        cx: &mut Context<ForgeView>,
+    ) -> Entity<TextInput> {
+        let fresh = !self.texts.borrow().contains_key(key);
+        let state = self.text_input(key, window, cx);
+        if fresh {
+            let placeholder = prop_str_opt(node, "placeholder");
+            let text = prop_str(node, "value");
+            let masked = prop_bool(node, "masked");
+            let disabled = prop_bool(node, "disabled");
+            state.update(cx, |s, cx| {
+                if let Some(p) = placeholder {
+                    s.set_placeholder(p, cx);
+                }
+                if !text.is_empty() {
+                    s.set_text(text, cx);
+                }
+                if masked {
+                    s.set_masked(true, cx);
+                }
+                if disabled {
+                    s.set_disabled(true, cx);
+                }
+            });
+            let path = binding_of(node, "value");
+            let changes = calls_for(view, node, "change");
+            let submits = calls_for(view, node, "submit");
+            if path.is_some() || !changes.is_empty() || !submits.is_empty() {
+                cx.subscribe(
+                    &state,
+                    move |view, entity, event: &InputEvent, cx| match event {
+                        InputEvent::Changed => {
+                            let text = entity.read(cx).text().to_string();
+                            if let Some(path) = &path {
+                                view.update_state(path, Json::String(text.clone()), cx);
+                            }
+                            for (name, args) in &changes {
+                                let mut a = args.clone();
+                                a.push(text.clone());
+                                view.fire_call(name, a, cx);
+                            }
+                        }
+                        InputEvent::Submit => {
+                            let text = entity.read(cx).text().to_string();
+                            for (name, args) in &submits {
+                                let mut a = args.clone();
+                                a.push(text.clone());
+                                view.fire_call(name, a, cx);
+                            }
+                        }
+                        _ => {}
+                    },
+                )
+                .detach();
+            }
+        }
+        state
     }
 
     /// A proxy view rendering `child` in a later pass — safe to hand to lazy
@@ -275,14 +352,14 @@ fn change(
     view: &ForgeView,
     node: &Node,
     cx: &mut Context<ForgeView>,
-) -> Option<impl Fn(Json, &mut Window, &mut App) + 'static> {
+) -> Option<Rc<dyn Fn(Json, &mut Window, &mut App)>> {
     let path = binding_of(node, "value");
     let calls = calls_for(view, node, "change");
     if path.is_none() && calls.is_empty() {
         return None;
     }
     let weak = cx.entity().downgrade();
-    Some(move |v: Json, _w: &mut Window, cx: &mut App| {
+    Some(Rc::new(move |v: Json, _w: &mut Window, cx: &mut App| {
         if let Some(path) = path.clone() {
             let v = v.clone();
             try_update(&weak, cx, |view, cx| view.update_state(&path, v, cx));
@@ -291,7 +368,7 @@ fn change(
             let (name, args) = (name.clone(), args.clone());
             try_update(&weak, cx, |view, cx| view.fire_call(&name, args, cx));
         }
-    })
+    }))
 }
 
 /// `on <event>:` calls with one runtime string argument appended — for
@@ -1684,6 +1761,625 @@ impl ForgeLibrary for Ely {
                 );
                 Some(w.into_any_element())
             }
+            "Input" => {
+                Some(Input::new(&self.field(node, key, view, _window, cx)).into_any_element())
+            }
+            "PasswordInput" => Some(
+                PasswordInput::new(&self.field(node, key, view, _window, cx)).into_any_element(),
+            ),
+            "EmailInput" => {
+                Some(EmailInput::new(&self.field(node, key, view, _window, cx)).into_any_element())
+            }
+            "UrlInput" => {
+                Some(UrlInput::new(&self.field(node, key, view, _window, cx)).into_any_element())
+            }
+            "SearchInput" => {
+                let mut s =
+                    SearchInput::new(key.to_string(), &self.field(node, key, view, _window, cx));
+                if let Some(h) = change_str(view, node, "pick", cx) {
+                    s = s.on_pick(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                Some(s.into_any_element())
+            }
+            "MaskedInput" => Some(
+                MaskedInput::new(
+                    key.to_string(),
+                    &self.field(node, key, view, _window, cx),
+                    prop_str(node, "mask"),
+                )
+                .into_any_element(),
+            ),
+            "PhoneInput" => {
+                let want = prop_str(node, "country");
+                let country = COUNTRIES
+                    .iter()
+                    .find(|c| c.0 == want.as_str())
+                    .map(|c| c.0)
+                    .unwrap_or("US");
+                Some(
+                    PhoneInput::new(
+                        key.to_string(),
+                        &self.field(node, key, view, _window, cx),
+                        country,
+                    )
+                    .into_any_element(),
+                )
+            }
+            "PathInput" => {
+                let mut p =
+                    PathInput::new(key.to_string(), &self.field(node, key, view, _window, cx));
+                if let Some(h) = change_str(view, node, "choose", cx) {
+                    p = p.on_choose(move |v, w, cx| h(v.display().to_string(), w, cx));
+                }
+                Some(p.into_any_element())
+            }
+            "RegexInput" => {
+                Some(RegexInput::new(&self.field(node, key, view, _window, cx)).into_any_element())
+            }
+            "ExpressionInput" => Some(
+                ExpressionInput::new(&self.field(node, key, view, _window, cx)).into_any_element(),
+            ),
+            "CodeInput" => {
+                Some(CodeInput::new(&self.field(node, key, view, _window, cx)).into_any_element())
+            }
+            "JsonInput" => {
+                Some(JsonInput::new(&self.field(node, key, view, _window, cx)).into_any_element())
+            }
+            "MentionInput" => Some(
+                MentionInput::new(key.to_string(), &self.field(node, key, view, _window, cx))
+                    .into_any_element(),
+            ),
+            "Combobox" => {
+                let mut c = Combobox::new(
+                    key.to_string(),
+                    &self.field(node, key, view, _window, cx),
+                    choices(node),
+                );
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    c = c.on_change(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                Some(c.into_any_element())
+            }
+            "FontPicker" => Some(
+                FontPicker::new(key.to_string(), &self.field(node, key, view, _window, cx))
+                    .into_any_element(),
+            ),
+            "CronEditor" => Some(
+                CronEditor::new(key.to_string(), &self.field(node, key, view, _window, cx))
+                    .into_any_element(),
+            ),
+            "TimezoneSelect" => Some(
+                TimezoneSelect::new(key.to_string(), &self.field(node, key, view, _window, cx))
+                    .into_any_element(),
+            ),
+            "InputGroup" => {
+                let mut g = InputGroup::new(&self.field(node, key, view, _window, cx));
+                for entry in prop_list(node, "before") {
+                    g = g.before(InputAddon::text(entry));
+                }
+                for entry in prop_list(node, "after") {
+                    g = g.after(InputAddon::text(entry));
+                }
+                for (i, child) in node.children.iter().enumerate() {
+                    let addon = InputAddon::new(self.child_view(child, &format!("{key}/{i}"), cx));
+                    g = if prop_str(child, "slot") == "after" {
+                        g.after(addon)
+                    } else {
+                        g.before(addon)
+                    };
+                }
+                Some(g.into_any_element())
+            }
+            "CheckboxCard" => {
+                let mut c = CheckboxCard::new(
+                    key.to_string(),
+                    prop_bool(node, "checked"),
+                    prop_str(node, "title"),
+                );
+                if let Some(h) = change(view, node, cx) {
+                    c = c.on_change(move |on, w, cx| h(Json::Bool(on), w, cx));
+                }
+                Some(c.into_any_element())
+            }
+            "CheckboxGroup" => {
+                let mut g = CheckboxGroup::new(key.to_string(), choices(node));
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    g = g.on_change(move |v, w, cx| h(v.join(","), w, cx));
+                }
+                Some(g.into_any_element())
+            }
+            "RadioGroup" => {
+                let mut g = RadioGroup::new(key.to_string(), choices(node));
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    g = g.on_change(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                Some(g.into_any_element())
+            }
+            "ListBox" => {
+                let mut l = ListBox::new(key.to_string(), choices(node));
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    l = l.on_change(move |v, w, cx| h(v.join(","), w, cx));
+                }
+                Some(l.into_any_element())
+            }
+            "Cascader" => {
+                let mut roots: Vec<Cascade> = Vec::new();
+                for path in prop_list(node, "tree") {
+                    let mut cursor = &mut roots;
+                    for part in path.split('/').filter(|p| !p.is_empty()) {
+                        let pos = match cursor.iter().position(|c| c.value == part) {
+                            Some(i) => i,
+                            None => {
+                                cursor.push(Cascade::new(part.trim(), part.trim()));
+                                cursor.len() - 1
+                            }
+                        };
+                        cursor = &mut cursor[pos].children;
+                    }
+                }
+                let mut c = Cascader::new(key.to_string(), roots);
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    c = c.on_change(move |v, w, cx| h(v.join("/"), w, cx));
+                }
+                Some(c.into_any_element())
+            }
+            "RangeSlider" => {
+                let mut s = RangeSlider::new(
+                    key.to_string(),
+                    prop_num(node, "low").unwrap_or(0.0),
+                    prop_num(node, "high").unwrap_or(100.0),
+                );
+                if let Some(h) = change(view, node, cx) {
+                    s = s.on_change(move |(lo, hi), w, cx| {
+                        h(
+                            Json::Array(vec![
+                                serde_json::Number::from_f64(lo)
+                                    .map(Json::Number)
+                                    .unwrap_or(Json::Null),
+                                serde_json::Number::from_f64(hi)
+                                    .map(Json::Number)
+                                    .unwrap_or(Json::Null),
+                            ]),
+                            w,
+                            cx,
+                        )
+                    });
+                }
+                Some(s.into_any_element())
+            }
+            "TagInput" => {
+                let mut t = TagInput::new(key.to_string(), prop_list(node, "tags"));
+                if let Some(p) = prop_str_opt(node, "placeholder") {
+                    t = t.placeholder(p);
+                }
+                t = t.suggestions(choices(node));
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    t = t.on_change(move |v, w, cx| {
+                        h(
+                            v.iter()
+                                .map(|s| s.to_string())
+                                .collect::<Vec<_>>()
+                                .join(","),
+                            w,
+                            cx,
+                        )
+                    });
+                }
+                Some(t.into_any_element())
+            }
+            "TransferList" => {
+                let mut t = TransferList::new(key.to_string(), choices(node));
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    t = t.on_change(move |v, w, cx| h(v.join(","), w, cx));
+                }
+                Some(t.into_any_element())
+            }
+            "UnitInput" => {
+                let units = prop_list(node, "units");
+                let unit = prop_str(node, "unit");
+                let mut u = UnitInput::new(
+                    key.to_string(),
+                    prop_num(node, "value").unwrap_or(0.0),
+                    units.iter().cloned(),
+                    if unit.is_empty() {
+                        units.first().cloned().unwrap_or_default()
+                    } else {
+                        unit
+                    },
+                );
+                if let Some(h) = change(view, node, cx) {
+                    u = u.on_change(move |v, w, cx| {
+                        h(
+                            serde_json::Number::from_f64(v)
+                                .map(Json::Number)
+                                .unwrap_or(Json::Null),
+                            w,
+                            cx,
+                        )
+                    });
+                }
+                if let Some(h) = change_str(view, node, "unit", cx) {
+                    u = u.on_unit(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                Some(u.into_any_element())
+            }
+            "FieldArray" => {
+                let mut f = FieldArray::new(key.to_string());
+                if let Some(l) = prop_str_opt(node, "add_label") {
+                    f = f.add_label(l);
+                }
+                for v in self.child_views(node, key, cx) {
+                    f = f.row(v);
+                }
+                if let Some(h) = handler(view, node, "add", cx) {
+                    f = f.on_add(h);
+                }
+                if let Some(h) = change(view, node, cx) {
+                    f = f.on_remove(move |i, w, cx| h(Json::from(i), w, cx));
+                }
+                Some(f.into_any_element())
+            }
+            "KeyValueInput" => {
+                let seed = prop_list(node, "pairs").into_iter().filter_map(|e| {
+                    let mut p = e.splitn(2, '|');
+                    Some((
+                        p.next()?.trim().to_owned(),
+                        p.next().unwrap_or("").trim().to_owned(),
+                    ))
+                });
+                let mut k = KeyValueInput::new(key.to_string(), seed);
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    k = k.on_change(move |v, w, cx| h(format!("{v:?}"), w, cx));
+                }
+                Some(k.into_any_element())
+            }
+            "ListInput" => {
+                let mut l = ListInput::new(key.to_string(), prop_list(node, "items"));
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    l = l.on_change(move |v, w, cx| h(v.join(","), w, cx));
+                }
+                Some(l.into_any_element())
+            }
+            "FileInput" => {
+                let paths = prop_list(node, "paths")
+                    .into_iter()
+                    .map(std::path::PathBuf::from);
+                let mut f = FileInput::new(key.to_string(), paths);
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    f = f.on_change(move |v, w, cx| {
+                        h(
+                            v.iter()
+                                .map(|p: &std::path::PathBuf| p.display().to_string())
+                                .collect::<Vec<_>>()
+                                .join(","),
+                            w,
+                            cx,
+                        )
+                    });
+                }
+                Some(f.into_any_element())
+            }
+            "DropZone" => {
+                let mut d = DropZone::new(key.to_string());
+                if let Some(h) = change_str(view, node, "drop", cx) {
+                    d = d.on_drop(move |v, w, cx| {
+                        h(
+                            v.iter()
+                                .map(|p: &std::path::PathBuf| p.display().to_string())
+                                .collect::<Vec<_>>()
+                                .join(","),
+                            w,
+                            cx,
+                        )
+                    });
+                }
+                Some(d.into_any_element())
+            }
+            "UploadList" => {
+                let uploads = prop_list(node, "uploads").into_iter().filter_map(|e| {
+                    let mut p = e.splitn(3, '|');
+                    let (name, bytes, raw) = (
+                        p.next()?.trim().to_owned(),
+                        p.next()
+                            .and_then(|b| b.trim().parse::<u64>().ok())
+                            .unwrap_or(0),
+                        p.next().unwrap_or("0").trim().to_owned(),
+                    );
+                    let state = if let Some(why) = raw.strip_prefix("failed:") {
+                        UploadState::Failed(why.to_owned().into())
+                    } else if raw == "done" {
+                        UploadState::Done
+                    } else {
+                        UploadState::Uploading(raw.parse().unwrap_or(0.0))
+                    };
+                    Some(Upload {
+                        name: name.into(),
+                        bytes,
+                        state,
+                    })
+                });
+                let mut u = UploadList::new(key.to_string(), uploads);
+                if let Some(h) = handler(view, node, "cancel", cx) {
+                    u = u.on_cancel(move |i, w, cx| {
+                        let _ = i;
+                        h(w, cx)
+                    });
+                }
+                if let Some(h) = handler(view, node, "retry", cx) {
+                    u = u.on_retry(move |i, w, cx| {
+                        let _ = i;
+                        h(w, cx)
+                    });
+                }
+                if let Some(h) = handler(view, node, "remove", cx) {
+                    u = u.on_remove(move |i, w, cx| {
+                        let _ = i;
+                        h(w, cx)
+                    });
+                }
+                Some(u.into_any_element())
+            }
+            "AvatarUpload" => {
+                let mut a = AvatarUpload::new(
+                    key.to_string(),
+                    Avatar::new(format!("{key}/avatar"), prop_str(node, "name")),
+                );
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    a = a.on_change(move |v, w, cx| h(v.display().to_string(), w, cx));
+                }
+                Some(a.into_any_element())
+            }
+            "SignaturePad" => {
+                Some(SignaturePad::new(key.to_string(), Vec::new()).into_any_element())
+            }
+            "IconPicker" => {
+                let mut p = IconPicker::new(key.to_string());
+                if let Some(i) = prop_str_opt(node, "value").and_then(|n| icon_named(&n)) {
+                    p = p.selected(i);
+                }
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    p = p.on_change(move |i, w, cx| h(i.name().to_string(), w, cx));
+                }
+                Some(p.into_any_element())
+            }
+            "EmojiPicker" => {
+                let mut p = EmojiPicker::new(key.to_string());
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    p = p.on_change(move |v, w, cx| h(v.to_string(), w, cx));
+                }
+                Some(p.into_any_element())
+            }
+            "EyeDropper" => {
+                let mut d = EyeDropper::new(key.to_string());
+                if let Some(h) = change_str(view, node, "pick", cx) {
+                    d = d.on_pick(move |v, w, cx| h(ely_hex(v.into()), w, cx));
+                }
+                Some(d.into_any_element())
+            }
+            "ColorPicker" => {
+                let color: Hsla = parse_hex(&prop_str(node, "value"))
+                    .map(Into::into)
+                    .unwrap_or_else(|_| hsla(0.0, 0.0, 1.0, 1.0));
+                let mut p = ColorPicker::new(key.to_string(), color);
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    p = p.on_change(move |v, w, cx| h(ely_hex(v.into()), w, cx));
+                }
+                Some(p.into_any_element())
+            }
+            "ColorSwatch" => {
+                let color: Hsla = parse_hex(&prop_str(node, "color"))
+                    .map(Into::into)
+                    .unwrap_or_else(|_| hsla(0.0, 0.0, 0.5, 1.0));
+                Some(ColorSwatch::new(key.to_string(), color).into_any_element())
+            }
+            "GradientEditor" => {
+                let stops = prop_list(node, "stops").into_iter().filter_map(|e| {
+                    let mut p = e.splitn(2, '|');
+                    let at = p.next()?.trim().parse::<f32>().ok()?;
+                    let color: Hsla = parse_hex(p.next()?.trim()).map(Into::into).ok()?;
+                    Some(GradientStop { at, color })
+                });
+                let mut g = GradientEditor::new(key.to_string(), stops);
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    g = g.on_change(move |v, w, cx| {
+                        h(
+                            v.iter()
+                                .map(|s: &GradientStop| {
+                                    format!("{}|{}", s.at, ely_hex(s.color.into()))
+                                })
+                                .collect::<Vec<_>>()
+                                .join(","),
+                            w,
+                            cx,
+                        )
+                    });
+                }
+                Some(g.into_any_element())
+            }
+            "Calendar" => {
+                let mut c = Calendar::new(key.to_string());
+                if let Ok(d) = prop_str(node, "selected").parse::<Date>() {
+                    c = c.selected(d);
+                }
+                if let Some(h) = change_str(view, node, "pick", cx) {
+                    c = c.on_pick(move |d, w, cx| h(d.to_string(), w, cx));
+                }
+                Some(c.into_any_element())
+            }
+            "DatePicker" => {
+                let mut p = DatePicker::new(
+                    key.to_string(),
+                    prop_str(node, "value").parse::<Date>().ok(),
+                );
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    p = p.on_change(move |d, w, cx| h(d.to_string(), w, cx));
+                }
+                Some(p.into_any_element())
+            }
+            "DateRangePicker" => {
+                let value = match (
+                    prop_str(node, "start").parse::<Date>(),
+                    prop_str(node, "end").parse::<Date>(),
+                ) {
+                    (Ok(a), Ok(b)) => Some((a, b)),
+                    _ => None,
+                };
+                let mut p = DateRangePicker::new(key.to_string(), value);
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    p = p.on_change(move |(a, b), w, cx| h(format!("{a}|{b}"), w, cx));
+                }
+                Some(p.into_any_element())
+            }
+            "WeekPicker" => {
+                let mut p = WeekPicker::new(
+                    key.to_string(),
+                    prop_num(node, "year")
+                        .and_then(|y| prop_num(node, "week").map(|w| (y as i16, w as i8))),
+                );
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    p = p.on_change(move |(y, wk), w, cx| h(format!("{y}|{wk}"), w, cx));
+                }
+                Some(p.into_any_element())
+            }
+            "MonthPicker" => {
+                let mut p = MonthPicker::new(
+                    key.to_string(),
+                    prop_num(node, "year")
+                        .and_then(|y| prop_num(node, "month").map(|m| (y as i16, m as i8))),
+                );
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    p = p.on_change(move |(y, m), w, cx| h(format!("{y}|{m}"), w, cx));
+                }
+                Some(p.into_any_element())
+            }
+            "QuarterPicker" => {
+                let mut p = QuarterPicker::new(
+                    key.to_string(),
+                    prop_num(node, "year")
+                        .and_then(|y| prop_num(node, "quarter").map(|q| (y as i16, q as i8))),
+                );
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    p = p.on_change(move |(y, q), w, cx| h(format!("{y}|{q}"), w, cx));
+                }
+                Some(p.into_any_element())
+            }
+            "YearPicker" => {
+                let mut p =
+                    YearPicker::new(key.to_string(), prop_num(node, "year").map(|y| y as i16));
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    p = p.on_change(move |y, w, cx| h(y.to_string(), w, cx));
+                }
+                Some(p.into_any_element())
+            }
+            "TimePicker" => {
+                let mut p = TimePicker::new(
+                    key.to_string(),
+                    prop_str(node, "value").parse::<Time>().ok(),
+                );
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    p = p.on_change(move |t, w, cx| h(t.to_string(), w, cx));
+                }
+                Some(p.into_any_element())
+            }
+            "DateTimePicker" => {
+                let mut p = DateTimePicker::new(
+                    key.to_string(),
+                    prop_str(node, "value").parse::<DateTime>().ok(),
+                );
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    p = p.on_change(move |t, w, cx| h(t.to_string(), w, cx));
+                }
+                Some(p.into_any_element())
+            }
+            "DurationPicker" => {
+                let mut p = DurationPicker::new(
+                    key.to_string(),
+                    Duration::from_secs_f64(prop_num(node, "seconds").unwrap_or(0.0).max(0.0)),
+                );
+                if let Some(h) = change(view, node, cx) {
+                    p = p.on_change(move |d, w, cx| {
+                        h(
+                            serde_json::Number::from_f64(d.as_secs_f64())
+                                .map(Json::Number)
+                                .unwrap_or(Json::Null),
+                            w,
+                            cx,
+                        )
+                    });
+                }
+                Some(p.into_any_element())
+            }
+            "RelativeDatePicker" => {
+                let range = match prop_str(node, "range").as_str() {
+                    "Yesterday" => Some(RelativeRange::Yesterday),
+                    "Last7Days" => Some(RelativeRange::Last7Days),
+                    "Last30Days" => Some(RelativeRange::Last30Days),
+                    "ThisMonth" => Some(RelativeRange::ThisMonth),
+                    "LastMonth" => Some(RelativeRange::LastMonth),
+                    "Today" => Some(RelativeRange::Today),
+                    _ => None,
+                };
+                let mut p = RelativeDatePicker::new(key.to_string(), range);
+                if let Some(h) = change_str(view, node, "change", cx) {
+                    p = p.on_change(move |r, (a, b), w, cx| h(format!("{r:?}|{a}|{b}"), w, cx));
+                }
+                Some(p.into_any_element())
+            }
+            "ScrubInput" => {
+                let mut s = ScrubInput::new(
+                    key.to_string(),
+                    prop_str(node, "label"),
+                    prop_num(node, "value").unwrap_or(0.0),
+                );
+                if let Some(h) = change(view, node, cx) {
+                    s = s.on_change(move |v, w, cx| {
+                        h(
+                            serde_json::Number::from_f64(v)
+                                .map(Json::Number)
+                                .unwrap_or(Json::Null),
+                            w,
+                            cx,
+                        )
+                    });
+                }
+                Some(s.into_any_element())
+            }
+            "FormSection" => {
+                let mut f = FormSection::new(prop_str(node, "title"));
+                f.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(f.into_any_element())
+            }
+            "FormLabel" => {
+                Some(FormLabel::new(key.to_string(), prop_str(node, "text")).into_any_element())
+            }
+            "FormError" => {
+                Some(FormError::new(key.to_string(), prop_str(node, "text")).into_any_element())
+            }
+            "FormField" => {
+                let mut f = FormField::new(key.to_string(), prop_str(node, "label"));
+                f.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(f.into_any_element())
+            }
+            "InlineForm" => {
+                let mut f = InlineForm::new();
+                f.extend(
+                    self.child_views(node, key, cx)
+                        .into_iter()
+                        .map(|v| v.into_any_element()),
+                );
+                Some(f.into_any_element())
+            }
+            "DirtyIndicator" => Some(
+                DirtyIndicator::new(key.to_string(), prop_bool(node, "dirty")).into_any_element(),
+            ),
             _ => None,
         }
     }

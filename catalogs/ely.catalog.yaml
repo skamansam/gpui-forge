@@ -226,6 +226,7 @@ elements:
     group: Display
     summary: One timeline entry (child of Timeline); children render inside the entry body.
     component: ely_core::data_display::TimelineItem
+    content: title
     props:
       title: string
       time: string
@@ -1027,7 +1028,7 @@ elements:
   Page:
     icon: file
     group: Layout
-    summary: Titled page — `slot: actions` children go to the header.
+    summary: "Titled page — `slot: actions` children go to the header."
     component: ely_core::layout::Page
     props:
       title: string
@@ -1152,7 +1153,7 @@ elements:
   Card:
     icon: square
     group: Layout
-    summary: Flat surface — `slot: header` child makes a CardHeader, `slot: footer` docks below.
+    summary: "Flat surface — `slot: header` child makes a CardHeader, `slot: footer` docks below."
     component: ely_core::layout::Card
 
   CardHeader:
@@ -1175,3 +1176,656 @@ elements:
     group: Layout
     summary: Recessed container on the sunken tone.
     component: ely_core::layout::Well
+
+  Input:
+    icon: text-cursor-input
+    group: Forms
+    summary: Text field backed by a TextInput entity — binding + change/submit events.
+    component: ely_core::forms::Input
+    children: none
+    props:
+      value: string
+      placeholder: string
+      disabled: bool
+    events: {change:, submit:}
+
+  PasswordInput:
+    icon: key-round
+    group: Forms
+    summary: Masked text field.
+    component: ely_core::forms::PasswordInput
+    children: none
+    props:
+      value: string
+      placeholder: string
+      disabled: bool
+    events: {change:, submit:}
+
+  EmailInput:
+    icon: mail
+    group: Forms
+    summary: Email-validating text field.
+    component: ely_core::forms::EmailInput
+    children: none
+    props:
+      value: string
+      placeholder: string
+      disabled: bool
+    events: {change:, submit:}
+
+  UrlInput:
+    icon: link
+    group: Forms
+    summary: URL-validating text field.
+    component: ely_core::forms::UrlInput
+    children: none
+    props:
+      value: string
+      placeholder: string
+      disabled: bool
+    events: {change:, submit:}
+
+  SearchInput:
+    icon: search
+    group: Forms
+    summary: Search field — `pick` fires when a suggestion is chosen.
+    component: ely_core::forms::SearchInput
+    children: none
+    props:
+      value: string
+      placeholder: string
+      disabled: bool
+    events: {change:, submit:, pick:}
+
+  MaskedInput:
+    icon: brackets
+    group: Forms
+    summary: Pattern-masked text field.
+    component: ely_core::forms::MaskedInput
+    children: none
+    props:
+      value: string
+      mask: string
+      placeholder: string
+      disabled: bool
+    events: {change:, submit:}
+
+  PhoneInput:
+    icon: phone
+    group: Forms
+    summary: Phone field with country picker — `country` is a code like US/GB/DE.
+    component: ely_core::forms::PhoneInput
+    children: none
+    props:
+      value: string
+      country: string
+      placeholder: string
+      disabled: bool
+    events: {change:, submit:}
+
+  PathInput:
+    icon: folder-open
+    group: Forms
+    summary: Filesystem path field — `choose` fires with the picked path.
+    component: ely_core::forms::PathInput
+    children: none
+    props:
+      value: string
+      placeholder: string
+      disabled: bool
+    events: {change:, choose:}
+
+  RegexInput:
+    icon: regex
+    group: Forms
+    summary: Regex-validating text field.
+    component: ely_core::forms::RegexInput
+    children: none
+    props:
+      value: string
+      placeholder: string
+      disabled: bool
+    events: {change:, submit:}
+
+  ExpressionInput:
+    icon: sigma
+    group: Forms
+    summary: Expression-editing field.
+    component: ely_core::forms::ExpressionInput
+    children: none
+    props:
+      value: string
+      placeholder: string
+      disabled: bool
+    events: {change:, submit:}
+
+  CodeInput:
+    icon: code
+    group: Forms
+    summary: Syntax-aware code editing field.
+    component: ely_core::forms::CodeInput
+    children: none
+    props:
+      value: string
+      placeholder: string
+      disabled: bool
+    events: {change:, submit:}
+
+  JsonInput:
+    icon: braces
+    group: Forms
+    summary: JSON-validating editing field.
+    component: ely_core::forms::JsonInput
+    children: none
+    props:
+      value: string
+      placeholder: string
+      disabled: bool
+    events: {change:, submit:}
+
+  MentionInput:
+    icon: at-sign
+    group: Forms
+    summary: Field with @-mention support.
+    component: ely_core::forms::MentionInput
+    children: none
+    props:
+      value: string
+      placeholder: string
+      disabled: bool
+    events: {change:, submit:}
+
+  Combobox:
+    icon: chevrons-up-down
+    group: Forms
+    summary: Filterable dropdown backed by a TextInput entity.
+    component: ely_core::forms::Combobox
+    children: none
+    props:
+      options: list<string>
+      value: string
+      placeholder: string
+      disabled: bool
+    events: {change:, submit:}
+
+  FontPicker:
+    icon: type
+    group: Forms
+    summary: Font family chooser.
+    component: ely_core::forms::FontPicker
+    children: none
+    props:
+      value: string
+      placeholder: string
+      disabled: bool
+    events: {change:}
+
+  CronEditor:
+    icon: calendar-clock
+    group: Forms
+    summary: Cron schedule editor.
+    component: ely_core::forms::CronEditor
+    children: none
+    props:
+      value: string
+      disabled: bool
+    events: {change:}
+
+  TimezoneSelect:
+    icon: globe
+    group: Forms
+    summary: Timezone chooser backed by a TextInput entity.
+    component: ely_core::forms::TimezoneSelect
+    children: none
+    props:
+      value: string
+      placeholder: string
+      disabled: bool
+    events: {change:}
+
+  InputGroup:
+    icon: panel-left
+    group: Forms
+    summary: Field flanked by addons — `before`/`after` text, children become addons via `slot`.
+    component: ely_core::forms::InputGroup
+    children: any
+    props:
+      value: string
+      before: list<string>
+      after: list<string>
+    events: {change:}
+
+  CheckboxCard:
+    icon: square-check-big
+    group: Forms
+    summary: Checkbox rendered as a titled card.
+    component: ely_core::forms::CheckboxCard
+    children: none
+    props:
+      title: string
+      checked: bool
+      value: bool
+    events: {change:}
+
+  CheckboxGroup:
+    icon: list-checks
+    group: Forms
+    summary: Group of checkboxes over `options`.
+    component: ely_core::forms::CheckboxGroup
+    children: none
+    props:
+      options: list<string>
+      value: string
+    events: {change:}
+
+  RadioGroup:
+    icon: circle-dot
+    group: Forms
+    summary: Radio group over `options`.
+    component: ely_core::forms::RadioGroup
+    children: none
+    props:
+      options: list<string>
+      value: string
+    events: {change:}
+
+  ListBox:
+    icon: list
+    group: Forms
+    summary: Scrollable list box over `options`.
+    component: ely_core::forms::ListBox
+    children: none
+    props:
+      options: list<string>
+      value: string
+    events: {change:}
+
+  Cascader:
+    icon: network
+    group: Forms
+    summary: Hierarchical picker — `tree` entries are `/`-separated paths.
+    component: ely_core::forms::Cascader
+    children: none
+    props:
+      tree: list<string>
+      value: string
+    events: {change:}
+
+  TagInput:
+    icon: tags
+    group: Forms
+    summary: Tag editor — `tags` seeds, `options` are suggestions.
+    component: ely_core::forms::TagInput
+    children: none
+    props:
+      tags: list<string>
+      options: list<string>
+      placeholder: string
+      value: string
+    events: {change:}
+
+  RangeSlider:
+    icon: sliders-horizontal
+    group: Forms
+    summary: Two-thumb range slider — value is a [low, high] pair.
+    component: ely_core::forms::RangeSlider
+    children: none
+    props:
+      low: number
+      high: number
+      value: number
+    events: {change:}
+
+  TransferList:
+    icon: arrow-left-right
+    group: Forms
+    summary: Dual-pane item transfer over `options`.
+    component: ely_core::forms::TransferList
+    children: none
+    props:
+      options: list<string>
+      value: string
+    events: {change:}
+
+  UnitInput:
+    icon: ruler
+    group: Forms
+    summary: Numeric field with unit picker — `units` list + `unit` selection.
+    component: ely_core::forms::UnitInput
+    children: none
+    props:
+      value: number
+      units: list<string>
+      unit: string
+    events: {change:, unit:}
+
+  FieldArray:
+    icon: rows-3
+    group: Forms
+    summary: Repeating rows with add/remove — children render as rows.
+    component: ely_core::forms::FieldArray
+    children: any
+    props:
+      add_label: string
+      value: number
+    events: {add:, change:}
+
+  KeyValueInput:
+    icon: table-2
+    group: Forms
+    summary: Key/value pair editor — `pairs` entries are `key|value`.
+    component: ely_core::forms::KeyValueInput
+    children: none
+    props:
+      pairs: list<string>
+      value: string
+    events: {change:}
+
+  ListInput:
+    icon: list-plus
+    group: Forms
+    summary: Editable list of string items.
+    component: ely_core::forms::ListInput
+    children: none
+    props:
+      items: list<string>
+      value: string
+    events: {change:}
+
+  FileInput:
+    icon: file-up
+    group: Forms
+    summary: File picker — `paths` seeds selections.
+    component: ely_core::forms::FileInput
+    children: none
+    props:
+      paths: list<string>
+      value: string
+    events: {change:}
+
+  DropZone:
+    icon: download
+    group: Forms
+    summary: Drag-and-drop file target — `drop` fires with paths.
+    component: ely_core::forms::DropZone
+    children: none
+    props:
+      value: string
+    events: {drop:}
+
+  UploadList:
+    icon: list-todo
+    group: Forms
+    summary: Upload progress list — `uploads` entries are `name|bytes|state` (state = pct, done, or failed:why).
+    component: ely_core::forms::UploadList
+    children: none
+    props:
+      uploads: list<string>
+    events: {cancel:, retry:, remove:}
+
+  AvatarUpload:
+    icon: user-round-pen
+    group: Forms
+    summary: Avatar picker — `change` fires with the chosen path.
+    component: ely_core::forms::AvatarUpload
+    children: none
+    props:
+      name: string
+      value: string
+    events: {change:}
+
+  SignaturePad:
+    icon: pen-line
+    group: Forms
+    summary: Freehand signature capture pad.
+    component: ely_core::forms::SignaturePad
+    children: none
+
+  IconPicker:
+    icon: smile
+    group: Forms
+    summary: Icon chooser — `value`/`change` carry icon names.
+    component: ely_core::forms::IconPicker
+    children: none
+    props:
+      value: string
+    events: {change:}
+
+  EmojiPicker:
+    icon: smile-plus
+    group: Forms
+    summary: Emoji chooser — `change` fires with the emoji.
+    component: ely_core::forms::EmojiPicker
+    children: none
+    props:
+      value: string
+    events: {change:}
+
+  EyeDropper:
+    icon: pipette
+    group: Forms
+    summary: Screen color picker — `pick` fires with a hex color.
+    component: ely_core::forms::EyeDropper
+    children: none
+    props:
+      value: string
+    events: {pick:}
+
+  ColorPicker:
+    icon: palette
+    group: Forms
+    summary: HSL color picker — values are `#rrggbb` hex strings.
+    component: ely_core::forms::ColorPicker
+    children: none
+    props:
+      value: color
+    events: {change:}
+
+  ColorSwatch:
+    icon: square
+    group: Forms
+    summary: Static color chip.
+    component: ely_core::forms::ColorSwatch
+    children: none
+    props:
+      color: color
+
+  GradientEditor:
+    icon: blend
+    group: Forms
+    summary: Gradient stop editor — `stops` entries are `pos|#hex`.
+    component: ely_core::forms::GradientEditor
+    children: none
+    props:
+      stops: list<string>
+      value: string
+    events: {change:}
+
+  Calendar:
+    icon: calendar
+    group: Forms
+    summary: Month calendar — `selected` ISO date, `pick` fires on day click.
+    component: ely_core::forms::Calendar
+    children: none
+    props:
+      selected: string
+      value: string
+    events: {pick:}
+
+  DatePicker:
+    icon: calendar-days
+    group: Forms
+    summary: Single-date picker — `value` is an ISO `YYYY-MM-DD` string.
+    component: ely_core::forms::DatePicker
+    children: none
+    props:
+      value: string
+    events: {change:}
+
+  DateRangePicker:
+    icon: calendar-range
+    group: Forms
+    summary: Start/end date range picker — ISO `start`/`end` props.
+    component: ely_core::forms::DateRangePicker
+    children: none
+    props:
+      start: string
+      end: string
+      value: string
+    events: {change:}
+
+  WeekPicker:
+    icon: calendar-fold
+    group: Forms
+    summary: ISO week picker — `year` + `week` numbers.
+    component: ely_core::forms::WeekPicker
+    children: none
+    props:
+      year: number
+      week: number
+      value: string
+    events: {change:}
+
+  MonthPicker:
+    icon: calendar-1
+    group: Forms
+    summary: Month picker — `year` + `month` numbers.
+    component: ely_core::forms::MonthPicker
+    children: none
+    props:
+      year: number
+      month: number
+      value: string
+    events: {change:}
+
+  QuarterPicker:
+    icon: pie-chart
+    group: Forms
+    summary: Quarter picker — `year` + `quarter` numbers.
+    component: ely_core::forms::QuarterPicker
+    children: none
+    props:
+      year: number
+      quarter: number
+      value: string
+    events: {change:}
+
+  YearPicker:
+    icon: calendar-heart
+    group: Forms
+    summary: Year picker — `year` number.
+    component: ely_core::forms::YearPicker
+    children: none
+    props:
+      year: number
+      value: string
+    events: {change:}
+
+  TimePicker:
+    icon: clock
+    group: Forms
+    summary: Time-of-day picker — `value` is an ISO `HH:MM` string.
+    component: ely_core::forms::TimePicker
+    children: none
+    props:
+      value: string
+    events: {change:}
+
+  DateTimePicker:
+    icon: calendar-plus
+    group: Forms
+    summary: Date+time picker — `value` is an ISO `YYYY-MM-DD HH:MM` string.
+    component: ely_core::forms::DateTimePicker
+    children: none
+    props:
+      value: string
+    events: {change:}
+
+  DurationPicker:
+    icon: timer
+    group: Forms
+    summary: Duration picker — `seconds` number.
+    component: ely_core::forms::DurationPicker
+    children: none
+    props:
+      seconds: number
+      value: number
+    events: {change:}
+
+  RelativeDatePicker:
+    icon: history
+    group: Forms
+    summary: Relative range picker (Today/Yesterday/Last7Days/…).
+    component: ely_core::forms::RelativeDatePicker
+    children: none
+    props:
+      range:
+        type: enum
+        values: [Today, Yesterday, Last7Days, Last30Days, ThisMonth, LastMonth]
+      value: string
+    events: {change:}
+
+  ScrubInput:
+    icon: mouse
+    group: Forms
+    summary: Drag-to-scrub labeled numeric input.
+    component: ely_core::forms::ScrubInput
+    children: none
+    props:
+      label: string
+      value: number
+    events: {change:}
+
+  FormSection:
+    icon: section
+    group: Forms
+    summary: Titled form grouping — children render inside.
+    component: ely_core::forms::FormSection
+    children: any
+    props:
+      title: string
+
+  FormLabel:
+    icon: tag
+    group: Forms
+    summary: Field label.
+    component: ely_core::forms::FormLabel
+    content: text
+    children: none
+    props:
+      text: string
+
+  FormError:
+    icon: circle-alert
+    group: Forms
+    summary: Field error message.
+    component: ely_core::forms::FormError
+    content: text
+    children: none
+    props:
+      text: string
+
+  FormField:
+    icon: text-select
+    group: Forms
+    summary: Labeled field wrapper — children render as the control.
+    component: ely_core::forms::FormField
+    children: any
+    props:
+      label: string
+
+  InlineForm:
+    icon: align-horizontal-justify-start
+    group: Forms
+    summary: Horizontal form row — children render inline.
+    component: ely_core::forms::InlineForm
+    children: any
+
+  DirtyIndicator:
+    icon: circle-dot
+    group: Forms
+    summary: Unsaved-changes dot.
+    component: ely_core::forms::DirtyIndicator
+    children: none
+    props:
+      dirty: bool
