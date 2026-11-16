@@ -16,26 +16,67 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # One leg per wasm base, in parallel. The compiled bundle is cached by a hash
+  # of every input that can change it — Rust sources, vendored crates,
+  # catalogs and bases (both include_str!'d into the build), and the lockfile —
+  # so doc/site-only pushes skip the wasm build entirely and a Rust push pays
+  # for four parallel legs instead of four sequential ones.
+  canvas:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        base: [gpui-kit, bezel, iced, ratatui]
+        include:
+          - base: gpui-kit
+            toolchain: nightly
+          - base: bezel
+            toolchain: nightly
+          - base: iced
+            toolchain: stable
+          - base: ratatui
+            toolchain: stable
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache canvas-${{ matrix.base }}
+        id: canvas-cache
+        uses: actions/cache@v4
+        with:
+          path: site/static/canvas
+          key: canvas-v1-${{ matrix.base }}-${{ hashFiles('crates/**', 'vendor/**', 'catalogs/**', 'bases/**', 'Cargo.lock', 'Cargo.toml', 'rust-toolchain.toml', 'site/scripts/build-canvas.sh') }}
+      - uses: dtolnay/rust-toolchain@master
+        if: steps.canvas-cache.outputs.cache-hit != 'true'
+        with:
+          toolchain: ${{ matrix.toolchain }}
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        if: steps.canvas-cache.outputs.cache-hit != 'true'
+        with:
+          key: canvas-${{ matrix.base }}
+      # Must match the wasm-bindgen version in Cargo.lock.
+      - uses: taiki-e/install-action@v2
+        if: steps.canvas-cache.outputs.cache-hit != 'true'
+        with:
+          tool: wasm-bindgen@0.2.129
+      - run: site/scripts/build-canvas.sh ${{ matrix.base }}
+        if: steps.canvas-cache.outputs.cache-hit != 'true'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: canvas-${{ matrix.base }}
+          path: site/static/canvas
+          retention-days: 1
+          if-no-files-found: error
+
   build:
+    needs: canvas
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # gpui-kit's web platform needs nightly (wasm_thread); the rest of the workspace stays on stable.
-      - uses: dtolnay/rust-toolchain@nightly
+      - uses: actions/download-artifact@v4
         with:
-          targets: wasm32-unknown-unknown
-      # iced's canvas builds on stable (rust-toolchain.toml) — its wasm target
-      # needs installing too, or `cargo build` fails with E0463.
-      - uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: site-wasm
-      # Must match the wasm-bindgen version in Cargo.lock.
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: wasm-bindgen@0.2.129
+          pattern: canvas-*
+          path: site/static/canvas
+          merge-multiple: true
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -43,7 +84,6 @@ jobs:
           cache-dependency-path: site/package-lock.json
       - run: npm ci
         working-directory: site
-      - run: site/scripts/build-canvas.sh
       - run: npm run check
         working-directory: site
       - run: npm run build
