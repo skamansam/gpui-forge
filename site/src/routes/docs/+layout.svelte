@@ -48,23 +48,26 @@
 			{/each}
 		</nav>
 	</aside>
-	<div class="content">
-		{@render children()}
+	<div class="main">
+		<div class="content">
+			{@render children()}
+		</div>
+		{#if toc.length > 1}
+			<nav class="toc" aria-label="On this page">
+				<span class="toc-title">On this page</span>
+				{#each toc as t (t.id)}
+					<a href="#{t.id}" class:d3={t.depth === 3} class:active={active === t.id}>{t.text}</a>
+				{/each}
+			</nav>
+		{/if}
 	</div>
-	{#if toc.length > 1}
-		<nav class="toc" aria-label="On this page">
-			<span class="toc-title">On this page</span>
-			{#each toc as t (t.id)}
-				<a href="#{t.id}" class:d3={t.depth === 3} class:active={active === t.id}>{t.text}</a>
-			{/each}
-		</nav>
-	{/if}
 </div>
 
 <style>
-	.layout { display: grid; grid-template-columns: 240px minmax(0, 820px) 180px; gap: 40px; max-width: 1350px; margin: 0 auto; padding: 32px 24px 80px; }
-	.layout:not(:has(.toc)) { grid-template-columns: 240px minmax(0, 820px); }
-	aside { position: sticky; top: 80px; align-self: start; max-height: calc(100vh - 100px); overflow-y: auto; }
+	.layout { display: grid; grid-template-columns: 260px minmax(0, 1fr); }
+	.main { display: grid; grid-template-columns: minmax(0, 820px) 180px; gap: 40px; justify-content: center; padding: 32px 40px 80px; min-width: 0; }
+	.main:not(:has(.toc)) { grid-template-columns: minmax(0, 820px); }
+	aside { position: sticky; top: 56px; align-self: start; height: calc(100vh - 56px); overflow-y: auto; padding: 24px 20px 24px 24px; border-right: 1px solid var(--border); }
 	aside nav { display: flex; flex-direction: column; gap: 12px; }
 	aside details { border-left: 1px solid var(--border); }
 	aside summary { cursor: pointer; padding: 2px 0 4px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg); list-style-position: inside; }
@@ -81,14 +84,15 @@
 	.content { min-width: 0; }
 	.drawer-toggle, .backdrop { display: none; }
 	@media (max-width: 1150px) {
-		.layout, .layout:not(:has(.toc)) { grid-template-columns: 240px minmax(0, 1fr); }
+		.main, .main:not(:has(.toc)) { grid-template-columns: minmax(0, 1fr); }
 		.toc { display: none; }
 	}
 	@media (max-width: 800px) {
-		.layout, .layout:not(:has(.toc)) { grid-template-columns: 1fr; }
-		.drawer-toggle { display: block; position: sticky; top: 64px; z-index: 25; margin: -8px 0 8px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); color: var(--fg); font: inherit; cursor: pointer; width: fit-content; }
+		.layout { grid-template-columns: 1fr; }
+		.main { padding: 16px 20px 64px; }
+		.drawer-toggle { display: block; position: sticky; top: 64px; z-index: 25; margin: 16px 0 0 20px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-2); color: var(--fg); font: inherit; cursor: pointer; width: fit-content; }
 		.backdrop { display: block; position: fixed; inset: 0; z-index: 39; background: rgb(0 0 0 / 0.55); border: 0; padding: 0; cursor: default; }
-		aside { position: fixed; inset: 0 auto 0 0; z-index: 40; width: min(300px, 85vw); max-height: none; padding: 24px 20px 24px 24px; background: var(--bg); border-right: 1px solid var(--border); transform: translateX(-100%); transition: transform 0.18s ease-out; }
+		aside { position: fixed; inset: 0 auto 0 0; z-index: 40; width: min(300px, 85vw); height: auto; max-height: none; padding: 24px 20px 24px 24px; background: var(--bg); border-right: 1px solid var(--border); transform: translateX(-100%); transition: transform 0.18s ease-out; }
 		aside.open { transform: none; }
 	}
 </style>
