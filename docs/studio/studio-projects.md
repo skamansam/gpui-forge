@@ -22,17 +22,17 @@ Recent files live in the menu too — the list persists at
 
 ## The project sidebar
 
-The left rail is a file viewer rooted at the open document's folder (the
-last-opened project root, or Studio's launch directory before anything is
-loaded). It lists folders and `*.forge.yaml` files — VCS and build noise
-(`target`, `node_modules`, dot-files) is filtered out and the scan is depth-
-and entry-capped so a huge tree can't stall the UI. The panel is resizable.
-Clicking a file opens it in the **Document** tab.
+The left rail is a file viewer rooted at the open document's folder — the
+last-opened project root, or Studio's launch directory before anything
+loads. It lists folders and `*.forge.yaml` files. It filters out VCS and
+build noise (`target`, `node_modules`, dot-files), and caps the scan's
+depth and entry count so a huge tree can't stall the UI. The panel is
+resizable. Clicking a file opens it in the **Document** tab.
 
 Right-clicking a row offers file actions: **New document here** creates the
-first free `untitled{,-N}.forge.yaml` in that folder (seeded with the open
-document's base) and opens it, **Reveal in file manager** opens the OS file
-browser at the row's folder, and **Rename…** prompts for a new name —
+first free `untitled{,-N}.forge.yaml` in that folder, seeded with the open
+document's base, and opens it. **Reveal in file manager** opens the OS file
+browser at the row's folder. **Rename…** prompts for a new name —
 `*.forge.yaml` files keep their suffix. Renaming the open document re-points
 saves at the new path.
 

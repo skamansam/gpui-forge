@@ -116,7 +116,7 @@ document *model* (the `.forge.json` form).
 - **`style:`** — all `style::KEYS` entries with their value shapes.
 - **Hover docs** — catalog `summary` fields surface as property descriptions.
 
-`forge-spec` validation stays authoritative. Unique ids, binding rules
-(`bind` on non-bindable props, two-way inside lists), required-prop
-satisfaction via positional content, and base compatibility are validated
-at runtime. The schema only approximates them.
+`forge-spec` validation stays authoritative. At runtime, `forge-spec`
+validates unique ids, binding rules (`bind` on non-bindable props,
+two-way inside lists), required-prop satisfaction via positional content,
+and base compatibility. The schema only approximates them.

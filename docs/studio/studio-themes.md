@@ -23,7 +23,7 @@ A live theme workbench:
 - **Reset** (the `rotate-ccw` button) — back to the default theme.
 - **Showcase** — a preview of the theme across bases, split off the editor by
   a draggable `Resizable` divider. The base `Select` picks which widget set
-  renders; the arrow button beside it cycles every base for a fast sanity
+  renders. The arrow button beside it cycles every base for a fast sanity
   pass.
 
 ## Theme fidelity per base
@@ -38,7 +38,7 @@ foreign card instead of silently degrading:
 - **dark/light only** — bezel and adabraka accept no custom colors. Their
   cards carry a small `follow studio / dark / light` selector — a per-pane
   pin, sent as `{"cmd":"theme","dark":…}` to that pane only.
-- **unmapped** — ratatui's card shows the raw terminal stream; ANSI colors
+- **unmapped** — ratatui's card shows the raw terminal stream. ANSI colors
   come from the app, not the theme.
 
 ## Persisted preferences
