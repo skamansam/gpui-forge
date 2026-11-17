@@ -1,0 +1,475 @@
+# Every element the base-gpui adapter renders, for a quick visual check.
+# The Theme tab's `gpui-base` preview points here — base.* widgets paint
+# fixed default chrome, so they do not follow $theme.
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
+forge: "0.1"
+
+base: gpui-kit
+use:
+  base: base-gpui
+meta:
+  title: base-gpui showcase
+
+root:
+  VStack:
+  style:
+    height: full
+    padding: 24px
+    gap: 16px
+    overflow: scroll
+  children:
+    - Label: base-gpui showcase
+      secondary: "every base.* element — headless Base UI parts with adapter default chrome"
+      style:
+        weight: semibold
+    - GroupBox: Buttons and toggles
+      variant: Outline
+      children:
+        - HStack:
+          style:
+            gap: 8px
+            wrap: true
+            align: center
+          children:
+            - base.Button: Default
+              on click: status('clicked base button')
+            - base.Button: Disabled
+              disabled: true
+            - base.Toggle: Toggle
+            - base.Toggle: Pressed
+              pressed: true
+    - GroupBox: Choice inputs
+      variant: Outline
+      children:
+        - HStack:
+          style:
+            gap: 16px
+            wrap: true
+            align: center
+          children:
+            - VStack:
+              style:
+                gap: 8px
+              children:
+                - base.Checkbox: Unchecked
+                - base.Checkbox: Checked
+                  checked: true
+                - base.Checkbox: Indeterminate
+                  indeterminate: true
+                - base.Checkbox: Disabled
+                  checked: true
+                  disabled: true
+            - VStack:
+              style:
+                gap: 8px
+              children:
+                - base.Switch:
+                - base.Switch:
+                  checked: true
+                - base.Switch:
+                  disabled: true
+    - GroupBox: Text input
+      variant: Outline
+      children:
+        - VStack:
+          style:
+            gap: 8px
+          children:
+            - base.Input:
+              placeholder: Empty input…
+            - base.Input:
+              value: Pre-filled value
+            - base.Input:
+              placeholder: Disabled
+              disabled: true
+    - GroupBox: Range and status
+      variant: Outline
+      children:
+        - VStack:
+          style:
+            gap: 12px
+          children:
+            - base.Slider:
+              label: Volume
+              show_value: true
+              value: 40
+              min: 0
+              max: 100
+            - base.Slider:
+              value: 60
+              min: 0
+              max: 100
+              step: 10
+            - base.Slider:
+              value: 30
+              disabled: true
+            - base.Progress:
+              label: Upload
+              value: 68
+            - base.Progress:
+              label: Hidden value
+              value: 30
+              show_value: false
+            - base.Meter:
+              label: Storage
+              value: 42
+              min: 0
+              max: 100
+    - GroupBox: Disclosure
+      variant: Outline
+      children:
+        - VStack:
+          style:
+            gap: 12px
+          children:
+            - base.Accordion:
+              multiple: true
+              children:
+                - base.AccordionItem: General
+                  value: general
+                  open: true
+                  children:
+                    - Text: Appearance and window settings.
+                - base.AccordionItem: Editor
+                  value: editor
+                  children:
+                    - VStack:
+                      style:
+                        gap: 8px
+                      children:
+                        - base.Checkbox: Word wrap
+                          checked: true
+                        - base.Input:
+                          placeholder: Font size
+                - base.AccordionItem: Advanced
+                  value: advanced
+                  disabled: true
+                  children:
+                    - Text: Experimental options.
+            - base.Collapsible:
+              label: More options
+              children:
+                - Text: Extra settings live here.
+                  style:
+                    size: sm
+                    color: $theme.muted_foreground
+    - GroupBox: Tabs
+      variant: Outline
+      children:
+        - base.Tabs:
+          value: account
+          children:
+            - base.Tab: Account
+              value: account
+              children:
+                - VStack:
+                  style:
+                    gap: 8px
+                  children:
+                    - base.Input:
+                      value: ada@example.com
+                    - base.Switch:
+                      checked: true
+            - base.Tab: Security
+              value: security
+              children:
+                - base.OTPField:
+                  length: 4
+            - base.Tab: Billing
+              value: billing
+              disabled: true
+              children:
+                - Text: Unreachable while disabled.
+    - GroupBox: Groups
+      variant: Outline
+      children:
+        - HStack:
+          style:
+            gap: 24px
+            wrap: true
+            align: start
+          children:
+            - VStack:
+              style:
+                gap: 8px
+              children:
+                - Label: Radio group
+                - base.RadioGroup:
+                  value: standard
+                  children:
+                    - base.Radio: Standard
+                      value: standard
+                    - base.Radio: Express
+                      value: express
+                    - base.Radio: Overnight
+                      value: overnight
+                      disabled: true
+            - VStack:
+              style:
+                gap: 8px
+              children:
+                - Label: Checkbox group
+                - base.CheckboxGroup:
+                  children:
+                    - base.Checkbox: Email
+                      value: email
+                      checked: true
+                    - base.Checkbox: SMS
+                      value: sms
+                    - base.Checkbox: Push
+                      value: push
+            - VStack:
+              style:
+                gap: 8px
+              children:
+                - Label: Toggle group
+                - base.ToggleGroup:
+                  children:
+                    - base.Toggle: Left
+                      value: left
+                      pressed: true
+                    - base.Toggle: Center
+                      value: center
+                    - base.Toggle: Right
+                      value: right
+    - GroupBox: Forms
+      variant: Outline
+      children:
+        - VStack:
+          style:
+            gap: 12px
+          children:
+            - base.Form:
+              on submit: status('form submitted')
+              children:
+                - base.Field:
+                  label: Email
+                  description: We never share your address.
+                  children:
+                    - base.Input:
+                      placeholder: you@example.com
+                - base.Field:
+                  label: Quantity
+                  error: Must be at least 1.
+                  children:
+                    - base.NumberField:
+                      value: 0
+                      min: 1
+                      max: 10
+                      step: 1
+            - base.Fieldset:
+              legend: Notifications
+              children:
+                - base.Checkbox: Product updates
+                  checked: true
+                - base.Checkbox: Security alerts
+                  checked: true
+            - base.OTPField:
+              length: 6
+              separator: true
+    - GroupBox: ScrollArea and toolbar
+      variant: Outline
+      children:
+        - VStack:
+          style:
+            gap: 12px
+          children:
+            - base.Toolbar:
+              children:
+                - base.ToolbarButton: New
+                - base.ToolbarButton: Open
+                - base.ToolbarGroup:
+                  children:
+                    - base.ToolbarButton: Bold
+                    - base.ToolbarButton: Italic
+                - base.ToolbarSeparator:
+                - base.ToolbarInput:
+                  placeholder: Search…
+                - base.ToolbarLink: Docs
+            - base.ScrollArea:
+              height: 120
+              children:
+                - Text: Line one of the scrollable log.
+                - Text: Line two — the viewport clips past 120px.
+                - Text: Line three.
+                - Text: Line four.
+                - Text: Line five.
+                - Text: Line six.
+                - Text: Line seven.
+                - Text: Line eight.
+                - Text: Line nine.
+                - Text: Line ten.
+    - GroupBox: Media and dividers
+      variant: Outline
+      children:
+        - HStack:
+          style:
+            gap: 12px
+            align: center
+          children:
+            - base.Avatar:
+              src: ../forge-icon.svg
+              fallback: GF
+            - base.Avatar:
+              fallback: SR
+            - base.Separator:
+              orientation: Vertical
+            - Text: vertical separator
+              style:
+                size: sm
+                color: $theme.muted_foreground
+        - base.Separator:
+    - GroupBox: Menus and navigation
+      variant: Outline
+      children:
+        - VStack:
+          style:
+            gap: 12px
+          children:
+            - base.Menubar:
+              children:
+                - base.Menu:
+                  label: File
+                  children:
+                    - base.MenuItem: New
+                    - base.MenuItem: Open…
+                    - base.MenuSeparator:
+                    - base.Submenu:
+                      label: Share
+                      children:
+                        - base.MenuItem: Copy link
+                        - base.MenuItem: Email…
+                    - base.MenuItem: Quit
+                - base.Menu:
+                  label: Edit
+                  children:
+                    - base.MenuCheckboxItem: Word wrap
+                      checked: true
+                    - base.MenuRadioGroup:
+                      value: single
+                      children:
+                        - base.MenuRadioItem: Single pane
+                          value: single
+                        - base.MenuRadioItem: Split pane
+                          value: split
+            - base.NavigationMenu:
+              children:
+                - base.NavigationMenuItem:
+                  label: Products
+                  children:
+                    - Text: Product links render inside the shared viewport.
+                      style:
+                        size: sm
+                - base.NavigationMenuItem:
+                  label: Docs
+                  children:
+                    - Text: Guides and API reference.
+                      style:
+                        size: sm
+            - base.ContextMenu:
+              children:
+                - base.ContextMenuArea:
+                  children:
+                    - GroupBox: Right-click me
+                      variant: Fill
+                - base.MenuItem: Copy
+                - base.MenuItem: Paste
+                  disabled: true
+    - GroupBox: Pickers
+      variant: Outline
+      children:
+        - HStack:
+          style:
+            gap: 16px
+            align: start
+          children:
+            - base.Select:
+              label: Fruit
+              placeholder: Choose a fruit
+              value: apple
+              on change: status('select changed')
+              on open: status('select open toggled')
+              children:
+                - base.OptionGroup:
+                  label: Common
+                  children:
+                    - base.Option: Apple
+                      value: apple
+                    - base.Option: Banana
+                      value: banana
+                - base.OptionSeparator:
+                - base.OptionGroup:
+                  label: Seasonal
+                  children:
+                    - base.Option: Cherry
+                      value: cherry
+                      disabled: true
+            - base.Combobox:
+              placeholder: Search languages…
+              on change: status('combobox changed')
+              on input: status('combobox input')
+              empty: No languages found
+              arrow: true
+              children:
+                - base.Option: Rust
+                  value: rust
+                - base.Option: TypeScript
+                  value: ts
+                - base.Option: Python
+                  value: py
+            - base.Autocomplete:
+              placeholder: Type to filter…
+              children:
+                - base.Option: Alpha
+                  value: a
+                - base.Option: Beta
+                  value: b
+                - base.Option: Gamma
+                  value: g
+    - GroupBox: Overlays
+      variant: Outline
+      children:
+        - HStack:
+          style:
+            gap: 16px
+            align: center
+          children:
+            - base.Dialog:
+              label: Open dialog
+              title: Confirm
+              description: This is a modal dialog.
+              close: true
+              children:
+                - Text: Dialog body content.
+                  style:
+                    size: sm
+            - base.AlertDialog:
+              label: Open alert
+              title: Are you sure?
+              description: Alert dialogs block Escape/outside dismissal.
+              close: true
+            - base.Popover:
+              label: Popover
+              on open: status('popover open toggled')
+              title: Details
+              description: Anchored popup content.
+              arrow: true
+              close: true
+              children:
+                - base.Button: Action
+            - base.Drawer:
+              label: Open drawer
+              title: Drawer
+              description: Bottom sheet.
+              children:
+                - Text: Drawer body.
+            - base.Tooltip:
+              label: Tooltip on hover
+              children:
+                - base.Button: Hover me
+            - base.PreviewCard:
+              label: "@gpui-forge"
+              children:
+                - Text: Preview card body.
+                  style:
+                    size: sm

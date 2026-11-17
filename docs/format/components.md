@@ -4,17 +4,18 @@
 
 Every component set Forge understands, what each provides, and how to enable it. A document picks a rendering base with `base:` and pulls adapter libraries in through `use:` imports — see [adapters](adapters.md).
 
-**746 supported elements** across 20 sets. 270 upstream exports were reviewed and deliberately not exposed — each carries a reason below (value types, traits, engine handles, or runtime requirements a declarative document cannot express).
+**962 supported elements** across 21 sets. 317 upstream exports were reviewed and deliberately not exposed — each carries a reason below (value types, traits, engine handles, or runtime requirements a declarative document cannot express).
 
 | Set | Enable | Supported | Reviewed — not widgets |
 | --- | --- | --- | --- |
 | [GPUI-KIT Components](#gpui-kit-components) | `base: gpui-kit` (default) | 73 | 40 |
 | [GPUI-KIT sub-elements (catalog)](#gpui-kit-sub-elements-catalog) | inside gpui-kit parents | 59 | 0 |
-| [ely Components](#ely-components) | `use: ely: ely-core` | 302 | 89 |
+| [ely Components](#ely-components) | `use: ely: ely-core` | 308 | 91 |
 | [guise Components](#guise-components) | `base: guise` | 125 | 32 |
 | [gpui-flow Components](#gpui-flow-components) | `use: gflow: gpui-flow` | 1 | 0 |
 | [ferrum-flow Components](#ferrum-flow-components) | `use: flow: ferrum-flow` | 1 | 14 |
-| [base-gpui Components](#base-gpui-components) | `use: base: base-gpui` | 10 | 0 |
+| [base-gpui Components](#base-gpui-components) | `use: base: base-gpui` | 36 | 1 |
+| [base-gpui parts (compound)](#base-gpui-parts-compound) | — | 184 | 44 |
 | [video Components](#video-components) | `use: video: gpui-video-player` | 1 | 2 |
 | [apple-hig Components](#apple-hig-components) | `use: hig: gpui-apple-hig` | 28 | 20 |
 | [pdf Components](#pdf-components) | `use: pdf: gpui-pdf` | 1 | 6 |
@@ -22,10 +23,10 @@ Every component set Forge understands, what each provides, and how to enable it.
 | [ratex Components](#ratex-components) | `use: math: ratex-gpui` | 2 | 2 |
 | [rhythm Components](#rhythm-components) | `use: rhythm: rhythm-gpui` | 1 | 3 |
 | [gpui-symbols Components](#gpui-symbols-components) | `use: symbols: gpui-symbols` | 1 | 3 |
-| [ratatui Components](#ratatui-components) | `base: ratatui` | 14 | 13 |
+| [ratatui Components](#ratatui-components) | `base: ratatui` | 13 | 14 |
 | [iced Components](#iced-components) | `base: iced` | 28 | 7 |
 | [bezel Components](#bezel-components) | `base: bezel` (scaffold) | 6 | 0 |
-| [adabraka Components](#adabraka-components) | catalog only (scaffold) | 84 | 39 |
+| [adabraka Components](#adabraka-components) | catalog only (scaffold) | 85 | 38 |
 | [forge built-ins](#forge-built-ins) | always available | 7 | 0 |
 | [template-lib Components](#template-lib-components) | adapter scaffold | 1 | 0 |
 
@@ -105,15 +106,15 @@ Every component set Forge understands, what each provides, and how to enable it.
 
 [docs](https://elygpui.com/) · [github](https://github.com/ELY-Open-Source/Ely-GPUI-Components)
 
-> The ely site advertises 1279 items (widgets + ~900 icons). Below is every exported widget type in `ely-core` 0.2 — the `[x]` entries render natively via `forge-lib-ely` (`use: ely: ely-core`); the rest have no Forge adapter support yet.
+> The ely site advertises 1279 items (widgets + ~900 icons). Below is every exported widget type in `ely-core` 0.2 plus the `ely-terminal` 0.1.1 crate — the `[x]` entries render natively via `forge-lib-ely` (`use: ely: ely-core`); the rest have no Forge adapter support yet. `ely-terminal.Terminal` is native-only (pty); on wasm the `Terminal` element is absent by `cfg`.
 
-<details><summary><strong>302 supported elements</strong></summary>
+<details><summary><strong>308 supported elements</strong></summary>
 
-`Accordion` `AccordionItem` `ActionBar` `Activity` `ActivityBar` `ActivityFeed` `Alert` `AlertDialog` `Anchor` `AnimatePresence` `AnimatedGradient` `AppShell` `AspectRatio` `Avatar` `AvatarGroup` `Backdrop` `Badge` `Banner` `Barcode` `BeforeAfter` `Blink` `Blockquote` `Breadcrumb` `BulkActionBar` `Button` `ButtonGroup` `Calendar` `Callout` `Caption` `Card` `CardHeader` `Carousel` `Cascader` `Changelog` `Checkbox` `CheckboxCard` `CheckboxGroup` `Code` `Collapsible` `ColorSwatch` `ColumnShell` `Comparison` `Confetti` `ConfirmButton` `ConfirmDialog` `ConnectionStatus` `Container` `ContextMenu` `CountBadge` `Countdown` `DataGrid` `DataTable` `DatePicker` `DateRangePicker` `DateTimePicker` `DescriptionList` `Dialog` `DirectoryListing` `Dock` `DockPanel` `DockSide` `DotBadge` `Drawer` `DropZone` `DropdownMenu` `DurationPicker` `EditorTabs` `Ellipsis` `EllipsisTooltip` `EmailInput` `EmojiPicker` `ErrorBoundary` `ErrorView` `ExpressionInput` `ExternalLink` `FieldArray` `Fieldset` `FileInput` `FileTree` `Flash` `Flip` `FloatingToolbar` `FontPicker` `Frame` `Gallery` `Gauge` `Glow` `GradientEditor` `GradientText` `Heading` `HeatmapTable` `HelpTooltip` `Highlight` `IconButton` `IconPicker` `Image` `InfiniteList` `InlineEdit` `InlineMessage` `Input` `InputAddon` `InputGroup` `IntersectionObserver` `Kbd` `KbdCombo` `KeyValueInput` `KpiCard` `Label` `LazyLoad` `Lightbox` `Link` `List` `ListInput` `ListItem` `LoadMore` `LoadingOverlay` `Marquee` `MaskedInput` `Masonry` `MasterDetail` `Measure` `Meter` `MiddleEllipsis` `MonthPicker` `NavGroup` `NavItem` `Notification` `NotificationCenter` `NumberInput` `OfflineIndicator` `OverflowMenu` `Overline` `Page` `Pagination` `PaneGroup` `PaneId` `PaneLayout` `Panel` `Paragraph` `ParticleBackground` `PasswordInput` `PathInput` `Peek` `PhoneInput` `PieMenu` `ProgressBar` `ProgressRing` `PromptDialog` `PropertyGrid` `PropertyGroup` `Pulse` `QrCode` `QuarterPicker` `QuickOpen` `QuickSwitcher` `Radio` `RadioCard` `RadioGroup` `RangeSlider` `RefreshIndicator` `RegexInput` `RelativeDatePicker` `Release` `Ripple` `SavingIndicator` `ScrollShadow` `ScrollToTop` `ScrubInput` `SearchableMenu` `Section` `Sections` `SelectableList` `Shake` `Sheet` `ShellColumn` `Shimmer` `ShimmerText` `SignaturePad` `SimpleGrid` `Skeleton` `SkeletonAvatar` `SkeletonCard` `SkeletonTable` `SkeletonText` `Slider` `Sparkline` `Spinner` `SplitButton` `SplitPane` `Spreadsheet` `Stagger` `Stars` `Statistic` `StatusBar` `StatusBarItem` `StatusMessage` `Steps` `StickyHeader` `Subtitle` `Suspense` `SwipeableListItem` `SyncStatus` `TabBar` `Table` `TableOfContents` `Tabs` `Tag` `TimePicker` `Timeline` `TimelineItem` `Title` `TitleBar` `Toast` `ToastViewport` `Toaster` `ToggleButton` `ToggleGroup` `ToggleItem` `Toolbar` `ToolbarGroup` `ToolbarSeparator` `Transform` `Tree` `TreeSelect` `TreeTable` `TrendIndicator` `Typewriter` `TypingIndicator` `UpdateBanner` `UpdateDialog` `UploadList` `UrlInput` `UsageBar` `UserChip` `Viewport` `VirtualList` `Watermark` `Well` `WindowControls` `Wizard` `YearPicker` `ZStack` `ZoomControl` `Divider` `CopyButton` `SegmentedControl` `EmptyState` `Switch` `Rating` `Stepper` `Icon` `AvatarUpload` `CodeInput` `ColorPicker` `Combobox` `CronEditor` `DirtyIndicator` `EyeDropper` `FormError` `FormField` `FormLabel` `FormSection` `InlineForm` `JsonInput` `ListBox` `MentionInput` `SearchInput` `TagInput` `TimezoneSelect` `TransferList` `UnitInput` `WeekPicker` `Outline` `SortableList` `GroupedList` `BackForwardNavigation` `GoToLine` `NavigationMenu` `TabOverflowMenu` `CrashReporter` `HoverCard` `Popover` `ResizeBorder` `Vibrancy` `WindowSwitcher` `AnimatedNumber` `CurrencyText` `DateTimeText` `DurationText` `Emoji` `FileSizeText` `Link` `PivotTable` `PluralText` `RelativeTime` `SelectableText` `TableToolbar` `ProgressBar` `Reorder` `Transition` `TooltipTrigger` `CommandPalette`
+`Accordion` `AccordionItem` `ActionBar` `Activity` `ActivityBar` `ActivityFeed` `Alert` `AlertDialog` `Anchor` `AnimatePresence` `AnimatedGradient` `AnsiText` (`ely-terminal` — ANSI-colored text, SGR only) `AppShell` `AspectRatio` `Avatar` `AvatarGroup` `Backdrop` `Badge` `Banner` `Barcode` `BeforeAfter` `Blink` `Blockquote` `Breadcrumb` `BulkActionBar` `Button` `ButtonGroup` `Calendar` `Callout` `Caption` `Card` `CardHeader` `Carousel` `Cascader` `Changelog` `Checkbox` `CheckboxCard` `CheckboxGroup` `Code` `Collapsible` `ColorSwatch` `ColumnShell` `Comparison` `Confetti` `ConfirmButton` `ConfirmDialog` `ConnectionStatus` `Container` `ContextMenu` `CountBadge` `Countdown` `DataGrid` `DataTable` `DatePicker` `DateRangePicker` `DateTimePicker` `DescriptionList` `Dialog` `DirectoryListing` `Dock` `DockPanel` `DockSide` `DotBadge` `Drawer` `DropZone` `DropdownMenu` `DurationPicker` `EditorTabs` `Ellipsis` `EllipsisTooltip` `EmailInput` `EmojiPicker` `ErrorBoundary` `ErrorView` `ExpressionInput` `ExternalLink` `FieldArray` `Fieldset` `FileInput` `FileTree` `Flash` `Flip` `FloatingToolbar` `FontPicker` `Frame` `Gallery` `Gauge` `Glow` `GradientEditor` `GradientText` `Heading` `HeatmapTable` `HelpTooltip` `Highlight` `IconButton` `IconPicker` `Image` `InfiniteList` `InlineEdit` `InlineMessage` `Input` `InputAddon` `InputGroup` `IntersectionObserver` `Kbd` `KbdCombo` `KeyValueInput` `KpiCard` `Label` `LazyLoad` `Lightbox` `Link` `List` `ListInput` `ListItem` `LoadMore` `LoadingOverlay` `LogViewer` (`ely-terminal` — 'at|LEVEL|target|message' `lines`) `Marquee` `MaskedInput` `Masonry` `MasterDetail` `Measure` `MenuItem` (base.Menu) `Meter` `MiddleEllipsis` `MonthPicker` `NavGroup` `NavItem` `Notification` `NotificationCenter` `NumberInput` `OfflineIndicator` `OverflowMenu` `Overline` `Page` `Pagination` `PaneGroup` `PaneId` `PaneLayout` `Panel` `Paragraph` `ParticleBackground` `PasswordInput` `PathInput` `Peek` `PhoneInput` `PieMenu` `ProgressBar` `ProgressRing` `PromptDialog` `PropertyGrid` `PropertyGroup` `Pulse` `QrCode` `QuarterPicker` `QuickOpen` `QuickSwitcher` `Radio` `RadioCard` `RadioGroup` `RangeSlider` `RefreshIndicator` `RegexInput` `RelativeDatePicker` `Release` `Ripple` `SavingIndicator` `ScrollShadow` `ScrollToTop` `ScrubInput` `SearchableMenu` `Section` `Sections` `SelectableList` `Shake` `Sheet` `ShellColumn` `ShellSelector` (`ely-terminal` — 'name=program' `shells`) `Shimmer` `ShimmerText` `SignaturePad` `SimpleGrid` `Skeleton` `SkeletonAvatar` `SkeletonCard` `SkeletonTable` `SkeletonText` `Slider` `Sparkline` `Spinner` `SplitButton` `SplitPane` `Spreadsheet` `Stagger` `Stars` `Statistic` `StatusBar` `StatusBarItem` `StatusMessage` `Steps` `StickyHeader` `Subtitle` `Suspense` `SwipeableListItem` `SyncStatus` `TabBar` `Table` `TableOfContents` `Tabs` `Tag` `Terminal` (`ely-terminal` — pty `command`/`cwd` or `output` replay; native only) `TerminalToolbar` (`ely-terminal` — clear/stop/split/`shells` picker) `TimePicker` `Timeline` `TimelineItem` `Title` `TitleBar` `Toast` `ToastViewport` `Toaster` `ToggleButton` `ToggleGroup` `ToggleItem` `Toolbar` `ToolbarGroup` `ToolbarSeparator` `Transform` `Tree` `TreeSelect` `TreeTable` `TrendIndicator` `Typewriter` `TypingIndicator` `UpdateBanner` `UpdateDialog` `UploadList` `UrlInput` `UsageBar` `UserChip` `Viewport` `VirtualList` `Watermark` `Well` `WindowControls` `Wizard` `YearPicker` `ZStack` `ZoomControl` `Divider` `CopyButton` `SegmentedControl` `EmptyState` `Switch` `Rating` `Stepper` `Icon` `AvatarUpload` `CodeInput` `ColorPicker` `Combobox` `CronEditor` `DirtyIndicator` `EyeDropper` `FormError` `FormField` `FormLabel` `FormSection` `InlineForm` `JsonInput` `ListBox` `MentionInput` `SearchInput` `TagInput` `TimezoneSelect` `TransferList` `UnitInput` `WeekPicker` `Outline` `SortableList` `GroupedList` `BackForwardNavigation` `GoToLine` `NavigationMenu` `TabOverflowMenu` `CrashReporter` `HoverCard` `Popover` `ResizeBorder` `Vibrancy` `WindowSwitcher` `AnimatedNumber` `CurrencyText` `DateTimeText` `DurationText` `Emoji` `FileSizeText` `Link` `PivotTable` `PluralText` `RelativeTime` `SelectableText` `TableToolbar` `ProgressBar` `Reorder` `Transition` `TooltipTrigger` `CommandPalette`
 
 </details>
 
-<details><summary><strong>89 reviewed — not standalone widgets</strong></summary>
+<details><summary><strong>91 reviewed — not standalone widgets</strong></summary>
 
 | Export | Reason |
 | --- | --- |
@@ -125,6 +126,8 @@ Every component set Forge understands, what each provides, and how to enable it.
 | `Close` | `Rc<dyn Fn>` dismiss-callback alias |
 | `Column` | column descriptor — tables build it from `columns` props |
 | `Command` | palette item descriptor — `value`/`label`/`keys` consumed by CommandPalette `groups` |
+| `CommandBlock` | `ely-terminal` — command + output block (Running/Ok/Error states) |
+| `CommandHistory` | `ely-terminal` — `PastCommand` list |
 | `Connectivity` | ConnectionStatus state enum — set via `state` prop |
 | `Copy` | gpui `Action` — copy command, not a widget |
 | `Crumb` | Breadcrumb item descriptor — built from `items` props |
@@ -144,7 +147,6 @@ Every component set Forge understands, what each provides, and how to enable it.
 | `History` | undo/redo history entity behind text inputs |
 | `LOCALES` | locale constant table |
 | `Menu` | menu model — DropdownMenu/ContextMenu own it via OwnedMenu |
-| `MenuItem` | menu item descriptor consumed by menu `items` props |
 | `Mix` | gradient color-stop pair for GradientEditor |
 | `OnClimb` | `Rc<dyn Fn>` breadcrumb-climb callback alias |
 | `OnFold` | `Rc<dyn Fn>` section-fold callback alias |
@@ -154,6 +156,7 @@ Every component set Forge understands, what each provides, and how to enable it.
 | `PieItem` | PieMenu sector descriptor |
 | `Place` | positioning enum (Center/Left/Right/Top/Bottom) |
 | `Presence` | Avatar presence enum — set via `presence` prop |
+| `ProcessList` | `ely-terminal` — `Process` rows; needs live process data |
 | `Raised` | elevation/style enum |
 | `Refresh` | RefreshIndicator `state` enum (Idle/Pulling/Refreshing/Done) |
 | `ScrollModel` | virtual-scroll state model behind VirtualList/InfiniteList |
@@ -308,16 +311,86 @@ Every component set Forge understands, what each provides, and how to enable it.
 
 ## base-gpui Components
 
-[docs](https://github.com/LukeTandjung/base-gpui) · [github](https://github.com/LukeTandjung/base-gpui)
+[docs](https://luketandjung.github.io/base-gpui/overview/quick-start.html) · [github](https://github.com/LukeTandjung/base-gpui)
 
-> Vendored Zed `gpui` engine fork — `use: base: base-gpui`, rendered by `forge-lib-base`. The crate also exports the full gpui element/element-style API (engine primitives — not a widget set).
+> Headless Base UI port (vendored at `vendor/base-gpui`, pinned to a Zed gpui rev) — `use: base: base-gpui`, rendered by `forge-lib-base`. Components ship unstyled as compound parts (`XxxRoot` + named parts — per-part inventory under "base-gpui parts" below); the adapter composes them into the `[x]` Forge elements with default chrome via `style_with_state`. Support types (`*Props`, `*Runtime`, `*Context`, `*StyleState`, `*Child`, `*ChildWiring`, `*Metadata`, `*Details`, `*Outcome`, `*Handler`, action/key-context consts, option enums like `AutocompleteMode`/`MenubarOrientation`, and helper fns like `input`/`scrollbar`/`modal_backdrop`/`point_in_*`/`normalize_otp_value`) are omitted for readability, as are the `Autocomplete*`/`ContextMenu*` aliases re-exporting Combobox/Menu parts. Event wiring: `on change:`/`on open:`/`on submit:`/`on activate:`/`on input:`/`on complete:` fire Forge handlers and write `{{binding}}` props back to state — `base.Input`/`base.ToolbarInput`/`FieldControl` value callbacks take `Fn(SharedString)` with no `&mut App`, so text-input `change` is not wireable upstream.
 
-<details><summary><strong>10 supported elements</strong></summary>
+<details><summary><strong>36 supported elements</strong></summary>
 
-`Button` `Checkbox` `Switch` `Toggle` `Slider` `Progress` `Meter` `Separator` `Input` `Avatar`
+`Accordion` (AccordionRoot + Item/Header/Trigger/Panel parts) `AlertDialog` (AlertDialogRoot + Trigger/Popup parts (Action/Cancel unmapped)) `Autocomplete` (AutocompleteRoot + Input/InputGroup/Clear + Combobox popup parts (Trigger/Icon/Value/ItemIndicator unmapped)) `Avatar` (AvatarRoot + Image/Fallback) `Button` (ButtonRoot) `Checkbox` (CheckboxRoot + Indicator) `CheckboxGroup` (CheckboxGroup + Checkbox children) `Collapsible` (CollapsibleRoot + Trigger/Panel parts) `Combobox` (ComboboxRoot + InputGroup/Input/Clear/Trigger/Icon/Portal/Positioner/Popup/List/Item/ItemIndicator parts (Value/Chips/Backdrop/Arrow/Collection/Empty/Group/GroupLabel/Separator/Status/Label unmapped)) `ContextMenu` (ContextMenuRoot + Trigger + Menu parts (re-exported as `ContextMenu*`)) `Dialog` (DialogRoot + Trigger/Portal/Backdrop/Viewport/Popup/Title/Description/Close parts) `Drawer` (DrawerRoot + Portal/Backdrop/Viewport/Popup/Content parts (Provider/SwipeArea/Indent/IndentBackground unmapped)) `Field` (FieldRoot + Label/Description/Error parts (Item/Control/Validity unmapped)) `Fieldset` (FieldsetRoot + Legend parts) `Form` (single-element compound (validation/submission context)) `Input` `Menu` (MenuRoot + Trigger/Portal/Positioner/Popup/Item/LinkItem/CheckboxItem/CheckboxItemIndicator/RadioGroup/RadioItem/RadioItemIndicator/Group/GroupLabel/Separator/SubmenuRoot/SubmenuTrigger parts (Backdrop/Arrow unmapped)) `Menubar` (single-element compound (base.Menu children wired via MenubarChild)) `Meter` (MeterRoot + Label/Track/Indicator/Value) `NavigationMenu` (NavigationMenuRoot + List/Item/Trigger/Content/Portal/Positioner/Popup/Viewport parts (Link/Icon/Backdrop/Arrow unmapped)) `NumberField` (NumberFieldRoot + Group/Input/Increment/Decrement parts (ScrubArea unmapped)) `OtpField` (OTPFieldRoot + Input slots) `Popover` (PopoverRoot + Trigger/Portal/Positioner/Popup/Title/Description parts (Backdrop/Viewport/Arrow/Close unmapped)) `PreviewCard` (PreviewCardRoot + Trigger/Portal/Positioner/Viewport/Popup parts (Backdrop/Arrow unmapped)) `Progress` (ProgressRoot + Label/Track/Indicator/Value) `RadioGroup` (RadioGroupRoot + Radio/Indicator parts) `ScrollArea` (ScrollAreaRoot + Viewport/Content/Scrollbar/Thumb parts (Corner unmapped)) `Select` (SelectRoot + Trigger/Value/Icon/Portal/Positioner/Popup/List/Item/ItemText/ItemIndicator parts (Backdrop/Arrow/Group/GroupLabel/Label/Separator/ScrollArrows unmapped)) `Separator` `Slider` (SliderRoot + Control/Track/Indicator/Thumb) `Switch` (SwitchRoot + Thumb) `Tabs` (TabsRoot + List/Tab/Panel parts (Indicator unmapped)) `Toggle` `ToggleGroup` (ToggleGroup + Toggle children) `Toolbar` (ToolbarRoot + Group/Button/Input/Link/Separator parts) `Tooltip` (TooltipRoot + Trigger/Portal/Positioner/Popup parts (Provider/Viewport/Arrow unmapped))
 
 </details>
 
+<details><summary><strong>1 reviewed — not standalone widgets</strong></summary>
+
+| Export | Reason |
+| --- | --- |
+| `Toast` | ToastProvider + Portal/Viewport/Root/Content/Title/Description/Action/Close parts |
+
+</details>
+
+## base-gpui parts (compound)
+
+[docs](https://luketandjung.github.io/base-gpui/overview/quick-start.html) · [github](https://github.com/LukeTandjung/base-gpui)
+
+> Compound child parts — each renders inside its component's arm (`*Root` is the anchor the adapter builds; `*Portal`/`Positioner`/`Backdrop`/`Arrow`/`Viewport`/`Provider` are overlay plumbing it owns). `[x]` = already composed by a `base.*` element.
+
+<details><summary><strong>184 supported elements</strong></summary>
+
+`AccordionHeader` (base.Accordion) `AccordionItem` (base.Accordion) `AccordionPanel` (base.Accordion) `AccordionRoot` (base.Accordion) `AccordionTrigger` (base.Accordion) `AlertDialogPopup` (base.AlertDialog) `AlertDialogRoot` (base.AlertDialog) `AlertDialogTrigger` (base.AlertDialog) `AutocompleteRoot` (base.Autocomplete) `AvatarFallback` (base.Avatar) `AvatarImage` (base.Avatar) `AvatarRoot` (base.Avatar) `ButtonRoot` (base.Button) `CheckboxGroup` (base.CheckboxGroup) `CheckboxIndicator` (base.Checkbox) `CheckboxRoot` (base.Checkbox) `CollapsiblePanel` (base.Collapsible) `CollapsibleRoot` (base.Collapsible) `CollapsibleTrigger` (base.Collapsible) `ComboboxArrow` (base.Combobox / base.Autocomplete (`arrow` prop)) `ComboboxBackdrop` (base.Combobox / base.Autocomplete (`backdrop` prop)) `ComboboxClear` (base.Combobox) `ComboboxEmpty` (base.Combobox / base.Autocomplete (`empty` prop)) `ComboboxGroup` (base.OptionGroup) `ComboboxGroupLabel` (base.OptionGroup) `ComboboxIcon` (base.Combobox) `ComboboxInput` (base.Combobox) `ComboboxInputGroup` (base.Combobox) `ComboboxItem` (base.Combobox) `ComboboxItemIndicator` (base.Combobox) `ComboboxLabel` (base.Combobox (`label` prop)) `ComboboxList` (base.Combobox) `ComboboxPopup` (base.Combobox) `ComboboxPortal` (base.Combobox) `ComboboxPositioner` (base.Combobox) `ComboboxRoot` (base.Combobox) `ComboboxSeparator` (base.OptionSeparator) `ComboboxStatus` (base.Combobox / base.Autocomplete (`status` prop)) `ComboboxTrigger` (base.Combobox) `ContextMenuRoot` (base.ContextMenu) `ContextMenuTrigger` (base.ContextMenu) `DialogBackdrop` (base.Dialog) `DialogClose` (base.Dialog) `DialogDescription` (base.Dialog) `DialogPopup` (base.Dialog) `DialogPortal` (base.Dialog) `DialogRoot` (base.Dialog) `DialogTitle` (base.Dialog) `DialogTrigger` (base.Dialog) `DialogViewport` (base.Dialog) `DrawerBackdrop` (base.Drawer) `DrawerContent` (base.Drawer) `DrawerPopup` (base.Drawer) `DrawerPortal` (base.Drawer) `DrawerRoot` (base.Drawer) `DrawerViewport` (base.Drawer) `FieldDescription` (base.Field) `FieldError` (base.Field) `FieldLabel` (base.Field) `FieldRoot` (base.Field) `FieldsetLegend` (base.Fieldset) `FieldsetRoot` (base.Fieldset) `Form` (base.Form) `Input` (base.Input) `MenuArrow` (base.Menu / base.Submenu / base.ContextMenu (`arrow` prop)) `MenuBackdrop` (base.Menu / base.Submenu / base.ContextMenu (`backdrop` prop)) `MenuCheckboxItem` (base.Menu) `MenuCheckboxItemIndicator` (base.Menu) `MenuGroup` (base.Menu) `MenuGroupLabel` (base.Menu) `MenuItem` (base.Menu) `MenuLinkItem` (base.Menu) `MenuPopup` (base.Menu) `MenuPortal` (base.Menu) `MenuPositioner` (base.Menu) `MenuRadioGroup` (base.Menu) `MenuRadioItem` (base.Menu) `MenuRadioItemIndicator` (base.Menu) `MenuRoot` (base.Menu) `MenuSeparator` (base.Menu) `MenuSubmenuRoot` (base.Menu) `MenuSubmenuTrigger` (base.Menu) `MenuTrigger` (base.Menu) `Menubar` (base.Menubar) `MeterIndicator` (base.Meter) `MeterLabel` (base.Meter) `MeterRoot` (base.Meter) `MeterTrack` (base.Meter) `MeterValue` (base.Meter) `NavigationMenuArrow` (base.NavigationMenu (`arrow` prop)) `NavigationMenuBackdrop` (base.NavigationMenu (`backdrop` prop)) `NavigationMenuContent` (base.NavigationMenu) `NavigationMenuItem` (base.NavigationMenu) `NavigationMenuList` (base.NavigationMenu) `NavigationMenuPopup` (base.NavigationMenu) `NavigationMenuPortal` (base.NavigationMenu) `NavigationMenuPositioner` (base.NavigationMenu) `NavigationMenuRoot` (base.NavigationMenu) `NavigationMenuTrigger` (base.NavigationMenu) `NavigationMenuViewport` (base.NavigationMenu) `NumberFieldDecrement` (base.NumberField) `NumberFieldGroup` (base.NumberField) `NumberFieldIncrement` (base.NumberField) `NumberFieldInput` (base.NumberField) `NumberFieldRoot` (base.NumberField) `OTPFieldInput` (base.OTPField) `OTPFieldRoot` (base.OTPField) `PopoverArrow` (base.Popover (`arrow` prop)) `PopoverBackdrop` (base.Popover (`backdrop` prop)) `PopoverClose` (base.Popover (`close` prop)) `PopoverDescription` (base.Popover) `PopoverPopup` (base.Popover) `PopoverPortal` (base.Popover) `PopoverPositioner` (base.Popover) `PopoverRoot` (base.Popover) `PopoverTitle` (base.Popover) `PopoverTrigger` (base.Popover) `PreviewCardArrow` (base.PreviewCard (`arrow` prop)) `PreviewCardBackdrop` (base.PreviewCard (`backdrop` prop)) `PreviewCardPopup` (base.PreviewCard) `PreviewCardPortal` (base.PreviewCard) `PreviewCardPositioner` (base.PreviewCard) `PreviewCardRoot` (base.PreviewCard) `PreviewCardTrigger` (base.PreviewCard) `PreviewCardViewport` (base.PreviewCard) `ProgressIndicator` (base.Progress) `ProgressLabel` (base.Progress) `ProgressRoot` (base.Progress) `ProgressTrack` (base.Progress) `ProgressValue` (base.Progress) `RadioGroupIndicator` (base.RadioGroup) `RadioGroupRadio` (base.RadioGroup) `RadioGroupRoot` (base.RadioGroup) `ScrollAreaContent` (base.ScrollArea) `ScrollAreaCorner` (base.ScrollArea (`orientation: Both`)) `ScrollAreaRoot` (base.ScrollArea) `ScrollAreaScrollbar` (base.ScrollArea) `ScrollAreaThumb` (base.ScrollArea) `ScrollAreaViewport` (base.ScrollArea) `SelectArrow` (base.Select (`arrow` prop)) `SelectBackdrop` (base.Select (`backdrop` prop)) `SelectGroup` (base.OptionGroup) `SelectGroupLabel` (base.OptionGroup) `SelectIcon` (base.Select) `SelectItem` (base.Select) `SelectItemIndicator` (base.Select) `SelectItemText` (base.Select) `SelectLabel` (base.Select (`label` prop)) `SelectList` (base.Select) `SelectPopup` (base.Select) `SelectPortal` (base.Select) `SelectPositioner` (base.Select) `SelectRoot` (base.Select) `SelectSeparator` (base.OptionSeparator) `SelectTrigger` (base.Select) `SelectValue` (base.Select) `Separator` (base.Separator) `SliderControl` (base.Slider) `SliderIndicator` (base.Slider) `SliderLabel` (base.Slider (`label` prop)) `SliderRoot` (base.Slider) `SliderThumb` (base.Slider) `SliderTrack` (base.Slider) `SliderValue` (base.Slider (`show_value` prop)) `SwitchRoot` (base.Switch) `SwitchThumb` (base.Switch) `TabsIndicator` (base.Tabs) `TabsList` (base.Tabs) `TabsPanel` (base.Tabs) `TabsRoot` (base.Tabs) `TabsTab` (base.Tabs) `Toggle` (base.Toggle) `ToggleGroup` (base.ToggleGroup) `ToolbarButton` (base.Toolbar) `ToolbarGroup` (base.Toolbar) `ToolbarInput` (base.Toolbar) `ToolbarLink` (base.Toolbar) `ToolbarRoot` (base.Toolbar) `ToolbarSeparator` (base.Toolbar) `TooltipPopup` (base.Tooltip) `TooltipPortal` (base.Tooltip) `TooltipPositioner` (base.Tooltip) `TooltipRoot` (base.Tooltip) `TooltipTrigger` (base.Tooltip)
+
+</details>
+
+<details><summary><strong>44 reviewed — not standalone widgets</strong></summary>
+
+| Export | Reason |
+| --- | --- |
+| `AutocompleteValue` | Autocomplete part |
+| `ComboboxChip` | Combobox part |
+| `ComboboxChipRemove` | Combobox part |
+| `ComboboxChips` | Combobox part |
+| `ComboboxCollection` | Combobox part |
+| `ComboboxValue` | Combobox part |
+| `DrawerIndent` | Drawer part |
+| `DrawerIndentBackground` | Drawer part |
+| `DrawerProvider` | Drawer part |
+| `DrawerSwipeArea` | Drawer part |
+| `FieldControl` | Field part |
+| `FieldItem` | Field part |
+| `FieldValidity` | Field part |
+| `NavigationMenuIcon` | NavigationMenu part |
+| `NavigationMenuLink` | NavigationMenu part |
+| `NumberFieldScrubArea` | NumberField part |
+| `NumberFieldScrubAreaCursor` | NumberField part |
+| `OtpSlotElement` | OtpField part |
+| `PopoverViewport` | Popover part |
+| `SelectScrollDownArrow` | Select part |
+| `SelectScrollUpArrow` | Select part |
+| `ToastAction` | Toast part |
+| `ToastClose` | Toast part |
+| `ToastContent` | Toast part |
+| `ToastDescription` | Toast part |
+| `ToastPortal` | Toast part |
+| `ToastProvider` | Toast part |
+| `ToastRoot` | Toast part |
+| `ToastTitle` | Toast part |
+| `ToastViewport` | Toast part |
+| `TooltipProvider` | Tooltip part |
+| `TooltipViewport` | Tooltip part |
+| `init` | fn — registers every component's key bindings on the `App` — the adapter calls it on first render |
+| `DirectionProvider` | wraps a subtree with LTR/RTL context for arrow-key navigation — context, not a visual widget |
+| `PresenceState` | mount-presence state behind exit transitions — internal to popups |
+| `SafePolygon` | hover-intent geometry tracker behind Menu/NavigationMenu hover |
+| `primitives.Input` | shared text-edit element (`primitives::input::Input` + `InputTextElement`) behind Input and field inputs |
+| `primitives.Scrollbar` | shared scrollbar element (`primitives::scroll::Scrollbar`) behind ScrollArea and scrollable popups |
+| `AlertDialogHandle` | imperative open/close handle — not an element |
+| `DialogHandle` | imperative open/close handle — not an element |
+| `TooltipHandle` | imperative open/close handle — not an element |
+| `SliderValues` | value type — slider thumb values behind the Slider arm |
+| `OTPFieldValidationType` | enum — OTP input validation mode |
+| `OTPNormalizedValue` | value type behind OTPField normalize handlers |
+
+</details>
 
 ## video Components
 
@@ -486,15 +559,19 @@ Every component set Forge understands, what each provides, and how to enable it.
 
 [docs](https://ratatui.rs/) · [github](https://github.com/ratatui/ratatui)
 
-> ratatui-flavor base — `[x]` widgets render via `canvas:` mappings; the catalog also provides `VStack`/`HStack`/`Input` analogues ratatui lacks.
+> ratatui-flavor base — `[x]` widgets render natively in the ratatui arm and
 
-<details><summary><strong>14 supported elements</strong></summary>
+> via `canvas:` mappings on the gpui compat canvas; the catalog also provides
 
-`BarChart` `Block` `Calendar` `Canvas` `Chart` `Clear` (ratatui arm — clears its rect) `Gauge` `List` `Logo` `Mascot` `Paragraph` `Sparkline` `Table` `Tabs`
+> `VStack`/`HStack`/`Input` analogues ratatui lacks.
+
+<details><summary><strong>13 supported elements</strong></summary>
+
+`BarChart` (ratatui arm — `data`/`labels`/`bar_width`/`max`) `Block` `Calendar` (ratatui arm — `Monthly` behind `widget-calendar`; `date` prop) `Canvas` (ratatui arm — `map` draws the world map layer) `Chart` (ratatui arm — `data`/`name`/axis bounds) `Clear` (ratatui arm — clears its rect) `Gauge` `List` `Logo` (ratatui arm — `RatatuiLogo` `tiny`|`small`) `Paragraph` `Sparkline` (ratatui arm — `data`/`max`) `Table` `Tabs`
 
 </details>
 
-<details><summary><strong>13 reviewed — not standalone widgets</strong></summary>
+<details><summary><strong>14 reviewed — not standalone widgets</strong></summary>
 
 | Export | Reason |
 | --- | --- |
@@ -504,7 +581,8 @@ Every component set Forge understands, what each provides, and how to enable it.
 | `Fill` | layout constraint (`Constraint::Fill`), not a widget |
 | `Line` | canvas shape — needs a Canvas draw context |
 | `ListItem` | row value type for `List` |
-| `Map` | canvas map layer — needs a Canvas draw context |
+| `Map` | reached via `Canvas`'s `map` prop, not a standalone element |
+| `Mascot` | not a `ratatui::widgets` export (examples-only asset) — dropped from catalog |
 | `Points` | canvas shape — needs a Canvas draw context |
 | `Rectangle` | canvas shape — needs a Canvas draw context |
 | `Row` | row descriptor for `Table` |
@@ -555,17 +633,17 @@ Every component set Forge understands, what each provides, and how to enable it.
 
 ## adabraka Components
 
-[docs](https://crates.io/crates/adabraka-ui) · [github](https://crates.io/crates/adabraka-ui)
+[docs](https://augani.github.io/adabraka-ui/) · [github](https://crates.io/crates/adabraka-ui)
 
 > adabraka-ui (shadcn flavor) on the adabraka-gpui fork — the catalog's `[x]` elements render via `canvas:`/shared arms; the remaining upstream exports have no Forge adapter yet.
 
-<details><summary><strong>84 supported elements</strong></summary>
+<details><summary><strong>85 supported elements</strong></summary>
 
-`VStack` (→ VStack) `HStack` (→ HStack) `Card` (→ GroupBox) `Text` (→ Text) `Badge` (→ shared arm) `Avatar` (→ Avatar) `Button` (→ Button) `Input` (→ Input) `Checkbox` (→ Checkbox) `Switch` (→ Switch) `Select` (→ Select) `Progress` (→ Progress) `Alert` (→ shared arm) `Dialog` (→ Dialog) `Accordion` `AlertDialog` `AnimatedCounter` (cataloged as `AnimatedCounter` (canvas: mapping)) `AnimatedList` (cataloged as `AnimatedList` (canvas: mapping)) `AnimatedPresence` (cataloged as `AnimatedPresence` (canvas: mapping)) `AnimatedText` (cataloged as `AnimatedText` (canvas: mapping)) `AreaChart` `AvatarGroup` `BarChart` `BottomSheet` `Breadcrumbs` `Calendar` `ColorPicker` `Combobox` `Confetti` (cataloged as `Confetti` (canvas: mapping)) `ContextMenu` `CopyButton` `CropArea` (cataloged as `CropArea` (canvas: mapping)) `DataTable` `DatePicker` `Dock` (cataloged as `Dock` (canvas: mapping)) `DonutChart` `DrawerNavigation` (cataloged as `DrawerNavigation` (canvas: mapping)) `DropZone` (cataloged as `DropZone` (canvas: mapping)) `Dropdown` `Editor` `ExpandableCard` `FileTree` `FloatingActionButton` `Form` `Gauge` `GlassMorphism` (cataloged as `GlassMorphism` (canvas: mapping)) `HotkeyInput` (cataloged as `HotkeyInput` (canvas: mapping)) `HoverCard` `InfiniteScroll` `InlineEdit` `KBD` `LineChart` (cataloged as `LineChartAda` (canvas: mapping)) `MagneticButton` (cataloged as `MagneticButton` (canvas: mapping)) `Marquee` (cataloged as `Marquee` (canvas: mapping)) `Meteors` (cataloged as `Meteors` (canvas: mapping)) `NavigationMenu` (cataloged as `NavigationMenuWidget` (canvas: mapping)) `NumberInput` (cataloged as `NumberInputField` (canvas: mapping)) `PopoverMenu` (cataloged as `PopoverMenu` (canvas: mapping)) `RadarChart` (cataloged as `RadarChartAda` (canvas: mapping)) `Radio` (cataloged as `Radio` (canvas: mapping)) `RadioGroup` `RangeSlider` (cataloged as `RangeSlider` (canvas: mapping)) `Rating` `ResizablePanel` (cataloged as `ResizablePanel` (canvas: mapping)) `ResizablePanelGroup` (cataloged as `ResizablePanelGroup` (canvas: mapping)) `SearchInput` (cataloged as `SearchInput` (canvas: mapping)) `SegmentedNav` (cataloged as `SegmentedNav` (canvas: mapping)) `Separator` (cataloged as `Separator` (canvas: mapping)) `Sheet` `Skeleton` `Slider` `SortableList` (cataloged as `SortableList` (canvas: mapping)) `Spinner` (cataloged as `Spinner` (canvas: mapping)) `Spotlight` (cataloged as `Spotlight` (canvas: mapping)) `StatusBar` (cataloged as `StatusBarWidget` (canvas: mapping)) `Table` `Tabs` `TagInput` (cataloged as `TagInput` (canvas: mapping)) `TextReveal` (cataloged as `TextReveal` (canvas: mapping)) `TiltCard` (cataloged as `TiltCard` (canvas: mapping)) `Toggle` `TreeList` (cataloged as `TreeList` (canvas: mapping)) `TypeWriter` (cataloged as `TypeWriter` (canvas: mapping)) `ViewRouter` (cataloged as `ViewRouter` (canvas: mapping))
+`VStack` (→ VStack) `HStack` (→ HStack) `Card` (→ GroupBox) `Text` (→ Text) `Badge` (→ shared arm) `Avatar` (→ Avatar) `Button` (→ Button) `Input` (→ Input) `Checkbox` (→ Checkbox) `Switch` (→ Switch) `Select` (→ Select) `Progress` (→ Progress) `Alert` (→ shared arm) `Dialog` (→ Dialog) `Accordion` `AlertDialog` `AnimatedCounter` (cataloged as `AnimatedCounter` (canvas: mapping)) `AnimatedList` (cataloged as `AnimatedList` (canvas: mapping)) `AnimatedPresence` (cataloged as `AnimatedPresence` (canvas: mapping)) `AnimatedText` (cataloged as `AnimatedText` (canvas: mapping)) `AreaChart` `AvatarGroup` `BarChart` `BottomSheet` `Breadcrumbs` `Calendar` `ColorPicker` `Combobox` `Confetti` (cataloged as `Confetti` (canvas: mapping)) `ContextMenu` `CopyButton` `CropArea` (cataloged as `CropArea` (canvas: mapping)) `DataTable` `DatePicker` `Dock` (cataloged as `Dock` (canvas: mapping)) `DonutChart` `DrawerNavigation` (cataloged as `DrawerNavigation` (canvas: mapping)) `DropZone` (cataloged as `DropZone` (canvas: mapping)) `Dropdown` `Editor` `ExpandableCard` `FileTree` `FloatingActionButton` `Form` `Gauge` `GlassMorphism` (cataloged as `GlassMorphism` (canvas: mapping)) `HotkeyInput` (cataloged as `HotkeyInput` (canvas: mapping)) `HoverCard` `InfiniteScroll` `InlineEdit` `KBD` `LineChart` (cataloged as `LineChartAda` (canvas: mapping)) `MagneticButton` (cataloged as `MagneticButton` (canvas: mapping)) `Marquee` (cataloged as `Marquee` (canvas: mapping)) `Meteors` (cataloged as `Meteors` (canvas: mapping)) `NavigationMenu` (cataloged as `NavigationMenuWidget` (canvas: mapping)) `NavigationMenuItem` (base.NavigationMenu) `NumberInput` (cataloged as `NumberInputField` (canvas: mapping)) `PopoverMenu` (cataloged as `PopoverMenu` (canvas: mapping)) `RadarChart` (cataloged as `RadarChartAda` (canvas: mapping)) `Radio` (cataloged as `Radio` (canvas: mapping)) `RadioGroup` `RangeSlider` (cataloged as `RangeSlider` (canvas: mapping)) `Rating` `ResizablePanel` (cataloged as `ResizablePanel` (canvas: mapping)) `ResizablePanelGroup` (cataloged as `ResizablePanelGroup` (canvas: mapping)) `SearchInput` (cataloged as `SearchInput` (canvas: mapping)) `SegmentedNav` (cataloged as `SegmentedNav` (canvas: mapping)) `Separator` (cataloged as `Separator` (canvas: mapping)) `Sheet` `Skeleton` `Slider` `SortableList` (cataloged as `SortableList` (canvas: mapping)) `Spinner` (cataloged as `Spinner` (canvas: mapping)) `Spotlight` (cataloged as `Spotlight` (canvas: mapping)) `StatusBar` (cataloged as `StatusBarWidget` (canvas: mapping)) `Table` `Tabs` `TagInput` (cataloged as `TagInput` (canvas: mapping)) `TextReveal` (cataloged as `TextReveal` (canvas: mapping)) `TiltCard` (cataloged as `TiltCard` (canvas: mapping)) `Toggle` `TreeList` (cataloged as `TreeList` (canvas: mapping)) `TypeWriter` (cataloged as `TypeWriter` (canvas: mapping)) `ViewRouter` (cataloged as `ViewRouter` (canvas: mapping))
 
 </details>
 
-<details><summary><strong>39 reviewed — not standalone widgets</strong></summary>
+<details><summary><strong>38 reviewed — not standalone widgets</strong></summary>
 
 | Export | Reason |
 | --- | --- |
@@ -590,7 +668,6 @@ Every component set Forge understands, what each provides, and how to enable it.
 | `LayoutAnimation` | enum for layout-transition presets |
 | `LineChartPoint` | point value type for LineChart |
 | `LineChartSeries` | series value type for LineChart |
-| `NavigationMenuItem` | item descriptor for NavigationMenu |
 | `PopoverMenuItem` | item descriptor for PopoverMenu |
 | `RadarDataset` | dataset value type for RadarChart |
 | `RadioLayout` | enum — radio group layout |

@@ -28,6 +28,7 @@ root:
           disabled: true
         - base.Checkbox: Accept the terms
           checked: true
+          on change: status('checkbox changed')
         - base.Checkbox: Indeterminate
           indeterminate: true
         - HStack:
@@ -36,14 +37,17 @@ root:
           children:
             - base.Switch:
               checked: true
+              on change: status('switch changed')
             - base.Switch:
             - base.Toggle: Bold
               pressed: true
+              on change: status('toggle changed')
             - base.Toggle: Italic
         - base.Slider:
           value: 40
           min: 0
           max: 100
+          on change: status('slider changed')
         - base.Progress:
           label: Upload
           value: 68
@@ -55,6 +59,37 @@ root:
         - base.Separator:
         - base.Input:
           placeholder: Type here…
+        - base.Tabs:
+          value: one
+          on change: status('tab changed')
+          children:
+            - base.Tab: First
+              value: one
+              children:
+                - Text: First tab panel.
+            - base.Tab: Second
+              value: two
+              children:
+                - base.NumberField:
+                  value: 3
+                  min: 0
+                  max: 10
+        - base.Accordion:
+          on change: status('accordion changed')
+          children:
+            - base.AccordionItem: Details
+              value: details
+              open: true
+              children:
+                - Text: Hidden until opened.
+        - base.RadioGroup:
+          value: a
+          on change: status('radio changed')
+          children:
+            - base.Radio: Option A
+              value: a
+            - base.Radio: Option B
+              value: b
         - HStack:
           style:
             gap: 12px
@@ -63,3 +98,39 @@ root:
               fallback: SR
             - base.Avatar:
               fallback: GF
+        - HStack:
+          style:
+            gap: 12px
+            align: center
+          children:
+            - base.Select:
+              placeholder: Pick one
+              value: b
+              on change: status('select changed')
+              on open: status('select open toggled')
+              children:
+                - base.Option: First
+                  value: a
+                - base.Option: Second
+                  value: b
+            - base.Tooltip:
+              label: Tooltip text
+              children:
+                - base.Button: Hover
+            - base.Dialog:
+              label: Dialog
+              title: Demo dialog
+              description: Rendered by base-gpui parts.
+              close: true
+              on open: status('dialog open toggled')
+        - base.Menu:
+          label: Menu
+          children:
+            - base.MenuItem: Cut
+              on activate: status('menu cut')
+            - base.MenuItem: Copy
+              on activate: status('menu copy')
+            - base.MenuSeparator:
+            - base.MenuCheckboxItem: Checked row
+              checked: true
+              on change: status('menu check changed')

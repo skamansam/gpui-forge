@@ -357,7 +357,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] MasterDetail
 - [x] Measure
 - [ ] Menu — menu model — DropdownMenu/ContextMenu own it via OwnedMenu
-- [ ] MenuItem — menu item descriptor consumed by menu `items` props
+- [x] MenuItem — base.Menu
 - [x] Meter
 - [x] MiddleEllipsis
 - [ ] Mix — gradient color-stop pair for GradientEditor
@@ -815,21 +815,287 @@ github: https://crates.io/crates/ferrum-flow
 
 ## base-gpui Components
 
-docs: https://github.com/LukeTandjung/base-gpui  
+docs: https://luketandjung.github.io/base-gpui/overview/quick-start.html  
 github: https://github.com/LukeTandjung/base-gpui
 
-> Vendored Zed `gpui` engine fork — `use: base: base-gpui`, rendered by `forge-lib-base`. The crate also exports the full gpui element/element-style API (engine primitives — not a widget set).
+> Headless Base UI port (vendored at `vendor/base-gpui`, pinned to a Zed gpui rev) — `use: base: base-gpui`, rendered by `forge-lib-base`. Components ship unstyled as compound parts (`XxxRoot` + named parts — per-part inventory under "base-gpui parts" below); the adapter composes them into the `[x]` Forge elements with default chrome via `style_with_state`. Support types (`*Props`, `*Runtime`, `*Context`, `*StyleState`, `*Child`, `*ChildWiring`, `*Metadata`, `*Details`, `*Outcome`, `*Handler`, action/key-context consts, option enums like `AutocompleteMode`/`MenubarOrientation`, and helper fns like `input`/`scrollbar`/`modal_backdrop`/`point_in_*`/`normalize_otp_value`) are omitted for readability, as are the `Autocomplete*`/`ContextMenu*` aliases re-exporting Combobox/Menu parts. Event wiring: `on change:`/`on open:`/`on submit:`/`on activate:`/`on input:`/`on complete:` fire Forge handlers and write `{{binding}}` props back to state — `base.Input`/`base.ToolbarInput`/`FieldControl` value callbacks take `Fn(SharedString)` with no `&mut App`, so text-input `change` is not wireable upstream.
 
-- [x] Button
-- [x] Checkbox
-- [x] Switch
-- [x] Toggle
-- [x] Slider
-- [x] Progress
-- [x] Meter
-- [x] Separator
+- [x] Accordion — AccordionRoot + Item/Header/Trigger/Panel parts
+- [x] AlertDialog — AlertDialogRoot + Trigger/Popup parts (Action/Cancel unmapped)
+- [x] Autocomplete — AutocompleteRoot + Input/InputGroup/Clear + Combobox popup parts (Trigger/Icon/Value/ItemIndicator unmapped)
+- [x] Avatar — AvatarRoot + Image/Fallback
+- [x] Button — ButtonRoot
+- [x] Checkbox — CheckboxRoot + Indicator
+- [x] CheckboxGroup — CheckboxGroup + Checkbox children
+- [x] Collapsible — CollapsibleRoot + Trigger/Panel parts
+- [x] Combobox — ComboboxRoot + InputGroup/Input/Clear/Trigger/Icon/Portal/Positioner/Popup/List/Item/ItemIndicator parts (Value/Chips/Backdrop/Arrow/Collection/Empty/Group/GroupLabel/Separator/Status/Label unmapped)
+- [x] ContextMenu — ContextMenuRoot + Trigger + Menu parts (re-exported as `ContextMenu*`)
+- [x] Dialog — DialogRoot + Trigger/Portal/Backdrop/Viewport/Popup/Title/Description/Close parts
+- [x] Drawer — DrawerRoot + Portal/Backdrop/Viewport/Popup/Content parts (Provider/SwipeArea/Indent/IndentBackground unmapped)
+- [x] Field — FieldRoot + Label/Description/Error parts (Item/Control/Validity unmapped)
+- [x] Fieldset — FieldsetRoot + Legend parts
+- [x] Form — single-element compound (validation/submission context)
 - [x] Input
-- [x] Avatar
+- [x] Menu — MenuRoot + Trigger/Portal/Positioner/Popup/Item/LinkItem/CheckboxItem/CheckboxItemIndicator/RadioGroup/RadioItem/RadioItemIndicator/Group/GroupLabel/Separator/SubmenuRoot/SubmenuTrigger parts (Backdrop/Arrow unmapped)
+- [x] Menubar — single-element compound (base.Menu children wired via MenubarChild)
+- [x] Meter — MeterRoot + Label/Track/Indicator/Value
+- [x] NavigationMenu — NavigationMenuRoot + List/Item/Trigger/Content/Portal/Positioner/Popup/Viewport parts (Link/Icon/Backdrop/Arrow unmapped)
+- [x] NumberField — NumberFieldRoot + Group/Input/Increment/Decrement parts (ScrubArea unmapped)
+- [x] OtpField — OTPFieldRoot + Input slots
+- [x] Popover — PopoverRoot + Trigger/Portal/Positioner/Popup/Title/Description parts (Backdrop/Viewport/Arrow/Close unmapped)
+- [x] PreviewCard — PreviewCardRoot + Trigger/Portal/Positioner/Viewport/Popup parts (Backdrop/Arrow unmapped)
+- [x] Progress — ProgressRoot + Label/Track/Indicator/Value
+- [x] RadioGroup — RadioGroupRoot + Radio/Indicator parts
+- [x] ScrollArea — ScrollAreaRoot + Viewport/Content/Scrollbar/Thumb parts (Corner unmapped)
+- [x] Select — SelectRoot + Trigger/Value/Icon/Portal/Positioner/Popup/List/Item/ItemText/ItemIndicator parts (Backdrop/Arrow/Group/GroupLabel/Label/Separator/ScrollArrows unmapped)
+- [x] Separator
+- [x] Slider — SliderRoot + Control/Track/Indicator/Thumb
+- [x] Switch — SwitchRoot + Thumb
+- [x] Tabs — TabsRoot + List/Tab/Panel parts (Indicator unmapped)
+- [ ] Toast — ToastProvider + Portal/Viewport/Root/Content/Title/Description/Action/Close parts
+- [x] Toggle
+- [x] ToggleGroup — ToggleGroup + Toggle children
+- [x] Toolbar — ToolbarRoot + Group/Button/Input/Link/Separator parts
+- [x] Tooltip — TooltipRoot + Trigger/Portal/Positioner/Popup parts (Provider/Viewport/Arrow unmapped)
+
+## base-gpui parts (compound)
+
+docs: https://luketandjung.github.io/base-gpui/overview/quick-start.html  
+github: https://github.com/LukeTandjung/base-gpui
+
+> Compound child parts — each renders inside its component's arm (`*Root` is the anchor the adapter builds; `*Portal`/`Positioner`/`Backdrop`/`Arrow`/`Viewport`/`Provider` are overlay plumbing it owns). `[x]` = already composed by a `base.*` element.
+
+- [x] AccordionHeader — base.Accordion
+- [x] AccordionItem — base.Accordion
+- [x] AccordionPanel — base.Accordion
+- [x] AccordionRoot — base.Accordion
+- [x] AccordionTrigger — base.Accordion
+- [x] AlertDialogPopup — base.AlertDialog
+- [x] AlertDialogRoot — base.AlertDialog
+- [x] AlertDialogTrigger — base.AlertDialog
+- [x] AutocompleteRoot — base.Autocomplete
+- [ ] AutocompleteValue — Autocomplete part
+- [x] AvatarFallback — base.Avatar
+- [x] AvatarImage — base.Avatar
+- [x] AvatarRoot — base.Avatar
+- [x] ButtonRoot — base.Button
+- [x] CheckboxGroup — base.CheckboxGroup
+- [x] CheckboxIndicator — base.Checkbox
+- [x] CheckboxRoot — base.Checkbox
+- [x] CollapsiblePanel — base.Collapsible
+- [x] CollapsibleRoot — base.Collapsible
+- [x] CollapsibleTrigger — base.Collapsible
+- [x] ComboboxArrow — base.Combobox / base.Autocomplete (`arrow` prop)
+- [x] ComboboxBackdrop — base.Combobox / base.Autocomplete (`backdrop` prop)
+- [ ] ComboboxChip — Combobox part
+- [ ] ComboboxChipRemove — Combobox part
+- [ ] ComboboxChips — Combobox part
+- [x] ComboboxClear — base.Combobox
+- [ ] ComboboxCollection — Combobox part
+- [x] ComboboxEmpty — base.Combobox / base.Autocomplete (`empty` prop)
+- [x] ComboboxGroup — base.OptionGroup
+- [x] ComboboxGroupLabel — base.OptionGroup
+- [x] ComboboxIcon — base.Combobox
+- [x] ComboboxInput — base.Combobox
+- [x] ComboboxInputGroup — base.Combobox
+- [x] ComboboxItem — base.Combobox
+- [x] ComboboxItemIndicator — base.Combobox
+- [x] ComboboxLabel — base.Combobox (`label` prop)
+- [x] ComboboxList — base.Combobox
+- [x] ComboboxPopup — base.Combobox
+- [x] ComboboxPortal — base.Combobox
+- [x] ComboboxPositioner — base.Combobox
+- [x] ComboboxRoot — base.Combobox
+- [x] ComboboxSeparator — base.OptionSeparator
+- [x] ComboboxStatus — base.Combobox / base.Autocomplete (`status` prop)
+- [x] ComboboxTrigger — base.Combobox
+- [ ] ComboboxValue — Combobox part
+- [x] ContextMenuRoot — base.ContextMenu
+- [x] ContextMenuTrigger — base.ContextMenu
+- [x] DialogBackdrop — base.Dialog
+- [x] DialogClose — base.Dialog
+- [x] DialogDescription — base.Dialog
+- [x] DialogPopup — base.Dialog
+- [x] DialogPortal — base.Dialog
+- [x] DialogRoot — base.Dialog
+- [x] DialogTitle — base.Dialog
+- [x] DialogTrigger — base.Dialog
+- [x] DialogViewport — base.Dialog
+- [x] DrawerBackdrop — base.Drawer
+- [x] DrawerContent — base.Drawer
+- [ ] DrawerIndent — Drawer part
+- [ ] DrawerIndentBackground — Drawer part
+- [x] DrawerPopup — base.Drawer
+- [x] DrawerPortal — base.Drawer
+- [ ] DrawerProvider — Drawer part
+- [x] DrawerRoot — base.Drawer
+- [ ] DrawerSwipeArea — Drawer part
+- [x] DrawerViewport — base.Drawer
+- [ ] FieldControl — Field part
+- [x] FieldDescription — base.Field
+- [x] FieldError — base.Field
+- [ ] FieldItem — Field part
+- [x] FieldLabel — base.Field
+- [x] FieldRoot — base.Field
+- [ ] FieldValidity — Field part
+- [x] FieldsetLegend — base.Fieldset
+- [x] FieldsetRoot — base.Fieldset
+- [x] Form — base.Form
+- [x] Input — base.Input
+- [x] MenuArrow — base.Menu / base.Submenu / base.ContextMenu (`arrow` prop)
+- [x] MenuBackdrop — base.Menu / base.Submenu / base.ContextMenu (`backdrop` prop)
+- [x] MenuCheckboxItem — base.Menu
+- [x] MenuCheckboxItemIndicator — base.Menu
+- [x] MenuGroup — base.Menu
+- [x] MenuGroupLabel — base.Menu
+- [x] MenuItem — base.Menu
+- [x] MenuLinkItem — base.Menu
+- [x] MenuPopup — base.Menu
+- [x] MenuPortal — base.Menu
+- [x] MenuPositioner — base.Menu
+- [x] MenuRadioGroup — base.Menu
+- [x] MenuRadioItem — base.Menu
+- [x] MenuRadioItemIndicator — base.Menu
+- [x] MenuRoot — base.Menu
+- [x] MenuSeparator — base.Menu
+- [x] MenuSubmenuRoot — base.Menu
+- [x] MenuSubmenuTrigger — base.Menu
+- [x] MenuTrigger — base.Menu
+- [x] Menubar — base.Menubar
+- [x] MeterIndicator — base.Meter
+- [x] MeterLabel — base.Meter
+- [x] MeterRoot — base.Meter
+- [x] MeterTrack — base.Meter
+- [x] MeterValue — base.Meter
+- [x] NavigationMenuArrow — base.NavigationMenu (`arrow` prop)
+- [x] NavigationMenuBackdrop — base.NavigationMenu (`backdrop` prop)
+- [x] NavigationMenuContent — base.NavigationMenu
+- [ ] NavigationMenuIcon — NavigationMenu part
+- [x] NavigationMenuItem — base.NavigationMenu
+- [ ] NavigationMenuLink — NavigationMenu part
+- [x] NavigationMenuList — base.NavigationMenu
+- [x] NavigationMenuPopup — base.NavigationMenu
+- [x] NavigationMenuPortal — base.NavigationMenu
+- [x] NavigationMenuPositioner — base.NavigationMenu
+- [x] NavigationMenuRoot — base.NavigationMenu
+- [x] NavigationMenuTrigger — base.NavigationMenu
+- [x] NavigationMenuViewport — base.NavigationMenu
+- [x] NumberFieldDecrement — base.NumberField
+- [x] NumberFieldGroup — base.NumberField
+- [x] NumberFieldIncrement — base.NumberField
+- [x] NumberFieldInput — base.NumberField
+- [x] NumberFieldRoot — base.NumberField
+- [ ] NumberFieldScrubArea — NumberField part
+- [ ] NumberFieldScrubAreaCursor — NumberField part
+- [x] OTPFieldInput — base.OTPField
+- [x] OTPFieldRoot — base.OTPField
+- [ ] OtpSlotElement — OtpField part
+- [x] PopoverArrow — base.Popover (`arrow` prop)
+- [x] PopoverBackdrop — base.Popover (`backdrop` prop)
+- [x] PopoverClose — base.Popover (`close` prop)
+- [x] PopoverDescription — base.Popover
+- [x] PopoverPopup — base.Popover
+- [x] PopoverPortal — base.Popover
+- [x] PopoverPositioner — base.Popover
+- [x] PopoverRoot — base.Popover
+- [x] PopoverTitle — base.Popover
+- [x] PopoverTrigger — base.Popover
+- [ ] PopoverViewport — Popover part
+- [x] PreviewCardArrow — base.PreviewCard (`arrow` prop)
+- [x] PreviewCardBackdrop — base.PreviewCard (`backdrop` prop)
+- [x] PreviewCardPopup — base.PreviewCard
+- [x] PreviewCardPortal — base.PreviewCard
+- [x] PreviewCardPositioner — base.PreviewCard
+- [x] PreviewCardRoot — base.PreviewCard
+- [x] PreviewCardTrigger — base.PreviewCard
+- [x] PreviewCardViewport — base.PreviewCard
+- [x] ProgressIndicator — base.Progress
+- [x] ProgressLabel — base.Progress
+- [x] ProgressRoot — base.Progress
+- [x] ProgressTrack — base.Progress
+- [x] ProgressValue — base.Progress
+- [x] RadioGroupIndicator — base.RadioGroup
+- [x] RadioGroupRadio — base.RadioGroup
+- [x] RadioGroupRoot — base.RadioGroup
+- [x] ScrollAreaContent — base.ScrollArea
+- [x] ScrollAreaCorner — base.ScrollArea (`orientation: Both`)
+- [x] ScrollAreaRoot — base.ScrollArea
+- [x] ScrollAreaScrollbar — base.ScrollArea
+- [x] ScrollAreaThumb — base.ScrollArea
+- [x] ScrollAreaViewport — base.ScrollArea
+- [x] SelectArrow — base.Select (`arrow` prop)
+- [x] SelectBackdrop — base.Select (`backdrop` prop)
+- [x] SelectGroup — base.OptionGroup
+- [x] SelectGroupLabel — base.OptionGroup
+- [x] SelectIcon — base.Select
+- [x] SelectItem — base.Select
+- [x] SelectItemIndicator — base.Select
+- [x] SelectItemText — base.Select
+- [x] SelectLabel — base.Select (`label` prop)
+- [x] SelectList — base.Select
+- [x] SelectPopup — base.Select
+- [x] SelectPortal — base.Select
+- [x] SelectPositioner — base.Select
+- [x] SelectRoot — base.Select
+- [ ] SelectScrollDownArrow — Select part
+- [ ] SelectScrollUpArrow — Select part
+- [x] SelectSeparator — base.OptionSeparator
+- [x] SelectTrigger — base.Select
+- [x] SelectValue — base.Select
+- [x] Separator — base.Separator
+- [x] SliderControl — base.Slider
+- [x] SliderIndicator — base.Slider
+- [x] SliderLabel — base.Slider (`label` prop)
+- [x] SliderRoot — base.Slider
+- [x] SliderThumb — base.Slider
+- [x] SliderTrack — base.Slider
+- [x] SliderValue — base.Slider (`show_value` prop)
+- [x] SwitchRoot — base.Switch
+- [x] SwitchThumb — base.Switch
+- [x] TabsIndicator — base.Tabs
+- [x] TabsList — base.Tabs
+- [x] TabsPanel — base.Tabs
+- [x] TabsRoot — base.Tabs
+- [x] TabsTab — base.Tabs
+- [ ] ToastAction — Toast part
+- [ ] ToastClose — Toast part
+- [ ] ToastContent — Toast part
+- [ ] ToastDescription — Toast part
+- [ ] ToastPortal — Toast part
+- [ ] ToastProvider — Toast part
+- [ ] ToastRoot — Toast part
+- [ ] ToastTitle — Toast part
+- [ ] ToastViewport — Toast part
+- [x] Toggle — base.Toggle
+- [x] ToggleGroup — base.ToggleGroup
+- [x] ToolbarButton — base.Toolbar
+- [x] ToolbarGroup — base.Toolbar
+- [x] ToolbarInput — base.Toolbar
+- [x] ToolbarLink — base.Toolbar
+- [x] ToolbarRoot — base.Toolbar
+- [x] ToolbarSeparator — base.Toolbar
+- [x] TooltipPopup — base.Tooltip
+- [x] TooltipPortal — base.Tooltip
+- [x] TooltipPositioner — base.Tooltip
+- [ ] TooltipProvider — Tooltip part
+- [x] TooltipRoot — base.Tooltip
+- [x] TooltipTrigger — base.Tooltip
+- [ ] TooltipViewport — Tooltip part
+
+Non-part exports — reviewed, not widgets:
+
+- [ ] init — fn — registers every component's key bindings on the `App` — the adapter calls it on first render
+- [ ] DirectionProvider — wraps a subtree with LTR/RTL context for arrow-key navigation — context, not a visual widget
+- [ ] PresenceState — mount-presence state behind exit transitions — internal to popups
+- [ ] SafePolygon — hover-intent geometry tracker behind Menu/NavigationMenu hover
+- [ ] primitives.Input — shared text-edit element (`primitives::input::Input` + `InputTextElement`) behind Input and field inputs
+- [ ] primitives.Scrollbar — shared scrollbar element (`primitives::scroll::Scrollbar`) behind ScrollArea and scrollable popups
+- [ ] AlertDialogHandle — imperative open/close handle — not an element
+- [ ] DialogHandle — imperative open/close handle — not an element
+- [ ] TooltipHandle — imperative open/close handle — not an element
+- [ ] SliderValues — value type — slider thumb values behind the Slider arm
+- [ ] OTPFieldValidationType — enum — OTP input validation mode
+- [ ] OTPNormalizedValue — value type behind OTPField normalize handlers
 
 ## video Components
 
@@ -1143,7 +1409,7 @@ github: https://crates.io/crates/adabraka-ui
 - [x] Marquee — cataloged as `Marquee` (canvas: mapping)
 - [x] Meteors — cataloged as `Meteors` (canvas: mapping)
 - [x] NavigationMenu — cataloged as `NavigationMenuWidget` (canvas: mapping)
-- [ ] NavigationMenuItem — item descriptor for NavigationMenu
+- [x] NavigationMenuItem — base.NavigationMenu
 - [x] NumberInput — cataloged as `NumberInputField` (canvas: mapping)
 - [x] PopoverMenu — cataloged as `PopoverMenu` (canvas: mapping)
 - [ ] PopoverMenuItem — item descriptor for PopoverMenu

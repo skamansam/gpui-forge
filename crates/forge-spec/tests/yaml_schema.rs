@@ -312,6 +312,11 @@ fn shipped_docs_validate() {
             "adabraka",
         ),
         (
+            "base-gpui-showcase",
+            include_str!("../../../examples/showcases/base-gpui-showcase.forge.yaml"),
+            "gpui-kit",
+        ),
+        (
             "ely-demo",
             include_str!("../../../examples/demos/ely-demo.forge.yaml"),
             "gpui-kit",

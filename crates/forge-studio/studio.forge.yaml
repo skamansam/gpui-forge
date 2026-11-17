@@ -395,10 +395,6 @@ previewSelector: &previewSelector
             - forge.Preview#preview-hig:
               doc: ../../examples/demos/hig-demo.forge.yaml
               style: {height: 480px}
-          case gc:
-            - forge.Preview#preview-gc:
-              doc: ../../examples/showcases/gc-showcase.forge.yaml
-              style: {height: 480px}
           case gflow:
             - forge.Preview#preview-gflow:
               doc: ../../examples/demos/gflow-demo.forge.yaml
@@ -413,8 +409,10 @@ previewSelector: &previewSelector
               style: {height: 480px}
           case gpui-base:
             - forge.Preview#preview-gpui-base:
-              doc: ../../examples/demos/base-demo.forge.yaml
+              doc: ../../examples/showcases/base-gpui-showcase.forge.yaml
               style: {height: 480px}
+            - Text: "theme: unmapped — base.* paints fixed default chrome"
+              style: {size: xs, color: $theme.muted_foreground}
           case guise:
             # Foreign bases open their own window — a different gpui
             # generation can't composite into this canvas.

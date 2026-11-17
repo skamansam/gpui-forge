@@ -44,8 +44,10 @@ elements:
       disabled:
         type: bool
         default: false
+      value: string
     events:
       click:
+      change:
 
   Switch:
     icon: toggle-left
@@ -62,6 +64,7 @@ elements:
         default: false
     events:
       click:
+      change:
 
   Toggle:
     icon: circle-dot
@@ -78,8 +81,10 @@ elements:
       disabled:
         type: bool
         default: false
+      value: string
     events:
       click:
+      change:
 
   Slider:
     icon: sliders-horizontal
@@ -100,9 +105,15 @@ elements:
       step:
         type: number
         default: 1
+      label: string
+      show_value:
+        type: bool
+        default: false
       disabled:
         type: bool
         default: false
+    events:
+      change:
 
   Progress:
     icon: loader
@@ -177,3 +188,817 @@ elements:
     props:
       src: string
       fallback: string
+
+  Accordion:
+    icon: chevrons-up-down
+    group: Disclosure
+    summary: 'Accordion — AccordionItem children each get a trigger label and a collapsible panel.'
+    component: base_gpui::accordion::{AccordionRoot, AccordionItem, AccordionHeader, AccordionTrigger, AccordionPanel}
+    children:
+      - AccordionItem
+    props:
+      multiple:
+        type: bool
+        default: false
+      keep_mounted:
+        type: bool
+        default: false
+      orientation:
+        type: enum
+        values: [Horizontal, Vertical]
+        default: Vertical
+      disabled:
+        type: bool
+        default: false
+      value:
+        type: list<string>
+    events:
+      change:
+
+  AccordionItem:
+    icon: chevron-down
+    group: Disclosure
+    summary: One accordion section — `label` becomes the header trigger, children the panel body.
+    component: base_gpui::accordion::{AccordionItem, AccordionHeader, AccordionTrigger, AccordionPanel}
+    content: label
+    children: any
+    props:
+      label: string
+      value: string
+      open:
+        type: bool
+        default: false
+      disabled:
+        type: bool
+        default: false
+
+  Collapsible:
+    icon: chevron-down
+    group: Disclosure
+    summary: Single collapsible section — `label` trigger + panel children.
+    component: base_gpui::collapsible::{CollapsibleRoot, CollapsibleTrigger, CollapsiblePanel}
+    content: label
+    children: any
+    props:
+      label: string
+      open:
+        type: bool
+        default: false
+      keep_mounted:
+        type: bool
+        default: false
+      disabled:
+        type: bool
+        default: false
+    events:
+      open:
+
+  Tabs:
+    icon: folder
+    group: Navigation
+    summary: 'Tabs — `base.Tab` children; `value` binds the selected tab.'
+    component: base_gpui::tabs::{TabsRoot, TabsList, TabsTab, TabsPanel, TabsIndicator}
+    children:
+      - Tab
+    props:
+      value: string
+    events:
+      change:
+
+  Tab:
+    icon: square
+    group: Navigation
+    summary: One tab — `label` on the tab, children inside the panel.
+    component: base_gpui::tabs::{TabsTab, TabsPanel}
+    content: label
+    children: any
+    props:
+      label: string
+      value: string
+      disabled:
+        type: bool
+        default: false
+      keep_mounted:
+        type: bool
+        default: false
+
+  RadioGroup:
+    icon: circle-dot
+    group: Input
+    summary: Radio group — `base.Radio` children, one selectable value.
+    component: base_gpui::radio_group::{RadioGroupRoot, RadioGroupRadio, RadioGroupIndicator}
+    children:
+      - Radio
+    props:
+      value: string
+      orientation:
+        type: enum
+        values: [Horizontal, Vertical]
+        default: Vertical
+      disabled:
+        type: bool
+        default: false
+    events:
+      change:
+
+  Radio:
+    icon: circle
+    group: Input
+    summary: One radio option inside a `base.RadioGroup`.
+    component: base_gpui::radio_group::{RadioGroupRadio, RadioGroupIndicator}
+    content: label
+    children: none
+    props:
+      label: string
+      value: string
+      disabled:
+        type: bool
+        default: false
+
+  CheckboxGroup:
+    icon: square-check
+    group: Input
+    summary: 'Checkbox group — `base.Checkbox` children, `value` binds the checked list.'
+    component: base_gpui::checkbox_group::CheckboxGroup
+    children:
+      - Checkbox
+    props:
+      value:
+        type: list<string>
+      disabled:
+        type: bool
+        default: false
+    events:
+      change:
+
+  ToggleGroup:
+    icon: layout-grid
+    group: Input
+    summary: Toggle group — `base.Toggle` children, single or multiple selection.
+    component: base_gpui::toggle_group::ToggleGroup
+    children:
+      - Toggle
+    props:
+      value:
+        type: list<string>
+      multiple:
+        type: bool
+        default: false
+      orientation:
+        type: enum
+        values: [Horizontal, Vertical]
+        default: Horizontal
+      loop_focus:
+        type: bool
+        default: false
+      disabled:
+        type: bool
+        default: false
+    events:
+      change:
+
+  Fieldset:
+    icon: group
+    group: Forms
+    summary: Fieldset with an optional `legend` heading.
+    component: base_gpui::fieldset::{FieldsetRoot, FieldsetLegend}
+    children: any
+    props:
+      legend: string
+
+  Field:
+    icon: text-cursor-input
+    group: Forms
+    summary: Field — label + control + description/error around one input child.
+    component: base_gpui::field::{FieldRoot, FieldLabel, FieldDescription, FieldError}
+    children: any
+    props:
+      label: string
+      description: string
+      error: string
+      invalid:
+        type: bool
+        default: false
+      disabled:
+        type: bool
+        default: false
+
+  Form:
+    icon: clipboard-list
+    group: Forms
+    summary: Form wrapper — `submit` fires with the collected field values.
+    component: base_gpui::form::Form
+    children: any
+    events:
+      submit:
+
+  NumberField:
+    icon: hash
+    group: Input
+    summary: Number input with −/+ stepper buttons.
+    component: base_gpui::number_field::{NumberFieldRoot, NumberFieldGroup, NumberFieldInput, NumberFieldDecrement, NumberFieldIncrement}
+    children: none
+    props:
+      value: number
+      min: number
+      max: number
+      step: number
+      disabled:
+        type: bool
+        default: false
+      read_only:
+        type: bool
+        default: false
+    events:
+      change:
+
+  OTPField:
+    icon: key-round
+    group: Input
+    summary: One-time-passcode input — `length` slots, optional midpoint separator.
+    component: base_gpui::otp_field::{OTPFieldRoot, OTPFieldInput}
+    children: none
+    props:
+      length:
+        type: number
+        default: 6
+      value: string
+      mask:
+        type: bool
+        default: false
+      separator:
+        type: bool
+        default: false
+      disabled:
+        type: bool
+        default: false
+      read_only:
+        type: bool
+        default: false
+    events:
+      change:
+      complete:
+
+  ScrollArea:
+    icon: scroll
+    group: Layout
+    summary: Clipped scrollable region with styled scrollbars.
+    component: base_gpui::scroll_area::{ScrollAreaRoot, ScrollAreaViewport, ScrollAreaContent, ScrollAreaScrollbar, ScrollAreaThumb, ScrollAreaCorner}
+    children: any
+    props:
+      height: string
+      width: string
+      orientation:
+        type: enum
+        values: [Vertical, Horizontal, Both]
+        default: Vertical
+      aria_label: string
+
+  Toolbar:
+    icon: wrench
+    group: Navigation
+    summary: 'Toolbar — `base.ToolbarButton`/`ToolbarLink`/`ToolbarInput`/`ToolbarGroup`/`ToolbarSeparator` children.'
+    component: base_gpui::toolbar::ToolbarRoot
+    children:
+      - ToolbarButton
+      - ToolbarLink
+      - ToolbarInput
+      - ToolbarGroup
+      - ToolbarSeparator
+    props:
+      orientation:
+        type: enum
+        values: [Horizontal, Vertical]
+        default: Horizontal
+      disabled:
+        type: bool
+        default: false
+
+  ToolbarButton:
+    icon: mouse-pointer-click
+    group: Navigation
+    summary: Button inside a `base.Toolbar`.
+    component: base_gpui::toolbar::ToolbarButton
+    content: label
+    children: none
+    props:
+      label: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      click:
+
+  ToolbarLink:
+    icon: link
+    group: Navigation
+    summary: Link inside a `base.Toolbar`.
+    component: base_gpui::toolbar::ToolbarLink
+    content: label
+    children: none
+    props:
+      label: string
+    events:
+      click:
+
+  ToolbarInput:
+    icon: text-cursor-input
+    group: Navigation
+    summary: Text input inside a `base.Toolbar`.
+    component: base_gpui::toolbar::ToolbarInput
+    children: none
+    props:
+      placeholder: string
+      disabled:
+        type: bool
+        default: false
+
+  ToolbarGroup:
+    icon: group
+    group: Navigation
+    summary: Grouped toolbar controls sharing a disabled state.
+    component: base_gpui::toolbar::ToolbarGroup
+    children:
+      - ToolbarButton
+      - ToolbarLink
+      - ToolbarInput
+    props:
+      disabled:
+        type: bool
+        default: false
+
+  ToolbarSeparator:
+    icon: minus
+    group: Navigation
+    summary: Divider between toolbar controls.
+    component: base_gpui::toolbar::ToolbarSeparator
+    children: none
+
+  Tooltip:
+    icon: message-square
+    group: Overlay
+    summary: 'Tooltip — children are the trigger content; `label` is the popup text.'
+    component: base_gpui::tooltip::{TooltipRoot, TooltipTrigger, TooltipPortal, TooltipPositioner, TooltipPopup}
+    content: label
+    children: any
+    props:
+      label: string
+      side:
+        type: enum
+        values: [Top, Bottom, Left, Right]
+        default: Top
+    events:
+      open:
+
+  Dialog:
+    icon: app-window
+    group: Overlay
+    summary: 'Modal dialog — `label` trigger button; `title`/`description` and children fill the popup.'
+    component: base_gpui::dialog::{DialogRoot, DialogTrigger, DialogPortal, DialogBackdrop, DialogViewport, DialogPopup, DialogTitle, DialogDescription, DialogClose}
+    content: label
+    children: any
+    props:
+      label: string
+      title: string
+      description: string
+      open:
+        type: bool
+        default: false
+      modal:
+        type: bool
+        default: true
+      close:
+        type: bool
+        default: false
+    events:
+      open:
+
+  AlertDialog:
+    icon: triangle-alert
+    group: Overlay
+    summary: Alert dialog — like `base.Dialog` with AlertDialog parts.
+    component: base_gpui::alert_dialog::{AlertDialogRoot, AlertDialogTrigger, AlertDialogPopup}
+    content: label
+    children: any
+    props:
+      label: string
+      title: string
+      description: string
+      open:
+        type: bool
+        default: false
+      close:
+        type: bool
+        default: false
+    events:
+      open:
+
+  Popover:
+    icon: message-square
+    group: Overlay
+    summary: 'Anchored popover — `label` trigger, `title`/`description`/children in the popup.'
+    component: base_gpui::popover::{PopoverRoot, PopoverTrigger, PopoverPortal, PopoverBackdrop, PopoverPositioner, PopoverPopup, PopoverTitle, PopoverDescription, PopoverClose, PopoverArrow}
+    content: label
+    children: any
+    props:
+      label: string
+      title: string
+      description: string
+      open:
+        type: bool
+        default: false
+      side:
+        type: enum
+        values: [Top, Bottom, Left, Right]
+        default: Bottom
+      close:
+        type: bool
+        default: false
+      arrow:
+        type: bool
+        default: false
+      backdrop:
+        type: bool
+        default: false
+    events:
+      open:
+
+  PreviewCard:
+    icon: id-card
+    group: Overlay
+    summary: 'Hover preview card — `label` link trigger, children in the card viewport.'
+    component: base_gpui::preview_card::{PreviewCardRoot, PreviewCardTrigger, PreviewCardPortal, PreviewCardBackdrop, PreviewCardPositioner, PreviewCardPopup, PreviewCardViewport, PreviewCardArrow}
+    content: label
+    children: any
+    props:
+      label: string
+      side:
+        type: enum
+        values: [Top, Bottom, Left, Right]
+        default: Bottom
+      arrow:
+        type: bool
+        default: false
+      backdrop:
+        type: bool
+        default: false
+    events:
+      open:
+
+  Drawer:
+    icon: panel-bottom
+    group: Overlay
+    summary: Bottom drawer — `label` trigger; `title`/`description`/children in the popup.
+    component: base_gpui::drawer::{DrawerRoot, DrawerPortal, DrawerBackdrop, DrawerViewport, DrawerPopup, DrawerContent}
+    content: label
+    children: any
+    props:
+      label: string
+      title: string
+      description: string
+      open:
+        type: bool
+        default: false
+      close:
+        type: bool
+        default: false
+    events:
+      open:
+
+  Select:
+    icon: chevrons-up-down
+    group: Pickers
+    summary: 'Select dropdown — `base.Option`/`OptionGroup`/`OptionSeparator` children; `value` binds the selection.'
+    component: base_gpui::select::{SelectRoot, SelectTrigger, SelectValue, SelectIcon, SelectPortal, SelectBackdrop, SelectPositioner, SelectPopup, SelectList, SelectItem, SelectItemIndicator, SelectItemText, SelectLabel, SelectGroup, SelectGroupLabel, SelectSeparator, SelectArrow}
+    children:
+      - Option
+      - OptionGroup
+      - OptionSeparator
+    props:
+      label: string
+      placeholder: string
+      value: string
+      disabled:
+        type: bool
+        default: false
+      arrow:
+        type: bool
+        default: false
+      backdrop:
+        type: bool
+        default: false
+    events:
+      change:
+      open:
+
+  Option:
+    icon: check
+    group: Pickers
+    summary: One option inside `base.Select`, `base.Combobox`, or `base.Autocomplete`.
+    component: base_gpui::select::{SelectItem, SelectItemIndicator, SelectItemText}
+    content: label
+    children: none
+    props:
+      label: string
+      value: string
+      disabled:
+        type: bool
+        default: false
+
+  OptionGroup:
+    icon: group
+    group: Pickers
+    summary: Labelled option group inside Select/Combobox/Autocomplete.
+    component: base_gpui::select::{SelectGroup, SelectGroupLabel}
+    children:
+      - Option
+      - OptionSeparator
+    props:
+      label: string
+
+  OptionSeparator:
+    icon: minus
+    group: Pickers
+    summary: Divider between options.
+    component: base_gpui::select::SelectSeparator
+    children: none
+
+  Combobox:
+    icon: chevrons-up-down
+    group: Pickers
+    summary: 'Combobox — filterable input + option list; `value` binds the selection, `input` the typed text.'
+    component: base_gpui::combobox::{ComboboxRoot, ComboboxInputGroup, ComboboxInput, ComboboxClear, ComboboxTrigger, ComboboxIcon, ComboboxPortal, ComboboxBackdrop, ComboboxPositioner, ComboboxPopup, ComboboxList, ComboboxItem, ComboboxItemIndicator, ComboboxEmpty, ComboboxStatus, ComboboxLabel, ComboboxGroup, ComboboxGroupLabel, ComboboxSeparator, ComboboxArrow}
+    children:
+      - Option
+      - OptionGroup
+      - OptionSeparator
+    props:
+      label: string
+      placeholder: string
+      value: string
+      empty: string
+      status: string
+      disabled:
+        type: bool
+        default: false
+      arrow:
+        type: bool
+        default: false
+      backdrop:
+        type: bool
+        default: false
+    events:
+      change:
+      input:
+      open:
+
+  Autocomplete:
+    icon: text-cursor-input
+    group: Pickers
+    summary: 'Autocomplete — inline suggestions over `base.Option` children; `mode` picks List/Inline/Both.'
+    component: base_gpui::autocomplete::AutocompleteRoot
+    children:
+      - Option
+      - OptionGroup
+      - OptionSeparator
+    props:
+      placeholder: string
+      value: string
+      mode:
+        type: enum
+        values: [List, Inline, Both, None]
+        default: List
+      empty: string
+      status: string
+      arrow:
+        type: bool
+        default: false
+      backdrop:
+        type: bool
+        default: false
+    events:
+      change:
+      open:
+
+  Menu:
+    icon: menu
+    group: Menus
+    summary: 'Dropdown menu — `label` trigger; children are menu items, groups, or a `base.Submenu`.'
+    component: base_gpui::menu::{MenuRoot, MenuTrigger, MenuPortal, MenuBackdrop, MenuPositioner, MenuPopup, MenuArrow}
+    children:
+      - MenuItem
+      - MenuLinkItem
+      - MenuCheckboxItem
+      - MenuRadioGroup
+      - MenuGroup
+      - MenuGroupLabel
+      - MenuSeparator
+      - Submenu
+    props:
+      label: string
+      arrow:
+        type: bool
+        default: false
+      backdrop:
+        type: bool
+        default: false
+    events:
+      open:
+
+  Menubar:
+    icon: menu
+    group: Menus
+    summary: Menubar — `base.Menu` children laid out in a bar.
+    component: base_gpui::menubar::Menubar
+    children:
+      - Menu
+
+  ContextMenu:
+    icon: mouse-pointer-click
+    group: Menus
+    summary: Right-click menu — ContextMenuArea wraps the target, remaining children are menu items.
+    component: base_gpui::context_menu::{ContextMenuRoot, ContextMenuTrigger}
+    children:
+      - ContextMenuArea
+      - MenuItem
+      - MenuLinkItem
+      - MenuCheckboxItem
+      - MenuRadioGroup
+      - MenuGroup
+      - MenuGroupLabel
+      - MenuSeparator
+      - Submenu
+    props:
+      arrow:
+        type: bool
+        default: false
+      backdrop:
+        type: bool
+        default: false
+    events:
+      open:
+
+  ContextMenuArea:
+    icon: square-dashed
+    group: Menus
+    summary: Right-click target region inside a ContextMenu.
+    component: base_gpui::context_menu::ContextMenuTrigger
+    children: any
+
+  MenuItem:
+    icon: mouse-pointer-click
+    group: Menus
+    summary: Action item inside a menu popup — `activate`/`click` fires on selection.
+    component: base_gpui::menu::MenuItem
+    content: label
+    children: none
+    props:
+      label: string
+      disabled:
+        type: bool
+        default: false
+    events:
+      click:
+      activate:
+
+  MenuLinkItem:
+    icon: link
+    group: Menus
+    summary: Link item inside a menu popup — `activate` fires on selection.
+    component: base_gpui::menu::MenuLinkItem
+    content: label
+    children: none
+    props:
+      label: string
+    events:
+      activate:
+      click:
+
+  MenuCheckboxItem:
+    icon: square-check
+    group: Menus
+    summary: Checkable menu item — `checked` binds the state.
+    component: base_gpui::menu::{MenuCheckboxItem, MenuCheckboxItemIndicator}
+    content: label
+    children: none
+    props:
+      label: string
+      checked:
+        type: bool
+        default: false
+      disabled:
+        type: bool
+        default: false
+    events:
+      change:
+
+  MenuRadioGroup:
+    icon: circle-dot
+    group: Menus
+    summary: Radio group inside a menu — `base.MenuRadioItem` children, `value` binds the selection.
+    component: base_gpui::menu::{MenuRadioGroup, MenuRadioItem, MenuRadioItemIndicator}
+    children:
+      - MenuRadioItem
+      - MenuGroupLabel
+      - MenuSeparator
+    props:
+      value: string
+    events:
+      change:
+
+  MenuRadioItem:
+    icon: circle
+    group: Menus
+    summary: One radio item inside `base.MenuRadioGroup`.
+    component: base_gpui::menu::{MenuRadioItem, MenuRadioItemIndicator}
+    content: label
+    children: none
+    props:
+      label: string
+      value: string
+      disabled:
+        type: bool
+        default: false
+
+  MenuGroup:
+    icon: group
+    group: Menus
+    summary: Item group inside a menu popup.
+    component: base_gpui::menu::MenuGroup
+    children:
+      - MenuItem
+      - MenuLinkItem
+      - MenuCheckboxItem
+      - MenuGroupLabel
+      - MenuSeparator
+
+  MenuGroupLabel:
+    icon: tag
+    group: Menus
+    summary: Non-interactive group heading inside a menu.
+    component: base_gpui::menu::MenuGroupLabel
+    content: label
+    children: none
+    props:
+      label: string
+
+  MenuSeparator:
+    icon: minus
+    group: Menus
+    summary: Divider inside a menu popup.
+    component: base_gpui::menu::MenuSeparator
+    children: none
+
+  Submenu:
+    icon: chevron-right
+    group: Menus
+    summary: Nested submenu — `label` trigger item, children open in a side popup.
+    component: base_gpui::menu::{MenuSubmenuRoot, MenuSubmenuTrigger, MenuPortal, MenuPositioner, MenuPopup}
+    children:
+      - MenuItem
+      - MenuLinkItem
+      - MenuCheckboxItem
+      - MenuRadioGroup
+      - MenuGroup
+      - MenuGroupLabel
+      - MenuSeparator
+      - Submenu
+    props:
+      label: string
+      arrow:
+        type: bool
+        default: false
+      backdrop:
+        type: bool
+        default: false
+    events:
+      open:
+
+  NavigationMenu:
+    icon: compass
+    group: Navigation
+    summary: 'Navigation menu — `base.NavigationMenuItem` children; each item''s children render in the shared viewport.'
+    component: base_gpui::navigation_menu::{NavigationMenuRoot, NavigationMenuList, NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent, NavigationMenuPortal, NavigationMenuBackdrop, NavigationMenuPositioner, NavigationMenuPopup, NavigationMenuViewport, NavigationMenuArrow}
+    children:
+      - NavigationMenuItem
+    props:
+      value: string
+      arrow:
+        type: bool
+        default: false
+      backdrop:
+        type: bool
+        default: false
+    events:
+      change:
+
+  NavigationMenuItem:
+    icon: square
+    group: Navigation
+    summary: One navigation-menu entry — `label` trigger, children in the viewport.
+    component: base_gpui::navigation_menu::{NavigationMenuItem, NavigationMenuTrigger, NavigationMenuContent}
+    content: label
+    children: any
+    props:
+      label: string
+      value: string

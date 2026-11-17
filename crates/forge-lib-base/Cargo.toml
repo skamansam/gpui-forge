@@ -11,6 +11,7 @@ repository.workspace = true
 # retargeted to the gpui-kit base's gpui-pre =0.3.10. MIT.
 base-gpui = { path = "../../vendor/base-gpui" }
 gpui-forge-runtime = { path = "../gpui-forge-runtime" }
+serde_json = "1"
 
 [lints]
 workspace = true
