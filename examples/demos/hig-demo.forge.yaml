@@ -6,40 +6,48 @@ use:
   hig: gpui-apple-hig
 
 root:
-  VStack:
-  style:
-    padding: 24px
-    gap: 12px
+  WindowBorder:
+  shadow: 0
   children:
-    - Text: gpui-apple-hig
-      style:
-        size: xl
-        weight: semibold
-    - HStack:
-      style:
-        gap: 8px
+    - TitleBar:
       children:
-        - hig.Button: Push
-          prominent: true
-        - hig.Button: Plain
-        - hig.Button: Destructive
-          destructive: true
-    - hig.Switch:
-      label: Toggle me
-      checked: true
-    - hig.Checkbox: I agree
-      checked: true
-    - hig.Slider:
-      value: 40
-      min: 0
-      max: 100
-      step: 1
-    - HStack:
+        - Text: "Hig Demo"
+        - ThemeSwitcher:
+    - VStack:
       style:
+        grow: 1
+        padding: 24px
         gap: 12px
-        align: center
       children:
-        - hig.Progress:
-          value: 0.65
-        - hig.Spinner:
-        - hig.Badge: 3
+        - Text: gpui-apple-hig
+          style:
+            size: xl
+            weight: semibold
+        - HStack:
+          style:
+            gap: 8px
+          children:
+            - hig.Button: Push
+              prominent: true
+            - hig.Button: Plain
+            - hig.Button: Destructive
+              destructive: true
+        - hig.Switch:
+          label: Toggle me
+          checked: true
+        - hig.Checkbox: I agree
+          checked: true
+        - hig.Slider:
+          value: 40
+          min: 0
+          max: 100
+          step: 1
+        - HStack:
+          style:
+            gap: 12px
+            align: center
+          children:
+            - hig.Progress:
+              value: 0.65
+            - hig.Spinner:
+            - hig.Badge: 3

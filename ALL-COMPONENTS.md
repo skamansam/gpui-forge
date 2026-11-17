@@ -203,7 +203,7 @@ github: https://github.com/longbridge/gpui-kit
 docs: https://elygpui.com/  
 github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 
-> The ely site advertises 1279 items (widgets + ~900 icons). Below is every exported widget type in `ely-core` 0.2 — the `[x]` entries render natively via `forge-lib-ely` (`use: ely: ely-core`); the rest have no Forge adapter support yet.
+> The ely site advertises 1279 items (widgets + ~900 icons). Below is every exported widget type in `ely-core` 0.2 plus the `ely-terminal` 0.1.1 crate — the `[x]` entries render natively via `forge-lib-ely` (`use: ely: ely-core`); the rest have no Forge adapter support yet. `ely-terminal.Terminal` is native-only (pty); on wasm the `Terminal` element is absent by `cfg`.
 
 - [x] Accordion
 - [x] AccordionItem
@@ -216,6 +216,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] Anchor
 - [x] AnimatePresence
 - [x] AnimatedGradient
+- [x] AnsiText — `ely-terminal` — ANSI-colored text, SGR only
 - [x] AppShell
 - [x] AspectRatio
 - [ ] AsyncView — needs a `Future` + `Context` — async entity, not declarative
@@ -254,6 +255,8 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [ ] Column — column descriptor — tables build it from `columns` props
 - [x] ColumnShell
 - [ ] Command — palette item descriptor — `value`/`label`/`keys` consumed by CommandPalette `groups`
+- [ ] CommandBlock — `ely-terminal` — command + output block (Running/Ok/Error states)
+- [ ] CommandHistory — `ely-terminal` — `PastCommand` list
 - [x] Comparison
 - [x] Confetti
 - [x] ConfirmButton
@@ -347,6 +350,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] ListItem
 - [x] LoadMore
 - [x] LoadingOverlay
+- [x] LogViewer — `ely-terminal` — 'at|LEVEL|target|message' `lines`
 - [x] Marquee
 - [x] MaskedInput
 - [x] Masonry
@@ -387,6 +391,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] PieMenu
 - [ ] Place — positioning enum (Center/Left/Right/Top/Bottom)
 - [ ] Presence — Avatar presence enum — set via `presence` prop
+- [ ] ProcessList — `ely-terminal` — `Process` rows; needs live process data
 - [x] ProgressBar
 - [x] ProgressRing
 - [x] PromptDialog
@@ -423,6 +428,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] Shake
 - [x] Sheet
 - [x] ShellColumn
+- [x] ShellSelector — `ely-terminal` — 'name=program' `shells`
 - [x] Shimmer
 - [x] ShimmerText
 - [x] SignaturePad
@@ -460,6 +466,8 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] TableOfContents
 - [x] Tabs
 - [x] Tag
+- [x] Terminal — `ely-terminal` — pty `command`/`cwd` or `output` replay; native only
+- [x] TerminalToolbar — `ely-terminal` — clear/stop/split/`shells` picker
 - [ ] TextInput — input state entity; Forge inputs manage it internally
 - [x] TimePicker
 - [x] Timeline
@@ -955,15 +963,17 @@ github: https://github.com/AprilNEA/gpui-symbols
 docs: https://ratatui.rs/  
 github: https://github.com/ratatui/ratatui
 
-> ratatui-flavor base — `[x]` widgets render via `canvas:` mappings; the catalog also provides `VStack`/`HStack`/`Input` analogues ratatui lacks.
+> ratatui-flavor base — `[x]` widgets render natively in the ratatui arm and
+> via `canvas:` mappings on the gpui compat canvas; the catalog also provides
+> `VStack`/`HStack`/`Input` analogues ratatui lacks.
 
-- [x] BarChart
+- [x] BarChart — ratatui arm — `data`/`labels`/`bar_width`/`max`
 - [ ] Bar — bar value type consumed by BarChart
 - [ ] BarGroup — grouping descriptor for BarChart
 - [x] Block
-- [x] Calendar
-- [x] Canvas
-- [x] Chart
+- [x] Calendar — ratatui arm — `Monthly` behind `widget-calendar`; `date` prop
+- [x] Canvas — ratatui arm — `map` draws the world map layer
+- [x] Chart — ratatui arm — `data`/`name`/axis bounds
 - [ ] Circle — canvas shape — needs a Canvas draw context
 - [x] Clear — ratatui arm — clears its rect
 - [ ] Fill — layout constraint (`Constraint::Fill`), not a widget
@@ -971,16 +981,16 @@ github: https://github.com/ratatui/ratatui
 - [ ] Line — canvas shape — needs a Canvas draw context
 - [x] List
 - [ ] ListItem — row value type for `List`
-- [x] Logo
-- [ ] Map — canvas map layer — needs a Canvas draw context
-- [x] Mascot
+- [x] Logo — ratatui arm — `RatatuiLogo` `tiny`|`small`
+- [ ] Map — reached via `Canvas`'s `map` prop, not a standalone element
+- [ ] Mascot — not a `ratatui::widgets` export (examples-only asset) — dropped from catalog
 - [x] Paragraph
 - [ ] Points — canvas shape — needs a Canvas draw context
 - [ ] Rectangle — canvas shape — needs a Canvas draw context
 - [ ] Row — row descriptor for `Table`
 - [ ] Cell — cell descriptor inside `Row`
 - [ ] Scrollbar — internal part of `ScrollArea`
-- [x] Sparkline
+- [x] Sparkline — ratatui arm — `data`/`max`
 - [x] Table
 - [x] Tabs
 - [ ] World — map dataset for the canvas `Map` layer
@@ -1051,7 +1061,7 @@ github: https://crates.io/crates/bezel
 
 ## adabraka Components
 
-docs: https://crates.io/crates/adabraka-ui  
+docs: https://augani.github.io/adabraka-ui/  
 github: https://crates.io/crates/adabraka-ui
 
 > adabraka-ui (shadcn flavor) on the adabraka-gpui fork — the catalog's `[x]` elements render via `canvas:`/shared arms; the remaining upstream exports have no Forge adapter yet.

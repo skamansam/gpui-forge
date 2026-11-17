@@ -6265,6 +6265,116 @@
           "if": {
             "not": {
               "propertyNames": {
+                "pattern": "^(?!AnsiText(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^AnsiText(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "text": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|AnsiText(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.AnsiText(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.AnsiText(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "text": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.AnsiText(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
                 "pattern": "^(?!AppShell(#[\\w-]+| \\.[\\w-]+)?$).*$"
               }
             }
@@ -8835,10 +8945,23 @@
                   }
                 ]
               },
+              "bar_width": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Cells per bar."
+              },
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
               },
               "color": {
@@ -8852,31 +8975,63 @@
               "data": {
                 "anyOf": [
                   {
-                    "items": {
-                      "anyOf": [
-                        {
-                          "type": "number"
+                    "anyOf": [
+                      {
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "pattern": "^(\\$|\\{)",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
-                        {
-                          "pattern": "^(\\$|\\{)",
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "type": "array"
+                        "type": "array"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "pattern": "^(\\$|\\{)",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
+                    "anyOf": [
+                      {
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "pattern": "^(\\$|\\{)",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 ],
-                "description": "Series values."
+                "description": "Bar values."
               },
               "gap": {
                 "anyOf": [
@@ -8919,6 +9074,30 @@
                   }
                 ]
               },
+              "labels": {
+                "description": "Newline-separated bar labels; defaults to bar index.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Scale ceiling; defaults to the largest value."
+              },
               "style": {
                 "$ref": "#/definitions/style"
               },
@@ -8955,7 +9134,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|BarChart(#[\\w-]+| \\.[\\w-]+)?|axis|children|color|data|gap|height|hover|style|tooltip|values|width)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|BarChart(#[\\w-]+| \\.[\\w-]+)?|axis|bar_width|children|color|data|gap|height|hover|labels|max|style|tooltip|values|width)$"
             }
           }
         },
@@ -9001,10 +9180,23 @@
                   }
                 ]
               },
+              "bar_width": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Cells per bar."
+              },
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
               },
               "color": {
@@ -9018,31 +9210,63 @@
               "data": {
                 "anyOf": [
                   {
-                    "items": {
-                      "anyOf": [
-                        {
-                          "type": "number"
+                    "anyOf": [
+                      {
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "pattern": "^(\\$|\\{)",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
                         },
-                        {
-                          "pattern": "^(\\$|\\{)",
-                          "type": "string"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ]
-                    },
-                    "type": "array"
+                        "type": "array"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "pattern": "^(\\$|\\{)",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
+                    "anyOf": [
+                      {
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "pattern": "^(\\$|\\{)",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 ],
-                "description": "Series values."
+                "description": "Bar values."
               },
               "gap": {
                 "anyOf": [
@@ -9085,6 +9309,30 @@
                   }
                 ]
               },
+              "labels": {
+                "description": "Newline-separated bar labels; defaults to bar index.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Scale ceiling; defaults to the largest value."
+              },
               "style": {
                 "$ref": "#/definitions/style"
               },
@@ -9121,7 +9369,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.BarChart(#[\\w-]+| \\.[\\w-]+)?|axis|children|color|data|gap|height|hover|style|tooltip|values|width)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.BarChart(#[\\w-]+| \\.[\\w-]+)?|axis|bar_width|children|color|data|gap|height|hover|labels|max|style|tooltip|values|width)$"
             }
           }
         },
@@ -12004,10 +12252,17 @@
             },
             "properties": {
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
+              },
+              "date": {
+                "description": "`YYYY-MM` or `YYYY-MM-DD`; defaults to today (UTC).",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               },
               "disabled": {
                 "anyOf": [
@@ -12084,7 +12339,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Calendar(#[\\w-]+| \\.[\\w-]+)?|children|disabled|month|on (change|pick)|selected|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Calendar(#[\\w-]+| \\.[\\w-]+)?|children|date|disabled|month|on (change|pick)|selected|style|tooltip|value)$"
             }
           }
         },
@@ -12121,10 +12376,17 @@
             },
             "properties": {
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
+              },
+              "date": {
+                "description": "`YYYY-MM` or `YYYY-MM-DD`; defaults to today (UTC).",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               },
               "disabled": {
                 "anyOf": [
@@ -12201,7 +12463,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Calendar(#[\\w-]+| \\.[\\w-]+)?|children|disabled|month|on (change|pick)|selected|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Calendar(#[\\w-]+| \\.[\\w-]+)?|children|date|disabled|month|on (change|pick)|selected|style|tooltip|value)$"
             }
           }
         },
@@ -12420,6 +12682,20 @@
                 ],
                 "description": "{nodes: [{id, x, y, label, type?}], edges: [{id, source, target, label?, type?, animated?}]}. Node type names a registered renderer; omitted nodes get the default chrome. Edge type: Bezier (default), Straight, SmoothStep."
               },
+              "map": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Draw the high-resolution world map."
+              },
               "minimap": {
                 "anyOf": [
                   {
@@ -12503,10 +12779,66 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "x_max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "x_min": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "y_max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "y_min": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Canvas(#[\\w-]+| \\.[\\w-]+)?|children|controls|graph|minimap|pattern|read_only|scene|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Canvas(#[\\w-]+| \\.[\\w-]+)?|children|controls|graph|map|minimap|pattern|read_only|scene|style|tooltip|x_max|x_min|y_max|y_min)$"
             }
           }
         },
@@ -12577,6 +12909,20 @@
                 ],
                 "description": "{nodes: [{id, x, y, label, type?}], edges: [{id, source, target, label?, type?, animated?}]}. Node type names a registered renderer; omitted nodes get the default chrome. Edge type: Bezier (default), Straight, SmoothStep."
               },
+              "map": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Draw the high-resolution world map."
+              },
               "minimap": {
                 "anyOf": [
                   {
@@ -12660,10 +13006,66 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "x_max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "x_min": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "y_max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "y_min": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Canvas(#[\\w-]+| \\.[\\w-]+)?|children|controls|graph|minimap|pattern|read_only|scene|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Canvas(#[\\w-]+| \\.[\\w-]+)?|children|controls|graph|map|minimap|pattern|read_only|scene|style|tooltip|x_max|x_min|y_max|y_min)$"
             }
           }
         },
@@ -13650,9 +14052,7 @@
             },
             "properties": {
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
               },
               "color": {
@@ -13665,13 +14065,45 @@
                 ]
               },
               "data": {
-                "description": "Rows as JSON — an array of objects keyed by field.",
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
-                ]
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "pattern": "^(\\$|\\{)",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Rows as JSON — an array of objects keyed by field."
               },
               "mark": {
                 "anyOf": [
@@ -13692,6 +14124,15 @@
                   }
                 ],
                 "description": "The mark kind drawn per datum."
+              },
+              "name": {
+                "description": "Series label shown in the legend.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               },
               "points": {
                 "anyOf": [
@@ -13773,6 +14214,34 @@
                   "null"
                 ]
               },
+              "x_max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "x_min": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "y": {
                 "description": "Field encoded on the y axis.",
                 "type": [
@@ -13781,10 +14250,38 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "y_max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "y_min": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Chart(#[\\w-]+| \\.[\\w-]+)?|children|color|data|mark|points|style|title|tooltip|type|x|y)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Chart(#[\\w-]+| \\.[\\w-]+)?|children|color|data|mark|name|points|style|title|tooltip|type|x|x_max|x_min|y|y_max|y_min)$"
             }
           }
         },
@@ -13815,9 +14312,7 @@
             },
             "properties": {
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
               },
               "color": {
@@ -13830,13 +14325,45 @@
                 ]
               },
               "data": {
-                "description": "Rows as JSON — an array of objects keyed by field.",
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
-                ]
+                "anyOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "pattern": "^(\\$|\\{)",
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "type": "array"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Rows as JSON — an array of objects keyed by field."
               },
               "mark": {
                 "anyOf": [
@@ -13857,6 +14384,15 @@
                   }
                 ],
                 "description": "The mark kind drawn per datum."
+              },
+              "name": {
+                "description": "Series label shown in the legend.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               },
               "points": {
                 "anyOf": [
@@ -13938,6 +14474,34 @@
                   "null"
                 ]
               },
+              "x_max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "x_min": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
               "y": {
                 "description": "Field encoded on the y axis.",
                 "type": [
@@ -13946,10 +14510,38 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "y_max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "y_min": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Chart(#[\\w-]+| \\.[\\w-]+)?|children|color|data|mark|points|style|title|tooltip|type|x|y)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Chart(#[\\w-]+| \\.[\\w-]+)?|children|color|data|mark|name|points|style|title|tooltip|type|x|x_max|x_min|y|y_max|y_min)$"
             }
           }
         },
@@ -42411,6 +43003,202 @@
           "if": {
             "not": {
               "propertyNames": {
+                "pattern": "^(?!LogViewer(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^LogViewer(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "follow": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "least": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "Trace",
+                      "Debug",
+                      "Info",
+                      "Warn",
+                      "Error"
+                    ]
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "lines": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on change": {
+                "description": "level or follow control changed — new value appended",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "query": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|LogViewer(#[\\w-]+| \\.[\\w-]+)?|children|follow|least|lines|on (change)|query|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.LogViewer(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.LogViewer(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "follow": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "least": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "Trace",
+                      "Debug",
+                      "Info",
+                      "Warn",
+                      "Error"
+                    ]
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "lines": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on change": {
+                "description": "level or follow control changed — new value appended",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "query": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.LogViewer(#[\\w-]+| \\.[\\w-]+)?|children|follow|least|lines|on (change)|query|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
                 "pattern": "^(?!Logo(#[\\w-]+| \\.[\\w-]+)?$).*$"
               }
             }
@@ -42428,10 +43216,25 @@
             },
             "properties": {
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
+              },
+              "size": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "tiny",
+                      "small"
+                    ]
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "style": {
                 "$ref": "#/definitions/style"
@@ -42447,7 +43250,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Logo(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Logo(#[\\w-]+| \\.[\\w-]+)?|children|size|style|tooltip)$"
             }
           }
         },
@@ -42472,10 +43275,25 @@
             },
             "properties": {
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
+              },
+              "size": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "tiny",
+                      "small"
+                    ]
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               },
               "style": {
                 "$ref": "#/definitions/style"
@@ -42491,7 +43309,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Logo(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Logo(#[\\w-]+| \\.[\\w-]+)?|children|size|style|tooltip)$"
             }
           }
         },
@@ -43468,94 +44286,6 @@
             },
             "propertyNames": {
               "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Marquee(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
-            }
-          }
-        },
-        {
-          "if": {
-            "not": {
-              "propertyNames": {
-                "pattern": "^(?!Mascot(#[\\w-]+| \\.[\\w-]+)?$).*$"
-              }
-            }
-          },
-          "then": {
-            "patternProperties": {
-              "^Mascot(#[\\w-]+| \\.[\\w-]+)?$": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Positional content — mapped to the element's primary prop."
-              }
-            },
-            "properties": {
-              "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
-                "type": "array"
-              },
-              "style": {
-                "$ref": "#/definitions/style"
-              },
-              "tooltip": {
-                "description": "Universal prop — hover tooltip text.",
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
-                ]
-              }
-            },
-            "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Mascot(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
-            }
-          }
-        },
-        {
-          "if": {
-            "not": {
-              "propertyNames": {
-                "pattern": "^(?![a-z][\\w-]*\\.Mascot(#[\\w-]+| \\.[\\w-]+)?$).*$"
-              }
-            }
-          },
-          "then": {
-            "patternProperties": {
-              "^[a-z][\\w-]*\\.Mascot(#[\\w-]+| \\.[\\w-]+)?$": {
-                "anyOf": [
-                  {
-                    "type": "null"
-                  }
-                ],
-                "description": "Positional content — mapped to the element's primary prop."
-              }
-            },
-            "properties": {
-              "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
-                "type": "array"
-              },
-              "style": {
-                "$ref": "#/definitions/style"
-              },
-              "tooltip": {
-                "description": "Universal prop — hover tooltip text.",
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
-                ]
-              }
-            },
-            "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Mascot(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -65839,6 +66569,120 @@
           "if": {
             "not": {
               "propertyNames": {
+                "pattern": "^(?!ShellSelector(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^ShellSelector(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "on pick": {
+                "description": "shell index picked — number appended",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "shells": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|ShellSelector(#[\\w-]+| \\.[\\w-]+)?|children|on (pick)|shells|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.ShellSelector(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.ShellSelector(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "on pick": {
+                "description": "shell index picked — number appended",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "shells": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.ShellSelector(#[\\w-]+| \\.[\\w-]+)?|children|on (pick)|shells|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
                 "pattern": "^(?!Shimmer(#[\\w-]+| \\.[\\w-]+)?$).*$"
               }
             }
@@ -69100,10 +69944,37 @@
             },
             "properties": {
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "pattern": "^(\\$|\\{)",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Series values."
               },
               "full_width": {
                 "anyOf": [
@@ -69149,6 +70020,21 @@
                     "type": "null"
                   }
                 ]
+              },
+              "max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Scale ceiling; defaults to the largest value."
               },
               "style": {
                 "$ref": "#/definitions/style"
@@ -69198,7 +70084,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Sparkline(#[\\w-]+| \\.[\\w-]+)?|children|full_width|height|kind|style|tooltip|values)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Sparkline(#[\\w-]+| \\.[\\w-]+)?|children|data|full_width|height|kind|max|style|tooltip|values)$"
             }
           }
         },
@@ -69229,10 +70115,37 @@
             },
             "properties": {
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "pattern": "^(\\$|\\{)",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Series values."
               },
               "full_width": {
                 "anyOf": [
@@ -69278,6 +70191,21 @@
                     "type": "null"
                   }
                 ]
+              },
+              "max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Scale ceiling; defaults to the largest value."
               },
               "style": {
                 "$ref": "#/definitions/style"
@@ -69327,7 +70255,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Sparkline(#[\\w-]+| \\.[\\w-]+)?|children|full_width|height|kind|style|tooltip|values)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Sparkline(#[\\w-]+| \\.[\\w-]+)?|children|data|full_width|height|kind|max|style|tooltip|values)$"
             }
           }
         },
@@ -77957,6 +78885,9 @@
                 "anyOf": [
                   {
                     "type": "null"
+                  },
+                  {
+                    "type": "null"
                   }
                 ],
                 "description": "Positional content — mapped to the element's primary prop."
@@ -77970,19 +78901,85 @@
               "cols": {
                 "anyOf": [
                   {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "pattern": "^(\\$|\\{)",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 ]
               },
               "command": {
-                "description": "Program to run — defaults to the user's shell.",
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Program to run — defaults to the user's shell."
+              },
+              "cwd": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on bell": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on exit": {
+                "description": "program ended — exit status appended",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on title": {
+                "description": "program set its title — string appended",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "output": {
                 "type": [
                   "string",
                   "number",
@@ -77993,14 +78990,32 @@
               "rows": {
                 "anyOf": [
                   {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "pattern": "^(\\$|\\{)",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 ]
               },
@@ -78018,7 +79033,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Terminal(#[\\w-]+| \\.[\\w-]+)?|children|cols|command|rows|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Terminal(#[\\w-]+| \\.[\\w-]+)?|children|cols|command|cwd|on (title|bell|exit)|output|rows|style|tooltip)$"
             }
           }
         },
@@ -78036,6 +79051,9 @@
                 "anyOf": [
                   {
                     "type": "null"
+                  },
+                  {
+                    "type": "null"
                   }
                 ],
                 "description": "Positional content — mapped to the element's primary prop."
@@ -78049,19 +79067,85 @@
               "cols": {
                 "anyOf": [
                   {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "pattern": "^(\\$|\\{)",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 ]
               },
               "command": {
-                "description": "Program to run — defaults to the user's shell.",
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  },
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Program to run — defaults to the user's shell."
+              },
+              "cwd": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on bell": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on exit": {
+                "description": "program ended — exit status appended",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on title": {
+                "description": "program set its title — string appended",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "output": {
                 "type": [
                   "string",
                   "number",
@@ -78072,14 +79156,32 @@
               "rows": {
                 "anyOf": [
                   {
-                    "type": "number"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   },
                   {
-                    "pattern": "^(\\$|\\{)",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "pattern": "^(\\$|\\{)",
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 ]
               },
@@ -78097,7 +79199,201 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Terminal(#[\\w-]+| \\.[\\w-]+)?|children|cols|command|rows|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Terminal(#[\\w-]+| \\.[\\w-]+)?|children|cols|command|cwd|on (title|bell|exit)|output|rows|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?!TerminalToolbar(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^TerminalToolbar(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "exit": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "on clear": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on pick": {
+                "description": "shell index picked — number appended",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on split": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on stop": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "shells": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "title": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|TerminalToolbar(#[\\w-]+| \\.[\\w-]+)?|children|exit|on (clear|split|pick|stop)|shells|style|title|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.TerminalToolbar(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.TerminalToolbar(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "exit": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "on clear": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on pick": {
+                "description": "shell index picked — number appended",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on split": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on stop": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "shells": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "title": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TerminalToolbar(#[\\w-]+| \\.[\\w-]+)?|children|exit|on (clear|split|pick|stop)|shells|style|title|tooltip)$"
             }
           }
         },
@@ -80250,6 +81546,90 @@
             },
             "propertyNames": {
               "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.ThemePicker(#[\\w-]+| \\.[\\w-]+)?|children|layout|on (change)|style|system|tooltip|value)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?!ThemeSwitcher(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^ThemeSwitcher(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|ThemeSwitcher(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.ThemeSwitcher(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.ThemeSwitcher(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.ThemeSwitcher(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -88775,6 +90155,36 @@
                 },
                 "type": "array"
               },
+              "resize-hit": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Pointer band around the frame edge that starts a resize, in px."
+              },
+              "shadow": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Shadow ring inset in px — space between the frame edge and content (client decorations only)."
+              },
               "style": {
                 "$ref": "#/definitions/style"
               },
@@ -88789,7 +90199,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|WindowBorder(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|WindowBorder(#[\\w-]+| \\.[\\w-]+)?|children|resize-hit|shadow|style|tooltip)$"
             }
           }
         },
@@ -88819,6 +90229,36 @@
                 },
                 "type": "array"
               },
+              "resize-hit": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Pointer band around the frame edge that starts a resize, in px."
+              },
+              "shadow": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Shadow ring inset in px — space between the frame edge and content (client decorations only)."
+              },
               "style": {
                 "$ref": "#/definitions/style"
               },
@@ -88833,7 +90273,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.WindowBorder(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.WindowBorder(#[\\w-]+| \\.[\\w-]+)?|children|resize-hit|shadow|style|tooltip)$"
             }
           }
         },
@@ -89750,7 +91190,7 @@
         }
       },
       "propertyNames": {
-        "pattern": "^((BackForwardNavigation|FloatingActionButton|IntersectionObserver|NavigationMenuWidget|QuestionnaireChoice|ResizablePanelGroup|InputGroupTextarea|NotificationCenter|ParticleBackground|RelativeDatePicker|QuestionnaireItem|SwipeableListItem|AnimatedGradient|AnimatedPresence|CommandSeparator|ConfirmationCard|ConnectionStatus|DirectoryListing|DrawerNavigation|InputGroupButton|NumberInputField|OfflineIndicator|RefreshIndicator|SegmentedControl|ToolbarSeparator|AIStreamingText|AnimatePresence|AnimatedCounter|DateRangePicker|DescriptionItem|DescriptionList|EllipsisTooltip|ExpressionInput|FloatingToolbar|InputGroupAddon|InputGroupInput|MaterialSurface|RatingIndicator|SavingIndicator|SettingsSection|SidebarMenuItem|StatusBarWidget|TabOverflowMenu|TableOfContents|TypingIndicator|AnimatedNumber|BreadcrumbItem|CommandPalette|DateTimePicker|DirtyIndicator|DropdownButton|DurationPicker|ExpandableCard|GradientEditor|InfiniteScroll|InputGroupText|LoadingOverlay|MagneticButton|MarkdownEditor|MessageContent|MiddleEllipsis|NavigationMenu|ProgressCircle|PullDownButton|ResizablePanel|SearchableMenu|SelectableList|SelectableText|SkeletonAvatar|TimezoneSelect|TooltipTrigger|TrendIndicator|VerticalSlider|WindowControls|WindowSwitcher|AIModelPicker|AccordionItem|ActivityRings|BulkActionBar|CheckboxGroup|ConfirmButton|ConfirmDialog|CrashReporter|ErrorBoundary|FloatingPanel|GlassMorphism|InlineMessage|KeyValueInput|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|PasswordInput|PropertyGroup|QuarterPicker|Questionnaire|QuickSwitcher|RadarChartAda|SettingsGroup|SidebarFooter|SidebarHeader|SkeletonTable|StatusBarItem|StatusMessage|ToastViewport|AITokenMeter|ActivityFeed|AnimatedList|AnimatedText|Autocomplete|AvatarUpload|CheckboxCard|CommandGroup|ConfirmModal|CopyableText|CurrencyText|DateTimeText|DropdownMenu|DurationText|ExternalLink|FileSizeText|GradientText|HeatmapTable|InfiniteList|LineChartAda|MasterDetail|MentionInput|Notification|OverflowMenu|ProgressRing|PromptDialog|PropertyGrid|QuickActions|RelativeTime|ResizeBorder|RingProgress|ScatterChart|ScrollShadow|SegmentedNav|SettingsView|SignaturePad|SkeletonCard|SkeletonText|SortableList|StickyHeader|SwitchButton|TableCaption|TableToolbar|TimelineItem|ToggleButton|ToolbarGroup|TransferList|UpdateBanner|UpdateDialog|WindowBorder|AIReasoning|ActionSheet|ActivityBar|AlertDialog|AspectRatio|AvatarGroup|BeforeAfter|BottomSheet|Breadcrumbs|ButtonGroup|ChoiceChips|CloseButton|Collapsible|ColorPicker|ColorSwatch|ColumnShell|CommandItem|ContextMenu|EmojiPicker|FormSection|GroupedList|HelpTooltip|HotkeyInput|KeyedColumn|MaskedInput|MonthPicker|MultiSelect|NumberInput|OutlineView|PageControl|PathControl|PercentText|PopoverMenu|PopupButton|ProgressBar|RangeSlider|SankeyChart|ScrollToTop|SearchField|SearchInput|SecureField|SettingItem|SettingPage|SettingsRow|ShareButton|ShellColumn|ShimmerText|SidebarMenu|SplitButton|Spreadsheet|StepperItem|TableFooter|TableHeader|ThemePicker|ToggleGroup|VirtualList|ZoomControl|AIChatView|AICitation|AIComposer|AISettings|AIThinking|AIToolCall|ActionIcon|Attachment|Blockquote|Breadcrumb|CardHeader|ColorInput|ColumnView|Comparison|CopyButton|CountBadge|CronEditor|DatePicker|DigitEntry|Disclosure|DonutChart|EditorTabs|EmailInput|EmptyState|EyeDropper|FieldArray|FontPicker|GridLayout|IconButton|IconPicker|InlineEdit|InlineForm|InputAddon|InputGroup|NumberText|Pagination|PhoneInput|PivotTable|PluralText|RadarChart|RadioGroup|RegexInput|ResultView|ScrollArea|Scrollable|ScrubInput|SimpleGrid|SplitPanel|SyncStatus|TextEditor|TextReveal|TimePicker|ToastStack|TokenField|Transition|TreeSelect|TypeWriter|Typewriter|UploadList|ViewRouter|WeekPicker|YearPicker|AIMessage|AISources|Accordion|ActionBar|AreaChart|Changelog|Clipboard|CodeInput|ColorWell|Container|Countdown|DataTable|ErrorView|FileInput|FocusTrap|FormError|FormField|FormLabel|Highlight|HoverCard|ImageView|ImageWell|Indicator|Inspector|JsonInput|LineChart|ListInput|MouseArea|PaneGroup|Paragraph|PathInput|QuickOpen|RadioCard|Resizable|Separator|Sparkline|SplitPane|SplitView|Spotlight|Statistic|StatusBar|TableBody|TableCell|TableHead|TableView|TagsInput|TextField|TextInput|ThemeIcon|TimeField|TreeTable|UnitInput|VideoView|Watermark|Activity|AppShell|Backdrop|BarChart|Calendar|Carousel|Cascader|Checkbox|ComboBox|Combobox|Confetti|CropArea|DataGrid|DataView|DotBadge|DropZone|Dropdown|Dropzone|Ellipsis|Fieldset|FileTree|GoToLine|GroupBox|KbdCombo|LazyLoad|Lightbox|ListItem|LoadMore|Markdown|MenuItem|NavGroup|OtpInput|Overline|PaneGrid|PickList|PieChart|PinInput|Progress|Sections|Settings|Showcase|Skeleton|Subtitle|Suspense|TableRow|TagInput|Terminal|TextArea|TextView|Textarea|TiltCard|Timeline|TitleBar|Transfer|TreeItem|TreeList|TreeView|UrlInput|UsageBar|UserChip|Vibrancy|Viewport|Barcode|Callout|Caption|Command|Divider|Gallery|Heading|KpiCard|ListBox|Marquee|Masonry|Measure|MenuBar|Message|Meteors|NavItem|NavLink|Outline|Palette|PieMenu|Popover|Preview|Release|Reorder|Section|Shimmer|Sidebar|Spinner|Spoiler|Stagger|Stepper|Toolbar|Tooltip|WebView|AICost|Anchor|Avatar|Banner|Bubble|Button|Canvas|Center|Dialog|Drawer|Editor|HStack|Loader|Marker|Mascot|Player|QrCode|Rating|Ripple|Select|Slider|Switch|TabBar|Toggle|VStack|Viewer|Window|Wizard|ZStack|About|Alert|Badge|Blink|Block|Board|Chart|Clear|Emoji|Empty|Field|Files|Flash|Frame|Gauge|Image|Input|Label|Meter|Modal|Panel|Paper|Pulse|Radio|Shake|Sheet|Space|Stack|Stars|Steps|Table|Timer|Title|Toast|Card|Chip|Code|Diff|Dock|Fade|Flip|Form|Glow|Grid|Icon|Knob|Link|List|Logo|Mark|Menu|Page|Peek|Rule|Tabs|Text|Tour|Tree|Vars|Well|Box|KBD|Kbd|Svg|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(BackForwardNavigation|FloatingActionButton|IntersectionObserver|NavigationMenuWidget|QuestionnaireChoice|ResizablePanelGroup|InputGroupTextarea|NotificationCenter|ParticleBackground|RelativeDatePicker|QuestionnaireItem|SwipeableListItem|AnimatedGradient|AnimatedPresence|CommandSeparator|ConfirmationCard|ConnectionStatus|DirectoryListing|DrawerNavigation|InputGroupButton|NumberInputField|OfflineIndicator|RefreshIndicator|SegmentedControl|ToolbarSeparator|AIStreamingText|AnimatePresence|AnimatedCounter|DateRangePicker|DescriptionItem|DescriptionList|EllipsisTooltip|ExpressionInput|FloatingToolbar|InputGroupAddon|InputGroupInput|MaterialSurface|RatingIndicator|SavingIndicator|SettingsSection|SidebarMenuItem|StatusBarWidget|TabOverflowMenu|TableOfContents|TypingIndicator|AnimatedNumber|BreadcrumbItem|CommandPalette|DateTimePicker|DirtyIndicator|DropdownButton|DurationPicker|ExpandableCard|GradientEditor|InfiniteScroll|InputGroupText|LoadingOverlay|MagneticButton|MarkdownEditor|MessageContent|MiddleEllipsis|NavigationMenu|ProgressCircle|PullDownButton|ResizablePanel|SearchableMenu|SelectableList|SelectableText|SkeletonAvatar|TimezoneSelect|TooltipTrigger|TrendIndicator|VerticalSlider|WindowControls|WindowSwitcher|AIModelPicker|AccordionItem|ActivityRings|BulkActionBar|CheckboxGroup|ConfirmButton|ConfirmDialog|CrashReporter|ErrorBoundary|FloatingPanel|GlassMorphism|InlineMessage|KeyValueInput|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|PasswordInput|PropertyGroup|QuarterPicker|Questionnaire|QuickSwitcher|RadarChartAda|SettingsGroup|SidebarFooter|SidebarHeader|SkeletonTable|StatusBarItem|StatusMessage|ToastViewport|AITokenMeter|ActivityFeed|AnimatedList|AnimatedText|Autocomplete|AvatarUpload|CheckboxCard|CommandGroup|ConfirmModal|CopyableText|CurrencyText|DateTimeText|DropdownMenu|DurationText|ExternalLink|FileSizeText|GradientText|HeatmapTable|InfiniteList|LineChartAda|MasterDetail|MentionInput|Notification|OverflowMenu|ProgressRing|PromptDialog|PropertyGrid|QuickActions|RelativeTime|ResizeBorder|RingProgress|ScatterChart|ScrollShadow|SegmentedNav|SettingsView|SignaturePad|SkeletonCard|SkeletonText|SortableList|StickyHeader|SwitchButton|TableCaption|TableToolbar|TimelineItem|ToggleButton|ToolbarGroup|TransferList|UpdateBanner|UpdateDialog|WindowBorder|AIReasoning|ActionSheet|ActivityBar|AlertDialog|AspectRatio|AvatarGroup|BeforeAfter|BottomSheet|Breadcrumbs|ButtonGroup|ChoiceChips|CloseButton|Collapsible|ColorPicker|ColorSwatch|ColumnShell|CommandItem|ContextMenu|EmojiPicker|FormSection|GroupedList|HelpTooltip|HotkeyInput|KeyedColumn|MaskedInput|MonthPicker|MultiSelect|NumberInput|OutlineView|PageControl|PathControl|PercentText|PopoverMenu|PopupButton|ProgressBar|RangeSlider|SankeyChart|ScrollToTop|SearchField|SearchInput|SecureField|SettingItem|SettingPage|SettingsRow|ShareButton|ShellColumn|ShimmerText|SidebarMenu|SplitButton|Spreadsheet|StepperItem|TableFooter|TableHeader|ThemePicker|ToggleGroup|VirtualList|ZoomControl|AIChatView|AICitation|AIComposer|AISettings|AIThinking|AIToolCall|ActionIcon|Attachment|Blockquote|Breadcrumb|CardHeader|ColorInput|ColumnView|Comparison|CopyButton|CountBadge|CronEditor|DatePicker|DigitEntry|Disclosure|DonutChart|EditorTabs|EmailInput|EmptyState|EyeDropper|FieldArray|FontPicker|GridLayout|IconButton|IconPicker|InlineEdit|InlineForm|InputAddon|InputGroup|NumberText|Pagination|PhoneInput|PivotTable|PluralText|RadarChart|RadioGroup|RegexInput|ResultView|ScrollArea|Scrollable|ScrubInput|SimpleGrid|SplitPanel|SyncStatus|TextEditor|TextReveal|TimePicker|ToastStack|TokenField|Transition|TreeSelect|TypeWriter|Typewriter|UploadList|ViewRouter|WeekPicker|YearPicker|AIMessage|AISources|Accordion|ActionBar|AreaChart|Changelog|Clipboard|CodeInput|ColorWell|Container|Countdown|DataTable|ErrorView|FileInput|FocusTrap|FormError|FormField|FormLabel|Highlight|HoverCard|ImageView|ImageWell|Indicator|Inspector|JsonInput|LineChart|ListInput|MouseArea|PaneGroup|Paragraph|PathInput|QuickOpen|RadioCard|Resizable|Separator|Sparkline|SplitPane|SplitView|Spotlight|Statistic|StatusBar|TableBody|TableCell|TableHead|TableView|TagsInput|TextField|TextInput|ThemeIcon|TimeField|TreeTable|UnitInput|VideoView|Watermark|Activity|AppShell|Backdrop|BarChart|Calendar|Carousel|Cascader|Checkbox|ComboBox|Combobox|Confetti|CropArea|DataGrid|DataView|DotBadge|DropZone|Dropdown|Dropzone|Ellipsis|Fieldset|FileTree|GoToLine|GroupBox|KbdCombo|LazyLoad|Lightbox|ListItem|LoadMore|Markdown|MenuItem|NavGroup|OtpInput|Overline|PaneGrid|PickList|PieChart|PinInput|Progress|Sections|Settings|Showcase|Skeleton|Subtitle|Suspense|TableRow|TagInput|Terminal|TextArea|TextView|Textarea|TiltCard|Timeline|TitleBar|Transfer|TreeItem|TreeList|TreeView|UrlInput|UsageBar|UserChip|Vibrancy|Viewport|Barcode|Callout|Caption|Command|Divider|Gallery|Heading|KpiCard|ListBox|Marquee|Masonry|Measure|MenuBar|Message|Meteors|NavItem|NavLink|Outline|Palette|PieMenu|Popover|Preview|Release|Reorder|Section|Shimmer|Sidebar|Spinner|Spoiler|Stagger|Stepper|Toolbar|Tooltip|WebView|AICost|Anchor|Avatar|Banner|Bubble|Button|Canvas|Center|Dialog|Drawer|Editor|HStack|Loader|Marker|Mascot|Player|QrCode|Rating|Ripple|Select|Slider|Switch|TabBar|Toggle|VStack|Viewer|Window|Wizard|ZStack|About|Alert|Badge|Blink|Block|Board|Chart|Clear|Emoji|Empty|Field|Files|Flash|Frame|Gauge|Image|Input|Label|Meter|Modal|Panel|Paper|Pulse|Radio|Shake|Sheet|Space|Stack|Stars|Steps|Table|Timer|Title|Toast|Card|Chip|Code|Diff|Dock|Fade|Flip|Form|Glow|Grid|Icon|Knob|Link|List|Logo|Mark|Menu|Page|Peek|Rule|Tabs|Text|Tour|Tree|Vars|Well|Box|KBD|Kbd|Svg|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<|(if|for|with|match|else|each|index|key|as|is|not|case .+))$"
+        "pattern": "^((BackForwardNavigation|FloatingActionButton|IntersectionObserver|NavigationMenuWidget|QuestionnaireChoice|ResizablePanelGroup|InputGroupTextarea|NotificationCenter|ParticleBackground|RelativeDatePicker|QuestionnaireItem|SwipeableListItem|AnimatedGradient|AnimatedPresence|CommandSeparator|ConfirmationCard|ConnectionStatus|DirectoryListing|DrawerNavigation|InputGroupButton|NumberInputField|OfflineIndicator|RefreshIndicator|SegmentedControl|ToolbarSeparator|AIStreamingText|AnimatePresence|AnimatedCounter|DateRangePicker|DescriptionItem|DescriptionList|EllipsisTooltip|ExpressionInput|FloatingToolbar|InputGroupAddon|InputGroupInput|MaterialSurface|RatingIndicator|SavingIndicator|SettingsSection|SidebarMenuItem|StatusBarWidget|TabOverflowMenu|TableOfContents|TerminalToolbar|TypingIndicator|AnimatedNumber|BreadcrumbItem|CommandPalette|DateTimePicker|DirtyIndicator|DropdownButton|DurationPicker|ExpandableCard|GradientEditor|InfiniteScroll|InputGroupText|LoadingOverlay|MagneticButton|MarkdownEditor|MessageContent|MiddleEllipsis|NavigationMenu|ProgressCircle|PullDownButton|ResizablePanel|SearchableMenu|SelectableList|SelectableText|SkeletonAvatar|TimezoneSelect|TooltipTrigger|TrendIndicator|VerticalSlider|WindowControls|WindowSwitcher|AIModelPicker|AccordionItem|ActivityRings|BulkActionBar|CheckboxGroup|ConfirmButton|ConfirmDialog|CrashReporter|ErrorBoundary|FloatingPanel|GlassMorphism|InlineMessage|KeyValueInput|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|PasswordInput|PropertyGroup|QuarterPicker|Questionnaire|QuickSwitcher|RadarChartAda|SettingsGroup|ShellSelector|SidebarFooter|SidebarHeader|SkeletonTable|StatusBarItem|StatusMessage|ThemeSwitcher|ToastViewport|AITokenMeter|ActivityFeed|AnimatedList|AnimatedText|Autocomplete|AvatarUpload|CheckboxCard|CommandGroup|ConfirmModal|CopyableText|CurrencyText|DateTimeText|DropdownMenu|DurationText|ExternalLink|FileSizeText|GradientText|HeatmapTable|InfiniteList|LineChartAda|MasterDetail|MentionInput|Notification|OverflowMenu|ProgressRing|PromptDialog|PropertyGrid|QuickActions|RelativeTime|ResizeBorder|RingProgress|ScatterChart|ScrollShadow|SegmentedNav|SettingsView|SignaturePad|SkeletonCard|SkeletonText|SortableList|StickyHeader|SwitchButton|TableCaption|TableToolbar|TimelineItem|ToggleButton|ToolbarGroup|TransferList|UpdateBanner|UpdateDialog|WindowBorder|AIReasoning|ActionSheet|ActivityBar|AlertDialog|AspectRatio|AvatarGroup|BeforeAfter|BottomSheet|Breadcrumbs|ButtonGroup|ChoiceChips|CloseButton|Collapsible|ColorPicker|ColorSwatch|ColumnShell|CommandItem|ContextMenu|EmojiPicker|FormSection|GroupedList|HelpTooltip|HotkeyInput|KeyedColumn|MaskedInput|MonthPicker|MultiSelect|NumberInput|OutlineView|PageControl|PathControl|PercentText|PopoverMenu|PopupButton|ProgressBar|RangeSlider|SankeyChart|ScrollToTop|SearchField|SearchInput|SecureField|SettingItem|SettingPage|SettingsRow|ShareButton|ShellColumn|ShimmerText|SidebarMenu|SplitButton|Spreadsheet|StepperItem|TableFooter|TableHeader|ThemePicker|ToggleGroup|VirtualList|ZoomControl|AIChatView|AICitation|AIComposer|AISettings|AIThinking|AIToolCall|ActionIcon|Attachment|Blockquote|Breadcrumb|CardHeader|ColorInput|ColumnView|Comparison|CopyButton|CountBadge|CronEditor|DatePicker|DigitEntry|Disclosure|DonutChart|EditorTabs|EmailInput|EmptyState|EyeDropper|FieldArray|FontPicker|GridLayout|IconButton|IconPicker|InlineEdit|InlineForm|InputAddon|InputGroup|NumberText|Pagination|PhoneInput|PivotTable|PluralText|RadarChart|RadioGroup|RegexInput|ResultView|ScrollArea|Scrollable|ScrubInput|SimpleGrid|SplitPanel|SyncStatus|TextEditor|TextReveal|TimePicker|ToastStack|TokenField|Transition|TreeSelect|TypeWriter|Typewriter|UploadList|ViewRouter|WeekPicker|YearPicker|AIMessage|AISources|Accordion|ActionBar|AreaChart|Changelog|Clipboard|CodeInput|ColorWell|Container|Countdown|DataTable|ErrorView|FileInput|FocusTrap|FormError|FormField|FormLabel|Highlight|HoverCard|ImageView|ImageWell|Indicator|Inspector|JsonInput|LineChart|ListInput|LogViewer|MouseArea|PaneGroup|Paragraph|PathInput|QuickOpen|RadioCard|Resizable|Separator|Sparkline|SplitPane|SplitView|Spotlight|Statistic|StatusBar|TableBody|TableCell|TableHead|TableView|TagsInput|TextField|TextInput|ThemeIcon|TimeField|TreeTable|UnitInput|VideoView|Watermark|Activity|AnsiText|AppShell|Backdrop|BarChart|Calendar|Carousel|Cascader|Checkbox|ComboBox|Combobox|Confetti|CropArea|DataGrid|DataView|DotBadge|DropZone|Dropdown|Dropzone|Ellipsis|Fieldset|FileTree|GoToLine|GroupBox|KbdCombo|LazyLoad|Lightbox|ListItem|LoadMore|Markdown|MenuItem|NavGroup|OtpInput|Overline|PaneGrid|PickList|PieChart|PinInput|Progress|Sections|Settings|Showcase|Skeleton|Subtitle|Suspense|TableRow|TagInput|Terminal|TextArea|TextView|Textarea|TiltCard|Timeline|TitleBar|Transfer|TreeItem|TreeList|TreeView|UrlInput|UsageBar|UserChip|Vibrancy|Viewport|Barcode|Callout|Caption|Command|Divider|Gallery|Heading|KpiCard|ListBox|Marquee|Masonry|Measure|MenuBar|Message|Meteors|NavItem|NavLink|Outline|Palette|PieMenu|Popover|Preview|Release|Reorder|Section|Shimmer|Sidebar|Spinner|Spoiler|Stagger|Stepper|Toolbar|Tooltip|WebView|AICost|Anchor|Avatar|Banner|Bubble|Button|Canvas|Center|Dialog|Drawer|Editor|HStack|Loader|Marker|Player|QrCode|Rating|Ripple|Select|Slider|Switch|TabBar|Toggle|VStack|Viewer|Window|Wizard|ZStack|About|Alert|Badge|Blink|Block|Board|Chart|Clear|Emoji|Empty|Field|Files|Flash|Frame|Gauge|Image|Input|Label|Meter|Modal|Panel|Paper|Pulse|Radio|Shake|Sheet|Space|Stack|Stars|Steps|Table|Timer|Title|Toast|Card|Chip|Code|Diff|Dock|Fade|Flip|Form|Glow|Grid|Icon|Knob|Link|List|Logo|Mark|Menu|Page|Peek|Rule|Tabs|Text|Tour|Tree|Vars|Well|Box|KBD|Kbd|Svg|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(BackForwardNavigation|FloatingActionButton|IntersectionObserver|NavigationMenuWidget|QuestionnaireChoice|ResizablePanelGroup|InputGroupTextarea|NotificationCenter|ParticleBackground|RelativeDatePicker|QuestionnaireItem|SwipeableListItem|AnimatedGradient|AnimatedPresence|CommandSeparator|ConfirmationCard|ConnectionStatus|DirectoryListing|DrawerNavigation|InputGroupButton|NumberInputField|OfflineIndicator|RefreshIndicator|SegmentedControl|ToolbarSeparator|AIStreamingText|AnimatePresence|AnimatedCounter|DateRangePicker|DescriptionItem|DescriptionList|EllipsisTooltip|ExpressionInput|FloatingToolbar|InputGroupAddon|InputGroupInput|MaterialSurface|RatingIndicator|SavingIndicator|SettingsSection|SidebarMenuItem|StatusBarWidget|TabOverflowMenu|TableOfContents|TerminalToolbar|TypingIndicator|AnimatedNumber|BreadcrumbItem|CommandPalette|DateTimePicker|DirtyIndicator|DropdownButton|DurationPicker|ExpandableCard|GradientEditor|InfiniteScroll|InputGroupText|LoadingOverlay|MagneticButton|MarkdownEditor|MessageContent|MiddleEllipsis|NavigationMenu|ProgressCircle|PullDownButton|ResizablePanel|SearchableMenu|SelectableList|SelectableText|SkeletonAvatar|TimezoneSelect|TooltipTrigger|TrendIndicator|VerticalSlider|WindowControls|WindowSwitcher|AIModelPicker|AccordionItem|ActivityRings|BulkActionBar|CheckboxGroup|ConfirmButton|ConfirmDialog|CrashReporter|ErrorBoundary|FloatingPanel|GlassMorphism|InlineMessage|KeyValueInput|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|PasswordInput|PropertyGroup|QuarterPicker|Questionnaire|QuickSwitcher|RadarChartAda|SettingsGroup|ShellSelector|SidebarFooter|SidebarHeader|SkeletonTable|StatusBarItem|StatusMessage|ThemeSwitcher|ToastViewport|AITokenMeter|ActivityFeed|AnimatedList|AnimatedText|Autocomplete|AvatarUpload|CheckboxCard|CommandGroup|ConfirmModal|CopyableText|CurrencyText|DateTimeText|DropdownMenu|DurationText|ExternalLink|FileSizeText|GradientText|HeatmapTable|InfiniteList|LineChartAda|MasterDetail|MentionInput|Notification|OverflowMenu|ProgressRing|PromptDialog|PropertyGrid|QuickActions|RelativeTime|ResizeBorder|RingProgress|ScatterChart|ScrollShadow|SegmentedNav|SettingsView|SignaturePad|SkeletonCard|SkeletonText|SortableList|StickyHeader|SwitchButton|TableCaption|TableToolbar|TimelineItem|ToggleButton|ToolbarGroup|TransferList|UpdateBanner|UpdateDialog|WindowBorder|AIReasoning|ActionSheet|ActivityBar|AlertDialog|AspectRatio|AvatarGroup|BeforeAfter|BottomSheet|Breadcrumbs|ButtonGroup|ChoiceChips|CloseButton|Collapsible|ColorPicker|ColorSwatch|ColumnShell|CommandItem|ContextMenu|EmojiPicker|FormSection|GroupedList|HelpTooltip|HotkeyInput|KeyedColumn|MaskedInput|MonthPicker|MultiSelect|NumberInput|OutlineView|PageControl|PathControl|PercentText|PopoverMenu|PopupButton|ProgressBar|RangeSlider|SankeyChart|ScrollToTop|SearchField|SearchInput|SecureField|SettingItem|SettingPage|SettingsRow|ShareButton|ShellColumn|ShimmerText|SidebarMenu|SplitButton|Spreadsheet|StepperItem|TableFooter|TableHeader|ThemePicker|ToggleGroup|VirtualList|ZoomControl|AIChatView|AICitation|AIComposer|AISettings|AIThinking|AIToolCall|ActionIcon|Attachment|Blockquote|Breadcrumb|CardHeader|ColorInput|ColumnView|Comparison|CopyButton|CountBadge|CronEditor|DatePicker|DigitEntry|Disclosure|DonutChart|EditorTabs|EmailInput|EmptyState|EyeDropper|FieldArray|FontPicker|GridLayout|IconButton|IconPicker|InlineEdit|InlineForm|InputAddon|InputGroup|NumberText|Pagination|PhoneInput|PivotTable|PluralText|RadarChart|RadioGroup|RegexInput|ResultView|ScrollArea|Scrollable|ScrubInput|SimpleGrid|SplitPanel|SyncStatus|TextEditor|TextReveal|TimePicker|ToastStack|TokenField|Transition|TreeSelect|TypeWriter|Typewriter|UploadList|ViewRouter|WeekPicker|YearPicker|AIMessage|AISources|Accordion|ActionBar|AreaChart|Changelog|Clipboard|CodeInput|ColorWell|Container|Countdown|DataTable|ErrorView|FileInput|FocusTrap|FormError|FormField|FormLabel|Highlight|HoverCard|ImageView|ImageWell|Indicator|Inspector|JsonInput|LineChart|ListInput|LogViewer|MouseArea|PaneGroup|Paragraph|PathInput|QuickOpen|RadioCard|Resizable|Separator|Sparkline|SplitPane|SplitView|Spotlight|Statistic|StatusBar|TableBody|TableCell|TableHead|TableView|TagsInput|TextField|TextInput|ThemeIcon|TimeField|TreeTable|UnitInput|VideoView|Watermark|Activity|AnsiText|AppShell|Backdrop|BarChart|Calendar|Carousel|Cascader|Checkbox|ComboBox|Combobox|Confetti|CropArea|DataGrid|DataView|DotBadge|DropZone|Dropdown|Dropzone|Ellipsis|Fieldset|FileTree|GoToLine|GroupBox|KbdCombo|LazyLoad|Lightbox|ListItem|LoadMore|Markdown|MenuItem|NavGroup|OtpInput|Overline|PaneGrid|PickList|PieChart|PinInput|Progress|Sections|Settings|Showcase|Skeleton|Subtitle|Suspense|TableRow|TagInput|Terminal|TextArea|TextView|Textarea|TiltCard|Timeline|TitleBar|Transfer|TreeItem|TreeList|TreeView|UrlInput|UsageBar|UserChip|Vibrancy|Viewport|Barcode|Callout|Caption|Command|Divider|Gallery|Heading|KpiCard|ListBox|Marquee|Masonry|Measure|MenuBar|Message|Meteors|NavItem|NavLink|Outline|Palette|PieMenu|Popover|Preview|Release|Reorder|Section|Shimmer|Sidebar|Spinner|Spoiler|Stagger|Stepper|Toolbar|Tooltip|WebView|AICost|Anchor|Avatar|Banner|Bubble|Button|Canvas|Center|Dialog|Drawer|Editor|HStack|Loader|Marker|Player|QrCode|Rating|Ripple|Select|Slider|Switch|TabBar|Toggle|VStack|Viewer|Window|Wizard|ZStack|About|Alert|Badge|Blink|Block|Board|Chart|Clear|Emoji|Empty|Field|Files|Flash|Frame|Gauge|Image|Input|Label|Meter|Modal|Panel|Paper|Pulse|Radio|Shake|Sheet|Space|Stack|Stars|Steps|Table|Timer|Title|Toast|Card|Chip|Code|Diff|Dock|Fade|Flip|Form|Glow|Grid|Icon|Knob|Link|List|Logo|Mark|Menu|Page|Peek|Rule|Tabs|Text|Tour|Tree|Vars|Well|Box|KBD|Kbd|Svg|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<|(if|for|with|match|else|each|index|key|as|is|not|case .+))$"
       },
       "type": "object"
     },

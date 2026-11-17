@@ -574,11 +574,77 @@
               }
             },
             "properties": {
+              "bar_width": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Cells per bar."
+              },
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "pattern": "^(\\$|\\{)",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Bar values."
+              },
+              "labels": {
+                "description": "Newline-separated bar labels; defaults to bar index.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Scale ceiling; defaults to the largest value."
               },
               "style": {
                 "$ref": "#/definitions/style"
@@ -594,8 +660,11 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|BarChart(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
-            }
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|BarChart(#[\\w-]+| \\.[\\w-]+)?|bar_width|children|data|labels|max|style|tooltip)$"
+            },
+            "required": [
+              "data"
+            ]
           }
         },
         {
@@ -619,10 +688,17 @@
             },
             "properties": {
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
+              },
+              "date": {
+                "description": "`YYYY-MM` or `YYYY-MM-DD`; defaults to today (UTC).",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               },
               "style": {
                 "$ref": "#/definitions/style"
@@ -638,7 +714,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Calendar(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Calendar(#[\\w-]+| \\.[\\w-]+)?|children|date|style|tooltip)$"
             }
           }
         },
@@ -663,10 +739,46 @@
             },
             "properties": {
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "pattern": "^(\\$|\\{)",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Series values — point x is the value's index."
+              },
+              "name": {
+                "description": "Series label shown in the legend.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               },
               "style": {
                 "$ref": "#/definitions/style"
@@ -679,11 +791,70 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "x_max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "x_min": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "y_max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "y_min": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Chart(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
-            }
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Chart(#[\\w-]+| \\.[\\w-]+)?|children|data|name|style|tooltip|x_max|x_min|y_max|y_min)$"
+            },
+            "required": [
+              "data"
+            ]
           }
         },
         {
@@ -707,10 +878,52 @@
             },
             "properties": {
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "pattern": "^(\\$|\\{)",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Series values."
+              },
+              "max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Scale ceiling; defaults to the largest value."
               },
               "style": {
                 "$ref": "#/definitions/style"
@@ -726,8 +939,11 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Sparkline(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
-            }
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Sparkline(#[\\w-]+| \\.[\\w-]+)?|children|data|max|style|tooltip)$"
+            },
+            "required": [
+              "data"
+            ]
           }
         },
         {
@@ -751,10 +967,22 @@
             },
             "properties": {
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
+              },
+              "map": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Draw the high-resolution world map."
               },
               "style": {
                 "$ref": "#/definitions/style"
@@ -767,10 +995,66 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "x_max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "x_min": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "y_max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "y_min": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Canvas(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Canvas(#[\\w-]+| \\.[\\w-]+)?|children|map|style|tooltip|x_max|x_min|y_max|y_min)$"
             }
           }
         },
@@ -795,54 +1079,25 @@
             },
             "properties": {
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
               },
-              "style": {
-                "$ref": "#/definitions/style"
-              },
-              "tooltip": {
-                "description": "Universal prop — hover tooltip text.",
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
-                ]
-              }
-            },
-            "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Logo(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
-            }
-          }
-        },
-        {
-          "if": {
-            "not": {
-              "propertyNames": {
-                "pattern": "^(?!Mascot(#[\\w-]+| \\.[\\w-]+)?$).*$"
-              }
-            }
-          },
-          "then": {
-            "patternProperties": {
-              "^Mascot(#[\\w-]+| \\.[\\w-]+)?$": {
+              "size": {
                 "anyOf": [
+                  {
+                    "enum": [
+                      "tiny",
+                      "small"
+                    ]
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
                   {
                     "type": "null"
                   }
-                ],
-                "description": "Positional content — mapped to the element's primary prop."
-              }
-            },
-            "properties": {
-              "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
-                "type": "array"
+                ]
               },
               "style": {
                 "$ref": "#/definitions/style"
@@ -858,7 +1113,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Mascot(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Logo(#[\\w-]+| \\.[\\w-]+)?|children|size|style|tooltip)$"
             }
           }
         },
@@ -924,11 +1179,77 @@
               }
             },
             "properties": {
+              "bar_width": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Cells per bar."
+              },
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "pattern": "^(\\$|\\{)",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Bar values."
+              },
+              "labels": {
+                "description": "Newline-separated bar labels; defaults to bar index.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Scale ceiling; defaults to the largest value."
               },
               "style": {
                 "$ref": "#/definitions/style"
@@ -944,8 +1265,11 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.BarChart(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
-            }
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.BarChart(#[\\w-]+| \\.[\\w-]+)?|bar_width|children|data|labels|max|style|tooltip)$"
+            },
+            "required": [
+              "data"
+            ]
           }
         },
         {
@@ -1034,10 +1358,17 @@
             },
             "properties": {
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
+              },
+              "date": {
+                "description": "`YYYY-MM` or `YYYY-MM-DD`; defaults to today (UTC).",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               },
               "style": {
                 "$ref": "#/definitions/style"
@@ -1053,7 +1384,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Calendar(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Calendar(#[\\w-]+| \\.[\\w-]+)?|children|date|style|tooltip)$"
             }
           }
         },
@@ -1078,10 +1409,22 @@
             },
             "properties": {
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
+              },
+              "map": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Draw the high-resolution world map."
               },
               "style": {
                 "$ref": "#/definitions/style"
@@ -1094,10 +1437,66 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "x_max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "x_min": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "y_max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "y_min": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Canvas(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Canvas(#[\\w-]+| \\.[\\w-]+)?|children|map|style|tooltip|x_max|x_min|y_max|y_min)$"
             }
           }
         },
@@ -1122,10 +1521,46 @@
             },
             "properties": {
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "pattern": "^(\\$|\\{)",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Series values — point x is the value's index."
+              },
+              "name": {
+                "description": "Series label shown in the legend.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               },
               "style": {
                 "$ref": "#/definitions/style"
@@ -1138,11 +1573,70 @@
                   "boolean",
                   "null"
                 ]
+              },
+              "x_max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "x_min": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "y_max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "y_min": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Chart(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
-            }
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Chart(#[\\w-]+| \\.[\\w-]+)?|children|data|name|style|tooltip|x_max|x_min|y_max|y_min)$"
+            },
+            "required": [
+              "data"
+            ]
           }
         },
         {
@@ -1444,54 +1938,25 @@
             },
             "properties": {
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
               },
-              "style": {
-                "$ref": "#/definitions/style"
-              },
-              "tooltip": {
-                "description": "Universal prop — hover tooltip text.",
-                "type": [
-                  "string",
-                  "number",
-                  "boolean",
-                  "null"
-                ]
-              }
-            },
-            "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Logo(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
-            }
-          }
-        },
-        {
-          "if": {
-            "not": {
-              "propertyNames": {
-                "pattern": "^(?![a-z][\\w-]*\\.Mascot(#[\\w-]+| \\.[\\w-]+)?$).*$"
-              }
-            }
-          },
-          "then": {
-            "patternProperties": {
-              "^[a-z][\\w-]*\\.Mascot(#[\\w-]+| \\.[\\w-]+)?$": {
+              "size": {
                 "anyOf": [
+                  {
+                    "enum": [
+                      "tiny",
+                      "small"
+                    ]
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
                   {
                     "type": "null"
                   }
-                ],
-                "description": "Positional content — mapped to the element's primary prop."
-              }
-            },
-            "properties": {
-              "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
-                "type": "array"
+                ]
               },
               "style": {
                 "$ref": "#/definitions/style"
@@ -1507,7 +1972,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Mascot(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Logo(#[\\w-]+| \\.[\\w-]+)?|children|size|style|tooltip)$"
             }
           }
         },
@@ -1532,10 +1997,52 @@
             },
             "properties": {
               "children": {
-                "items": {
-                  "$ref": "#/definitions/node"
-                },
+                "maxItems": 0,
                 "type": "array"
+              },
+              "data": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "pattern": "^(\\$|\\{)",
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Series values."
+              },
+              "max": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Scale ceiling; defaults to the largest value."
               },
               "style": {
                 "$ref": "#/definitions/style"
@@ -1551,8 +2058,11 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Sparkline(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
-            }
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Sparkline(#[\\w-]+| \\.[\\w-]+)?|children|data|max|style|tooltip)$"
+            },
+            "required": [
+              "data"
+            ]
           }
         },
         {
@@ -1848,7 +2358,7 @@
         }
       },
       "propertyNames": {
-        "pattern": "^((Sparkline|BarChart|Calendar|Canvas|HStack|Mascot|VStack|Block|Chart|Clear|Gauge|Input|Table|List|Logo|Tabs|Text)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(Sparkline|BarChart|Calendar|Canvas|HStack|Mascot|VStack|Block|Chart|Clear|Gauge|Input|Table|List|Logo|Tabs|Text)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<|(if|for|with|match|else|each|index|key|as|is|not|case .+))$"
+        "pattern": "^((Sparkline|BarChart|Calendar|Canvas|HStack|VStack|Block|Chart|Clear|Gauge|Input|Table|List|Logo|Tabs|Text)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(Sparkline|BarChart|Calendar|Canvas|HStack|VStack|Block|Chart|Clear|Gauge|Input|Table|List|Logo|Tabs|Text)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<|(if|for|with|match|else|each|index|key|as|is|not|case .+))$"
       },
       "type": "object"
     },

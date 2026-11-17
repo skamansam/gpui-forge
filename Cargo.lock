@@ -3215,6 +3215,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e9c71c2167ca323c882b99918929403426e2373ea17242ff5653e0d5e1058be"
 
 [[package]]
+name = "ely-charts"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "185986026487034156c909c160b56a7eb7505252fbb6af34bdf563126c91ad7d"
+dependencies = [
+ "ely-core",
+ "gpui-pre",
+ "jiff",
+ "log",
+ "web-time",
+]
+
+[[package]]
 name = "ely-core"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3241,6 +3254,39 @@ dependencies = [
  "serde_json",
  "smallvec",
  "unicode-segmentation",
+ "web-time",
+]
+
+[[package]]
+name = "ely-editor"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "eb05a426ea57b6b1e601fb8d26f587bad2643dcba435ce29696cb0f095b4405a"
+dependencies = [
+ "ely-charts",
+ "ely-core",
+ "gpui-pre",
+ "log",
+ "regex",
+ "serde_json",
+]
+
+[[package]]
+name = "ely-terminal"
+version = "0.1.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbc47dd1f4902600e4110a95eae5996d9d379d68c7b65e1b5bcd9319973eef54"
+dependencies = [
+ "alacritty_terminal",
+ "anyhow",
+ "ely-core",
+ "ely-editor",
+ "futures",
+ "gpui-pre",
+ "log",
+ "regex",
+ "rustix 1.1.5",
+ "vte",
  "web-time",
 ]
 
@@ -3834,6 +3880,7 @@ version = "0.9.1"
 dependencies = [
  "anyhow",
  "ely-core",
+ "ely-terminal",
  "gpui-forge-runtime",
  "jiff",
  "serde_json",
@@ -3909,6 +3956,7 @@ dependencies = [
  "forge-lib-hig",
  "forge-lib-video",
  "forge-lib-zorite",
+ "forge-term",
  "gpui",
  "gpui-forge-runtime",
  "gpui-kit",
@@ -4939,6 +4987,7 @@ dependencies = [
  "iced",
  "ratatui",
  "serde_json",
+ "time",
 ]
 
 [[package]]
@@ -8213,6 +8262,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "num_threads"
+version = "0.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "cabcc654086861f9e1bc5115258de62ef92c79b20f4615a1b0cc57c4e82027d4"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "objc"
 version = "0.2.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -9788,6 +9846,7 @@ dependencies = [
  "lru",
  "paste",
  "strum 0.26.3",
+ "time",
  "unicode-segmentation",
  "unicode-truncate",
  "unicode-width 0.2.0",
@@ -12040,7 +12099,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cdb87b95ec50ddfa440816d227a17b2ccbdda963a316a727fda0fc4334f7d134"
 dependencies = [
  "deranged",
+ "libc",
  "num-conv",
+ "num_threads",
  "powerfmt",
  "serde_core",
  "time-core",

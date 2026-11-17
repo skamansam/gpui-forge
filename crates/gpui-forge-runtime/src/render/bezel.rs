@@ -6,7 +6,7 @@
 //! where their API is stable and gpui primitives elsewhere — `forge.*`
 //! intrinsics and two-way input widgets are stubs until the adapter port.
 
-use crate::render::{get_path, set_path};
+use crate::render::{doc_meta, get_path, lookup_path, set_path};
 use ::bezel::gpui;
 use ::bezel::gpui::prelude::*;
 use ::bezel::gpui::*;
@@ -101,6 +101,8 @@ const MUTED: u32 = 0xa1a1aa;
 
 pub struct ForgeView {
     doc: Option<Document>,
+    /// The document's `meta:` map — `{$meta.k}` bindings resolve against it.
+    meta: Json,
     pub catalogs: Vec<Catalog>,
     state: Json,
     previews: HashMap<String, Entity<ForgeView>>,
@@ -137,6 +139,7 @@ impl ForgeView {
         Self {
             doc: None,
             catalogs,
+            meta: Json::Object(Default::default()),
             state: Json::Object(Default::default()),
             previews: HashMap::new(),
             libraries: Vec::new(),
@@ -156,6 +159,7 @@ impl ForgeView {
     }
 
     pub fn set_document(&mut self, doc: Document, cx: &mut Context<Self>) {
+        self.meta = doc_meta(&doc);
         self.doc = Some(doc);
         cx.notify();
     }
@@ -323,7 +327,7 @@ impl ForgeView {
     }
 
     fn lookup(&self, path: &Path) -> Option<&Json> {
-        get_path(&self.state, path)
+        lookup_path(&self.meta, &self.state, path)
     }
 
     /// `{{ path }}` / `$state.x` text — binding values render as JSON scalars.

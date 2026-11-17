@@ -645,6 +645,29 @@ root:
 }
 
 #[test]
+fn meta_self_refs_resolve() {
+    let doc = yaml::from_str(
+        r#"forge: "0.1"
+meta:
+  name: my-app
+  id: "dev.forge.{$meta.name}"
+  flat: "x-{$name}"
+root:
+  Text: hi
+"#,
+    )
+    .expect("meta doc parses");
+    assert_eq!(
+        doc.meta,
+        vec![
+            ("name".into(), "my-app".into()),
+            ("id".into(), "dev.forge.my-app".into()),
+            ("flat".into(), "x-my-app".into()),
+        ]
+    );
+}
+
+#[test]
 fn duplicate_ref_names_are_rejected() {
     let err = yaml::from_str(
         r#"

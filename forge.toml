@@ -1,0 +1,36 @@
+# GPUI Forge workspace manifest.
+#
+# `forge` commands resolve the nearest forge.toml walking up from the current
+# directory, so running from the repo root picks up workspace defaults:
+# identity for scaffolded apps, the base policy multi-doc commands check
+# against, and the entry document for invocations that don't name one.
+# A document's own `meta:`/`base:` always wins where both exist.
+
+[package]
+name = "gpui-forge"
+version = "0.9.1"
+id = "dev.forge.gpui-forge"
+title = "GPUI Forge"
+icon = "gpui_forge_icon_medallion.svg"
+
+[forge]
+base = "gpui-kit"
+# Entry document for `forge build`/`preview`/`package` run with no doc path —
+# point it at whichever doc you're working on.
+document = "crates/forge-studio/studio.forge.yaml"
+# Multi-doc apps list every document explicitly — `forge skeleton` builds
+# exactly this set, never a directory scan (entry `document` is always in).
+# documents = [
+#   "crates/forge-studio/studio.forge.yaml",
+#   "examples/demos/ely-terminal.forge.yaml",
+# ]
+
+# [themes]
+# Project theme JSONs merge into the shipped catalog on `forge build`/
+# `skeleton` — a same-named file replaces the shipped theme. Defaults to
+# `./themes` beside this manifest when uncommented out entirely.
+# dir = "themes"
+
+# [libraries]
+# Extra dependency pins added to generated app Cargo.toml (`use:` imports
+# already pin adapter crates — this is for everything else).

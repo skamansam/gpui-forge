@@ -1,0 +1,96 @@
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/ely.json
+forge: "0.1"
+base: gpui-kit
+use:
+  ely: ely-core
+meta:
+  name: ely-terminal-demo
+  title: Ely Terminal Demo
+  version: 0.1.0
+  id: "dev.forge.{$meta.name}"
+  description: A demo of the Ely terminal components
+  icon: ../../gpui_forge_icon_small.svg
+
+root:
+  WindowBorder:
+  shadow: 0
+  children:
+    - TitleBar:
+      children:
+        - Text: "{$meta.title} {$meta.version}"
+        - ThemeSwitcher:
+    - VStack:
+      style:
+        grow: 1
+        padding: 24px
+        gap: 16px
+      children:
+        - Text: Ely Terminal Components
+          style:
+            size: xl
+            weight: semibold
+        - Text: A live pty-backed terminal with its toolbar — type in it.
+          style:
+            color: $theme.muted_foreground
+
+        - ely.TerminalToolbar:
+          title: bash — /home/sam
+          shells: "zsh=/bin/zsh;bash=/bin/bash;fish=/usr/bin/fish"
+          on clear: status('toolbar clear')
+          on stop: status('toolbar stop')
+          on split: status('toolbar split')
+          on pick: status('toolbar shell picked')
+        - ely.Terminal:
+          command: bash
+          style:
+            height: 320px
+          on title: status('terminal title set')
+          on bell: status('terminal bell')
+          on exit: status('shell exited')
+
+        - ely.Divider:
+        - Text: Recorded output
+          style:
+            weight: semibold
+        - Text: output replays a captured byte stream — no process behind it.
+          style:
+            color: $theme.muted_foreground
+        - ely.Terminal:
+          output: "sam@box:~/gpui-forge$ forge build app.forge.yaml\n[32m   Compiling[0m gpui-forge v0.9.1\n[32m   Compiling[0m forge-lib-ely v0.9.1\n[33mwarning:[0m unused variable `term`\n[32m    Finished[0m dev profile in 12.34s\nsam@box:~/gpui-forge$ \n"
+          cols: 64
+          rows: 6
+          style:
+            height: 170px
+
+        - ely.Divider:
+        - Text: AnsiText
+          style:
+            weight: semibold
+        - Text: SGR escape codes color the text they wrap — for log lines and output snippets, not a terminal.
+          style:
+            color: $theme.muted_foreground
+        - ely.AnsiText: "[32m✓[0m build finished in 12.34s"
+        - ely.AnsiText: "[33m⚠[0m [1mwarn[0m: unused variable `term` [2m-- forge-lib-ely/src/lib.rs:912[0m"
+        - ely.AnsiText: "[31m✗[0m [1merror[0m: pty closed by remote — [4msession ended[0m"
+
+        - ely.Divider:
+        - Text: LogViewer
+          style:
+            weight: semibold
+        - Text: lines are 'at|LEVEL|target|message' — filter by least level or query, or toggle follow.
+          style:
+            color: $theme.muted_foreground
+        - ely.LogViewer:
+          lines: |
+            09:14:02|Info|forge::app|Studio window opened
+            09:14:02|Debug|forge::render|layout pass: 412 nodes
+            09:14:03|Info|forge::term|pty spawned: bash (pid 8217)
+            09:14:07|Warn|forge::net|request took 1.8s — over budget
+            09:14:09|Error|forge::term|pty write failed: session closed
+            09:14:09|Info|forge::term|replaying recorded output
+            09:14:12|Trace|forge::render|paint: 120fps
+          least: Trace
+          follow: true
+          style:
+            height: 220px
+          on change: status('log filter changed')

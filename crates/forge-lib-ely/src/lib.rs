@@ -89,6 +89,9 @@ use ely_core::typography::{
 };
 use ely_core::typography::{Caption, Heading, Label, Overline, Paragraph, Subtitle, Title};
 use ely_core::typography::{Code, CopyableText, NumberText, PercentText};
+use ely_terminal::{
+    AnsiText, LogLevel, LogLine, LogViewer, ShellChoice, ShellSelector, TerminalToolbar,
+};
 use jiff::Timestamp;
 use jiff::civil::{Date, DateTime, Time};
 use serde_json::Value as Json;
@@ -127,6 +130,10 @@ pub struct Ely {
     /// `Entity<PaneGroup>` and `Entity<Dock>` per element key.
     panes: RefCell<HashMap<String, Entity<PaneGroup>>>,
     docks: RefCell<HashMap<String, Entity<Dock>>>,
+    /// `Entity<ely_terminal::Terminal>` per `Terminal` key — the pty lives in
+    /// the entity, so it must persist across renders.
+    #[cfg(not(target_family = "wasm"))]
+    terminals: RefCell<HashMap<String, Entity<ely_terminal::Terminal>>>,
 }
 
 /// Renders one Forge child in its own entity update — the ely widgets'
@@ -159,6 +166,8 @@ impl Ely {
             handles: RefCell::new(HashMap::new()),
             panes: RefCell::new(HashMap::new()),
             docks: RefCell::new(HashMap::new()),
+            #[cfg(not(target_family = "wasm"))]
+            terminals: RefCell::new(HashMap::new()),
         }
     }
 
@@ -188,6 +197,71 @@ impl Ely {
         }
         let t = cx.new(|_| TocSections::new(ScrollHandle::new()));
         tocs.insert(name.to_owned(), t.clone());
+        t
+    }
+
+    /// The `ely_terminal::Terminal` entity behind a `Terminal` key — `output`
+    /// replays a recorded stream, otherwise `command`/`cwd` spawn a pty
+    /// (default: the login shell); a failed spawn shows its error on the grid.
+    #[cfg(not(target_family = "wasm"))]
+    fn terminal(
+        &self,
+        node: &Node,
+        key: &str,
+        view: &ForgeView,
+        cx: &mut Context<ForgeView>,
+    ) -> Entity<ely_terminal::Terminal> {
+        if let Some(t) = self.terminals.borrow().get(key) {
+            return t.clone();
+        }
+        let t = cx.new(|cx| {
+            let output = prop_str(node, "output");
+            if !output.is_empty() {
+                let cols = prop_num(node, "cols").unwrap_or(80.0) as usize;
+                let rows = prop_num(node, "rows").unwrap_or(24.0) as usize;
+                ely_terminal::Terminal::replay(output.as_bytes(), cols, rows, cx)
+            } else {
+                let launch = launch_of(node);
+                match ely_terminal::Terminal::spawn(launch, cx) {
+                    Ok(t) => t,
+                    Err(e) => ely_terminal::Terminal::replay(
+                        format!("spawn failed: {e}\r\n").as_bytes(),
+                        80,
+                        4,
+                        cx,
+                    ),
+                }
+            }
+        });
+        let exits = calls_for(view, node, "exit");
+        let bells = calls_for(view, node, "bell");
+        let titles = calls_for(view, node, "title");
+        if !(exits.is_empty() && bells.is_empty() && titles.is_empty()) {
+            cx.subscribe(&t, move |view, _term, ev, cx| match ev {
+                ely_terminal::TerminalEvent::Exited(status) => {
+                    for (name, args) in &exits {
+                        let mut a = args.clone();
+                        a.push(format!("{status:?}"));
+                        view.fire_call(name, a, cx);
+                    }
+                }
+                ely_terminal::TerminalEvent::Bell => {
+                    for (name, args) in &bells {
+                        view.fire_call(name, args.clone(), cx);
+                    }
+                }
+                ely_terminal::TerminalEvent::Title(title) => {
+                    for (name, args) in &titles {
+                        let mut a = args.clone();
+                        a.push(title.to_string());
+                        view.fire_call(name, a, cx);
+                    }
+                }
+                _ => {}
+            })
+            .detach();
+        }
+        self.terminals.borrow_mut().insert(key.to_owned(), t.clone());
         t
     }
 
@@ -473,6 +547,181 @@ fn fire_str(
     })
 }
 
+/// Fire `on <event>:` calls with an index payload appended to each call's args.
+fn fire_index(
+    view: &ForgeView,
+    node: &Node,
+    event: &str,
+    cx: &mut Context<ForgeView>,
+) -> Option<impl Fn(usize, &mut Window, &mut App) + 'static> {
+    let calls = calls_for(view, node, event);
+    if calls.is_empty() {
+        return None;
+    }
+    let weak = cx.entity().downgrade();
+    Some(move |i: usize, _w: &mut Window, cx: &mut App| {
+        for (name, args) in &calls {
+            let (name, mut args) = (name.clone(), args.clone());
+            args.push(i.to_string());
+            try_update(&weak, cx, |view, cx| view.fire_call(&name, args, cx));
+        }
+    })
+}
+
+/// `lines` prop → `LogLine`s — 'at|LEVEL|target|message' rows; `at` may be empty.
+fn log_lines_of(node: &Node) -> Vec<LogLine> {
+    prop_str(node, "lines")
+        .lines()
+        .map(|line| {
+            let mut p = line.splitn(4, '|');
+            LogLine {
+                at: p.next().unwrap_or_default().trim().into(),
+                level: log_level_of(p.next().unwrap_or("Info")),
+                target: p.next().unwrap_or_default().trim().into(),
+                message: p.next().unwrap_or_default().into(),
+            }
+        })
+        .collect()
+}
+
+/// Level text → `LogLevel`, defaulting to Info.
+fn log_level_of(text: &str) -> LogLevel {
+    if text.eq_ignore_ascii_case("trace") {
+        LogLevel::Trace
+    } else if text.eq_ignore_ascii_case("debug") {
+        LogLevel::Debug
+    } else if text.eq_ignore_ascii_case("warn") {
+        LogLevel::Warn
+    } else if text.eq_ignore_ascii_case("error") {
+        LogLevel::Error
+    } else {
+        LogLevel::Info
+    }
+}
+
+/// A `LogViewer` over the node's `lines`; `least`/`query`/`follow` filter,
+/// `on change:` fires on the widget's own level/follow controls.
+fn log_viewer_of(
+    node: &Node,
+    key: &str,
+    view: &ForgeView,
+    cx: &mut Context<ForgeView>,
+) -> LogViewer {
+    let mut lv = LogViewer::new(key.to_string(), log_lines_of(node));
+    if let Some(least) = prop_str_opt(node, "least") {
+        lv = lv.least(log_level_of(&least));
+    }
+    let query = prop_str(node, "query");
+    if !query.is_empty() {
+        lv = lv.query(query);
+    }
+    if let Some(Value::Bool(follow)) = prop(node, "follow") {
+        lv = lv.follow(*follow);
+    }
+    let calls = calls_for(view, node, "change");
+    if !calls.is_empty() {
+        let weak = cx.entity().downgrade();
+        let level_calls = calls.clone();
+        lv = lv.on_least(move |level, _w, cx| {
+            for (name, args) in &level_calls {
+                let (name, mut args) = (name.clone(), args.clone());
+                args.push(format!("{level:?}"));
+                try_update(&weak, cx, |view, cx| view.fire_call(&name, args, cx));
+            }
+        });
+        let weak = cx.entity().downgrade();
+        lv = lv.on_follow(move |follow, _w, cx| {
+            for (name, args) in &calls {
+                let (name, mut args) = (name.clone(), args.clone());
+                args.push(format!("{follow}"));
+                try_update(&weak, cx, |view, cx| view.fire_call(&name, args, cx));
+            }
+        });
+    }
+    lv
+}
+
+/// `shells` prop → `ShellChoice`s — 'name=program' pairs split on ';'.
+fn shell_choices_of(node: &Node) -> Vec<ShellChoice> {
+    prop_str(node, "shells")
+        .split(';')
+        .filter_map(|s| {
+            let (name, program) = s.split_once('=')?;
+            Some(ShellChoice {
+                name: name.trim().into(),
+                program: program.trim().into(),
+            })
+        })
+        .collect()
+}
+
+/// A `ShellSelector` over the node's `shells`; `on pick:` fires the index.
+fn shell_selector_of(
+    node: &Node,
+    key: &str,
+    view: &ForgeView,
+    cx: &mut Context<ForgeView>,
+) -> ShellSelector {
+    let mut sel = ShellSelector::new(key.to_string(), shell_choices_of(node));
+    if let Some(f) = fire_index(view, node, "pick", cx) {
+        sel = sel.on_pick(f);
+    }
+    sel
+}
+
+/// A `TerminalToolbar` with an optional shell picker; clear/stop/split/pick fire.
+fn terminal_toolbar_of(
+    node: &Node,
+    key: &str,
+    view: &ForgeView,
+    cx: &mut Context<ForgeView>,
+) -> TerminalToolbar {
+    let mut bar = TerminalToolbar::new(
+        key.to_string(),
+        prop_str(node, "title"),
+        prop_num(node, "exit").map(|e| e as i32),
+    );
+    let shells = shell_choices_of(node);
+    if !shells.is_empty() {
+        let mut sel = ShellSelector::new(format!("{key}-shells"), shells);
+        if let Some(f) = fire_index(view, node, "pick", cx) {
+            sel = sel.on_pick(f);
+        }
+        bar = bar.shells(sel);
+    }
+    if let Some(f) = handler(view, node, "clear", cx) {
+        bar = bar.on_clear(f);
+    }
+    if let Some(f) = handler(view, node, "stop", cx) {
+        bar = bar.on_stop(f);
+    }
+    if let Some(f) = handler(view, node, "split", cx) {
+        bar = bar.on_split(f);
+    }
+    bar
+}
+
+/// `command`/`cwd` props → a `Launch` — `command` splits on whitespace;
+/// empty leaves the default (login shell).
+#[cfg(not(target_family = "wasm"))]
+fn launch_of(node: &Node) -> ely_terminal::Launch {
+    let mut launch = ely_terminal::Launch::default();
+    let command = prop_str(node, "command");
+    if !command.is_empty() {
+        let mut words = command.split_whitespace();
+        if let Some(program) = words.next() {
+            launch.program = Some((
+                program.to_string(),
+                words.map(str::to_string).collect(),
+            ));
+        }
+    }
+    if let Some(cwd) = prop_str_opt(node, "cwd") {
+        launch.cwd = Some(cwd.into());
+    }
+    launch
+}
+
 /// Build a `TreeNode` forest from `/`-separated paths (`src/lib.rs` …).
 fn tree_nodes(paths: &[String]) -> Vec<TreeNode> {
     fn into_nodes<'a>(it: impl Iterator<Item = &'a [String]>) -> Vec<TreeNode> {
@@ -702,10 +951,21 @@ impl ForgeLibrary for Ely {
     ) -> Option<AnyElement> {
         if !self.inited.replace(true) {
             ely_core::theme::Theme::init(cx);
-            // Ely's Theme defaults to light — match the host's mode.
-            if gpui_forge_runtime::base::kit::component::theme::Theme::global(cx).is_dark() {
-                ely_core::theme::Theme::set_mode(ely_core::theme::Mode::Dark, cx);
-            }
+            #[cfg(not(target_family = "wasm"))]
+            ely_terminal::bind_keys(cx);
+        }
+        // Ely's theme follows the host's — resync every render so a theme
+        // switch (chrome select, OS appearance) reaches ely widgets.
+        let dark = gpui_forge_runtime::base::kit::component::theme::Theme::global(cx).is_dark();
+        if ely_core::theme::Theme::global(cx).is_dark() != dark {
+            ely_core::theme::Theme::set_mode(
+                if dark {
+                    ely_core::theme::Mode::Dark
+                } else {
+                    ely_core::theme::Mode::Light
+                },
+                cx,
+            );
         }
         match node.element.name.as_str() {
             "Button" => Some(button_of(node, key).into_any_element()),
@@ -3510,6 +3770,16 @@ impl ForgeLibrary for Ely {
                 Some(g.into_any_element())
             }
             "ToolbarSeparator" => Some(ToolbarSeparator.into_any_element()),
+            "AnsiText" => Some(AnsiText::new(prop_str(node, "text")).into_any_element()),
+            "LogViewer" => Some(log_viewer_of(node, key, view, cx).into_any_element()),
+            "ShellSelector" => {
+                Some(shell_selector_of(node, key, view, cx).into_any_element())
+            }
+            #[cfg(not(target_family = "wasm"))]
+            "Terminal" => Some(self.terminal(node, key, view, cx).into_any_element()),
+            "TerminalToolbar" => {
+                Some(terminal_toolbar_of(node, key, view, cx).into_any_element())
+            }
             "TitleBar" => {
                 let mut t = TitleBar::new(key.to_string());
                 if let Some(title) = prop_str_opt(node, "title") {

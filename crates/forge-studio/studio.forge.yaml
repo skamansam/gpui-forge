@@ -21,6 +21,10 @@ state:
   studio.project: string
   studio.spec: string
   studio.tab: number
+  studio.assets_dir: string
+  studio.asset_files: list
+  studio.assets_zoom: number
+  studio.doc_dir: string
   studio.theme_json: multiline
   studio.theme_preview: string
   studio.markers: list
@@ -220,6 +224,102 @@ welcomeTab: &welcomeTab
                       size: Small
                       variant: Primary
                       on click: start_from('blank')
+
+
+# ============================================================================
+# THE ASSETS TAB
+# ============================================================================
+# Browses the project's media: `[assets] dir` from the manifest when set, else
+# `<root>/assets`, else the project root. `studio.assets_zoom` picks the view —
+# 0 List (file tree, folders navigate in place), 1 Thumbs (flat rows with
+# previews), 2 Grid (media cards). `studio.asset_files` is the flattened
+# listing `refresh_assets` seeds on every project/document load.
+assetsTab: &assetsTab
+  children:
+    - VStack:
+      style: {grow: true, min-height: 0, min-width: 0, padding: 12px, gap: 10px}
+      children:
+        - HStack:
+          style: {gap: 8px, align: center}
+          children:
+            - Text: Assets
+              style: {size: sm, weight: semibold}
+            - Text: "{$studio.assets_dir}"
+              style: {size: xs, color: $theme.muted_foreground}
+            - Tabs#assetsZoom:
+              variant: Segmented
+              selected: bind $studio.assets_zoom
+              style: {grow: true}
+              children:
+                - Tab: List
+                - Tab: Thumbs
+                - Tab: Grid
+        - if: $studio.assets_zoom
+          is: 0
+          children:
+            - forge.Files#assetList:
+              root: "{$studio.assets_dir}"
+              filter: ["*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp", "*.svg", "*.ico", "*.bmp", "*.avif", "*.mp4", "*.webm", "*.mov", "*.mkv", "*.ttf", "*.otf", "*.woff", "*.woff2"]
+              nonce: $studio.files_nonce
+              search: true
+              folders: navigate
+              placeholder: no assets found
+              style: {grow: true, min-height: 0}
+          else:
+            - if: $studio.assets_zoom
+              is: 1
+              children:
+                - Scrollable:
+                  style: {grow: true, min-height: 0, gap: 2px}
+                  children:
+                    - for: $studio.asset_files
+                      each: f
+                      children:
+                        - HStack:
+                          style: {gap: 8px, align: center, padding: 4px}
+                          children:
+                            - Image:
+                              src: "{$f.path}"
+                              size: 28px
+                              object-fit: Cover
+                              if: $f.img
+                            - Icon: file
+                              if: $f.img
+                              not: true
+                            - Text: "{$f.rel}"
+                              style: {grow: true, size: sm}
+                            - Text: "{$f.size}B"
+                              style: {size: xs, color: $theme.muted_foreground}
+                      else:
+                        - Text: "no assets — open a project or save this document near an assets/ folder"
+                          style: {size: sm, color: $theme.muted_foreground}
+              else:
+                - Scrollable:
+                  style: {grow: true, min-height: 0}
+                  children:
+                    - Grid:
+                      columns: 5
+                      style: {gap: 8px}
+                      children:
+                        - for: $studio.asset_files
+                          each: f
+                          children:
+                            - VStack:
+                              style: {gap: 4px, align: center, padding: 8px, border: 1px, radius: 6px}
+                              children:
+                                - Image:
+                                  src: "{$f.path}"
+                                  size: 72px
+                                  object-fit: Cover
+                                  if: $f.img
+                                - Icon: file
+                                  if: $f.img
+                                  not: true
+                                - Text: "{$f.name}"
+                                  style: {size: xs}
+                          else:
+                            - Text: "no assets — open a project or save this document near an assets/ folder"
+                              style: {size: sm, color: $theme.muted_foreground}
 
 
 # ============================================================================
@@ -588,8 +688,17 @@ body: &body
                 padding: 8px
                 gap: 8px
               children:
-                - Label: Project
-                  style: {weight: semibold, size: sm}
+                - HStack:
+                  style: {gap: 8px, align: center}
+                  children:
+                    - Label: Project
+                      style: {weight: semibold, size: sm, grow: true}
+                    - Button: project
+                      variant: Ghost
+                      size: Small
+                      tooltip: toggle between the project root and this document's folder
+                      on click: files_scope()
+                      if: $studio.project
                 - Text: "{$studio.project_name}"
                   style: {size: xs, color: $theme.muted_foreground}
                 - forge.Files#files:
@@ -634,6 +743,8 @@ body: &body
                       <<: *varsTab
                     - Tab: Theme
                       <<: *themesTab
+                    - Tab: Assets
+                      <<: *assetsTab
 
                 - VStack#inspector:
                   <<: *inspector

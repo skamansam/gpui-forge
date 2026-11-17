@@ -375,6 +375,11 @@ impl Reader<'_> {
                 meta.push((key.text, text));
             }
         }
+        // `{$k}`/`{$meta.k}` inside a meta value reads an earlier meta entry.
+        for i in 0..meta.len() {
+            let resolved = subst_meta_refs(&meta[i].1, &meta);
+            meta[i].1 = resolved;
+        }
         meta
     }
 
@@ -1027,4 +1032,38 @@ pub(crate) fn element_key(key: &str) -> Option<(ElementRef, Option<String>)> {
         },
         id.map(str::to_owned),
     ))
+}
+
+/// Replaces `{$key}`/`{$meta.key}` placeholders in a `meta:` value with the
+/// entry of that name already read — `id: "dev.app.{$meta.name}"`.
+fn subst_meta_refs(text: &str, meta: &[(String, String)]) -> String {
+    let mut out = String::new();
+    let mut rest = text;
+    while let Some(open) = rest.find('{') {
+        out.push_str(&rest[..open]);
+        rest = &rest[open + 1..];
+        if let Some(after) = rest.strip_prefix('{') {
+            out.push('{');
+            rest = after;
+            continue;
+        }
+        let Some(close) = rest.find('}') else {
+            out.push('{');
+            break;
+        };
+        let key = rest[..close]
+            .trim()
+            .strip_prefix('$')
+            .map(|k| k.strip_prefix("meta.").unwrap_or(k));
+        match key.and_then(|k| meta.iter().find(|(m, _)| m == k)) {
+            Some((_, v)) => out.push_str(v),
+            _ => {
+                out.push('{');
+                out.push_str(&rest[..close + 1]);
+            }
+        }
+        rest = &rest[close + 1..];
+    }
+    out.push_str(rest);
+    out
 }

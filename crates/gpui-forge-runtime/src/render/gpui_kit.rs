@@ -206,6 +206,8 @@ pub trait ForgeLibrary {
 pub struct ForgeView {
     doc: Option<Document>,
     pub catalogs: Vec<Catalog>,
+    /// The document's `meta:` map — `{$meta.k}` bindings resolve against it.
+    meta: Json,
     state: Json,
     inputs: HashMap<String, Entity<InputState>>,
     textareas: HashMap<String, Entity<TextareaState>>,
@@ -229,6 +231,8 @@ pub struct ForgeView {
     /// or a removed folder self-heals without explicit resets.
     files_nav: HashMap<String, String>,
     selects: HashMap<String, Entity<SelectState<Options>>>,
+    /// The shared `ThemeSwitcher` select — one Light/Dark state per view.
+    theme_select: Option<Entity<SelectState<Options>>>,
     comboboxes: HashMap<String, Entity<ComboboxState<Vec<SharedString>>>>,
     carousels: HashMap<String, Entity<CarouselState>>,
     commands: HashMap<String, Entity<CommandState>>,
@@ -328,6 +332,7 @@ impl ForgeView {
         Self {
             doc: None,
             catalogs,
+            meta: Json::Object(Default::default()),
             state: Json::Object(Default::default()),
             inputs: HashMap::new(),
             textareas: HashMap::new(),
@@ -344,6 +349,7 @@ impl ForgeView {
             files_queries: HashMap::new(),
             files_nav: HashMap::new(),
             selects: HashMap::new(),
+            theme_select: None,
             comboboxes: HashMap::new(),
             carousels: HashMap::new(),
             commands: HashMap::new(),
@@ -372,6 +378,7 @@ impl ForgeView {
     }
 
     pub fn set_document(&mut self, doc: Document, cx: &mut Context<Self>) {
+        self.meta = crate::render::doc_meta(&doc);
         self.doc = Some(doc);
         cx.notify();
     }
@@ -1576,6 +1583,16 @@ impl ForgeView {
 
     fn lookup(&self, path: &Path) -> Option<&Json> {
         let mut segments = path.0.iter();
+        // `meta.*` reads the document's `meta:` map — a constant namespace.
+        if let Some(PathSegment::Field(name)) = path.0.first()
+            && name == "meta"
+        {
+            segments.next();
+            return segments.try_fold(&self.meta, |json, segment| match segment {
+                PathSegment::Field(name) => json.get(name),
+                PathSegment::Index(i) => json.get(i),
+            });
+        }
         let mut json = &self.state;
         // `for`/`with` scope vars shadow state — innermost frame wins.
         if let Some(PathSegment::Field(name)) = path.0.first()
@@ -4402,6 +4419,45 @@ impl ForgeView {
             "TitleBar" => TitleBar::new()
                 .children(children(self, window, cx))
                 .into_any_element(),
+            // Light/Dark `Select` wired straight to `Theme::change` — library
+            // adapters (ely) resync their own theme off the host's each render.
+            "ThemeSwitcher" => {
+                let state = match &self.theme_select {
+                    Some(state) => state.clone(),
+                    None => {
+                        let dark =
+                            gpui_kit::component::theme::Theme::global(cx).is_dark();
+                        let state = cx.new(|cx| {
+                            SelectState::new(
+                                vec!["Light".into(), "Dark".into()],
+                                Some(IndexPath::new(if dark { 1 } else { 0 })),
+                                window,
+                                cx,
+                            )
+                        });
+                        self.subscriptions.push(cx.subscribe(
+                            &state,
+                            |_this, _state, event: &SelectEvent<Options>, cx| {
+                                use gpui_kit::component::theme::{Theme, ThemeMode};
+                                if let SelectEvent::Confirm(Some(value)) = event {
+                                    Theme::change(
+                                        if value.as_ref() == "Dark" {
+                                            ThemeMode::Dark
+                                        } else {
+                                            ThemeMode::Light
+                                        },
+                                        None,
+                                        cx,
+                                    );
+                                }
+                            },
+                        ));
+                        self.theme_select = Some(state.clone());
+                        state
+                    }
+                };
+                Select::new(&state).into_any_element()
+            }
             "Message" => {
                 let mut message = Message::new();
                 if self
@@ -5280,6 +5336,12 @@ impl ForgeView {
             }
             "WindowBorder" => {
                 let mut b = gpui_kit::component::WindowBorder::new();
+                if let Some(s) = self.prop(node, "shadow").and_then(|v| self.number(v)) {
+                    b = b.shadow_size(px(s as f32));
+                }
+                if let Some(r) = self.prop(node, "resize-hit").and_then(|v| self.number(v)) {
+                    b = b.resize_hit_size(px(r as f32));
+                }
                 b.extend(
                     node.children
                         .iter()

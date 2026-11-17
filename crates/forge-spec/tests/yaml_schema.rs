@@ -317,6 +317,11 @@ fn shipped_docs_validate() {
             "gpui-kit",
         ),
         (
+            "ely-terminal",
+            include_str!("../../../examples/demos/ely-terminal.forge.yaml"),
+            "gpui-kit",
+        ),
+        (
             "gpui-kit-showcase",
             include_str!("../../../examples/showcases/gpui-kit-showcase.forge.yaml"),
             "gpui-kit",

@@ -79,6 +79,30 @@ pub fn get_path<'a>(json: &'a Json, path: &Path) -> Option<&'a Json> {
     Some(current)
 }
 
+/// Binding lookup with the `meta` namespace: `meta.*` paths read the document
+/// meta object; anything else reads view state.
+pub fn lookup_path<'a>(meta: &'a Json, state: &'a Json, path: &Path) -> Option<&'a Json> {
+    let (root, segments) = match path.0.first() {
+        Some(PathSegment::Field(name)) if name == "meta" => (meta, &path.0[1..]),
+        _ => (state, &path.0[..]),
+    };
+    segments.iter().try_fold(root, |j, s| match s {
+        PathSegment::Field(f) => j.get(f.as_str()),
+        PathSegment::Index(i) => j.get(i),
+    })
+}
+
+/// A document's `meta:` map as a JSON object — `{$meta.k}` bindings resolve
+/// against it.
+pub fn doc_meta(doc: &forge_spec::Document) -> Json {
+    Json::Object(
+        doc.meta
+            .iter()
+            .map(|(k, v)| (k.clone(), Json::String(v.clone())))
+            .collect(),
+    )
+}
+
 /// Writes `value` at `path` in a JSON state tree, creating objects/arrays as
 /// needed — the inverse of `get_path`.
 pub fn set_path(state: &mut Json, path: &Path, value: Json) {

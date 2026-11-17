@@ -114,51 +114,102 @@ elements:
   BarChart:
     icon: circle-dot
     group: Components
-    summary: "BarChart — ratatui, via BarChart."
+    summary: Bar chart over a `data:` `[number]` series; `labels` names bars.
+    component: ratatui::widgets::BarChart
     canvas: BarChart
-    children: any
+    children: none
+    props:
+      data:
+        type: list<number>
+        required: true
+        summary: Bar values.
+      labels:
+        type: string
+        summary: Newline-separated bar labels; defaults to bar index.
+      bar_width:
+        type: number
+        summary: Cells per bar.
+      max:
+        type: number
+        summary: Scale ceiling; defaults to the largest value.
 
   Calendar:
     icon: circle-dot
     group: Components
-    summary: "Calendar — ratatui, via Calendar."
+    summary: Month calendar — `date` picks the month; today is highlighted.
+    component: ratatui::widgets::calendar::Monthly
     canvas: Calendar
-    children: any
+    children: none
+    props:
+      date:
+        type: string
+        summary: "`YYYY-MM` or `YYYY-MM-DD`; defaults to today (UTC)."
 
   Chart:
     icon: circle-dot
     group: Components
-    summary: "Chart — ratatui, via LineChart."
+    summary: Line chart over a `data:` `[number]` series (index on x).
+    component: ratatui::widgets::Chart
     canvas: LineChart
-    children: any
+    children: none
+    props:
+      data:
+        type: list<number>
+        required: true
+        summary: Series values — point x is the value's index.
+      name:
+        type: string
+        summary: Series label shown in the legend.
+      x_min: number
+      x_max: number
+      y_min: number
+      y_max: number
 
   Sparkline:
     icon: circle-dot
     group: Components
-    summary: "Sparkline — ratatui, via LineChart."
+    summary: Inline sparkline over a `data:` `[number]` series.
+    component: ratatui::widgets::Sparkline
     canvas: LineChart
-    children: any
+    children: none
+    props:
+      data:
+        type: list<number>
+        required: true
+        summary: Series values.
+      max:
+        type: number
+        summary: Scale ceiling; defaults to the largest value.
 
   Canvas:
     icon: circle-dot
     group: Components
-    summary: "Canvas — ratatui, via Box."
+    summary: Drawing surface — `map` renders the world map layer.
+    component: ratatui::widgets::canvas::Canvas
     canvas: Box
-    children: any
+    children: none
+    props:
+      map:
+        type: bool
+        default: true
+        summary: Draw the high-resolution world map.
+      x_min: number
+      x_max: number
+      y_min: number
+      y_max: number
 
   Logo:
     icon: circle-dot
     group: Components
-    summary: "Logo — ratatui, via Image."
+    summary: The ratatui logo — `size` `tiny`|`small`.
+    component: ratatui::widgets::RatatuiLogo
     canvas: Image
-    children: any
-
-  Mascot:
-    icon: circle-dot
-    group: Components
-    summary: "Mascot — ratatui, via Image."
-    canvas: Image
-    children: any
+    children: none
+    props:
+      size:
+        type: enum
+        values: [tiny, small]
+        default: small
 
 
   Clear:

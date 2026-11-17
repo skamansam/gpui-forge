@@ -56,7 +56,7 @@ base-guise = [
     "forge-lib-guise/symbols",
 ]
 base-bezel = ["dep:bezel", "gpui-forge-runtime/base-bezel"]
-base-ratatui = ["dep:ratatui", "dep:crossterm", "gpui-forge-runtime/base-ratatui"]
+base-ratatui = ["dep:ratatui", "dep:crossterm", "dep:forge-term", "gpui-forge-runtime/base-ratatui"]
 base-iced = ["dep:iced", "gpui-forge-runtime/base-iced"]
 
 [dependencies]
@@ -76,11 +76,21 @@ guise-ui = { version = "1.10", optional = true }
 bezel = { version = "0.2.24", optional = true, features = ["platform"] }
 ratatui = { version = "0.29", optional = true, default-features = false, features = ["crossterm"] }
 crossterm = { version = "0.28", optional = true }
+# Emulator for the ratatui_fidelity example — no gpui feature (native cell
+# grid only; TermView stays off this base's build).
+forge-term = { path = "../forge-term", optional = true, default-features = false }
 iced = { version = "0.13", optional = true }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 x11rb = "0.14.0"
 raw-window-handle = "0.6.2"
+
+# `cargo run -p forge-preview --no-default-features --features base-ratatui
+#  --example ratatui_fidelity`
+[[example]]
+name = "ratatui_fidelity"
+path = "examples/ratatui_fidelity.rs"
+required-features = ["base-ratatui"]
 
 [lints]
 workspace = true

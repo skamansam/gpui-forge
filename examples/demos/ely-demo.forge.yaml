@@ -5,68 +5,76 @@ use:
   ely: ely-core
 
 root:
-  VStack:
-  style:
-    padding: 24px
-    gap: 12px
+  WindowBorder:
+  shadow: 0
   children:
-    - Text: Ely Components
+    - TitleBar:
+      children:
+        - Text: "Ely Demo"
+        - ThemeSwitcher:
+    - VStack:
       style:
-        size: xl
-        weight: semibold
-    - ely.Button: Primary Ely Button
-      variant: Primary
-      size: Md
-      on click: status('clicked ely button')
-    - ely.Button: Danger Outline
-      variant: Danger
-      size: Sm
-    - ely.Badge: Ely Badge
-    - ely.Alert: Disk quota almost full
-      severity: Warning
-    - ely.StatusMessage: All systems nominal
-      icon: check
-    - ely.Heading: Ely Heading
-      level: 2
-    - ely.Title: Ely Title
-    - ely.Avatar: Sam Ramirez
-    - ely.Paragraph: Body text rendered by the Ely adapter.
-    - ely.Spinner:
-      spinner: Dots
-      size: Md
-    - ely.Divider:
-    - Text: Below the divider
-    - ely.IconButton:
-      icon: check
-      tooltip: Done
-    - ely.Statistic:
-      label: Uptime
-      value: "99.9%"
-    - ely.KpiCard:
-      label: Revenue
-      value: "42k"
-    - ely.Meter:
-      label: Storage
-      value: 68
-    - ely.UsageBar:
-      total: 100
-    - ely.TrendIndicator:
-      change: 12.5
-    - ely.Banner: Deploy queued
-      severity: Info
-    - ely.InlineMessage: Syncing…
-      severity: Warning
-    - ely.QrCode:
-      data: "https://gpui.rs"
-    - ely.TimelineItem: v0.2 shipped
-    - ely.Subtitle: Section subtitle
-    - ely.Caption: fine print
-    - ely.Label: Field label
-    - ely.Overline: OVERLINE
-    - ely.Icon:
-      icon: check
-      size: Lg
-    - ely.CopyButton:
-      label: Copy
-    - ely.AspectRatio:
-      ratio: 1.77
+        grow: 1
+        padding: 24px
+        gap: 12px
+      children:
+        - Text: Ely Components
+          style:
+            size: xl
+            weight: semibold
+        - ely.Button: Primary Ely Button
+          variant: Primary
+          size: Md
+          on click: status('clicked ely button')
+        - ely.Button: Danger Outline
+          variant: Danger
+          size: Sm
+        - ely.Badge: Ely Badge
+        - ely.Alert: Disk quota almost full
+          severity: Warning
+        - ely.StatusMessage: All systems nominal
+          icon: check
+        - ely.Heading: Ely Heading
+          level: 2
+        - ely.Title: Ely Title
+        - ely.Avatar: Sam Ramirez
+        - ely.Paragraph: Body text rendered by the Ely adapter.
+        - ely.Spinner:
+          spinner: Dots
+          size: Md
+        - ely.Divider:
+        - Text: Below the divider
+        - ely.IconButton:
+          icon: check
+          tooltip: Done
+        - ely.Statistic:
+          label: Uptime
+          value: "99.9%"
+        - ely.KpiCard:
+          label: Revenue
+          value: "42k"
+        - ely.Meter:
+          label: Storage
+          value: 68
+        - ely.UsageBar:
+          total: 100
+        - ely.TrendIndicator:
+          change: 12.5
+        - ely.Banner: Deploy queued
+          severity: Info
+        - ely.InlineMessage: Syncing…
+          severity: Warning
+        - ely.QrCode:
+          data: "https://gpui.rs"
+        - ely.TimelineItem: v0.2 shipped
+        - ely.Subtitle: Section subtitle
+        - ely.Caption: fine print
+        - ely.Label: Field label
+        - ely.Overline: OVERLINE
+        - ely.Icon:
+          icon: check
+          size: Lg
+        - ely.CopyButton:
+          label: Copy
+        - ely.AspectRatio:
+          ratio: 1.77

@@ -6,7 +6,7 @@
 //! as `Message`s — `on click:` bindings become `Message::Hooks`, two-way
 //! inputs become `Message::Input`/`Toggle`/`Slide` writes.
 
-use crate::render::{get_path, set_path};
+use crate::render::{doc_meta, get_path, lookup_path, set_path};
 use forge_spec::catalog::Catalog;
 use forge_spec::{Document, Node, Path, Segment, Unit, Value};
 use iced::widget::{
@@ -53,6 +53,8 @@ pub trait ForgeLibrary {
 
 pub struct ForgeView {
     doc: Option<Document>,
+    /// The document's `meta:` map — `{$meta.k}` bindings resolve against it.
+    meta: Json,
     pub catalogs: Vec<Catalog>,
     state: Json,
     pub libraries: Vec<Rc<dyn ForgeLibrary>>,
@@ -81,6 +83,7 @@ impl ForgeView {
             previews: HashMap::new(),
             doc: None,
             catalogs,
+            meta: Json::Object(Default::default()),
             state: Json::Object(Default::default()),
             libraries: Vec::new(),
             hooks: HashMap::new(),
@@ -96,6 +99,7 @@ impl ForgeView {
     }
 
     pub fn set_document(&mut self, doc: Document) {
+        self.meta = doc_meta(&doc);
         self.doc = Some(doc);
     }
 
@@ -207,7 +211,7 @@ impl ForgeView {
     }
 
     fn lookup(&self, path: &Path) -> Option<&Json> {
-        get_path(&self.state, path)
+        lookup_path(&self.meta, &self.state, path)
     }
 
     fn json_text(&self, path: &Path) -> String {

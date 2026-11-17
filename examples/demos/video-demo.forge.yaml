@@ -7,18 +7,26 @@ use:
   video: gpui-video-player
 
 root:
-  VStack:
-  style:
-    padding: 24px
-    gap: 12px
+  WindowBorder:
+  shadow: 0
   children:
-    - Text: gpui-video-player
+    - TitleBar:
+      children:
+        - Text: "Video Demo"
+        - ThemeSwitcher:
+    - VStack:
       style:
-        size: xl
-        weight: semibold
-    - video.Player:
-      src: https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4
-      width: 640px
-      height: 360px
-      muted: true
-      looping: true
+        grow: 1
+        padding: 24px
+        gap: 12px
+      children:
+        - Text: gpui-video-player
+          style:
+            size: xl
+            weight: semibold
+        - video.Player:
+          src: https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4
+          width: 640px
+          height: 360px
+          muted: true
+          looping: true

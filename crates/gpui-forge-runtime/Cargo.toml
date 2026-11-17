@@ -13,7 +13,7 @@ base-gpui-kit = ["dep:gpui-kit", "dep:gpui-base", "dep:forge-term"]
 base-bezel = ["dep:bezel"]
 base-adabraka = []
 base-guise = ["dep:gpui", "dep:guise-ui"]
-base-ratatui = ["dep:ratatui"]
+base-ratatui = ["dep:ratatui", "dep:time"]
 base-iced = ["dep:iced"]
 
 [dependencies]
@@ -30,7 +30,9 @@ guise-ui = { version = "1.10", optional = true }
 # (0.3.21+zed.f16f96) — re-exported as `bezel::gpui`.
 bezel = { version = "0.2.24", optional = true, features = ["platform"] }
 # ratatui base (#112): terminal UI — the twin draws into `ratatui::Frame`.
-ratatui = { version = "0.29", optional = true, default-features = false }
+# widget-calendar pulls `time` for `Monthly`'s `Date` — pure Rust, wasm-safe.
+ratatui = { version = "0.29", optional = true, default-features = false, features = ["widget-calendar"] }
+time = { version = "0.3", optional = true }
 # iced base (#113): Elm-architecture toolkit — view()/update()/Element.
 iced = { version = "0.13", optional = true }
 serde_json = "1"

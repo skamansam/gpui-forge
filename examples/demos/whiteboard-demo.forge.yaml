@@ -6,15 +6,23 @@ use:
   wb: gpui-whiteboard
 
 root:
-  VStack:
-  style:
-    padding: 24px
-    gap: 12px
+  WindowBorder:
+  shadow: 0
   children:
-    - Text: gpui-whiteboard
+    - TitleBar:
+      children:
+        - Text: "Whiteboard Demo"
+        - ThemeSwitcher:
+    - VStack:
       style:
-        size: xl
-        weight: semibold
-    - wb.Board:
-      style:
-        height: 560px
+        grow: 1
+        padding: 24px
+        gap: 12px
+      children:
+        - Text: gpui-whiteboard
+          style:
+            size: xl
+            weight: semibold
+        - wb.Board:
+          style:
+            height: 560px

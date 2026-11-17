@@ -7,16 +7,24 @@ use:
   pdf: gpui-pdf
 
 root:
-  VStack:
-  style:
-    padding: 24px
-    gap: 12px
+  WindowBorder:
+  shadow: 0
   children:
-    - Text: gpui-pdf
+    - TitleBar:
+      children:
+        - Text: "Pdf Demo"
+        - ThemeSwitcher:
+    - VStack:
       style:
-        size: xl
-        weight: semibold
-    - pdf.Viewer:
-      src: ./sample.pdf
-      style:
-        height: 560px
+        grow: 1
+        padding: 24px
+        gap: 12px
+      children:
+        - Text: gpui-pdf
+          style:
+            size: xl
+            weight: semibold
+        - pdf.Viewer:
+          src: ./sample.pdf
+          style:
+            height: 560px

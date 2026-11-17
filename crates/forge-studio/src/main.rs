@@ -394,6 +394,13 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
                     .and_then(|j| j.as_str())
                     .unwrap_or("*.forge.yaml = bold; *.json = green"),
                 "file": "welcome.forge.yaml",
+                // Assets tab — `refresh_assets` rewrites dir + listing when a
+                // document/project loads.
+                "assets_dir": "",
+                "asset_files": [],
+                "assets_zoom": 0,
+                // Files sidebar "project" toggle — the document's folder.
+                "doc_dir": "",
                 "diagnostics": "",
                 "widget_sets": WIDGET_SETS,
                 "spec": gpui_forge_runtime::forge_spec::SPEC_VERSION,
@@ -409,12 +416,14 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     // re-roots it at the file's directory via `load_source`.
     if let Ok(cwd) = std::env::current_dir() {
         refresh_files(&mut view, &cwd, cx);
+        refresh_assets(&mut view, &cwd, cx);
     }
 
     for name in [
         "new_document",
         "open_document",
         "open_project",
+        "files_scope",
         "create_project",
         "preview_in_host",
         "raise_host",
@@ -905,6 +914,7 @@ fn dispatch(
         }
         "open_document" => open_document(shared.clone(), cx),
         "open_project" => open_project(shared.clone(), cx),
+        "files_scope" => files_scope(view, cx),
         "create_project" => create_project(view, shared.clone(), cx),
         "preview_in_host" => preview_in_host(view, shared.clone(), cx),
         "raise_host" => host_send(&json!({"cmd":"raise"})),
@@ -1402,6 +1412,8 @@ fn rename_file(view: &mut ForgeView, shared: SharedState, cx: &mut Context<Forge
         watch_file(to.clone(), shared.clone(), cx);
     }
     refresh_files(view, &parent, cx);
+    refresh_assets(view, &parent, cx);
+    refresh_themes(view, &parent, cx);
     status(view, &format!("renamed to {}", to.display()), cx);
     close_dialog(cx);
 }
@@ -1790,8 +1802,14 @@ fn host_send_theme(view: &ForgeView, cx: &App) {
 /// Reads `key = "value"` lines out of a manifest's `[forge]` section — the
 /// manifest format is flat enough that a scan beats a TOML dependency.
 fn manifest_value(src: &str, key: &str) -> Option<String> {
-    let forge = src.split("[forge]").nth(1)?.split('[').next()?;
-    forge.lines().map(str::trim).find_map(|l| {
+    manifest_section(src, "forge", key)
+}
+
+/// `key = "…"` inside a `[section]` of a `forge.toml` — section-aware so
+/// `[assets] dir` doesn't read a `[forge] dir` by accident.
+fn manifest_section(src: &str, section: &str, key: &str) -> Option<String> {
+    let body = src.split(&format!("[{section}]")).nth(1)?.split('[').next()?;
+    body.lines().map(str::trim).find_map(|l| {
         l.strip_prefix(key)?
             .trim_start_matches('=')
             .trim()
@@ -1799,6 +1817,165 @@ fn manifest_value(src: &str, key: &str) -> Option<String> {
             .strip_suffix('"')
             .map(str::to_owned)
     })
+}
+
+/// Media globs the Assets tab lists — images, video, fonts. Keep the
+/// `forge.Files` `filter:` in `studio.forge.yaml` in sync.
+const ASSET_GLOBS: &[&str] = &[
+    "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp", "*.svg", "*.ico", "*.bmp",
+    "*.avif", "*.mp4", "*.webm", "*.mov", "*.mkv", "*.ttf", "*.otf", "*.woff",
+    "*.woff2",
+];
+
+const IMAGE_EXTS: &[&str] = &[
+    "png", "jpg", "jpeg", "gif", "webp", "svg", "ico", "bmp", "avif",
+];
+
+/// The directory the Assets tab browses for `root`: the project's
+/// `[assets] dir` when the manifest names one, else `<root>/assets` when it
+/// exists, else the root itself.
+fn assets_root(root: &std::path::Path) -> PathBuf {
+    let declared = std::fs::read_to_string(root.join("forge.toml"))
+        .ok()
+        .and_then(|src| manifest_section(&src, "assets", "dir"))
+        .map(|d| root.join(d));
+    declared.filter(|d| d.is_dir()).unwrap_or_else(|| {
+        let guess = root.join("assets");
+        if guess.is_dir() {
+            guess
+        } else {
+            root.to_path_buf()
+        }
+    })
+}
+
+/// Seeds the Assets tab: `studio.assets_dir` names the browsed root and
+/// `studio.asset_files` is the flattened media listing the thumbnail/grid
+/// zooms iterate.
+fn refresh_assets(
+    view: &mut ForgeView,
+    root: &std::path::Path,
+    cx: &mut Context<ForgeView>,
+) {
+    let dir = assets_root(root);
+    view.update_state(
+        &parse_path("studio.assets_dir").unwrap(),
+        Json::String(dir.display().to_string()),
+        cx,
+    );
+    let mut budget = 800usize;
+    let filters: Vec<String> = ASSET_GLOBS.iter().map(|s| s.to_string()).collect();
+    let entries = gpui_forge_runtime::render::scan_files(&dir, &filters, 4, false, &mut budget);
+    let mut files = Vec::new();
+    flatten_assets(&entries, &dir, &mut files);
+    view.update_state(
+        &parse_path("studio.asset_files").unwrap(),
+        Json::Array(files),
+        cx,
+    );
+}
+
+/// The project's theme dir: `[themes] dir` in `forge.toml` when declared,
+/// else `<root>/themes`. Mirrors `emit_themes`' project half in forge-cli.
+fn themes_root(root: &std::path::Path) -> PathBuf {
+    std::fs::read_to_string(root.join("forge.toml"))
+        .ok()
+        .and_then(|src| manifest_section(&src, "themes", "dir"))
+        .map(|d| root.join(d))
+        .filter(|d| d.is_dir())
+        .unwrap_or_else(|| root.join("themes"))
+}
+
+/// Loads the project's theme JSONs into the shared registry and re-seeds
+/// the Theme tab's select lists so project themes appear alongside the
+/// shipped catalog. Registry entries are keyed by theme name — a project
+/// theme with the same name replaces the shipped one, matching `forge
+/// build`'s project-wins merge.
+fn refresh_themes(
+    view: &mut ForgeView,
+    root: &std::path::Path,
+    cx: &mut Context<ForgeView>,
+) {
+    // A doc refresh names the doc's folder — when a project is open its
+    // themes are the ones that matter, so prefer the project root.
+    let project = view.state()["studio"]["project"]
+        .as_str()
+        .unwrap_or_default()
+        .to_owned();
+    let root = if project.is_empty() {
+        root.to_path_buf()
+    } else {
+        PathBuf::from(project)
+    };
+    let dir = themes_root(&root);
+    if let Ok(entries) = std::fs::read_dir(&dir) {
+        for e in entries.flatten() {
+            if e.path().extension().and_then(|s| s.to_str()) == Some("json")
+                && let Ok(content) = std::fs::read_to_string(e.path())
+            {
+                let _ = ThemeRegistry::global_mut(cx).load_themes_from_str(&content);
+            }
+        }
+    }
+    let sorted = ThemeRegistry::global(cx).sorted_themes();
+    let light_themes: Vec<String> = sorted
+        .iter()
+        .filter(|t| !t.mode.is_dark())
+        .map(|t| t.name.to_string())
+        .collect();
+    let dark_themes: Vec<String> = sorted
+        .iter()
+        .filter(|t| t.mode.is_dark())
+        .map(|t| t.name.to_string())
+        .collect();
+    let mut all_themes = Vec::with_capacity(light_themes.len() + dark_themes.len() + 2);
+    all_themes.push("--- Light Themes ---".to_string());
+    all_themes.extend(light_themes.iter().cloned());
+    all_themes.push("--- Dark Themes ---".to_string());
+    all_themes.extend(dark_themes.iter().cloned());
+    for (key, list) in [
+        ("studio.light_themes", light_themes),
+        ("studio.dark_themes", dark_themes),
+        ("studio.all_themes", all_themes),
+    ] {
+        view.update_state(
+            &parse_path(key).unwrap(),
+            Json::Array(list.into_iter().map(Json::String).collect()),
+            cx,
+        );
+    }
+}
+
+/// `scan_files` returns nested `{name,path,dir,children}` entries — the
+/// thumbnail/grid zooms want one flat row per media file.
+fn flatten_assets(entries: &[Json], root: &std::path::Path, out: &mut Vec<Json>) {
+    for entry in entries {
+        if entry["dir"].as_bool().unwrap_or(false) {
+            if let Some(children) = entry["children"].as_array() {
+                flatten_assets(children, root, out);
+            }
+            continue;
+        }
+        let path = entry["path"].as_str().unwrap_or_default();
+        let name = entry["name"].as_str().unwrap_or_default();
+        let ext = std::path::Path::new(name)
+            .extension()
+            .map(|e| e.to_string_lossy().to_lowercase())
+            .unwrap_or_default();
+        let rel = std::path::Path::new(path)
+            .strip_prefix(root)
+            .map(|r| r.display().to_string())
+            .unwrap_or_else(|_| name.to_owned());
+        let size = std::fs::metadata(path).map(|m| m.len()).unwrap_or_default();
+        out.push(serde_json::json!({
+            "name": name,
+            "rel": rel,
+            "path": path,
+            "ext": ext.clone(),
+            "img": IMAGE_EXTS.contains(&ext.as_str()),
+            "size": size,
+        }));
+    }
 }
 
 /// The `forge-preview{,-base}` binary for `base` — next to the running
@@ -2844,6 +3021,13 @@ fn load_source(
     view.reset_inputs("source");
     if let Some(dir) = dir {
         shared.borrow_mut().dir = Some(dir.to_path_buf());
+        // The Files sidebar's "project" toggle returns here when it leaves
+        // the project root.
+        view.update_state(
+            &parse_path("studio.doc_dir").unwrap(),
+            Json::String(dir.display().to_string()),
+            cx,
+        );
     }
     if let Some(doc) = doc {
         view.set_preview_document("canvas", doc, cx);
@@ -2860,7 +3044,36 @@ fn load_source(
         .or_else(|| shared.borrow().dir.clone());
     if let Some(root) = root {
         refresh_files(view, &root, cx);
+        refresh_assets(view, &root, cx);
+        refresh_themes(view, &root, cx);
     }
+}
+
+/// The sidebar's "project" button — toggles `studio.project_dir` between the
+/// project root (`studio.project`, set by `open_project`) and the current
+/// document's folder (`studio.doc_dir`).
+fn files_scope(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
+    let (project, doc_dir, current) = {
+        let state = view.state();
+        (
+            state["studio"]["project"].as_str().unwrap_or_default().to_owned(),
+            state["studio"]["doc_dir"].as_str().unwrap_or_default().to_owned(),
+            state["studio"]["project_dir"].as_str().unwrap_or_default().to_owned(),
+        )
+    };
+    // No project open → the only scope is the document's folder.
+    if project.is_empty() {
+        status(view, "no project — open a forge.toml first", cx);
+        return;
+    }
+    let next = if current == project { doc_dir } else { project };
+    if next.is_empty() {
+        return;
+    }
+    let next_path = std::path::PathBuf::from(&next);
+    refresh_files(view, &next_path, cx);
+    refresh_assets(view, &next_path, cx);
+    refresh_themes(view, &next_path, cx);
 }
 
 /// #148 — point the sidebar's `forge.Files` at `dir` and bust its scan cache:

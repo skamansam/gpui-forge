@@ -5,53 +5,61 @@ use:
   base: base-gpui
 
 root:
-  VStack:
-  style:
-    padding: 24px
-    gap: 12px
+  WindowBorder:
+  shadow: 0
   children:
-    - Text: Base GPUI Components
-      style:
-        size: xl
-        weight: semibold
-    - base.Button: Primary Base Button
-      on click: status('clicked base button')
-    - base.Button: Disabled
-      disabled: true
-    - base.Checkbox: Accept the terms
-      checked: true
-    - base.Checkbox: Indeterminate
-      indeterminate: true
-    - HStack:
-      style:
-        gap: 16px
+    - TitleBar:
       children:
-        - base.Switch:
-          checked: true
-        - base.Switch:
-        - base.Toggle: Bold
-          pressed: true
-        - base.Toggle: Italic
-    - base.Slider:
-      value: 40
-      min: 0
-      max: 100
-    - base.Progress:
-      label: Upload
-      value: 68
-    - base.Meter:
-      label: Storage
-      value: 42
-      min: 0
-      max: 100
-    - base.Separator:
-    - base.Input:
-      placeholder: Type here…
-    - HStack:
+        - Text: "Base Demo"
+        - ThemeSwitcher:
+    - VStack:
       style:
+        grow: 1
+        padding: 24px
         gap: 12px
       children:
-        - base.Avatar:
-          fallback: SR
-        - base.Avatar:
-          fallback: GF
+        - Text: Base GPUI Components
+          style:
+            size: xl
+            weight: semibold
+        - base.Button: Primary Base Button
+          on click: status('clicked base button')
+        - base.Button: Disabled
+          disabled: true
+        - base.Checkbox: Accept the terms
+          checked: true
+        - base.Checkbox: Indeterminate
+          indeterminate: true
+        - HStack:
+          style:
+            gap: 16px
+          children:
+            - base.Switch:
+              checked: true
+            - base.Switch:
+            - base.Toggle: Bold
+              pressed: true
+            - base.Toggle: Italic
+        - base.Slider:
+          value: 40
+          min: 0
+          max: 100
+        - base.Progress:
+          label: Upload
+          value: 68
+        - base.Meter:
+          label: Storage
+          value: 42
+          min: 0
+          max: 100
+        - base.Separator:
+        - base.Input:
+          placeholder: Type here…
+        - HStack:
+          style:
+            gap: 12px
+          children:
+            - base.Avatar:
+              fallback: SR
+            - base.Avatar:
+              fallback: GF

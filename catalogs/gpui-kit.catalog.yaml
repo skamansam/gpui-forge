@@ -1040,6 +1040,13 @@ elements:
     component: gpui_kit::component::title_bar::TitleBar
     children: any
 
+  ThemeSwitcher:
+    icon: sun-moon
+    group: Input
+    summary: Light/dark select wired to `Theme::change`; library themes follow the host mode.
+    component: gpui_kit::component::select::Select
+    children: none
+
   Message:
     icon: message-square
     group: Display
@@ -1787,4 +1794,13 @@ elements:
     group: Layout
     summary: "Window frame with resize-hit padding — wraps children."
     component: gpui_component::WindowBorder
+    props:
+      shadow:
+        type: number
+        default: 20
+        summary: Shadow ring inset in px — space between the frame edge and content (client decorations only).
+      resize-hit:
+        type: number
+        default: 4
+        summary: Pointer band around the frame edge that starts a resize, in px.
     children: any

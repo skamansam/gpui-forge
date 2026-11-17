@@ -3130,3 +3130,80 @@ elements:
     props:
       options: list<string>
     events: {switch:, close:}
+
+  AnsiText:
+    icon: terminal
+    group: Shell
+    summary: "ANSI-colored text — SGR escapes in `text` style runs; other codes drop."
+    component: ely_terminal::AnsiText
+    content: text
+    children: none
+    props:
+      text: string
+
+  LogViewer:
+    icon: list
+    group: Shell
+    summary: "Scrolling log — `lines` 'at|LEVEL|target|message' rows; `least`/`query` filter, `follow` tails."
+    component: ely_terminal::LogViewer
+    children: none
+    props:
+      lines: string
+      least:
+        type: enum
+        values: [Trace, Debug, Info, Warn, Error]
+      query: string
+      follow:
+        type: bool
+        default: true
+    events:
+      change:
+        summary: level or follow control changed — new value appended
+
+  Terminal:
+    icon: terminal
+    group: Shell
+    summary: "pty terminal — `command`/`cwd` spawn a program (login shell default); `output` replays a recorded stream instead."
+    component: ely_terminal::Terminal
+    children: none
+    props:
+      command: string
+      cwd: string
+      output: string
+      cols: number
+      rows: number
+    events:
+      exit:
+        summary: program ended — exit status appended
+      bell:
+      title:
+        summary: program set its title — string appended
+
+  TerminalToolbar:
+    icon: square-terminal
+    group: Shell
+    summary: "Terminal title bar — `shells` 'name=program;…' adds a picker; clear/stop/split fire."
+    component: ely_terminal::TerminalToolbar
+    children: none
+    props:
+      title: string
+      exit: number
+      shells: string
+    events:
+      clear:
+      stop:
+      split:
+      pick:
+        summary: shell index picked — number appended
+
+  ShellSelector:
+    icon: chevron-down
+    group: Shell
+    summary: "Shell picker — `shells` 'name=program;…'; `pick` fires the index."
+    component: ely_terminal::ShellSelector
+    children: none
+    props:
+      shells: string
+    events:
+      pick:
+        summary: shell index picked — number appended

@@ -8,6 +8,18 @@ use serde_json::Value as Json;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
+/// `meta:<key>` from a parsed document — doc-level app identity.
+fn doc_meta<'a>(
+    doc: &'a gpui_forge_runtime::forge_spec::Document,
+    key: &str,
+) -> Option<&'a str> {
+    doc.meta
+        .iter()
+        .find(|(k, _)| k == key)
+        .map(|(_, v)| v.as_str())
+        .filter(|v| !v.is_empty())
+}
+
 /// `forge.toml` — a Forge project manifest.
 #[allow(dead_code)]
 #[derive(serde::Deserialize, Default)]
@@ -17,6 +29,7 @@ struct ForgeToml {
     forge: ForgeSection,
     hooks: Hooks,
     assets: Assets,
+    themes: Assets,
     libraries: std::collections::HashMap<String, String>,
 }
 
@@ -42,6 +55,10 @@ struct ForgeSection {
     base: String,
     /// Entry document, relative to the manifest.
     document: String,
+    /// Explicit document set for `forge skeleton` — relative to the
+    /// manifest. Absent or empty builds the entry document alone; the app
+    /// never gets documents that weren't listed.
+    documents: Vec<String>,
 }
 
 #[allow(dead_code)]
@@ -56,6 +73,9 @@ struct Hooks {
 #[derive(serde::Deserialize, Default)]
 #[serde(default)]
 struct Assets {
+    /// Directory of files the app ships — `[assets]` bundles them into the
+    /// package; `[themes]` (same shape) names the project's gpui-kit theme
+    /// JSONs.
     dir: String,
 }
 
@@ -629,9 +649,16 @@ id = "dev.forge.{name}"
 [forge]
 base = "{base}"
 document = "app.forge.yaml"
+# Multi-doc apps list every document explicitly — `forge skeleton` builds
+# exactly this set (the entry `document` is always included):
+# documents = ["app.forge.yaml", "docs/settings.forge.yaml"]
 
 # [assets]
 # dir = "assets"
+
+# [themes]
+# Project theme JSONs merge into the shipped catalog — same-named files win.
+# dir = "themes"
 
 # [libraries]
 # ely-core = "^0.2"
@@ -1082,11 +1109,26 @@ fn package_cmd(rest: &[String]) -> i32 {
 
 /// Wraps a built binary for the host OS into `<manifest-dir>/dist/`.
 fn bundle(m_dir: &Path, manifest: &ForgeToml, name: &str, binary: &Path) -> i32 {
-    let title = if manifest.package.title.is_empty() {
-        name.replace('-', " ")
-    } else {
-        manifest.package.title.clone()
-    };
+    // The entry document's `meta:` carries app identity — read it when the
+    // manifest names a document.
+    let entry_doc = m_dir.join(&manifest.forge.document);
+    let doc = std::fs::read_to_string(&entry_doc).ok().and_then(|src| {
+        gpui_forge_runtime::check::check(
+            &src,
+            gpui_forge_runtime::base::BASE_ID,
+            &gpui_forge_runtime::check::catalogs(),
+        )
+        .0
+    });
+    let meta =
+        |key: &str| doc.as_ref().and_then(|d| doc_meta(d, key)).map(str::to_owned);
+    let title = meta("title").unwrap_or_else(|| {
+        if manifest.package.title.is_empty() {
+            name.replace('-', " ")
+        } else {
+            manifest.package.title.clone()
+        }
+    });
     let out_dir = m_dir.to_path_buf().join("dist");
     let _ = std::fs::remove_dir_all(&out_dir);
     let _ = std::fs::create_dir_all(&out_dir);
@@ -1095,11 +1137,25 @@ fn bundle(m_dir: &Path, manifest: &ForgeToml, name: &str, binary: &Path) -> i32 
         let appdir = out_dir.join(format!("{name}.AppDir"));
         let _ = std::fs::create_dir_all(appdir.join("usr/bin"));
         let _ = std::fs::copy(binary, appdir.join("usr/bin").join(name));
+        // `[assets] dir` — copied next to the binary so document-relative
+        // paths like `assets/logo.png` resolve against the AppRun cwd.
+        if !manifest.assets.dir.is_empty() {
+            let assets = m_dir.join(&manifest.assets.dir);
+            let dest = assets
+                .file_name()
+                .map(|n| appdir.join("usr/bin").join(n));
+            if assets.is_dir()
+                && let Some(dest) = dest
+            {
+                let _ = copy_dir(&assets, &dest);
+            }
+        }
         write(
             &appdir.join("AppRun"),
             &format!(
                 r#"#!/bin/sh
-exec "$(dirname "$0")/usr/bin/{name}" "$@"
+cd "$(dirname "$0")/usr/bin"
+exec "./{name}" "$@"
 "#
             ),
         );
@@ -1109,19 +1165,24 @@ exec "$(dirname "$0")/usr/bin/{name}" "$@"
         let mut desktop = format!(
             "[Desktop Entry]\nType=Application\nName={title}\nExec={name}\nCategories=Development;\nTerminal=false\n"
         );
-        if !manifest.package.icon.is_empty() {
-            let icon = m_dir.join(&manifest.package.icon);
-            if let Some(base) = icon.file_name().map(|n| n.to_string_lossy().into_owned())
-                && icon.exists()
-            {
-                let _ = std::fs::copy(&icon, appdir.join(&base));
-                // Icon= wants the file's name without its extension.
-                let name = base
-                    .rsplit_once('.')
-                    .map(|(s, _)| s.to_string())
-                    .unwrap_or(base);
-                desktop.push_str(&format!("Icon={name}\n"));
-            }
+        // `meta.icon` resolves relative to the document; the manifest's
+        // `package.icon` relative to `forge.toml`.
+        let icon = meta("icon")
+            .map(|i| entry_doc.parent().unwrap_or(m_dir).join(&i))
+            .or_else(|| {
+                (!manifest.package.icon.is_empty()).then(|| m_dir.join(&manifest.package.icon))
+            });
+        if let Some(icon) = icon
+            && let Some(base) = icon.file_name().map(|n| n.to_string_lossy().into_owned())
+            && icon.exists()
+        {
+            let _ = std::fs::copy(&icon, appdir.join(&base));
+            // Icon= wants the file's name without its extension.
+            let name = base
+                .rsplit_once('.')
+                .map(|(s, _)| s.to_string())
+                .unwrap_or(base);
+            desktop.push_str(&format!("Icon={name}\n"));
         }
         write(&appdir.join(format!("{name}.desktop")), &desktop);
         if Command::new("appimagetool")
@@ -1635,7 +1696,7 @@ fn project(rest: &[String]) -> Option<(PathBuf, ForgeToml, PathBuf, String)> {
     let (manifest_dir, manifest) =
         manifest.unwrap_or_else(|| (PathBuf::new(), ForgeToml::default()));
     let path = doc_path(rest)
-        .filter(|p| p.file_name() != Some(std::ffi::OsStr::new("forge.toml")))
+        .filter(|p| p.is_file() && p.file_name() != Some(std::ffi::OsStr::new("forge.toml")))
         .or_else(|| manifest_dir.join(&manifest.forge.document).into());
     let path = path.filter(|p| p.exists())?;
     let path = path.canonicalize().unwrap_or(path);
@@ -1762,7 +1823,7 @@ fn lib_wiring(library: &str, root: &Path, base_id: &str) -> Option<(String, Stri
 
 fn build_cmd(rest: &[String]) -> i32 {
     let release = rest.iter().any(|a| a == "--release");
-    let Some((_m_dir, manifest, path, name)) = project(rest) else {
+    let Some((m_dir, manifest, path, name)) = project(rest) else {
         usage();
         return 2;
     };
@@ -1788,22 +1849,6 @@ fn build_cmd(rest: &[String]) -> i32 {
     let root = workspace_root()
         .canonicalize()
         .unwrap_or_else(|_| workspace_root());
-    let title = if manifest.package.title.is_empty() {
-        name.replace('-', " ")
-    } else {
-        manifest.package.title.clone()
-    };
-    let app_id = if manifest.package.id.is_empty() {
-        name.clone()
-    } else {
-        manifest.package.id.clone()
-    };
-    let libs = manifest
-        .libraries
-        .iter()
-        .map(|(n, v)| format!("{n} = \"{v}\""))
-        .collect::<Vec<_>>()
-        .join("\n");
     // Wire the document's `use:` imports to adapter crates: path dep +
     // register_library call per known library (#loose-ends).
     let doc_src = std::fs::read_to_string(&path).unwrap_or_default();
@@ -1812,6 +1857,33 @@ fn build_cmd(rest: &[String]) -> i32 {
         gpui_forge_runtime::base::BASE_ID,
         &gpui_forge_runtime::check::catalogs(),
     );
+    // App identity: the document's `meta:` wins, `forge.toml [package]`
+    // falls back, the file stem is the last resort.
+    let meta = |key: &str| {
+        built_doc
+            .as_ref()
+            .and_then(|d| doc_meta(d, key).map(str::to_owned))
+    };
+    let title = meta("title").unwrap_or_else(|| {
+        if manifest.package.title.is_empty() {
+            name.replace('-', " ")
+        } else {
+            manifest.package.title.clone()
+        }
+    });
+    let app_id = meta("id").unwrap_or_else(|| {
+        if manifest.package.id.is_empty() {
+            name.clone()
+        } else {
+            manifest.package.id.clone()
+        }
+    });
+    let libs = manifest
+        .libraries
+        .iter()
+        .map(|(n, v)| format!("{n} = \"{v}\""))
+        .collect::<Vec<_>>()
+        .join("\n");
     let mut lib_deps = Vec::new();
     let mut lib_uses = Vec::new();
     let mut lib_register = Vec::new();
@@ -1922,33 +1994,7 @@ fn build_cmd(rest: &[String]) -> i32 {
     // Only gpui-kit apps read the theme registry. Other bases theme their own
     // way (#96).
     if base.theme == "gpui-kit" {
-        let themes_in = root.join("themes");
-        let themes_out = dir.join("themes");
-        let _ = std::fs::create_dir_all(&themes_out);
-        let mut theme_list = Vec::new();
-        if let Ok(entries) = std::fs::read_dir(&themes_in) {
-            for e in entries.flatten() {
-                let name = e.file_name().to_string_lossy().into_owned();
-                if name.ends_with(".json")
-                    && std::fs::copy(e.path(), themes_out.join(&name)).is_ok()
-                {
-                    theme_list.push(name);
-                }
-            }
-        }
-        let themes_rs = format!(
-            "pub const THEMES: &[(&str, &str)] = &[\n{}\n];\n",
-            theme_list
-                .iter()
-                .map(|n| format!(
-                    "    ({:?}, include_str!(\"../themes/{}\")),",
-                    n.trim_end_matches(".json"),
-                    n
-                ))
-                .collect::<Vec<_>>()
-                .join("\n")
-        );
-        write(&src_dir.join("themes.rs"), &themes_rs);
+        emit_themes(&root, &m_dir, &manifest, &dir, &src_dir);
     }
     if rest.iter().any(|a| a == "--codegen") {
         let src = std::fs::read_to_string(&path).unwrap_or_default();
@@ -2037,22 +2083,21 @@ fn skeleton_cmd(rest: &[String]) -> i32 {
         );
         return 1;
     }
-    let scan_root = if m_dir.as_os_str().is_empty() {
-        path.parent().unwrap_or(Path::new(".")).to_path_buf()
-    } else {
-        m_dir.clone()
-    };
-    // Every *.forge.yaml in the project, bounded like Studio's scanner —
-    // plus the primary doc even if it lives outside the scan root. Root and
-    // output dir canonicalize so the skip check survives `.`/symlinked args.
-    let scan_root = scan_root.canonicalize().unwrap_or(scan_root);
-    let out_c = out.canonicalize().unwrap_or_else(|_| out.clone());
-    let mut files = Vec::new();
-    let mut budget = 100usize;
-    scan_docs(&scan_root, &out_c, &mut files, 4, &mut budget);
+    // The document set is exactly `forge.documents` resolved against the
+    // manifest dir — never a directory scan. The entry document is always
+    // part of the app, listed or not.
     let path_c = path.canonicalize().unwrap_or_else(|_| path.clone());
-    if !files.contains(&path_c) {
-        files.push(path_c.clone());
+    let mut files = vec![path_c.clone()];
+    for entry in &manifest.forge.documents {
+        let doc = m_dir.join(entry);
+        if !doc.exists() {
+            eprintln!("forge: `documents` names {} — no such file", doc.display());
+            return 1;
+        }
+        let doc = doc.canonicalize().unwrap_or(doc);
+        if !files.contains(&doc) {
+            files.push(doc);
+        }
     }
     let catalogs = gpui_forge_runtime::check::catalogs();
     // Parse the primary first — its `base:` is the app's base; docs on a
@@ -2096,16 +2141,6 @@ fn skeleton_cmd(rest: &[String]) -> i32 {
     let root = workspace_root()
         .canonicalize()
         .unwrap_or_else(|_| workspace_root());
-    let title = if manifest.package.title.is_empty() {
-        name.replace('-', " ")
-    } else {
-        manifest.package.title.clone()
-    };
-    let app_id = if manifest.package.id.is_empty() {
-        name.clone()
-    } else {
-        manifest.package.id.clone()
-    };
     let libs = manifest
         .libraries
         .iter()
@@ -2114,6 +2149,7 @@ fn skeleton_cmd(rest: &[String]) -> i32 {
         .join("\n");
     // Per doc: (stem, source, model). Stems dedup for the `docs::DOCS` keys.
     let mut docs: Vec<(String, String, gpui_forge_runtime::forge_spec::Document)> = Vec::new();
+    let mut entry_meta: Vec<(String, String)> = Vec::new();
     let mut stems = std::collections::HashMap::<String, usize>::new();
     let mut lib_deps = Vec::new();
     let mut lib_uses = Vec::new();
@@ -2176,15 +2212,40 @@ fn skeleton_cmd(rest: &[String]) -> i32 {
                 ),
             }
         }
+        if file == &path_c {
+            entry_meta = doc.meta.clone();
+        }
         docs.push((stem, src, doc));
     }
     if docs.is_empty() {
-        eprintln!(
-            "forge: no *.forge.yaml documents found under {}",
-            scan_root.display()
-        );
+        eprintln!("forge: no usable documents — every listed file failed to parse");
         return 1;
     }
+    // App identity: the entry document's `meta:` wins, `forge.toml
+    // [package]` falls back, the file stem is the last resort.
+    let meta = |key: &str| {
+        entry_meta
+            .iter()
+            .find(|(k, _)| k == key)
+            .map(|(_, v)| v.as_str())
+            .or_else(|| docs.iter().find_map(|(_, _, d)| doc_meta(d, key)))
+            .filter(|v| !v.is_empty())
+            .map(str::to_owned)
+    };
+    let title = meta("title").unwrap_or_else(|| {
+        if manifest.package.title.is_empty() {
+            name.replace('-', " ")
+        } else {
+            manifest.package.title.clone()
+        }
+    });
+    let app_id = meta("id").unwrap_or_else(|| {
+        if manifest.package.id.is_empty() {
+            name.clone()
+        } else {
+            manifest.package.id.clone()
+        }
+    });
     let primary_stem = path
         .file_stem()
         .unwrap_or_default()
@@ -2281,33 +2342,7 @@ fn skeleton_cmd(rest: &[String]) -> i32 {
             .replace("{LIB_REGISTER}", &lib_register.join("\n")),
     );
     if base.theme == "gpui-kit" {
-        let themes_in = root.join("themes");
-        let themes_out = out.join("themes");
-        let _ = std::fs::create_dir_all(&themes_out);
-        let mut theme_list = Vec::new();
-        if let Ok(entries) = std::fs::read_dir(&themes_in) {
-            for e in entries.flatten() {
-                let name = e.file_name().to_string_lossy().into_owned();
-                if name.ends_with(".json")
-                    && std::fs::copy(e.path(), themes_out.join(&name)).is_ok()
-                {
-                    theme_list.push(name);
-                }
-            }
-        }
-        let themes_rs = format!(
-            "pub const THEMES: &[(&str, &str)] = &[\n{}\n];\n",
-            theme_list
-                .iter()
-                .map(|n| format!(
-                    "    ({:?}, include_str!(\"../themes/{}\")),",
-                    n.trim_end_matches(".json"),
-                    n
-                ))
-                .collect::<Vec<_>>()
-                .join("\n")
-        );
-        write(&src_dir.join("themes.rs"), &themes_rs);
+        emit_themes(&root, &m_dir, &manifest, &out, &src_dir);
     }
     println!(
         "forge: skeleton {} — {} doc{} under docs/, `cargo run` inside it",
@@ -2321,38 +2356,6 @@ fn skeleton_cmd(rest: &[String]) -> i32 {
     0
 }
 
-/// Recursive `*.forge.yaml` collector for `forge skeleton` — hidden names
-/// and build noise are skipped, the output dir is excluded, and the walk
-/// is depth-/entry-capped.
-fn scan_docs(dir: &Path, skip: &Path, out: &mut Vec<PathBuf>, depth: usize, budget: &mut usize) {
-    if depth == 0 || *budget == 0 || dir == skip {
-        return;
-    }
-    let Ok(read) = std::fs::read_dir(dir) else {
-        return;
-    };
-    for e in read.flatten() {
-        if *budget == 0 {
-            return;
-        }
-        let name = e.file_name().to_string_lossy().into_owned();
-        if name.starts_with('.') {
-            continue;
-        }
-        let p = e.path();
-        if e.file_type().is_ok_and(|t| t.is_dir()) {
-            if !matches!(
-                name.as_str(),
-                "target" | "node_modules" | "dist" | "vendor" | "build"
-            ) {
-                scan_docs(&p, skip, out, depth - 1, budget);
-            }
-        } else if name.ends_with(".forge.yaml") {
-            *budget -= 1;
-            out.push(p.canonicalize().unwrap_or(p));
-        }
-    }
-}
 
 /// A `state:` entry's seed value — recognized type names get type defaults;
 /// anything else is a literal (`sel: gpui-kit` seeds `"gpui-kit"`,
@@ -2395,4 +2398,62 @@ fn seed_path(seed: &mut serde_json::Map<String, Json>, path: &str, val: Json) {
             _ => return, // a scalar already claimed this prefix
         };
     }
+}
+
+/// Recursive directory copy for bundling `assets.dir`.
+fn copy_dir(src: &Path, dst: &Path) -> std::io::Result<()> {
+    std::fs::create_dir_all(dst)?;
+    for entry in std::fs::read_dir(src)? {
+        let entry = entry?;
+        let dest = dst.join(entry.file_name());
+        if entry.file_type()?.is_dir() {
+            copy_dir(&entry.path(), &dest)?;
+        } else {
+            std::fs::copy(entry.path(), &dest)?;
+        }
+    }
+    Ok(())
+}
+
+/// Bundles theme JSONs into a gpui-kit app crate: the workspace `themes/`
+/// catalog first, then the project's `[themes] dir` (or `<manifest>/themes`
+/// by convention) — project files overwrite same-named shipped ones, so a
+/// project can restyle a stock theme by name. Emits the `themes/` copies
+/// and `src/themes.rs` with an `include_str!` row per file.
+fn emit_themes(root: &Path, m_dir: &Path, manifest: &ForgeToml, out_dir: &Path, src_dir: &Path) {
+    let themes_out = out_dir.join("themes");
+    let _ = std::fs::create_dir_all(&themes_out);
+    let project_themes = if manifest.themes.dir.is_empty() {
+        m_dir.join("themes")
+    } else {
+        m_dir.join(&manifest.themes.dir)
+    };
+    let mut theme_list = Vec::new();
+    for dir_in in [root.join("themes"), project_themes] {
+        let Ok(entries) = std::fs::read_dir(&dir_in) else {
+            continue;
+        };
+        for e in entries.flatten() {
+            let name = e.file_name().to_string_lossy().into_owned();
+            if name.ends_with(".json")
+                && std::fs::copy(e.path(), themes_out.join(&name)).is_ok()
+                && !theme_list.contains(&name)
+            {
+                theme_list.push(name);
+            }
+        }
+    }
+    let themes_rs = format!(
+        "pub const THEMES: &[(&str, &str)] = &[\n{}\n];\n",
+        theme_list
+            .iter()
+            .map(|n| format!(
+                "    ({:?}, include_str!(\"../themes/{}\")),",
+                n.trim_end_matches(".json"),
+                n
+            ))
+            .collect::<Vec<_>>()
+            .join("\n")
+    );
+    write(&src_dir.join("themes.rs"), &themes_rs);
 }

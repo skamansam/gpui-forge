@@ -14,44 +14,52 @@ state:
   sel: gpui-kit
 
 root:
-  VStack:
-  style:
-    padding: 24px
-    gap: 12px
+  WindowBorder:
+  shadow: 0
   children:
-    - Text: declared preview panes
+    - TitleBar:
+      children:
+        - Text: "Previews Demo"
+        - ThemeSwitcher:
+    - VStack:
       style:
-        size: xl
-        weight: semibold
-    - Text: one document, a host per pane — pick the base below
-      style:
-        size: sm
-        color: $theme.muted_foreground
-    - Select:
-      options:
-        - gpui-kit
-        - guise
-        - bezel
-      value: bind $sel
-    - match: $sel
-      case gpui-kit:
-        - forge.Preview#pane-kit:
-          remote: gpui-kit
-          base: gpui-kit
-          doc: ./ely-demo.forge.yaml
+        grow: 1
+        padding: 24px
+        gap: 12px
+      children:
+        - Text: declared preview panes
           style:
-            height: 480px
-      case guise:
-        - forge.Preview#pane-02:
-          remote: guise
-          base: guise
-          doc: ../showcases/guise-showcase.forge.yaml
+            size: xl
+            weight: semibold
+        - Text: one document, a host per pane — pick the base below
           style:
-            height: 480px
-      case bezel:
-        - forge.Preview#pane-bezel:
-          remote: bezel
-          base: bezel
-          doc: ./base-demo.forge.yaml
-          style:
-            height: 480px
+            size: sm
+            color: $theme.muted_foreground
+        - Select:
+          options:
+            - gpui-kit
+            - guise
+            - bezel
+          value: bind $sel
+        - match: $sel
+          case gpui-kit:
+            - forge.Preview#pane-kit:
+              remote: gpui-kit
+              base: gpui-kit
+              doc: ./ely-demo.forge.yaml
+              style:
+                height: 480px
+          case guise:
+            - forge.Preview#pane-02:
+              remote: guise
+              base: guise
+              doc: ../showcases/guise-showcase.forge.yaml
+              style:
+                height: 480px
+          case bezel:
+            - forge.Preview#pane-bezel:
+              remote: bezel
+              base: bezel
+              doc: ./base-demo.forge.yaml
+              style:
+                height: 480px

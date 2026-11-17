@@ -5304,6 +5304,48 @@
           "if": {
             "not": {
               "propertyNames": {
+                "pattern": "^(?!ThemeSwitcher(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^ThemeSwitcher(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|ThemeSwitcher(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
                 "pattern": "^(?!Message(#[\\w-]+| \\.[\\w-]+)?$).*$"
               }
             }
@@ -9738,6 +9780,36 @@
                 },
                 "type": "array"
               },
+              "resize-hit": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Pointer band around the frame edge that starts a resize, in px."
+              },
+              "shadow": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Shadow ring inset in px — space between the frame edge and content (client decorations only)."
+              },
               "style": {
                 "$ref": "#/definitions/style"
               },
@@ -9752,7 +9824,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|WindowBorder(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|WindowBorder(#[\\w-]+| \\.[\\w-]+)?|children|resize-hit|shadow|style|tooltip)$"
             }
           }
         },
@@ -10967,6 +11039,61 @@
             },
             "propertyNames": {
               "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.AnimatedNumber(#[\\w-]+| \\.[\\w-]+)?|children|count_up|decimals|pad|style|tooltip|value)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.AnsiText(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.AnsiText(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "text": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.AnsiText(#[\\w-]+| \\.[\\w-]+)?|children|style|text|tooltip)$"
             }
           }
         },
@@ -25153,6 +25280,104 @@
           "if": {
             "not": {
               "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.LogViewer(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.LogViewer(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "follow": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "least": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "Trace",
+                      "Debug",
+                      "Info",
+                      "Warn",
+                      "Error"
+                    ]
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "lines": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on change": {
+                "description": "level or follow control changed — new value appended",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "query": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.LogViewer(#[\\w-]+| \\.[\\w-]+)?|children|follow|least|lines|on (change)|query|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
                 "pattern": "^(?![a-z][\\w-]*\\.Marker(#[\\w-]+| \\.[\\w-]+)?$).*$"
               }
             }
@@ -33872,6 +34097,63 @@
           "if": {
             "not": {
               "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.ShellSelector(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.ShellSelector(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "on pick": {
+                "description": "shell index picked — number appended",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "shells": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.ShellSelector(#[\\w-]+| \\.[\\w-]+)?|children|on (pick)|shells|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
                 "pattern": "^(?![a-z][\\w-]*\\.Shimmer(#[\\w-]+| \\.[\\w-]+)?$).*$"
               }
             }
@@ -38602,6 +38884,217 @@
           "if": {
             "not": {
               "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.Terminal(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.Terminal(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "cols": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "command": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "cwd": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "on bell": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on exit": {
+                "description": "program ended — exit status appended",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on title": {
+                "description": "program set its title — string appended",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "output": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "rows": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Terminal(#[\\w-]+| \\.[\\w-]+)?|children|cols|command|cwd|on (title|bell|exit)|output|rows|style|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.TerminalToolbar(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.TerminalToolbar(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "exit": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "on clear": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on pick": {
+                "description": "shell index picked — number appended",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on split": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on stop": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "shells": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "title": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.TerminalToolbar(#[\\w-]+| \\.[\\w-]+)?|children|exit|on (clear|split|pick|stop)|shells|style|title|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
                 "pattern": "^(?![a-z][\\w-]*\\.Tex(#[\\w-]+| \\.[\\w-]+)?$).*$"
               }
             }
@@ -39040,6 +39533,48 @@
             },
             "propertyNames": {
               "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Textarea(#[\\w-]+| \\.[\\w-]+)?|children|disabled|height|on (change)|placeholder|readonly|rows|style|tooltip|value)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.ThemeSwitcher(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.ThemeSwitcher(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.ThemeSwitcher(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
             }
           }
         },
@@ -42189,6 +42724,36 @@
                 },
                 "type": "array"
               },
+              "resize-hit": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Pointer band around the frame edge that starts a resize, in px."
+              },
+              "shadow": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Shadow ring inset in px — space between the frame edge and content (client decorations only)."
+              },
               "style": {
                 "$ref": "#/definitions/style"
               },
@@ -42203,7 +42768,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.WindowBorder(#[\\w-]+| \\.[\\w-]+)?|children|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.WindowBorder(#[\\w-]+| \\.[\\w-]+)?|children|resize-hit|shadow|style|tooltip)$"
             }
           }
         },
@@ -42655,7 +43220,7 @@
         }
       },
       "propertyNames": {
-        "pattern": "^((QuestionnaireChoice|InputGroupTextarea|QuestionnaireItem|CommandSeparator|InputGroupButton|DescriptionItem|DescriptionList|InputGroupAddon|InputGroupInput|SidebarMenuItem|BreadcrumbItem|DropdownButton|InputGroupText|MessageContent|ProgressCircle|ResizablePanel|AccordionItem|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|Questionnaire|SettingsGroup|SidebarFooter|SidebarHeader|CommandGroup|DropdownMenu|Notification|SwitchButton|TableCaption|WindowBorder|AlertDialog|AvatarGroup|Collapsible|ColorPicker|CommandItem|ContextMenu|NumberInput|SankeyChart|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|VirtualList|Attachment|Breadcrumb|DatePicker|GridLayout|InputGroup|Pagination|RadarChart|RadioGroup|Scrollable|Accordion|Clipboard|DataTable|FocusTrap|FormField|HoverCard|LineChart|Resizable|Separator|StatusBar|TableBody|TableCell|TableHead|TimeField|BarChart|Calendar|Carousel|Checkbox|Combobox|GroupBox|MenuItem|OtpInput|PieChart|Progress|Settings|Skeleton|TableRow|TextView|Textarea|TitleBar|TreeItem|Command|Message|Popover|Shimmer|Sidebar|Spinner|Stepper|Toolbar|Avatar|Bubble|Button|Dialog|Editor|HStack|Marker|Rating|Select|Slider|Switch|Toggle|VStack|Alert|Badge|Empty|Image|Input|Label|Radio|Sheet|Table|Diff|Form|Grid|Icon|Link|List|Tabs|Text|Tree|Box|Kbd|Tab|Tag)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(BackForwardNavigation|FloatingActionButton|IntersectionObserver|QuestionnaireChoice|InputGroupTextarea|NotificationCenter|ParticleBackground|RelativeDatePicker|QuestionnaireItem|SwipeableListItem|AnimatedGradient|CommandSeparator|ConfirmationCard|ConnectionStatus|DirectoryListing|InputGroupButton|OfflineIndicator|RefreshIndicator|SegmentedControl|ToolbarSeparator|AnimatePresence|DateRangePicker|DescriptionItem|DescriptionList|EllipsisTooltip|ExpressionInput|FloatingToolbar|InputGroupAddon|InputGroupInput|MaterialSurface|RatingIndicator|SavingIndicator|SidebarMenuItem|TabOverflowMenu|TableOfContents|TypingIndicator|AnimatedNumber|BreadcrumbItem|CommandPalette|DateTimePicker|DirtyIndicator|DropdownButton|DurationPicker|GradientEditor|InputGroupText|LoadingOverlay|MessageContent|MiddleEllipsis|NavigationMenu|ProgressCircle|PullDownButton|ResizablePanel|SearchableMenu|SelectableList|SelectableText|SkeletonAvatar|TimezoneSelect|TooltipTrigger|TrendIndicator|WindowControls|WindowSwitcher|AccordionItem|ActivityRings|BulkActionBar|CheckboxGroup|ConfirmButton|ConfirmDialog|CrashReporter|ErrorBoundary|FloatingPanel|InlineMessage|KeyValueInput|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|PasswordInput|PropertyGroup|QuarterPicker|Questionnaire|QuickSwitcher|SettingsGroup|SidebarFooter|SidebarHeader|SkeletonTable|StatusBarItem|StatusMessage|ToastViewport|ActivityFeed|AvatarUpload|CheckboxCard|CommandGroup|CopyableText|CurrencyText|DateTimeText|DropdownMenu|DurationText|ExternalLink|FileSizeText|GradientText|HeatmapTable|InfiniteList|MasterDetail|MentionInput|Notification|OverflowMenu|ProgressRing|PromptDialog|PropertyGrid|QuickActions|RelativeTime|ResizeBorder|ScrollShadow|SignaturePad|SkeletonCard|SkeletonText|SortableList|StickyHeader|SwitchButton|TableCaption|TableToolbar|TimelineItem|ToggleButton|ToolbarGroup|TransferList|UpdateBanner|UpdateDialog|WindowBorder|ActionSheet|ActivityBar|AlertDialog|AspectRatio|AvatarGroup|BeforeAfter|ButtonGroup|ChoiceChips|Collapsible|ColorPicker|ColorSwatch|ColumnShell|CommandItem|ContextMenu|EmojiPicker|FormSection|GroupedList|HelpTooltip|HotkeyInput|MaskedInput|MonthPicker|MultiSelect|NumberInput|OutlineView|PageControl|PathControl|PercentText|PopupButton|ProgressBar|RangeSlider|SankeyChart|ScrollToTop|SearchField|SearchInput|SecureField|SettingItem|SettingPage|ShareButton|ShellColumn|ShimmerText|SidebarMenu|SplitButton|Spreadsheet|StepperItem|TableFooter|TableHeader|ToggleGroup|VirtualList|ZoomControl|Attachment|Blockquote|Breadcrumb|CardHeader|ColumnView|Comparison|CopyButton|CountBadge|CronEditor|DatePicker|DigitEntry|Disclosure|EditorTabs|EmailInput|EmptyState|EyeDropper|FieldArray|FontPicker|GridLayout|IconButton|IconPicker|InlineEdit|InlineForm|InputAddon|InputGroup|NumberText|Pagination|PhoneInput|PivotTable|PluralText|RadarChart|RadioGroup|RegexInput|ResultView|ScrollArea|Scrollable|ScrubInput|SimpleGrid|SyncStatus|TimePicker|TokenField|Transition|TreeSelect|Typewriter|UploadList|WeekPicker|YearPicker|Accordion|ActionBar|Changelog|Clipboard|CodeInput|ColorWell|Container|Countdown|DataTable|ErrorView|FileInput|FocusTrap|FormError|FormField|FormLabel|Highlight|HoverCard|ImageView|ImageWell|Inspector|JsonInput|LineChart|ListInput|PaneGroup|Paragraph|PathInput|QuickOpen|RadioCard|Resizable|Separator|Sparkline|SplitPane|SplitView|Statistic|StatusBar|TableBody|TableCell|TableHead|TableView|TextField|TimeField|TreeTable|UnitInput|Watermark|Activity|AppShell|Backdrop|BarChart|Calendar|Carousel|Cascader|Checkbox|ComboBox|Combobox|Confetti|DataGrid|DotBadge|DropZone|Ellipsis|Fieldset|FileTree|GoToLine|GroupBox|KbdCombo|LazyLoad|Lightbox|ListItem|LoadMore|MenuItem|NavGroup|OtpInput|Overline|PieChart|PinInput|Progress|Sections|Settings|Showcase|Skeleton|Subtitle|Suspense|TableRow|TagInput|TextView|Textarea|Timeline|TitleBar|TreeItem|UrlInput|UsageBar|UserChip|Vibrancy|Viewport|Barcode|Callout|Caption|Command|Divider|Gallery|Heading|KpiCard|ListBox|Marquee|Masonry|Measure|MenuBar|Message|NavItem|Outline|Palette|PieMenu|Popover|Preview|Release|Reorder|Section|Shimmer|Sidebar|Spinner|Stagger|Stepper|Toolbar|Anchor|Avatar|Banner|Bubble|Button|Canvas|Dialog|Drawer|Editor|HStack|Marker|Player|QrCode|Rating|Ripple|Select|Slider|Switch|TabBar|Toggle|VStack|Viewer|Window|Wizard|ZStack|Alert|Badge|Blink|Board|Chart|Emoji|Empty|Files|Flash|Frame|Gauge|Image|Input|Label|Meter|Panel|Pulse|Radio|Shake|Sheet|Stars|Steps|Table|Timer|Title|Card|Code|Diff|Dock|Flip|Form|Glow|Grid|Icon|Knob|Link|List|Page|Peek|Tabs|Text|Tree|Vars|Well|Box|Kbd|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<|(if|for|with|match|else|each|index|key|as|is|not|case .+))$"
+        "pattern": "^((QuestionnaireChoice|InputGroupTextarea|QuestionnaireItem|CommandSeparator|InputGroupButton|DescriptionItem|DescriptionList|InputGroupAddon|InputGroupInput|SidebarMenuItem|BreadcrumbItem|DropdownButton|InputGroupText|MessageContent|ProgressCircle|ResizablePanel|AccordionItem|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|Questionnaire|SettingsGroup|SidebarFooter|SidebarHeader|ThemeSwitcher|CommandGroup|DropdownMenu|Notification|SwitchButton|TableCaption|WindowBorder|AlertDialog|AvatarGroup|Collapsible|ColorPicker|CommandItem|ContextMenu|NumberInput|SankeyChart|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|VirtualList|Attachment|Breadcrumb|DatePicker|GridLayout|InputGroup|Pagination|RadarChart|RadioGroup|Scrollable|Accordion|Clipboard|DataTable|FocusTrap|FormField|HoverCard|LineChart|Resizable|Separator|StatusBar|TableBody|TableCell|TableHead|TimeField|BarChart|Calendar|Carousel|Checkbox|Combobox|GroupBox|MenuItem|OtpInput|PieChart|Progress|Settings|Skeleton|TableRow|TextView|Textarea|TitleBar|TreeItem|Command|Message|Popover|Shimmer|Sidebar|Spinner|Stepper|Toolbar|Avatar|Bubble|Button|Dialog|Editor|HStack|Marker|Rating|Select|Slider|Switch|Toggle|VStack|Alert|Badge|Empty|Image|Input|Label|Radio|Sheet|Table|Diff|Form|Grid|Icon|Link|List|Tabs|Text|Tree|Box|Kbd|Tab|Tag)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(BackForwardNavigation|FloatingActionButton|IntersectionObserver|QuestionnaireChoice|InputGroupTextarea|NotificationCenter|ParticleBackground|RelativeDatePicker|QuestionnaireItem|SwipeableListItem|AnimatedGradient|CommandSeparator|ConfirmationCard|ConnectionStatus|DirectoryListing|InputGroupButton|OfflineIndicator|RefreshIndicator|SegmentedControl|ToolbarSeparator|AnimatePresence|DateRangePicker|DescriptionItem|DescriptionList|EllipsisTooltip|ExpressionInput|FloatingToolbar|InputGroupAddon|InputGroupInput|MaterialSurface|RatingIndicator|SavingIndicator|SidebarMenuItem|TabOverflowMenu|TableOfContents|TerminalToolbar|TypingIndicator|AnimatedNumber|BreadcrumbItem|CommandPalette|DateTimePicker|DirtyIndicator|DropdownButton|DurationPicker|GradientEditor|InputGroupText|LoadingOverlay|MessageContent|MiddleEllipsis|NavigationMenu|ProgressCircle|PullDownButton|ResizablePanel|SearchableMenu|SelectableList|SelectableText|SkeletonAvatar|TimezoneSelect|TooltipTrigger|TrendIndicator|WindowControls|WindowSwitcher|AccordionItem|ActivityRings|BulkActionBar|CheckboxGroup|ConfirmButton|ConfirmDialog|CrashReporter|ErrorBoundary|FloatingPanel|InlineMessage|KeyValueInput|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|PasswordInput|PropertyGroup|QuarterPicker|Questionnaire|QuickSwitcher|SettingsGroup|ShellSelector|SidebarFooter|SidebarHeader|SkeletonTable|StatusBarItem|StatusMessage|ThemeSwitcher|ToastViewport|ActivityFeed|AvatarUpload|CheckboxCard|CommandGroup|CopyableText|CurrencyText|DateTimeText|DropdownMenu|DurationText|ExternalLink|FileSizeText|GradientText|HeatmapTable|InfiniteList|MasterDetail|MentionInput|Notification|OverflowMenu|ProgressRing|PromptDialog|PropertyGrid|QuickActions|RelativeTime|ResizeBorder|ScrollShadow|SignaturePad|SkeletonCard|SkeletonText|SortableList|StickyHeader|SwitchButton|TableCaption|TableToolbar|TimelineItem|ToggleButton|ToolbarGroup|TransferList|UpdateBanner|UpdateDialog|WindowBorder|ActionSheet|ActivityBar|AlertDialog|AspectRatio|AvatarGroup|BeforeAfter|ButtonGroup|ChoiceChips|Collapsible|ColorPicker|ColorSwatch|ColumnShell|CommandItem|ContextMenu|EmojiPicker|FormSection|GroupedList|HelpTooltip|HotkeyInput|MaskedInput|MonthPicker|MultiSelect|NumberInput|OutlineView|PageControl|PathControl|PercentText|PopupButton|ProgressBar|RangeSlider|SankeyChart|ScrollToTop|SearchField|SearchInput|SecureField|SettingItem|SettingPage|ShareButton|ShellColumn|ShimmerText|SidebarMenu|SplitButton|Spreadsheet|StepperItem|TableFooter|TableHeader|ToggleGroup|VirtualList|ZoomControl|Attachment|Blockquote|Breadcrumb|CardHeader|ColumnView|Comparison|CopyButton|CountBadge|CronEditor|DatePicker|DigitEntry|Disclosure|EditorTabs|EmailInput|EmptyState|EyeDropper|FieldArray|FontPicker|GridLayout|IconButton|IconPicker|InlineEdit|InlineForm|InputAddon|InputGroup|NumberText|Pagination|PhoneInput|PivotTable|PluralText|RadarChart|RadioGroup|RegexInput|ResultView|ScrollArea|Scrollable|ScrubInput|SimpleGrid|SyncStatus|TimePicker|TokenField|Transition|TreeSelect|Typewriter|UploadList|WeekPicker|YearPicker|Accordion|ActionBar|Changelog|Clipboard|CodeInput|ColorWell|Container|Countdown|DataTable|ErrorView|FileInput|FocusTrap|FormError|FormField|FormLabel|Highlight|HoverCard|ImageView|ImageWell|Inspector|JsonInput|LineChart|ListInput|LogViewer|PaneGroup|Paragraph|PathInput|QuickOpen|RadioCard|Resizable|Separator|Sparkline|SplitPane|SplitView|Statistic|StatusBar|TableBody|TableCell|TableHead|TableView|TextField|TimeField|TreeTable|UnitInput|Watermark|Activity|AnsiText|AppShell|Backdrop|BarChart|Calendar|Carousel|Cascader|Checkbox|ComboBox|Combobox|Confetti|DataGrid|DotBadge|DropZone|Ellipsis|Fieldset|FileTree|GoToLine|GroupBox|KbdCombo|LazyLoad|Lightbox|ListItem|LoadMore|MenuItem|NavGroup|OtpInput|Overline|PieChart|PinInput|Progress|Sections|Settings|Showcase|Skeleton|Subtitle|Suspense|TableRow|TagInput|Terminal|TextView|Textarea|Timeline|TitleBar|TreeItem|UrlInput|UsageBar|UserChip|Vibrancy|Viewport|Barcode|Callout|Caption|Command|Divider|Gallery|Heading|KpiCard|ListBox|Marquee|Masonry|Measure|MenuBar|Message|NavItem|Outline|Palette|PieMenu|Popover|Preview|Release|Reorder|Section|Shimmer|Sidebar|Spinner|Stagger|Stepper|Toolbar|Anchor|Avatar|Banner|Bubble|Button|Canvas|Dialog|Drawer|Editor|HStack|Marker|Player|QrCode|Rating|Ripple|Select|Slider|Switch|TabBar|Toggle|VStack|Viewer|Window|Wizard|ZStack|Alert|Badge|Blink|Board|Chart|Emoji|Empty|Files|Flash|Frame|Gauge|Image|Input|Label|Meter|Panel|Pulse|Radio|Shake|Sheet|Stars|Steps|Table|Timer|Title|Card|Code|Diff|Dock|Flip|Form|Glow|Grid|Icon|Knob|Link|List|Page|Peek|Tabs|Text|Tree|Vars|Well|Box|Kbd|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<|(if|for|with|match|else|each|index|key|as|is|not|case .+))$"
       },
       "type": "object"
     },

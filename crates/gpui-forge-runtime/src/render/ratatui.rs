@@ -6,15 +6,19 @@
 //! directly and `render` draws into a `ratatui::Frame`. The host
 //! (`forge-preview-ratatui`) owns the terminal.
 
-use crate::render::{get_path, set_path};
+use crate::render::{doc_meta, get_path, lookup_path, set_path};
 use forge_spec::catalog::Catalog;
 use forge_spec::{Document, Node, Path, Segment, Unit, Value};
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Direction, Layout, Rect};
 use ratatui::style::{Color, Modifier, Style};
+use ratatui::symbols;
 use ratatui::text::{Line, Span};
+use ratatui::widgets::calendar::{CalendarEventStore, Monthly};
+use ratatui::widgets::canvas::{Canvas, Map, MapResolution};
 use ratatui::widgets::{
-    Block, BorderType, Borders, Clear, Gauge, List, ListItem, Paragraph, Tabs, Wrap,
+    Axis, BarChart, Block, BorderType, Borders, Chart, Clear, Dataset, Gauge, GraphType, List,
+    ListItem, Paragraph, RatatuiLogo, Sparkline, Tabs, Wrap,
 };
 use serde_json::Value as Json;
 use std::collections::HashMap;
@@ -42,6 +46,8 @@ pub trait ForgeLibrary {
 
 pub struct ForgeView {
     doc: Option<Document>,
+    /// The document's `meta:` map — `{$meta.k}` bindings resolve against it.
+    meta: Json,
     pub catalogs: Vec<Catalog>,
     state: Json,
     pub libraries: Vec<Rc<dyn ForgeLibrary>>,
@@ -77,6 +83,7 @@ impl ForgeView {
         Self {
             doc: None,
             catalogs,
+            meta: Json::Object(Default::default()),
             state: Json::Object(Default::default()),
             libraries: Vec::new(),
             hooks: HashMap::new(),
@@ -95,6 +102,7 @@ impl ForgeView {
     }
 
     pub fn set_document(&mut self, doc: Document) {
+        self.meta = doc_meta(&doc);
         self.doc = Some(doc);
     }
 
@@ -315,7 +323,7 @@ impl ForgeView {
     }
 
     fn lookup(&self, path: &Path) -> Option<&Json> {
-        get_path(&self.state, path)
+        lookup_path(&self.meta, &self.state, path)
     }
 
     /// `{{ path }}` text — binding values render as JSON scalars.
@@ -366,6 +374,35 @@ impl ForgeView {
                 self.lookup(path).and_then(Json::as_f64).unwrap_or(fallback)
             }
             _ => fallback,
+        }
+    }
+
+    fn boolean(&self, node: &Node, name: &str, fallback: bool) -> bool {
+        match node.props.iter().find(|(k, _)| k == name).map(|(_, v)| v) {
+            Some(Value::Bool(b)) => *b,
+            Some(Value::Binding { path, .. }) => {
+                self.lookup(path).and_then(Json::as_bool).unwrap_or(fallback)
+            }
+            _ => fallback,
+        }
+    }
+
+    /// A `list<number>` prop — a `[1, 2, 3]` literal or a bound state array.
+    fn floats(&self, node: &Node, name: &str) -> Vec<f64> {
+        match node.props.iter().find(|(k, _)| k == name).map(|(_, v)| v) {
+            Some(Value::List(items)) => items
+                .iter()
+                .filter_map(|v| match v {
+                    Value::Number { value, .. } => Some(*value),
+                    _ => None,
+                })
+                .collect(),
+            Some(Value::Binding { path, .. }) => self
+                .lookup(path)
+                .and_then(Json::as_array)
+                .map(|a| a.iter().filter_map(Json::as_f64).collect())
+                .unwrap_or_default(),
+            _ => Vec::new(),
         }
     }
 
@@ -658,6 +695,136 @@ impl ForgeView {
                     area,
                 );
             }
+            "Sparkline" => {
+                let values: Vec<u64> = self
+                    .floats(node, "data")
+                    .iter()
+                    .map(|v| v.max(0.0) as u64)
+                    .collect();
+                let mut spark = Sparkline::default()
+                    .data(&values)
+                    .style(Style::default().fg(Color::Yellow));
+                let max = self.num(node, "max", 0.0);
+                if max > 0.0 {
+                    spark = spark.max(max as u64);
+                }
+                frame.render_widget(spark, area);
+            }
+            "BarChart" => {
+                let data = self.floats(node, "data");
+                let declared = self.prop_text(node, "labels");
+                let labels: Vec<String> = if declared.is_empty() {
+                    (0..data.len()).map(|i| i.to_string()).collect()
+                } else {
+                    declared.lines().map(|l| l.to_string()).collect()
+                };
+                let entries: Vec<(&str, u64)> = data
+                    .iter()
+                    .enumerate()
+                    .map(|(i, v)| {
+                        (
+                            labels.get(i).map(String::as_str).unwrap_or(""),
+                            v.max(0.0) as u64,
+                        )
+                    })
+                    .collect();
+                let mut chart = BarChart::default()
+                    .data(&entries)
+                    .bar_style(Style::default().fg(Color::Green));
+                let width = self.num(node, "bar_width", 0.0);
+                if width > 0.0 {
+                    chart = chart.bar_width(width as u16);
+                }
+                let max = self.num(node, "max", 0.0);
+                if max > 0.0 {
+                    chart = chart.max(max as u64);
+                }
+                frame.render_widget(chart, area);
+            }
+            "Chart" => {
+                let data = self.floats(node, "data");
+                let points: Vec<(f64, f64)> = data
+                    .iter()
+                    .enumerate()
+                    .map(|(i, v)| (i as f64, *v))
+                    .collect();
+                let (mut y_lo, mut y_hi) = data.iter().fold(
+                    (f64::INFINITY, f64::NEG_INFINITY),
+                    |(lo, hi), v| (lo.min(*v), hi.max(*v)),
+                );
+                if y_lo >= y_hi {
+                    (y_lo, y_hi) = (0.0, 1.0);
+                }
+                let x_hi = data.len().saturating_sub(1).max(1) as f64;
+                let name = self.prop_text(node, "name");
+                let mut ds = Dataset::default()
+                    .marker(symbols::Marker::Braille)
+                    .graph_type(GraphType::Line)
+                    .style(Style::default().fg(Color::Cyan))
+                    .data(&points);
+                if !name.is_empty() {
+                    ds = ds.name(name);
+                }
+                frame.render_widget(
+                    Chart::new(vec![ds])
+                        .x_axis(Axis::default().bounds([
+                            self.num(node, "x_min", 0.0),
+                            self.num(node, "x_max", x_hi),
+                        ]))
+                        .y_axis(Axis::default().bounds([
+                            self.num(node, "y_min", y_lo),
+                            self.num(node, "y_max", y_hi),
+                        ])),
+                    area,
+                );
+            }
+            "Calendar" => {
+                let declared = self.prop_text(node, "date");
+                let date = parse_date(&declared)
+                    .unwrap_or_else(|| time::OffsetDateTime::now_utc().date());
+                let events = CalendarEventStore::today(
+                    Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD),
+                );
+                let header = Style::default().add_modifier(Modifier::BOLD);
+                frame.render_widget(
+                    Monthly::new(date, events)
+                        .show_month_header(header)
+                        .show_weekdays_header(header)
+                        .block(Block::default().borders(Borders::ALL)),
+                    area,
+                );
+            }
+            "Canvas" => {
+                let map = self.boolean(node, "map", true);
+                frame.render_widget(
+                    Canvas::default()
+                        .x_bounds([
+                            self.num(node, "x_min", -180.0),
+                            self.num(node, "x_max", 180.0),
+                        ])
+                        .y_bounds([
+                            self.num(node, "y_min", -90.0),
+                            self.num(node, "y_max", 90.0),
+                        ])
+                        .paint(move |ctx| {
+                            if map {
+                                ctx.draw(&Map {
+                                    resolution: MapResolution::High,
+                                    color: Color::White,
+                                });
+                            }
+                        }),
+                    area,
+                );
+            }
+            "Logo" => {
+                let logo = if self.prop_text(node, "size") == "tiny" {
+                    RatatuiLogo::tiny()
+                } else {
+                    RatatuiLogo::small()
+                };
+                frame.render_widget(logo, area);
+            }
             _ => {
                 frame.render_widget(
                     Paragraph::new(format!("{} — no ratatui renderer", node.element.name))
@@ -682,6 +849,15 @@ impl ForgeView {
             self.render_node(child, *chunk, frame);
         }
     }
+}
+
+/// `date` prop — `"YYYY-MM"` or `"YYYY-MM-DD"`; day defaults to the 1st.
+fn parse_date(text: &str) -> Option<time::Date> {
+    let mut parts = text.split('-');
+    let year: i32 = parts.next()?.parse().ok()?;
+    let month: u8 = parts.next()?.parse().ok()?;
+    let day: u8 = parts.next().map_or(Ok(1), |d| d.parse()).ok()?;
+    time::Date::from_calendar_date(year, time::Month::try_from(month).ok()?, day).ok()
 }
 
 /// The interactivity a focused element accepts — Input = text editing,
