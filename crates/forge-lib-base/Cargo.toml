@@ -13,5 +13,10 @@ base-gpui = { path = "../../vendor/base-gpui" }
 gpui-forge-runtime = { path = "../gpui-forge-runtime" }
 serde_json = "1"
 
+[dev-dependencies]
+# Live interaction tests drive a real window through gpui's test platform —
+# same pin + harness as vendor/base-gpui's tests.
+gpui = { package = "gpui-pre", version = "=0.3.10", features = ["test-support"] }
+
 [lints]
 workspace = true

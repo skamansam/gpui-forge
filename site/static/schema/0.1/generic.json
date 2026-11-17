@@ -3064,7 +3064,7 @@
                     "type": "array"
                   },
                   {
-                    "pattern": "^(\\$|\\{)",
+                    "pattern": "^(\\$|\\{|bind\\s)",
                     "type": "string"
                   },
                   {
@@ -3305,7 +3305,7 @@
                     "type": "array"
                   },
                   {
-                    "pattern": "^(\\$|\\{)",
+                    "pattern": "^(\\$|\\{|bind\\s)",
                     "type": "string"
                   },
                   {
@@ -15449,6 +15449,14 @@
                   }
                 ]
               },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -15483,7 +15491,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Checkbox(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|indeterminate|label|on (change|click)|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Checkbox(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|indeterminate|label|name|on (change|click)|style|tooltip|value)$"
             }
           }
         },
@@ -15751,6 +15759,14 @@
                   }
                 ]
               },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -15785,7 +15801,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Checkbox(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|indeterminate|label|on (change|click)|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Checkbox(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|indeterminate|label|name|on (change|click)|style|tooltip|value)$"
             }
           }
         },
@@ -16115,7 +16131,7 @@
                         "type": "array"
                       },
                       {
-                        "pattern": "^(\\$|\\{)",
+                        "pattern": "^(\\$|\\{|bind\\s)",
                         "type": "string"
                       },
                       {
@@ -16293,7 +16309,7 @@
                         "type": "array"
                       },
                       {
-                        "pattern": "^(\\$|\\{)",
+                        "pattern": "^(\\$|\\{|bind\\s)",
                         "type": "string"
                       },
                       {
@@ -18738,6 +18754,14 @@
                   }
                 ]
               },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -18927,7 +18951,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Combobox(#[\\w-]+| \\.[\\w-]+)?|arrow|backdrop|children|disabled|empty|label|multiple|on (change|submit|input|open)|options|placeholder|size|status|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Combobox(#[\\w-]+| \\.[\\w-]+)?|arrow|backdrop|children|disabled|empty|label|multiple|name|on (change|submit|input|open)|options|placeholder|size|status|style|tooltip|value)$"
             }
           }
         },
@@ -19088,6 +19112,14 @@
                   }
                 ]
               },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -19277,7 +19309,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Combobox(#[\\w-]+| \\.[\\w-]+)?|arrow|backdrop|children|disabled|empty|label|multiple|on (change|submit|input|open)|options|placeholder|size|status|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Combobox(#[\\w-]+| \\.[\\w-]+)?|arrow|backdrop|children|disabled|empty|label|multiple|name|on (change|submit|input|open)|options|placeholder|size|status|style|tooltip|value)$"
             }
           }
         },
@@ -39387,6 +39419,14 @@
                 ],
                 "description": "Hide the text, for passwords."
               },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -39562,7 +39602,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Input(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|description|disabled|error|label|masked|on (change|submit)|placeholder|readonly|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Input(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|description|disabled|error|label|masked|name|on (change|submit)|placeholder|readonly|style|tooltip|value)$"
             }
           }
         },
@@ -39710,6 +39750,14 @@
                 ],
                 "description": "Hide the text, for passwords."
               },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -39885,7 +39933,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Input(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|description|disabled|error|label|masked|on (change|submit)|placeholder|readonly|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Input(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|description|disabled|error|label|masked|name|on (change|submit)|placeholder|readonly|style|tooltip|value)$"
             }
           }
         },
@@ -49313,7 +49361,7 @@
                         "type": "number"
                       },
                       {
-                        "pattern": "^(\\$|\\{)",
+                        "pattern": "^(\\$|\\{|bind\\s)",
                         "type": "string"
                       },
                       {
@@ -49451,7 +49499,7 @@
                         "type": "number"
                       },
                       {
-                        "pattern": "^(\\$|\\{)",
+                        "pattern": "^(\\$|\\{|bind\\s)",
                         "type": "string"
                       },
                       {
@@ -51546,6 +51594,14 @@
                   }
                 ]
               },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -51597,7 +51653,7 @@
                     "type": "number"
                   },
                   {
-                    "pattern": "^(\\$|\\{)",
+                    "pattern": "^(\\$|\\{|bind\\s)",
                     "type": "string"
                   },
                   {
@@ -51607,7 +51663,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|NumberField(#[\\w-]+| \\.[\\w-]+)?|children|disabled|max|min|on (change)|read_only|step|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|NumberField(#[\\w-]+| \\.[\\w-]+)?|children|disabled|max|min|name|on (change)|read_only|step|style|tooltip|value)$"
             }
           }
         },
@@ -51676,6 +51732,14 @@
                   }
                 ]
               },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -51727,7 +51791,7 @@
                     "type": "number"
                   },
                   {
-                    "pattern": "^(\\$|\\{)",
+                    "pattern": "^(\\$|\\{|bind\\s)",
                     "type": "string"
                   },
                   {
@@ -51737,7 +51801,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.NumberField(#[\\w-]+| \\.[\\w-]+)?|children|disabled|max|min|on (change)|read_only|step|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.NumberField(#[\\w-]+| \\.[\\w-]+)?|children|disabled|max|min|name|on (change)|read_only|step|style|tooltip|value)$"
             }
           }
         },
@@ -52543,6 +52607,14 @@
                   }
                 ]
               },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -52603,7 +52675,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|OTPField(#[\\w-]+| \\.[\\w-]+)?|children|disabled|length|mask|on (complete|change)|read_only|separator|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|OTPField(#[\\w-]+| \\.[\\w-]+)?|children|disabled|length|mask|name|on (complete|change)|read_only|separator|style|tooltip|value)$"
             }
           }
         },
@@ -52671,6 +52743,14 @@
                   }
                 ]
               },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -52731,7 +52811,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.OTPField(#[\\w-]+| \\.[\\w-]+)?|children|disabled|length|mask|on (complete|change)|read_only|separator|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.OTPField(#[\\w-]+| \\.[\\w-]+)?|children|disabled|length|mask|name|on (complete|change)|read_only|separator|style|tooltip|value)$"
             }
           }
         },
@@ -59273,7 +59353,7 @@
                         "type": "number"
                       },
                       {
-                        "pattern": "^(\\$|\\{)",
+                        "pattern": "^(\\$|\\{|bind\\s)",
                         "type": "string"
                       },
                       {
@@ -59518,7 +59598,7 @@
                         "type": "number"
                       },
                       {
-                        "pattern": "^(\\$|\\{)",
+                        "pattern": "^(\\$|\\{|bind\\s)",
                         "type": "string"
                       },
                       {
@@ -62996,6 +63076,14 @@
                   }
                 ]
               },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -63118,7 +63206,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|RadioGroup(#[\\w-]+| \\.[\\w-]+)?|children|color|disabled|label|layout|on (change)|options|orientation|selected|size|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|RadioGroup(#[\\w-]+| \\.[\\w-]+)?|children|color|disabled|label|layout|name|on (change)|options|orientation|selected|size|style|tooltip|value)$"
             }
           }
         },
@@ -63223,6 +63311,14 @@
                   }
                 ]
               },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -63345,7 +63441,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.RadioGroup(#[\\w-]+| \\.[\\w-]+)?|children|color|disabled|label|layout|on (change)|options|orientation|selected|size|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.RadioGroup(#[\\w-]+| \\.[\\w-]+)?|children|color|disabled|label|layout|name|on (change)|options|orientation|selected|size|style|tooltip|value)$"
             }
           }
         },
@@ -68834,6 +68930,14 @@
                   }
                 ]
               },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -68987,7 +69091,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Select(#[\\w-]+| \\.[\\w-]+)?|arrow|backdrop|children|cleanable|disabled|label|on (change|open)|options|placeholder|searchable|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Select(#[\\w-]+| \\.[\\w-]+)?|arrow|backdrop|children|cleanable|disabled|label|name|on (change|open)|options|placeholder|searchable|style|tooltip|value)$"
             }
           }
         },
@@ -69118,6 +69222,14 @@
                   }
                 ]
               },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -69271,7 +69383,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Select(#[\\w-]+| \\.[\\w-]+)?|arrow|backdrop|children|cleanable|disabled|label|on (change|open)|options|placeholder|searchable|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Select(#[\\w-]+| \\.[\\w-]+)?|arrow|backdrop|children|cleanable|disabled|label|name|on (change|open)|options|placeholder|searchable|style|tooltip|value)$"
             }
           }
         },
@@ -73720,6 +73832,14 @@
                   }
                 ]
               },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -73888,7 +74008,7 @@
                         "type": "number"
                       },
                       {
-                        "pattern": "^(\\$|\\{)",
+                        "pattern": "^(\\$|\\{|bind\\s)",
                         "type": "string"
                       },
                       {
@@ -73913,7 +74033,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Slider(#[\\w-]+| \\.[\\w-]+)?|children|color|disabled|label|max|min|on (change)|reverse|show_value|step|style|tooltip|value|vertical)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Slider(#[\\w-]+| \\.[\\w-]+)?|children|color|disabled|label|max|min|name|on (change)|reverse|show_value|step|style|tooltip|value|vertical)$"
             }
           }
         },
@@ -74168,6 +74288,14 @@
                   }
                 ]
               },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -74336,7 +74464,7 @@
                         "type": "number"
                       },
                       {
-                        "pattern": "^(\\$|\\{)",
+                        "pattern": "^(\\$|\\{|bind\\s)",
                         "type": "string"
                       },
                       {
@@ -74361,7 +74489,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Slider(#[\\w-]+| \\.[\\w-]+)?|children|color|disabled|label|max|min|on (change)|reverse|show_value|step|style|tooltip|value|vertical)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Slider(#[\\w-]+| \\.[\\w-]+)?|children|color|disabled|label|max|min|name|on (change)|reverse|show_value|step|style|tooltip|value|vertical)$"
             }
           }
         },
@@ -79370,6 +79498,14 @@
                   }
                 ]
               },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -79396,7 +79532,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Switch(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|label|on (change|click)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Switch(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|label|name|on (change|click)|style|tooltip)$"
             }
           }
         },
@@ -79631,6 +79767,14 @@
                   }
                 ]
               },
+              "name": {
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "on change": {
                 "type": [
                   "string",
@@ -79657,7 +79801,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Switch(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|label|on (change|click)|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Switch(#[\\w-]+| \\.[\\w-]+)?|checked|children|disabled|label|name|on (change|click)|style|tooltip)$"
             }
           }
         },
@@ -89178,7 +89322,7 @@
                         "type": "array"
                       },
                       {
-                        "pattern": "^(\\$|\\{)",
+                        "pattern": "^(\\$|\\{|bind\\s)",
                         "type": "string"
                       },
                       {
@@ -89369,7 +89513,7 @@
                         "type": "array"
                       },
                       {
-                        "pattern": "^(\\$|\\{)",
+                        "pattern": "^(\\$|\\{|bind\\s)",
                         "type": "string"
                       },
                       {

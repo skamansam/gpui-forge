@@ -1,2 +1,7 @@
 [alias]
 xtask = "run --package xtask --"
+
+[env]
+# ForgeView::render_node recurses once per document level with a large frame —
+# libtest's default ~2MiB worker stack overflows on a VStack + one child.
+RUST_MIN_STACK = "67108864"

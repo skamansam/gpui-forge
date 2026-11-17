@@ -268,6 +268,9 @@ impl ForgeLibrary for Base {
                 if let Some(v) = prop_str_opt(node, "value") {
                     root = root.value(SharedString::from(v));
                 }
+                if let Some(n) = prop_str_opt(node, "name") {
+                    root = root.name(SharedString::from(n));
+                }
                 if let Some(cb) = value_change(view, node, "checked", "change", cx) {
                     root = root.on_checked_change(move |checked, _d, w, cx| {
                         cb(Json::Bool(checked), checked.to_string(), w, cx);
@@ -275,7 +278,8 @@ impl ForgeLibrary for Base {
                 }
                 let root = root.child(indicator);
                 let mut row = div()
-                    .id(key.to_string())
+                    .id(format!("{key}-row"))
+                    .debug_selector(|| key.to_string())
                     .flex()
                     .flex_row()
                     .items_center()
@@ -306,6 +310,9 @@ impl ForgeLibrary for Base {
                     .id(key.to_string())
                     .default_checked(prop_bool(node, "checked"))
                     .disabled(prop_bool(node, "disabled"));
+                if let Some(n) = prop_str_opt(node, "name") {
+                    root = root.name(SharedString::from(n));
+                }
                 if let Some(cb) = value_change(view, node, "checked", "change", cx) {
                     root = root.on_checked_change(move |checked, _d, w, cx| {
                         cb(Json::Bool(checked), checked.to_string(), w, cx);
@@ -407,6 +414,9 @@ impl ForgeLibrary for Base {
                     .flex_col()
                     .gap_1()
                     .w_full();
+                if let Some(n) = prop_str_opt(node, "name") {
+                    root = root.name(SharedString::from(n));
+                }
                 if let Some(cb) = value_change(view, node, "value", "change", cx) {
                     root = root.on_value_change(move |values, _d, w, cx| {
                         let (json, text) = match values {
@@ -522,7 +532,7 @@ impl ForgeLibrary for Base {
                 Some(s.bg(rgb(BORDER)).into_any_element())
             }
             "Input" => {
-                let i = Input::new()
+                let mut i = Input::new()
                     .id(key.to_string())
                     .placeholder(prop_str(node, "placeholder"))
                     .default_value(prop_str(node, "value"))
@@ -536,6 +546,9 @@ impl ForgeLibrary for Base {
                     .bg(rgb(WHITE))
                     .text_sm()
                     .text_color(rgb(TEXT));
+                if let Some(n) = prop_str_opt(node, "name") {
+                    i = i.name(SharedString::from(n));
+                }
                 Some(i.into_any_element())
             }
             "Avatar" => {
@@ -764,6 +777,9 @@ impl ForgeLibrary for Base {
                     .disabled(prop_bool(node, "disabled"))
                     .flex()
                     .gap_2();
+                if let Some(n) = prop_str_opt(node, "name") {
+                    root = root.name(SharedString::from(n));
+                }
                 root = if horizontal {
                     root.flex_row().gap_4()
                 } else {
@@ -1053,6 +1069,9 @@ impl ForgeLibrary for Base {
                     .disabled(prop_bool(node, "disabled"))
                     .read_only(prop_bool(node, "read_only"))
                     .child(group);
+                if let Some(n) = prop_str_opt(node, "name") {
+                    root = root.name(SharedString::from(n));
+                }
                 if let Some(v) = prop_num(node, "value") {
                     root = root.default_value(Some(v));
                 }
@@ -1080,9 +1099,11 @@ impl ForgeLibrary for Base {
                 let length = prop_num(node, "length")
                     .map(|n| n.max(1.0) as usize)
                     .unwrap_or(6);
-                let mut root = OTPFieldRoot::new()
-                    .id(key.to_string())
-                    .length(length)
+                let mut root = OTPFieldRoot::new().id(key.to_string()).length(length);
+                if let Some(n) = prop_str_opt(node, "name") {
+                    root = root.name(SharedString::from(n));
+                }
+                root = root
                     .disabled(prop_bool(node, "disabled"))
                     .read_only(prop_bool(node, "read_only"))
                     .mask(prop_bool(node, "mask"))
@@ -1704,6 +1725,7 @@ impl ForgeLibrary for Base {
                     .id(key.to_string())
                     .disabled(prop_bool(node, "disabled"))
                     .item_to_string_value(|v| v.clone())
+                    .name(prop_str(node, "name"))
                     .label_resolver(|v| v.clone())
                     .flex()
                     .flex_col()
@@ -1963,6 +1985,7 @@ impl ForgeLibrary for Base {
                 let mut root = ComboboxRoot::<SharedString>::new()
                     .id(key.to_string())
                     .item_to_string_value(|v| v.clone())
+                    .name(prop_str(node, "name"))
                     .disabled(prop_bool(node, "disabled"))
                     .flex()
                     .flex_col()

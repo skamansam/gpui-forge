@@ -36,6 +36,7 @@ elements:
     props:
       label: string
       checked:
+        bindable: true
         type: bool
         default: false
       indeterminate:
@@ -44,7 +45,10 @@ elements:
       disabled:
         type: bool
         default: false
-      value: string
+      value:
+        type: string
+        bindable: true
+      name: string
     events:
       click:
       change:
@@ -57,11 +61,13 @@ elements:
     children: none
     props:
       checked:
+        bindable: true
         type: bool
         default: false
       disabled:
         type: bool
         default: false
+      name: string
     events:
       click:
       change:
@@ -76,12 +82,15 @@ elements:
     props:
       label: string
       pressed:
+        bindable: true
         type: bool
         default: false
       disabled:
         type: bool
         default: false
-      value: string
+      value:
+        type: string
+        bindable: true
     events:
       click:
       change:
@@ -94,6 +103,7 @@ elements:
     children: none
     props:
       value:
+        bindable: true
         type: number
         default: 50
       min:
@@ -109,6 +119,7 @@ elements:
       show_value:
         type: bool
         default: false
+      name: string
       disabled:
         type: bool
         default: false
@@ -123,6 +134,7 @@ elements:
     children: none
     props:
       value:
+        bindable: true
         type: number
         default: 50
       max:
@@ -141,6 +153,7 @@ elements:
     children: none
     props:
       value:
+        bindable: true
         type: number
         default: 50
       min:
@@ -173,7 +186,10 @@ elements:
     component: base_gpui::input::Input
     children: none
     props:
-      value: string
+      value:
+        type: string
+        bindable: true
+      name: string
       placeholder: string
       disabled:
         type: bool
@@ -211,6 +227,7 @@ elements:
         type: bool
         default: false
       value:
+        bindable: true
         type: list<string>
     events:
       change:
@@ -224,8 +241,11 @@ elements:
     children: any
     props:
       label: string
-      value: string
+      value:
+        type: string
+        bindable: true
       open:
+        bindable: true
         type: bool
         default: false
       disabled:
@@ -242,6 +262,7 @@ elements:
     props:
       label: string
       open:
+        bindable: true
         type: bool
         default: false
       keep_mounted:
@@ -261,7 +282,9 @@ elements:
     children:
       - Tab
     props:
-      value: string
+      value:
+        type: string
+        bindable: true
     events:
       change:
 
@@ -274,7 +297,9 @@ elements:
     children: any
     props:
       label: string
-      value: string
+      value:
+        type: string
+        bindable: true
       disabled:
         type: bool
         default: false
@@ -290,7 +315,10 @@ elements:
     children:
       - Radio
     props:
-      value: string
+      value:
+        type: string
+        bindable: true
+      name: string
       orientation:
         type: enum
         values: [Horizontal, Vertical]
@@ -310,7 +338,9 @@ elements:
     children: none
     props:
       label: string
-      value: string
+      value:
+        type: string
+        bindable: true
       disabled:
         type: bool
         default: false
@@ -324,6 +354,7 @@ elements:
       - Checkbox
     props:
       value:
+        bindable: true
         type: list<string>
       disabled:
         type: bool
@@ -340,6 +371,7 @@ elements:
       - Toggle
     props:
       value:
+        bindable: true
         type: list<string>
       multiple:
         type: bool
@@ -399,10 +431,13 @@ elements:
     component: base_gpui::number_field::{NumberFieldRoot, NumberFieldGroup, NumberFieldInput, NumberFieldDecrement, NumberFieldIncrement}
     children: none
     props:
-      value: number
+      value:
+        type: number
+        bindable: true
       min: number
       max: number
       step: number
+      name: string
       disabled:
         type: bool
         default: false
@@ -422,7 +457,10 @@ elements:
       length:
         type: number
         default: 6
-      value: string
+      value:
+        type: string
+        bindable: true
+      name: string
       mask:
         type: bool
         default: false
@@ -562,6 +600,7 @@ elements:
       title: string
       description: string
       open:
+        bindable: true
         type: bool
         default: false
       modal:
@@ -585,6 +624,7 @@ elements:
       title: string
       description: string
       open:
+        bindable: true
         type: bool
         default: false
       close:
@@ -605,6 +645,7 @@ elements:
       title: string
       description: string
       open:
+        bindable: true
         type: bool
         default: false
       side:
@@ -657,6 +698,7 @@ elements:
       title: string
       description: string
       open:
+        bindable: true
         type: bool
         default: false
       close:
@@ -677,7 +719,10 @@ elements:
     props:
       label: string
       placeholder: string
-      value: string
+      value:
+        type: string
+        bindable: true
+      name: string
       disabled:
         type: bool
         default: false
@@ -700,7 +745,9 @@ elements:
     children: none
     props:
       label: string
-      value: string
+      value:
+        type: string
+        bindable: true
       disabled:
         type: bool
         default: false
@@ -735,7 +782,10 @@ elements:
     props:
       label: string
       placeholder: string
-      value: string
+      value:
+        type: string
+        bindable: true
+      name: string
       empty: string
       status: string
       disabled:
@@ -763,7 +813,9 @@ elements:
       - OptionSeparator
     props:
       placeholder: string
-      value: string
+      value:
+        type: string
+        bindable: true
       mode:
         type: enum
         values: [List, Inline, Both, None]
@@ -884,6 +936,7 @@ elements:
     props:
       label: string
       checked:
+        bindable: true
         type: bool
         default: false
       disabled:
@@ -902,7 +955,9 @@ elements:
       - MenuGroupLabel
       - MenuSeparator
     props:
-      value: string
+      value:
+        type: string
+        bindable: true
     events:
       change:
 
@@ -915,7 +970,9 @@ elements:
     children: none
     props:
       label: string
-      value: string
+      value:
+        type: string
+        bindable: true
       disabled:
         type: bool
         default: false
@@ -982,7 +1039,9 @@ elements:
     children:
       - NavigationMenuItem
     props:
-      value: string
+      value:
+        type: string
+        bindable: true
       arrow:
         type: bool
         default: false
@@ -1001,4 +1060,6 @@ elements:
     children: any
     props:
       label: string
-      value: string
+      value:
+        type: string
+        bindable: true

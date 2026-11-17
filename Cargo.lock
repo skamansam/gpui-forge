@@ -3872,6 +3872,7 @@ version = "0.9.1"
 dependencies = [
  "base-gpui",
  "gpui-forge-runtime",
+ "gpui-pre",
  "serde_json",
 ]
 

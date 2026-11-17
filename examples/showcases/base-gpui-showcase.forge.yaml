@@ -247,12 +247,14 @@ root:
                   description: We never share your address.
                   children:
                     - base.Input:
+                      name: email
                       placeholder: you@example.com
                 - base.Field:
                   label: Quantity
                   error: Must be at least 1.
                   children:
                     - base.NumberField:
+                      name: quantity
                       value: 0
                       min: 1
                       max: 10
