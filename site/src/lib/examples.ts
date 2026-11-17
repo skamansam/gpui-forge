@@ -26,6 +26,7 @@ import ratatuiShowcase from '../../../examples/showcases/ratatui-showcase.forge.
 import ratatuiDashboard from '../../../examples/demos/ratatui-dashboard.forge.yaml?raw';
 import ratatuiForms from '../../../examples/demos/ratatui-forms.forge.yaml?raw';
 import gpuiKitShowcase from '../../../examples/showcases/gpui-kit-showcase.forge.yaml?raw';
+import baseGpuiShowcase from '../../../examples/showcases/base-gpui-showcase.forge.yaml?raw';
 import icedShowcase from '../../../examples/showcases/iced-showcase.forge.yaml?raw';
 import bezelShowcase from '../../../examples/showcases/bezel-showcase.forge.yaml?raw';
 import guiseShowcase from '../../../examples/showcases/guise-showcase.forge.yaml?raw';
@@ -105,6 +106,13 @@ export const showcases: Showcase[] = [
 		title: 'gpui-kit',
 		summary: '`base: gpui-kit` — the base widget set itself.',
 		yaml: gpuiKitShowcase
+	},
+	{
+		slug: 'base-gpui-showcase',
+		alias: 'base',
+		title: 'base-gpui showcase',
+		summary: '`use: base: base-gpui` — the full Base UI port: forms, pickers, menus and overlays.',
+		yaml: baseGpuiShowcase
 	},
 	{
 		slug: 'ratatui-showcase',

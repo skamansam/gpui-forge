@@ -103,15 +103,21 @@ constructs the upstream widget:
 
 ## Current limits
 
-- **Events are not wired.** `on click:` on adapter elements validates but the
-  hook isn't invoked — adapters render visual-only elements today.
+- **Event wiring is adapter-side.** `on click:` on adapter elements still goes
+  through the runtime's wrapper div, but element-specific callbacks (`change`,
+  `open`, `submit`, `activate`, `input`, `complete`) are wired per adapter —
+  `forge-lib-ely` and `forge-lib-base` route widget callbacks through a
+  `WeakEntity<ForgeView>` to `fire_call` (hook handlers with a payload arg)
+  and `update_state` (`bind $path` / `$path` prop write-back). Catalog props
+  that accept `bind` need `bindable: true`.
 - **Stateful widgets need entities.** Components whose constructor takes a
   GPUI `Entity`/state (inputs, list models) need the adapter to own state —
   the v1 shim is stateless per render.
-- **Children aren't mapped.** Elements that take child components
-  (`children: any` in the catalog) render their own frame but don't yet
-  receive the node's Forge children. Adapters that want them must walk
-  `node.children` and `view.render_node` them (a helper is a follow-up).
+- **Children aren't automatic.** Elements that take child components
+  (`children: any` in the catalog) don't receive the node's Forge children
+  for free — adapters compose them with a lazy `AnyView` proxy (see
+  `forge-lib-base`'s `BaseProxy`, or `forge-lib-ely`) so child nodes render
+  on demand instead of re-entering `ForgeView` mid-render.
 - **License policy:** GPL-family libraries stay opt-in (separate crate,
   explicit `use:`), never linked into Studio or generated apps by default.
 
