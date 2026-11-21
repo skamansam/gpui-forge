@@ -35,3 +35,5 @@
 - [x] the Variables tab is empty when opening a forge file — `set_document` never seeded `state:` declarations, so `forge.Vars` flattened an empty preview state. Now declared-but-unwritten paths seed to their type's zero value (string→"", bool→false, number→0, enum→first variant, list→[], object→{}), absent/null only so live values survive reloads — same as `forge build --codegen` boilerplate.
 
 - [x] the Vars editor rows don't align — labels took natural width so every editor's left edge landed somewhere different. Now a table: fixed 200px label column (muted, truncated paths with a full-path tooltip) + flexible widget column, a "variable / value" header row, and the add-var row on the same gridlines.
+
+- [x] Vars tab needed a variable count — `forge.Vars` got a `count:` out-prop publishing the flattened row count; the shell binds `studio.vars_count` and the header text shows "There are N variables in this forge file."

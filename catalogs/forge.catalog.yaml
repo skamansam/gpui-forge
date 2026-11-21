@@ -326,4 +326,9 @@ elements:
         default: canvas
         summary: "The `forge.Preview` element id whose document state is
           inspected — `of: canvas`."
+      count:
+        type: string
+        bindable: true
+        summary: "Publishes the flattened variable count — how many rows
+          the inspector is showing."
     children: none

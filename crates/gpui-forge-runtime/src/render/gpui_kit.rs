@@ -563,6 +563,14 @@ impl ForgeView {
         let mut rows: Vec<(String, Json)> = Vec::new();
         flatten("", &state, &mut rows);
         rows.sort_by(|a, b| a.0.cmp(&b.0));
+        // `count:` — the doc's "N variables" line reads this instead of
+        // re-flattening state itself.
+        if let Some(path) = self.two_way(node, "count") {
+            let value = Json::from(rows.len());
+            if get_path(self.state(), &path) != Some(&value) {
+                self.update_state(&path, value, cx);
+            }
+        }
 
         let mut list = div()
             .flex()
