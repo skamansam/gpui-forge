@@ -818,7 +818,13 @@ impl ForgeView {
     /// `forge.Palette` — a catalog-driven element palette: a dropdown selects
     /// the library (base or any registered `ForgeLibrary`), and a grid of
     /// buttons inserts its elements through the `insert_component` hook.
-    fn palette(&mut self, _node: &Node, key: &str, cx: &mut Context<Self>) -> AnyElement {
+    fn palette(
+        &mut self,
+        _node: &Node,
+        key: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
         // (label, library id, tag prefix) — skip the `forge` intrinsics catalog
         // and any catalog the edited document's base doesn't support (#98).
         let doc_base = get_path(self.state(), &parse_path("studio.doc_base").unwrap())
@@ -890,19 +896,39 @@ impl ForgeView {
                 }
             });
 
-        let prefix = libs
-            .iter()
-            .find(|(_, id, _)| id == &selected)
-            .map(|(_, _, p)| p.clone())
-            .unwrap_or_default();
+        // `studio.palette_all` widens the listing to every catalog — each
+        // element still carries its own library's tag prefix, and groups are
+        // prefixed with the library name so `gpui-kit` and `ely` items don't
+        // collide. `studio.palette_query` filters element names.
+        let all = get_path(self.state(), &parse_path("studio.palette_all").unwrap())
+            .and_then(|j| j.as_bool())
+            .unwrap_or(false);
+        let query = get_path(self.state(), &parse_path("studio.palette_query").unwrap())
+            .and_then(|j| j.as_str())
+            .unwrap_or_default()
+            .to_lowercase();
         // Accordion groups of icon buttons — `icon:`/`group:` are palette
         // metadata declared per element in the catalog manifest.
         type PaletteItem = (String, String, String); // name, insert tag, icon
         let mut groups: Vec<(String, Vec<PaletteItem>)> = Vec::new();
-        if let Some(cat) = self.catalogs.iter().find(|c| c.library == selected) {
+        for (label, lib, prefix) in &libs {
+            if !all && *lib != selected {
+                continue;
+            }
+            let Some(cat) = self.catalogs.iter().find(|c| c.library == *lib) else {
+                continue;
+            };
             for def in &cat.elements {
-                let group = def.group.clone().unwrap_or_else(|| "Elements".into());
                 let name = def.name.clone();
+                if !query.is_empty() && !name.to_lowercase().contains(&query) {
+                    continue;
+                }
+                let base_group = def.group.clone().unwrap_or_else(|| "Elements".into());
+                let group = if all {
+                    format!("{label} · {base_group}")
+                } else {
+                    base_group
+                };
                 let tag = if prefix.is_empty() {
                     name.clone()
                 } else {
@@ -990,6 +1016,59 @@ impl ForgeView {
                 .child(row);
             grid = grid.item(move |_| item);
         }
+        // Search input + "all sets" scope toggle — the query filters element
+        // names in the selected library by default; checking the box widens
+        // the listing to every catalog (groups get a `lib ·` prefix).
+        let search_state = match self.inputs.get(&format!("{key}-pal-search")) {
+            Some(state) => state.clone(),
+            None => {
+                let state = cx.new(|cx| {
+                    InputState::new(window, cx).placeholder("search widgets…")
+                });
+                let subscription = cx.subscribe(&state, move |this, state, event, cx| {
+                    if let InputEvent::Change = event {
+                        let value = state.read(cx).value().to_string();
+                        this.update_state(
+                            &parse_path("studio.palette_query").unwrap(),
+                            Json::String(value),
+                            cx,
+                        );
+                    }
+                });
+                self.subscriptions.push(subscription);
+                self.inputs
+                    .insert(format!("{key}-pal-search"), state.clone());
+                state
+            }
+        };
+        let weak_all = cx.entity().downgrade();
+        let all_cb = Checkbox::new(SharedString::from(format!("{key}-all")))
+            .label("all sets")
+            .checked(all)
+            .on_click(move |v: &bool, _w: &mut Window, cx: &mut App| {
+                let v = *v;
+                try_update(&weak_all, cx, "palette all", move |this, cx| {
+                    this.update_state(
+                        &parse_path("studio.palette_all").unwrap(),
+                        Json::Bool(v),
+                        cx,
+                    );
+                })
+                .ok();
+            });
+        let search_row = div()
+            .flex()
+            .flex_row()
+            .items_center()
+            .gap_1()
+            .child(
+                div()
+                    .flex_1()
+                    .min_w_0()
+                    .child(Input::new(&search_state).cleanable(true)),
+            )
+            .child(all_cb);
+
         // The palette fills its docked slot (`size_full`) — a content-height
         // column let collapse-all shrink the whole window chain (status bar
         // floated). The library selector pins at top; the accordion groups
@@ -1006,6 +1085,7 @@ impl ForgeView {
             .size_full()
             .min_h_0()
             .child(selector)
+            .child(search_row)
             .child(
                 div()
                     .id(SharedString::from(format!("{key}-groups")))
@@ -4162,7 +4242,7 @@ impl ForgeView {
                     }
                 }
                 (Some("forge"), "InspectorField") => self.inspector_field(node, key, window, cx),
-                (Some("forge"), "Palette") => self.palette(node, key, cx),
+                (Some("forge"), "Palette") => self.palette(node, key, window, cx),
                 (Some("forge"), "Icons") => self.icons(node, key, window, cx),
                 (Some("forge"), "Files") => self.files(node, key, window, cx),
                 (Some("forge"), "Showcase") => self.showcase(node, key, window, cx),
