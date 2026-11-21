@@ -65,7 +65,7 @@ mod iced;
 ))]
 pub use iced::*;
 
-use forge_spec::{Path, PathSegment, Value};
+use forge_spec::{Color, Path, PathSegment, Value};
 use serde_json::Value as Json;
 
 /// Reads `path` out of a JSON state tree — `a.b` walks objects, `a.0` indexes
@@ -107,7 +107,10 @@ pub fn doc_meta(doc: &forge_spec::Document) -> Json {
 
 /// A `style_changed` write's `Json` as a style `Value` — `null`, `""` and
 /// the `[none]` Select sentinel all remove the entry (`None`); bools/numbers
-/// map to real `Value`s instead of being flattened to strings.
+/// map to real `Value`s instead of being flattened to strings. Strings go
+/// through the Forge value lexer (`8px` → length, `true` → bool, `row` →
+/// enum, `$theme.x` → token) — before this, a `gap: "8"` typed in the
+/// Inspector stored `Value::String`, which every style arm silently dropped.
 pub fn style_edit_value(json: &Json) -> Option<Value> {
     if json.is_null() || json.as_str().is_some_and(|s| s.is_empty() || s == "[none]") {
         return None;
@@ -118,6 +121,12 @@ pub fn style_edit_value(json: &Json) -> Option<Value> {
             value: n.as_f64().unwrap_or_default(),
             unit: None,
         },
+        Json::String(s) => Color::parse_hex(s)
+            .map(Value::Color)
+            .or_else(|| {
+                forge_spec::value::parse_value(s, forge_spec::value::Quoting::Plain).ok()
+            })
+            .unwrap_or_else(|| Value::String(s.clone())),
         _ => Value::String(json.as_str().unwrap_or_default().to_owned()),
     })
 }
@@ -151,4 +160,46 @@ pub fn set_path(state: &mut Json, path: &Path, value: Json) {
         };
     }
     *target = value;
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use forge_spec::model::Unit;
+
+    #[test]
+    fn style_edit_lexes_typed_strings() {
+        // Numbers with units become real lengths — `Value::String("8")` was
+        // silently dropped by every style arm before the lexer existed.
+        assert_eq!(
+            style_edit_value(&Json::String("8px".into())),
+            Some(Value::Number {
+                value: 8.0,
+                unit: Some(Unit::Px)
+            })
+        );
+        assert_eq!(
+            style_edit_value(&Json::String("2".into())),
+            Some(Value::Number {
+                value: 2.0,
+                unit: None
+            })
+        );
+        assert_eq!(
+            style_edit_value(&Json::String("true".into())),
+            Some(Value::Bool(true))
+        );
+        assert_eq!(
+            style_edit_value(&Json::String("row".into())),
+            Some(Value::Enum("row".into()))
+        );
+        assert!(matches!(
+            style_edit_value(&Json::String("#3b82f6".into())),
+            Some(Value::Color(_))
+        ));
+        // Removal sentinels.
+        assert_eq!(style_edit_value(&Json::Null), None);
+        assert_eq!(style_edit_value(&Json::String(String::new())), None);
+        assert_eq!(style_edit_value(&Json::String("[none]".into())), None);
+    }
 }

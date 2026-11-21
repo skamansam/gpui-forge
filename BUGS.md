@@ -25,7 +25,7 @@
 - [ ] when collapsing all the groups int eh palette, and the length of the palette gets shorter than the window, the status bar moves up the window. it should stay at the bottom. (i think the window's main VStack is shrinking). Then when dragging a palette item to the canvas, the main contents shrinks horizontally. Once the main  vstack gets "detached" from the window with these bugs, it never seems to go back properly.
 - [ ] when an item is selected for inspection, the structure panel should highlight the selected item
 - [ ] when an item is being inspected, the item in the canvas should be highlighted
-- [ ] why is the grow and shrinl style numeric?
+- [x] why is the grow and shrinl style numeric? — ANSWER/FIXED: flex factors are genuinely numeric (`grow: 2` = 2× siblings; `true` = 1.0). The real bug: Inspector seeded `grow: true` as text "true" in a numeric box, and string edits stored `Value::String` which every style arm dropped — nothing applied live. `style_edit_value` now lexes strings (`8px`/`true`/`row`/`#hex`/`$theme.x`); Factor/Fraction bools seed as `1`/`0`
 - [x] when I type into the gap-x field, the gap field changes, and vice versa — FIXED: cached widget entities were keyed positionally, so a reordered row reused an entity whose subscription still wrote the old bound path; cache keys now carry `bind_salt` (bound paths) and style rows use stable registry order
 - [ ] the inspector panel should stay the same size and be scrollable 
 - [ ] the problems panel should be like a red alert when there are issues and a green alert when there are no issues

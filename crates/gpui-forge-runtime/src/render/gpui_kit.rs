@@ -3128,6 +3128,20 @@ impl ForgeView {
         }
     }
 
+    /// A set style value's inspector seed — `value_json`, except Factor /
+    /// Fraction bools become `1`/`0`: those rows render a `NumberInput` that
+    /// can't display `true`, and `1`/`0` round-trip through
+    /// `style_edit_value` identically (`grow: true` ≡ `grow: 1`).
+    fn style_seed_json(&self, name: &str, value: &Value) -> Json {
+        use forge_spec::style::{StyleType, key_type};
+        match (key_type(name), value) {
+            (Some(StyleType::Factor | StyleType::Fraction), Value::Bool(b)) => {
+                Json::from(if *b { 1.0 } else { 0.0 })
+            }
+            _ => self.value_json(value),
+        }
+    }
+
     /// Renders `forge.Inspector` — a catalog-driven `Form` of the selected node's props.
     /// Each field binds `document.edits.<prop>`. `prop_changed` writes through to the doc.
     fn inspector(
@@ -3168,7 +3182,7 @@ impl ForgeView {
             for (name, value) in style_rows(&target.style) {
                 let json = value
                     .as_ref()
-                    .map(|v| self.value_json(v))
+                    .map(|v| self.style_seed_json(&name, v))
                     .unwrap_or_else(|| unset_style_seed(&name));
                 match parse_path(&format!("document.edits.style.{name}")) {
                     Ok(edit_path) => self.update_state(&edit_path, json, cx),
@@ -3221,7 +3235,10 @@ impl ForgeView {
             let styles: Vec<Json> = style_rows(&target.style)
                 .iter()
                 .map(|(name, v)| {
-                    let value = v.as_ref().map(|v| self.value_json(v)).unwrap_or(Json::Null);
+                    let value = v
+                        .as_ref()
+                        .map(|v| self.style_seed_json(name, v))
+                        .unwrap_or(Json::Null);
                     let (ty, options) = style_item_type(name, &value);
                     serde_json::json!({
                         "kind": "style", "name": name, "label": name,
