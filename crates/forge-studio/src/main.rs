@@ -4,6 +4,10 @@
 //! inspector are all declared in YAML and interpreted by `ForgeView`. Events in that
 //! document call the hooks registered below.
 
+mod manifest;
+
+use manifest::{manifest_section, manifest_value};
+
 use std::cell::RefCell;
 use std::path::PathBuf;
 use std::rc::Rc;
@@ -1853,30 +1857,6 @@ fn host_send_theme(view: &ForgeView, cx: &App) {
     host_send(&theme_cmd(view, cx.theme()));
 }
 
-/// Reads `key = "value"` lines out of a manifest's `[forge]` section — the
-/// manifest format is flat enough that a scan beats a TOML dependency.
-fn manifest_value(src: &str, key: &str) -> Option<String> {
-    manifest_section(src, "forge", key)
-}
-
-/// `key = "…"` inside a `[section]` of a `forge.toml` — section-aware so
-/// `[assets] dir` doesn't read a `[forge] dir` by accident.
-fn manifest_section(src: &str, section: &str, key: &str) -> Option<String> {
-    let body = src
-        .split(&format!("[{section}]"))
-        .nth(1)?
-        .split('[')
-        .next()?;
-    body.lines().map(str::trim).find_map(|l| {
-        l.strip_prefix(key)?
-            .trim_start_matches('=')
-            .trim()
-            .strip_prefix('"')?
-            .strip_suffix('"')
-            .map(str::to_owned)
-    })
-}
-
 /// Media globs the Assets tab lists — images, video, fonts. Keep the
 /// `forge.Files` `filter:` in `studio.forge.yaml` in sync.
 const ASSET_GLOBS: &[&str] = &[
@@ -2742,6 +2722,11 @@ fn load_project(
         Json::String(dir.display().to_string()),
         cx,
     );
+    // Root the workspace panels at the project — the Files tree, Assets
+    // tab and theme list all follow `studio.project`.
+    refresh_files(view, &dir, cx);
+    refresh_assets(view, &dir, cx);
+    refresh_themes(view, &dir, cx);
     load_file(doc_path, view, shared, cx);
 }
 
@@ -3094,6 +3079,18 @@ fn load_source(
             Json::String(dir.display().to_string()),
             cx,
         );
+        // No project open — the document's own folder is the workspace:
+        // root the Files tree, Assets tab and theme list at it so a
+        // single-file session still browses its directory.
+        if view.state()["studio"]["project"]
+            .as_str()
+            .unwrap_or_default()
+            .is_empty()
+        {
+            refresh_files(view, dir, cx);
+            refresh_assets(view, dir, cx);
+            refresh_themes(view, dir, cx);
+        }
     }
     if let Some(doc) = doc {
         // Vendor-on-use — download just the icons this doc references into

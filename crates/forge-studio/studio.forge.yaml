@@ -338,27 +338,6 @@ assetsTab: &assetsTab
 # `icons/<set>/` the asset source layers in. `set`/`selected`/`query` bind
 # out so the doc can restyle the grid; click a cell to write `studio.icon`.
 
-HStack: &iconGrid
-  style: {gap: 8px}
-  children:
-    - Text: "Icons"
-      style: {grow: true, size: sm, color: $theme.muted_foreground}
-
-VStack: &iconsHeader
-  style: {gap: 8px}
-  children:
-    - Text: "Icons"
-      style: {grow: true, size: sm, color: $theme.muted_foreground}
-
-newIconsTab: &newIconsTab
-  children:
-    - VStack:
-      style: {grow: true, min-height: 0, gap: 8px, padding: 8px}
-      children:
-        <<: *iconsHeader
-        <<: *iconGrid
-
-
 iconsTab: &iconsTab
   children:
     - VStack:
@@ -811,7 +790,6 @@ body: &body
                   style: {size: xs, color: $theme.muted_foreground}
                 - forge.Files#files:
                   root: "{$studio.project_dir}"
-                  filter: ["*.forge.yaml", "*.json"]
                   nonce: $studio.files_nonce
                   search: $studio.files_search
                   icons: $studio.files_icons
@@ -821,7 +799,7 @@ body: &body
                   selected: bind $studio.file_selected
                   # Single click selects/highlights; double-click (`open`) loads.
                   on open: open_path($studio.file_selected)
-                  placeholder: no .forge.yaml files here
+                  placeholder: no files here
                   style: {grow: true, min-height: 0, min-width: 0}
         - ResizablePanel:
           children:

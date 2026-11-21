@@ -12,9 +12,9 @@
 - [x] the icon browser should copy the icon to the assets/icons folder when clicked
 - [x] the the icons in the assets/icons folder should be highlighted in the browser to show that it is currently downloaded
 - [x] the generated skeleton should include an about window in the currently selected widget set that has the app name, version, and copyright, and proper attribution of the included iconsets.
-- [ ] after opening a file or project, if there is only one  document opened, the current directory needs to be scanned for all files, and those files should be added to the file tree. when they are addded, they need to be added in a directory-like manner that reflects where they are located in the file system instead of a flat list. This should be a new global preference - whether to show a flat list or a tree view.
-- [ ] after opening the forge.toml project, clicking on the src folder in the project tree does nothing.
-- [ ] after opening the forge.toml project, there is a message in the status line that says forge.toml has no forge.document
+- [x] after opening a file or project, if there is only one  document opened, the current directory needs to be scanned for all files, and those files should be added to the file tree. when they are addded, they need to be added in a directory-like manner that reflects where they are located in the file system instead of a flat list. This should be a new global preference - whether to show a flat list or a tree view.
+- [x] after opening the forge.toml project, clicking on the src folder in the project tree does nothing.
+- [x] after opening the forge.toml project, there is a message in the status line that says forge.toml has no forge.document
 - [ ] the iconbrowser should have a size dropdown to show different icon sizes. it should be beside the current filters, so iconset, category, suffix, and size should be on one line
 - [ ] the license warnign should be at the top of the window, along with the 
 - [ ] the widget palette should have a search bar at the top. the seach should filter the widgets in the palette by default, but have a checkbox that can search through all widgets sets
