@@ -564,7 +564,32 @@ impl ForgeView {
         flatten("", &state, &mut rows);
         rows.sort_by(|a, b| a.0.cmp(&b.0));
 
-        let mut list = div().flex().flex_col().gap_2();
+        let mut list = div()
+            .flex()
+            .flex_col()
+            .child(
+                div()
+                    .flex()
+                    .flex_row()
+                    .gap_3()
+                    .pb_1()
+                    .child(
+                        div()
+                            .w(px(200.))
+                            .flex_shrink_0()
+                            .text_xs()
+                            .text_color(cx.theme().muted_foreground)
+                            .child("variable"),
+                    )
+                    .child(
+                        div()
+                            .flex_grow(1.0)
+                            .min_w_0()
+                            .text_xs()
+                            .text_color(cx.theme().muted_foreground)
+                            .child("value"),
+                    ),
+            );
         for (path, value) in rows {
             let state_key = format!("vars-{key}-{path}");
             let display = match &value {
@@ -726,21 +751,46 @@ impl ForgeView {
                     }
                 }
             };
+            // Table row — a fixed-width label column keeps every editor's
+            // left edge on the same gridline; long paths ellipsize with the
+            // full name on hover. `pt` optically aligns the label with the
+            // control's text; `items_start` keeps tall rows (textareas)
+            // anchored to the first line.
             list = list.child(
                 div()
                     .flex()
                     .flex_col()
-                    .gap_1()
                     .child(
                         div()
                             .flex()
                             .flex_row()
-                            .items_center()
-                            .gap_2()
-                            .child(Label::new(SharedString::from(format!("${path}"))))
-                            .child(row_edit),
+                            .items_start()
+                            .gap_3()
+                            .child(
+                                div()
+                                    .id(format!("vars-tip-{key}-{path}"))
+                                    .w(px(200.))
+                                    .flex_shrink_0()
+                                    .pt(px(7.))
+                                    .child(
+                                        div()
+                                            .text_sm()
+                                            .text_color(cx.theme().muted_foreground)
+                                            .whitespace_nowrap()
+                                            .overflow_hidden()
+                                            .text_ellipsis()
+                                            .child(format!("${path}")),
+                                    )
+                                    .tooltip({
+                                        let tip = format!("${path}");
+                                        move |_, cx| {
+                                            cx.new(|_| Tooltip::new(tip.clone())).into()
+                                        }
+                                    }),
+                            )
+                            .child(div().flex_grow(1.0).min_w_0().child(row_edit)),
                     )
-                    .child(Separator::horizontal()),
+                    .child(Separator::horizontal().mt_1()),
             );
         }
 
@@ -812,10 +862,27 @@ impl ForgeView {
             div()
                 .flex()
                 .flex_row()
-                .gap_1()
-                .child(Input::new(&add_path_state).with_size(size("small")))
-                .child(Input::new(&add_val_state).with_size(size("small")))
-                .child(add_btn),
+                .items_center()
+                .gap_3()
+                .child(
+                    div()
+                        .w(px(200.))
+                        .flex_shrink_0()
+                        .text_sm()
+                        .text_color(cx.theme().muted_foreground)
+                        .child("new var"),
+                )
+                .child(
+                    div()
+                        .flex()
+                        .flex_row()
+                        .flex_grow(1.0)
+                        .min_w_0()
+                        .gap_1()
+                        .child(Input::new(&add_path_state).with_size(size("small")))
+                        .child(Input::new(&add_val_state).with_size(size("small")))
+                        .child(add_btn),
+                ),
         );
 
         div()
