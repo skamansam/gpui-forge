@@ -2082,9 +2082,19 @@ impl ForgeView {
                                             .flex()
                                             .flex_col()
                                             .items_center()
+                                            .justify_center()
                                             .gap_1()
+                                            // `flex_1` alone stretched a
+                                            // partial row's cells across the
+                                            // width — columns misaligned row
+                                            // to row. Capping at the stride
+                                            // keeps every cell the same box:
+                                            // full rows still share the
+                                            // width evenly, short rows stay
+                                            // column-aligned and left-pack.
                                             .flex_1()
                                             .min_w_0()
+                                            .max_w(px(cell))
                                             .p_2()
                                             .rounded_md()
                                             .cursor_pointer()
@@ -2097,13 +2107,18 @@ impl ForgeView {
                                             .child(cell_icon)
                                             .child(
                                                 div()
+                                                    .w_full()
+                                                    .h(px(16.))
                                                     .text_xs()
+                                                    .text_center()
                                                     .text_color(if on_disk {
                                                         cx.theme().success
                                                     } else {
                                                         cx.theme().muted_foreground
                                                     })
+                                                    .whitespace_nowrap()
                                                     .overflow_hidden()
+                                                    .text_ellipsis()
                                                     .child(name.clone()),
                                             )
                                             .tooltip({

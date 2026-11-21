@@ -41,3 +41,5 @@
 - [x] Vars editor showed `number` vars as sliders — swapped to `NumberInput` (stepper buttons + typed value); only writes parseable numbers so partial input can't clobber state. Explicit `slider` decls still get a Slider.
 
 - [x] Vars editor bool/enum/slider rows couldn't be changed — they rendered `checked`/`selected` display-only widgets with no write-back. Checkbox now writes the click through, enum Selects write `SelectEvent::Confirm`, and sliders write `SliderEvent::Change` into the preview's state.
+
+- [x] icon grid cells stretched unevenly — `flex_1` blew a partial row's icons up to fill the width, so columns misaligned and labels wrapped to uneven heights. Cells now cap at the size stride (full rows still share width evenly, short rows left-pack column-aligned), labels are single-line centered + ellipsized at a fixed height, and icon+label center vertically in the row.
