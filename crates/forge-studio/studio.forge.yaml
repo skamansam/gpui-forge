@@ -32,6 +32,7 @@ state:
   studio.theme_preview: string
   studio.markers: list
   editor.source: multiline
+  studio.recent_files: list
   document.selected: string
   base: string
   bases: list
@@ -58,6 +59,7 @@ state:
 # THE APP MENU
 # ============================================================================
 appMenu: &appMenu
+  label: File
   icon: hamburger
   size: Small
   variant: Ghost
@@ -74,6 +76,57 @@ appMenu: &appMenu
     - MenuItem: Open Project…
       icon: package-open
       on click: open_project()
+    - MenuItem: Preview in Host…
+      icon: app-window
+      on click: preview_in_host()
+    - MenuItem: Format
+      icon: sparkles
+      on click: format_document()
+    - MenuSeparator:
+    - MenuSeparator:
+    - MenuItem: Save
+      icon: save
+      on click: save_document()
+    - MenuSeparator:
+    - MenuItem: Preferences...
+      icon: settings
+      on click: open_dialog("preferences")
+    - MenuSeparator:
+    - MenuItem: Test error
+      icon: alert-circle
+      on click: test_error()
+
+editMenu: &editMenu
+  icon: hamburger
+  label: Edit
+  size: Small
+  variant: Ghost
+  children:
+    - MenuItem: Undo
+      icon: undo-2
+      on click: undo()
+    - MenuItem: Redo
+      icon: redo-2
+      on click: redo()
+    - MenuSeparator:
+    - MenuItem: Save
+      icon: save
+      on click: save_document()
+    - MenuSeparator:
+    - MenuItem: Preferences...
+      icon: settings
+      on click: open_dialog("preferences")
+    - MenuSeparator:
+    - MenuItem: Test error
+      icon: alert-circle
+      on click: test_error()
+
+projectMenu: &projectMenu
+  icon: hamburger
+  label: Project
+  size: Small
+  variant: Ghost
+  children:
     - MenuItem: Preview in Host…
       icon: app-window
       on click: preview_in_host()
@@ -106,17 +159,26 @@ appMenu: &appMenu
 titleBar: &titleBar
   children:
     - HStack:
+      style: 
+        gap: 12px
       children:
-        - DropdownMenu#file-menu:
-          <<: *appMenu
         - Image#logo:
           src: ../../gpui_forge_icon_small.svg
           size: 18px
+          style:
+            align: center
         - Label: Forge Studio
           style:
             weight: semibold
+            gap: 12px
         - Tag: self-hosted
           outline: true
+        - DropdownMenu#file-menu:
+          <<: *appMenu
+        - DropdownMenu#edit-menu:
+          <<: *editMenu
+        - DropdownMenu#project-menu:
+          <<: *projectMenu
 
 
 # ============================================================================
@@ -605,8 +667,10 @@ varsTab: &varsTab
 inspector: &inspector
   style:
     width: 280px
+    shrink: false
     height: full
     min-height: 0
+    overflow: scroll
     padding: 8px
     gap: 8px
   children:
@@ -718,6 +782,7 @@ previewTab: &previewTab
         - VStack#palette:
           style:
             width: 200px
+            shrink: false
             height: full
             padding: 8px
             gap: 8px

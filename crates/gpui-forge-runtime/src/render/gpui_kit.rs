@@ -918,14 +918,16 @@ impl ForgeView {
         // Open state lives in studio.palette_open (indices) — groups start open
         // (untracked == open) and header clicks toggle via the accordion callback.
         let open_path = parse_path("studio.palette_open").unwrap();
-        let open_set: Vec<usize> = get_path(self.state(), &open_path)
+        // `None` (never toggled) = every group open; an explicit `[]` =
+        // collapse-all — don't conflate them or the last collapse snaps
+        // everything back open on the next render.
+        let open_set: Option<Vec<usize>> = get_path(self.state(), &open_path)
             .and_then(|j| j.as_array().cloned())
             .map(|a| {
                 a.iter()
                     .filter_map(|v| v.as_u64().map(|u| u as usize))
                     .collect()
-            })
-            .unwrap_or_default();
+            });
         let weak_toggle = cx.entity().downgrade();
         let open_path_c = open_path.clone();
         let mut grid = Accordion::new(SharedString::from(format!("{key}-groups")))
@@ -980,8 +982,8 @@ impl ForgeView {
                         }),
                 );
             }
-            // Untracked (empty open_set) means "everything open" — the default.
-            let open = open_set.is_empty() || open_set.contains(&i);
+            // Untracked (no open_set) means "everything open" — the default.
+            let open = open_set.as_ref().is_none_or(|set| set.contains(&i));
             let item = gpui_kit::component::accordion::AccordionItem::new()
                 .title(SharedString::from(group.clone()))
                 .open(open)
@@ -1952,12 +1954,13 @@ impl ForgeView {
             );
         }
 
+        let skey = format!("{key}|{}", bind_salt(node));
         // Collapse state survives the items rebuild below — the tree only
         // flattens `expanded` flags on the items it was last given, so they
         // carry over by id.
         let previous = self
             .trees
-            .get(key)
+            .get(&skey)
             .map(|state| tree_expansion(state.read(cx)))
             .unwrap_or_default();
         let mut items = items;
@@ -2016,7 +2019,8 @@ impl ForgeView {
         items: Vec<TreeItem>,
         cx: &mut Context<Self>,
     ) -> AnyElement {
-        let state = match self.trees.get(key) {
+        let skey = format!("{key}|{}", bind_salt(node));
+        let state = match self.trees.get(&skey) {
             Some(state) => {
                 state.update(cx, |state, cx| {
                     *state = std::mem::replace(state, TreeState::new(cx)).items(items.clone());
@@ -2025,7 +2029,7 @@ impl ForgeView {
             }
             None => {
                 let state = cx.new(|cx| TreeState::new(cx).items(items));
-                self.trees.insert(key.to_owned(), state.clone());
+                self.trees.insert(skey.clone(), state.clone());
                 state
             }
         };
@@ -2258,14 +2262,13 @@ impl ForgeView {
             }
         }
         let open_path = parse_path("studio.showcase_open").unwrap();
-        let open_set: Vec<usize> = get_path(self.state(), &open_path)
+        let open_set: Option<Vec<usize>> = get_path(self.state(), &open_path)
             .and_then(|j| j.as_array().cloned())
             .map(|a| {
                 a.iter()
                     .filter_map(|v| v.as_u64().map(|u| u as usize))
                     .collect()
-            })
-            .unwrap_or_default();
+            });
         let weak_toggle = cx.entity().downgrade();
         let open_path_c = open_path.clone();
         let mut grid = Accordion::new(SharedString::from(format!("{key}-groups")))
@@ -2314,7 +2317,7 @@ impl ForgeView {
                         .child(widget),
                 );
             }
-            let open = open_set.is_empty() || open_set.contains(&i);
+            let open = open_set.as_ref().is_none_or(|set| set.contains(&i));
             let item = gpui_kit::component::accordion::AccordionItem::new()
                 .title(SharedString::from(group.clone()))
                 .open(open)
@@ -3452,18 +3455,19 @@ impl ForgeView {
             .and_then(|p| self.lookup(p))
             .and_then(|j| j.as_str())
             .map(str::to_owned);
+        let skey = format!("{key}|{}", bind_salt(node));
         // Collapse state survives the items rebuild — the tree only flattens
         // `expanded` flags on the items it was last given, so they carry over
         // by id. Without this every state write snapped all folders back open.
         let previous = self
             .trees
-            .get(key)
+            .get(&skey)
             .map(|state| tree_expansion(state.read(cx)))
             .unwrap_or_default();
         let mut items = Vec::new();
         self.outline_data(&doc.root, "0".to_owned(), &mut items);
         carry_expansion(&mut items, &previous);
-        let state = match self.trees.get(key) {
+        let state = match self.trees.get(&skey) {
             Some(state) => {
                 state.update(cx, |state, cx| {
                     *state = std::mem::replace(state, TreeState::new(cx)).items(items.clone());
@@ -3472,7 +3476,7 @@ impl ForgeView {
             }
             None => {
                 let state = cx.new(|cx| TreeState::new(cx).items(items));
-                self.trees.insert(key.to_owned(), state.clone());
+                self.trees.insert(skey.clone(), state.clone());
                 state
             }
         };
@@ -3730,7 +3734,14 @@ impl ForgeView {
     ) -> Entity<InputState> {
         let placeholder = self.prop_text(node, "placeholder").unwrap_or_default();
         let masked = self.prop_bool(node, "masked");
-        let state_key = format!("{key}|{placeholder}|{masked}");
+        let path = self.two_way(node, "value");
+        // The bound path rides the cache key — a reordered row (inspector
+        // set-first ordering, `for:` shifts) reusing this slot must not
+        // inherit an entity whose subscription still writes the old path.
+        let state_key = format!(
+            "{key}|{placeholder}|{masked}|{}",
+            path.as_ref().map(ToString::to_string).unwrap_or_default()
+        );
         let value = self.prop_text(node, "value").unwrap_or_default();
         if let Some(state) = self.inputs.get(&state_key) {
             return state.clone();
@@ -3741,7 +3752,6 @@ impl ForgeView {
                 .masked(masked)
                 .default_value(value.clone())
         });
-        let path = self.two_way(node, "value");
         let changed = node.clone();
         let subscription = cx.subscribe(&state, move |this, state, event, cx| match event {
             InputEvent::Change => {
@@ -3768,7 +3778,11 @@ impl ForgeView {
         cx: &mut Context<Self>,
     ) -> Entity<TextareaState> {
         let placeholder = self.prop_text(node, "placeholder").unwrap_or_default();
-        let state_key = format!("{key}|{placeholder}");
+        let path = self.two_way(node, "value");
+        let state_key = format!(
+            "{key}|{placeholder}|{}",
+            path.as_ref().map(ToString::to_string).unwrap_or_default()
+        );
         let value = self.prop_text(node, "value").unwrap_or_default();
         if let Some(state) = self.textareas.get(&state_key) {
             return state.clone();
@@ -3783,7 +3797,6 @@ impl ForgeView {
                 None => state,
             }
         });
-        let path = self.two_way(node, "value");
         let changed = node.clone();
         let subscription = cx.subscribe(&state, move |this, state, event, cx| {
             if let InputEvent::Change = event {
@@ -4365,7 +4378,12 @@ impl ForgeView {
             "NumberInput" => {
                 let placeholder = self.prop_text(node, "placeholder").unwrap_or_default();
                 let value = self.prop_text(node, "value").unwrap_or_default();
-                let state = match self.inputs.get(key) {
+                let path = self.two_way(node, "value");
+                let state_key = format!(
+                    "{key}|{}",
+                    path.as_ref().map(ToString::to_string).unwrap_or_default()
+                );
+                let state = match self.inputs.get(&state_key) {
                     Some(state) => state.clone(),
                     None => {
                         let state = cx.new(|cx| {
@@ -4373,7 +4391,6 @@ impl ForgeView {
                                 .placeholder(placeholder)
                                 .default_value(value.clone())
                         });
-                        let path = self.two_way(node, "value");
                         let changed = node.clone();
                         let subscription = cx.subscribe(&state, move |this, state, event, cx| {
                             if let InputEvent::Change = event {
@@ -4385,7 +4402,7 @@ impl ForgeView {
                             }
                         });
                         self.subscriptions.push(subscription);
-                        self.inputs.insert(key.to_owned(), state.clone());
+                        self.inputs.insert(state_key.clone(), state.clone());
                         state
                     }
                 };
@@ -4416,7 +4433,11 @@ impl ForgeView {
                         _ => {}
                     }
                 }
-                let state_key = format!("{key}|{language}");
+                let path = self.two_way(node, "value");
+                let state_key = format!(
+                    "{key}|{language}|{}",
+                    path.as_ref().map(ToString::to_string).unwrap_or_default()
+                );
                 let value = self.prop_text(node, "value").unwrap_or_default();
                 let state = match self.editors.get(&state_key) {
                     Some(state) => state.clone(),
@@ -4431,7 +4452,6 @@ impl ForgeView {
                                 state.language(language)
                             }
                         });
-                        let path = self.two_way(node, "value");
                         let changed = node.clone();
                         let subscription = cx.subscribe(&state, move |this, state, event, cx| {
                             if let InputEvent::Change = event {
@@ -4553,7 +4573,12 @@ impl ForgeView {
                     .map(SharedString::from)
                     .collect();
                 let value = self.prop_text(node, "value").unwrap_or_default();
-                let state_key = format!("{key}|{}", options.join("\u{1f}"));
+                let path = self.two_way(node, "value");
+                let state_key = format!(
+                    "{key}|{}|{}",
+                    options.join("\u{1f}"),
+                    path.as_ref().map(ToString::to_string).unwrap_or_default()
+                );
                 let state = match self.selects.get(&state_key) {
                     Some(state) => state.clone(),
                     None => {
@@ -4564,7 +4589,6 @@ impl ForgeView {
                         // Sync the bound `value` into the state's selected index —
                         // external writes (e.g. theme reset) land here too.
                         state.update(cx, |s, cx| s.set_selected_index(ix, window, cx));
-                        let path = self.two_way(node, "value");
                         let changed = node.clone();
                         let subscription = cx.subscribe(
                             &state,
@@ -5080,7 +5104,12 @@ impl ForgeView {
                     .into_any_element()
             }
             "Slider" => {
-                let state = match self.sliders.get(key) {
+                let path = self.two_way(node, "value");
+                let state_key = format!(
+                    "{key}|{}",
+                    path.as_ref().map(ToString::to_string).unwrap_or_default()
+                );
+                let state = match self.sliders.get(&state_key) {
                     Some(state) => state.clone(),
                     None => {
                         let value = self
@@ -5103,7 +5132,6 @@ impl ForgeView {
                         }
                         state = state.default_value(SliderValue::Single(value as f32));
                         let state = cx.new(|_| state);
-                        let path = self.two_way(node, "value");
                         let changed = node.clone();
                         let subscription = cx.subscribe(&state, move |this, _state, event, cx| {
                             let SliderEvent::Change(value) = event else {
@@ -5117,7 +5145,7 @@ impl ForgeView {
                             }
                         });
                         self.subscriptions.push(subscription);
-                        self.sliders.insert(key.to_owned(), state.clone());
+                        self.sliders.insert(state_key.clone(), state.clone());
                         state
                     }
                 };
@@ -5228,7 +5256,8 @@ impl ForgeView {
             }
             "FormField" => self.form_field(node, key, window, cx).into_any_element(),
             "ColorPicker" => {
-                let state = match self.color_pickers.get(key) {
+                let skey = format!("{key}|{}", bind_salt(node));
+                let state = match self.color_pickers.get(&skey) {
                     Some(state) => state.clone(),
                     None => {
                         let state = cx.new(|cx| ColorPickerState::new(window, cx));
@@ -5243,14 +5272,15 @@ impl ForgeView {
                             this.fire(&changed, "change", cx);
                         });
                         self.subscriptions.push(subscription);
-                        self.color_pickers.insert(key.to_owned(), state.clone());
+                        self.color_pickers.insert(skey.clone(), state.clone());
                         state
                     }
                 };
                 ColorPicker::new(&state).into_any_element()
             }
             "OtpInput" => {
-                let state = match self.otps.get(key) {
+                let skey = format!("{key}|{}", bind_salt(node));
+                let state = match self.otps.get(&skey) {
                     Some(state) => state.clone(),
                     None => {
                         let length = self
@@ -5275,14 +5305,15 @@ impl ForgeView {
                                 _ => {}
                             });
                         self.subscriptions.push(subscription);
-                        self.otps.insert(key.to_owned(), state.clone());
+                        self.otps.insert(skey.clone(), state.clone());
                         state
                     }
                 };
                 OtpInput::new(&state).into_any_element()
             }
             "DatePicker" => {
-                let state = match self.date_pickers.get(key) {
+                let skey = format!("{key}|{}", bind_salt(node));
+                let state = match self.date_pickers.get(&skey) {
                     Some(state) => state.clone(),
                     None => {
                         let state = cx.new(|cx| DatePickerState::new(window, cx));
@@ -5297,7 +5328,7 @@ impl ForgeView {
                             this.fire(&changed, "change", cx);
                         });
                         self.subscriptions.push(subscription);
-                        self.date_pickers.insert(key.to_owned(), state.clone());
+                        self.date_pickers.insert(skey.clone(), state.clone());
                         state
                     }
                 };
@@ -5306,18 +5337,20 @@ impl ForgeView {
                     .into_any_element()
             }
             "Calendar" => {
-                let state = match self.calendars.get(key) {
+                let skey = format!("{key}|{}", bind_salt(node));
+                let state = match self.calendars.get(&skey) {
                     Some(state) => state.clone(),
                     None => {
                         let state = cx.new(|cx| CalendarState::new(window, cx));
-                        self.calendars.insert(key.to_owned(), state.clone());
+                        self.calendars.insert(skey.clone(), state.clone());
                         state
                     }
                 };
                 Calendar::new(&state).into_any_element()
             }
             "TimeField" => {
-                let state = match self.time_fields.get(key) {
+                let skey = format!("{key}|{}", bind_salt(node));
+                let state = match self.time_fields.get(&skey) {
                     Some(state) => state.clone(),
                     None => {
                         let state = cx.new(|cx| TimeFieldState::new(window, cx));
@@ -5326,7 +5359,7 @@ impl ForgeView {
                             this.fire(&changed, "change", cx);
                         });
                         self.subscriptions.push(subscription);
-                        self.time_fields.insert(key.to_owned(), state.clone());
+                        self.time_fields.insert(skey.clone(), state.clone());
                         state
                     }
                 };
@@ -5532,7 +5565,8 @@ impl ForgeView {
                 sidebar.into_any_element()
             }
             "List" | "VirtualList" => {
-                let state = match self.lists.get(key) {
+                let skey = format!("{key}|{}", bind_salt(node));
+                let state = match self.lists.get(&skey) {
                     Some(state) => state.clone(),
                     None => {
                         // The weak view must come from the OUTER context — `cx` inside
@@ -5567,7 +5601,7 @@ impl ForgeView {
                                 _ => {}
                             });
                         self.subscriptions.push(subscription);
-                        self.lists.insert(key.to_owned(), state.clone());
+                        self.lists.insert(skey.clone(), state.clone());
                         state
                     }
                 };
@@ -5583,7 +5617,8 @@ impl ForgeView {
                     .enumerate()
                     .map(|(i, child)| self.tree_data(child, &format!("{key}/{i}"), &mut nodes))
                     .collect();
-                let state = match self.trees.get(key) {
+                let skey = format!("{key}|{}", bind_salt(node));
+                let state = match self.trees.get(&skey) {
                     Some(state) => {
                         state.update(cx, |state, cx| {
                             *state =
@@ -5593,7 +5628,7 @@ impl ForgeView {
                     }
                     None => {
                         let state = cx.new(|cx| TreeState::new(cx).items(items.clone()));
-                        self.trees.insert(key.to_owned(), state.clone());
+                        self.trees.insert(skey.clone(), state.clone());
                         state
                     }
                 };
@@ -5947,7 +5982,8 @@ impl ForgeView {
                     })
                     .unwrap_or_default();
                 let placeholder = self.prop_text(node, "placeholder");
-                let state = match self.comboboxes.get(key) {
+                let skey = format!("{key}|{}", bind_salt(node));
+                let state = match self.comboboxes.get(&skey) {
                     Some(state) => state.clone(),
                     None => {
                         let state = cx
@@ -5975,7 +6011,7 @@ impl ForgeView {
                             this.fire(&changed, "change", cx);
                         });
                         self.subscriptions.push(subscription);
-                        self.comboboxes.insert(key.to_owned(), state.clone());
+                        self.comboboxes.insert(skey.clone(), state.clone());
                         state
                     }
                 };
@@ -5990,7 +6026,8 @@ impl ForgeView {
                     .prop(node, "item-width")
                     .and_then(|v| self.number(v))
                     .map(|n| px(n as f32));
-                let state = match self.carousels.get(key) {
+                let skey = format!("{key}|{}", bind_salt(node));
+                let state = match self.carousels.get(&skey) {
                     Some(state) => state.clone(),
                     None => {
                         let state = cx.new(|_| {
@@ -6000,7 +6037,7 @@ impl ForgeView {
                                 Axis::Horizontal
                             })
                         });
-                        self.carousels.insert(key.to_owned(), state.clone());
+                        self.carousels.insert(skey.clone(), state.clone());
                         state
                     }
                 };
@@ -6052,11 +6089,12 @@ impl ForgeView {
                     .into_any_element()
             }
             "Command" => {
-                let state = match self.commands.get(key) {
+                let skey = format!("{key}|{}", bind_salt(node));
+                let state = match self.commands.get(&skey) {
                     Some(state) => state.clone(),
                     None => {
                         let state = cx.new(|cx| CommandState::new(window, cx));
-                        self.commands.insert(key.to_owned(), state.clone());
+                        self.commands.insert(skey.clone(), state.clone());
                         state
                     }
                 };
@@ -6154,7 +6192,8 @@ impl ForgeView {
                         def
                     })
                     .collect();
-                let state = match self.questionnaires.get(key) {
+                let skey = format!("{key}|{}", bind_salt(node));
+                let state = match self.questionnaires.get(&skey) {
                     Some(state) => state.clone(),
                     None => {
                         let state = cx.new(|cx| {
@@ -6166,7 +6205,7 @@ impl ForgeView {
                                 .unwrap_or_else(|_| unreachable!())
                             })
                         });
-                        self.questionnaires.insert(key.to_owned(), state.clone());
+                        self.questionnaires.insert(skey.clone(), state.clone());
                         state
                     }
                 };
@@ -6619,16 +6658,25 @@ fn inspector_scroll_style() -> Entries {
 /// Every style key the inspector lists — set entries first in `style:`
 /// order, then the rest of `KEYS`, so clearing a value (`[none]`, an empty
 /// input) removes the entry without its row disappearing.
+/// Rows in stable registry order — set-first ordering made a row teleport
+/// mid-typing when its key became set (and churned every positional entity
+/// key). Unregistered style keys keep document order at the tail.
 fn style_rows(set: &Entries) -> Vec<(String, Option<Value>)> {
-    let mut rows: Vec<(String, Option<Value>)> = set
+    let mut rows: Vec<(String, Option<Value>)> = forge_spec::style::KEYS
         .iter()
-        .map(|(name, value)| (name.clone(), Some(value.clone())))
+        .map(|(key, _)| {
+            (
+                (*key).to_owned(),
+                set.iter()
+                    .find(|(name, _)| name == key)
+                    .map(|(_, value)| value.clone()),
+            )
+        })
         .collect();
-    for (key, _) in forge_spec::style::KEYS {
-        if set.iter().any(|(name, _)| name == key) {
-            continue;
+    for (name, value) in set {
+        if forge_spec::style::key_type(name).is_none() {
+            rows.push((name.clone(), Some(value.clone())));
         }
-        rows.push(((*key).to_owned(), None));
     }
     rows
 }
@@ -8147,4 +8195,24 @@ impl IntoElement for BoundsTracker {
     fn into_element(self) -> Self::Element {
         self
     }
+}
+
+/// Positional `key`s collide when generated rows reorder (`for:` shifts,
+/// conditional branches) — salting a state cache key with the node's bound
+/// paths stops a row inheriting an entity that still displays or writes
+/// another binding's value.
+pub(crate) fn bind_salt(node: &Node) -> String {
+    let mut bound = node
+        .props
+        .iter()
+        .filter_map(|(name, value)| match value {
+            Value::Binding { path, .. } => Some(format!("{name}={path}")),
+            _ => None,
+        })
+        .collect::<Vec<_>>();
+    if let Some(Value::Binding { path, .. }) = &node.content {
+        bound.push(format!("*={path}"));
+    }
+    bound.sort();
+    bound.join("&")
 }

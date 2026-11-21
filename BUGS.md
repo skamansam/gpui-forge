@@ -16,12 +16,19 @@
 - [x] after opening the forge.toml project, clicking on the src folder in the project tree does nothing.
 - [x] after opening the forge.toml project, there is a message in the status line that says forge.toml has no forge.document
 - [ ] the iconbrowser should have a size dropdown to show different icon sizes. it should be beside the current filters, so iconset, category, suffix, and size should be on one line
-- [ ] the license warnign should be at the top of the window, along with the 
+- [ ] the license warnign should be at the top of the window, along with the name and license info. basically, the bottom panel should be there.
+- [ ] the forge.Icons widget's UI should be handed off the forge file and the variables should be used to drive it. Remember,  we are trying to minimize the generated UI and pass it off to the forge file wherever possible.
+- [ ] we need to make sure we have docs that explain how to use custom widgets like forge.Icons
+- [ ] we need to add more app features to the homepage/website - highlight features such as the varaibles editor, the widget palette, the icon browser, etc., the ability to use custom widgets, the ability to create custom icons, the ability to use flow control logic in the forge files, and the ability to have project files for complicated multi-file projects and assets. If you have any more suggestions about which other features to highlight, add them as well.
 - [ ] the widget palette should have a search bar at the top. the seach should filter the widgets in the palette by default, but have a checkbox that can search through all widgets sets
 - [ ] the palette shoudl scroll if there are more widgets than can be displayed
 - [ ] when collapsing all the groups int eh palette, and the length of the palette gets shorter than the window, the status bar moves up the window. it should stay at the bottom. (i think the window's main VStack is shrinking). Then when dragging a palette item to the canvas, the main contents shrinks horizontally. Once the main  vstack gets "detached" from the window with these bugs, it never seems to go back properly.
 - [ ] when an item is selected for inspection, the structure panel should highlight the selected item
 - [ ] when an item is being inspected, the item in the canvas should be highlighted
 - [ ] why is the grow and shrinl style numeric?
-- [ ] when I type into the gap-x field, the gap field changes, and vice versa
+- [x] when I type into the gap-x field, the gap field changes, and vice versa — FIXED: cached widget entities were keyed positionally, so a reordered row reused an entity whose subscription still wrote the old bound path; cache keys now carry `bind_salt` (bound paths) and style rows use stable registry order
 - [ ] the inspector panel should stay the same size and be scrollable 
+- [ ] the problems panel should be like a red alert when there are issues and a green alert when there are no issues
+- [ ] ctrl+s should save the current document
+- [ ] there should be a project tab that allows editing the project file IF a project is open
+- [ ] the menus need the correct icons

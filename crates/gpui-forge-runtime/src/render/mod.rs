@@ -6,6 +6,8 @@
 mod gpui_kit;
 #[cfg(feature = "base-gpui-kit")]
 pub use gpui_kit::*;
+#[cfg(all(test, feature = "base-gpui-kit"))]
+mod bind_salt_tests;
 
 #[cfg(all(feature = "base-guise", not(feature = "base-gpui-kit")))]
 mod guise;
