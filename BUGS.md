@@ -30,5 +30,5 @@
 - [x] the inspector panel should stay the same size and be scrollable — fixed earlier: width 280px, shrink false, overflow scroll on the docked column + overflow scroll on Properties/Style tab bodies 
 - [x] the problems panel should be like a red alert when there are issues and a green alert when there are no issues — done: studio.problem_variant (Success/Error) is published at every diagnostics write site; both panels now render a banner Alert bound to it
 - [x] ctrl+s should save the current document — done: SaveDocument action bound to ctrl-s (+ cmd-s), fires save_document on the render root so it works regardless of focus; falls back to save-as prompt when no file is open
-- [ ] there should be a project tab that allows editing the project file IF a project is open
+- [x] there should be a project tab that allows editing the project file IF a project is open — done: conditional Tab (if: $studio.project) with an Editor bound to studio.toml_source (seeded by load_project); Apply runs save_project → writes forge.toml → re-loads the project
 - [ ] the menus need the correct icons

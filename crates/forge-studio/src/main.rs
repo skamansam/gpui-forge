@@ -130,6 +130,9 @@ struct Shared {
     /// The `forge.toml` currently being watched — `watch_manifest` exits
     /// when this no longer matches its path (project switched).
     manifest_watching: Option<PathBuf>,
+    /// The open project's `forge.toml` — the Project tab edits this file;
+    /// `save_project` writes `studio.toml_source` back here.
+    project_toml: Option<PathBuf>,
     /// Undo/redo — snapshots of `(document, editor source)` taken before each
     /// mutation, so a step back restores the editor text exactly.
     undo: Vec<(Document, String)>,
@@ -341,6 +344,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         project_dir: None,
         project_watch: false,
         manifest_watching: None,
+        project_toml: None,
         undo: Vec::new(),
         redo: Vec::new(),
     }));
@@ -518,6 +522,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "preview_in_host",
         "raise_host",
         "save_document",
+        "save_project",
         "format_document",
         "apply_theme",
         "apply_theme_name",
@@ -1056,6 +1061,7 @@ fn dispatch(
         "rename_file" => rename_file(view, shared.clone(), cx),
         "close_dialog" => close_dialog(cx),
         "save_document" => save_document(view, shared, cx),
+        "save_project" => save_project(view, shared, cx),
         "format_document" => format_document(view, shared, cx),
         "apply_theme" => {
             let dark = args.first().is_some_and(|a| a == "true");
@@ -2784,11 +2790,17 @@ fn load_project(
     }
     let dir = toml.parent().map(|p| p.to_path_buf()).unwrap_or_default();
     shared.borrow_mut().project_dir = Some(dir.clone());
+    shared.borrow_mut().project_toml = Some(toml.clone());
     add_icon_root(assets_root(&dir));
     let doc_path = dir.join(&rel);
     view.update_state(
         &parse_path("studio.project").unwrap(),
         Json::String(dir.display().to_string()),
+        cx,
+    );
+    view.update_state(
+        &parse_path("studio.toml_source").unwrap(),
+        Json::String(src.clone()),
         cx,
     );
     // Root the workspace panels at the project — the Files tree, Assets
@@ -3642,6 +3654,27 @@ fn save_document(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<Fo
             status(view, &format!("saved {}", path.display()), cx);
         }
         Err(e) => status(view, &format!("cannot save {}: {e}", path.display()), cx),
+    }
+}
+
+/// `save_project` — the Project tab's Apply button: write `studio.toml_source`
+/// back to `forge.toml` and re-run `load_project` so document/icons/assets/
+/// themes changes apply immediately (the manifest watcher re-detects it too).
+fn save_project(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView>) {
+    let Some(toml) = shared.borrow().project_toml.clone() else {
+        status(view, "no project open", cx);
+        return;
+    };
+    let src = get_path(view.state(), &parse_path("studio.toml_source").unwrap())
+        .and_then(|j| j.as_str())
+        .unwrap_or_default()
+        .to_owned();
+    match std::fs::write(&toml, &src) {
+        Ok(()) => {
+            status(view, &format!("saved {}", toml.display()), cx);
+            load_project(toml, view, shared.clone(), cx);
+        }
+        Err(e) => status(view, &format!("cannot save {}: {e}", toml.display()), cx),
     }
 }
 

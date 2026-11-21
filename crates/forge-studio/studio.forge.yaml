@@ -19,6 +19,7 @@ state:
   studio.widget_set: string
   studio.widget_sets: list
   studio.diagnostics: string
+  studio.toml_source: string
   studio.problem_variant: string
   studio.file: string
   studio.host: string
@@ -898,6 +899,27 @@ body: &body
                       <<: *assetsTab
                     - Tab: Icons
                       <<: *iconsTab
+                    # Only when a forge.toml project is open — edits the
+                    # manifest itself; Apply writes it and re-loads the
+                    # project (document/icons/assets/themes re-derive).
+                    - Tab: Project
+                      if: $studio.project
+                      children:
+                        - VStack:
+                          style: {grow: true, min-height: 0, padding: 12px, gap: 8px}
+                          children:
+                            - Text: "{$studio.project}/forge.toml"
+                              style: {size: sm, color: $theme.muted_foreground}
+                            - Editor#project_toml:
+                              language: toml
+                              value: bind $studio.toml_source
+                              style: {grow: true, min-height: 0, border: 1px}
+                            - HStack:
+                              style: {justify: end}
+                              children:
+                                - Button: Apply
+                                  variant: Primary
+                                  on click: save_project()
 
 
 # ============================================================================
