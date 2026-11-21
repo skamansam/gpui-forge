@@ -6,6 +6,9 @@ use:
   forge: forge
 meta:
   title: Forge Studio
+  # Hot-reload: Studio watches this file and swaps the parsed doc on
+  # change (parse failures keep the last-good doc + show diagnostics).
+  watch: "true"  # hot-reloads this shell
 
 state:
   studio.theme: string

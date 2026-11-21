@@ -15,14 +15,20 @@ pub fn manifest_section(src: &str, section: &str, key: &str) -> Option<String> {
         .split('[')
         .next()?;
     body.lines().map(str::trim).find_map(|l| {
-        l.strip_prefix(key)?
-            .trim_start()
-            .strip_prefix('=')?
-            .trim()
-            .strip_prefix('"')?
-            .strip_suffix('"')
-            .map(str::to_owned)
+        let v = l.strip_prefix(key)?.trim_start().strip_prefix('=')?.trim();
+        match v.strip_prefix('"').and_then(|s| s.strip_suffix('"')) {
+            Some(s) => Some(s.to_owned()),
+            // Bare values too — `watch = true` (a TOML bool) reads as "true".
+            None if !v.is_empty() => Some(v.to_owned()),
+            None => None,
+        }
     })
+}
+
+/// `meta.watch` / `[forge] watch` are declared as strings or bare bools —
+/// both normalise through here.
+pub fn truthy(v: &str) -> bool {
+    matches!(v, "true" | "1" | "yes" | "on")
 }
 
 #[cfg(test)]
@@ -47,6 +53,12 @@ mod tests {
         // `documents` must not satisfy a `document` lookup.
         let docs = "[forge]\ndocuments = [\"a.forge.yaml\"]\n";
         assert_eq!(manifest_value(docs, "document"), None);
+        // Bare bools parse too — `[forge] watch = true`.
+        assert_eq!(
+            manifest_value("[forge]\nwatch = true\n", "watch").as_deref(),
+            Some("true")
+        );
+        assert!(truthy("true") && truthy("yes") && !truthy("false") && !truthy(""));
         // The real workspace manifest parses its entry document.
         let repo = include_str!("../../../forge.toml");
         assert_eq!(

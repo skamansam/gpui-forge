@@ -18,6 +18,9 @@ base = "gpui-kit"
 # Entry document for `forge build`/`preview`/`package` run with no doc path —
 # point it at whichever doc you're working on.
 document = "crates/forge-studio/studio.forge.yaml"
+# Studio hot-reload: opened docs swap in on save (their own `meta.watch`
+# also enables it per-file), and this manifest re-applies on change.
+watch = true
 # Multi-doc apps list every document explicitly — `forge skeleton` builds
 # exactly this set, never a directory scan (entry `document` is always in).
 # documents = [

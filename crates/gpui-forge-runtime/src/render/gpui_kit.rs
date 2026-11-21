@@ -434,6 +434,12 @@ impl ForgeView {
         &self.state
     }
 
+    /// The document's `meta:` map — `meta.watch` opts a file into
+    /// hot-reload.
+    pub fn meta(&self) -> &Json {
+        &self.meta
+    }
+
     /// Writes `value` at `path` in the view state without rebuilding inputs.
     /// The parsed document this view renders, if any.
     pub fn document(&self) -> Option<&Document> {

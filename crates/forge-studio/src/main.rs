@@ -33,6 +33,37 @@ const SHELL: &str = include_str!("../studio.forge.yaml");
 const WELCOME: &str = include_str!("../welcome.forge.yaml");
 const GALLERY: &str = include_str!("../gallery.forge.yaml");
 const GALLERY_FORGE: &str = include_str!("../gallery.forge.forge.yaml");
+
+/// Reads `rel` (crate-dir-relative — `CARGO_MANIFEST_DIR` bakes the source
+/// dir at compile time) from disk, falling back to the `include_str!` copy.
+/// Packaged builds won't find the path and get the embedded bytes.
+fn file_src(rel: &str, embedded: &'static str) -> String {
+    std::fs::read_to_string(std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(rel))
+        .unwrap_or_else(|_| embedded.to_owned())
+}
+
+/// A document's `meta.watch` opts its file into hot-reload — Studio then
+/// polls it and swaps the parsed doc on change (see `watch_file` /
+/// `watch_shell`).
+fn doc_watches(doc: &Document) -> bool {
+    doc.meta
+        .iter()
+        .any(|(k, v)| k == "watch" && manifest::truthy(v))
+}
+
+/// Same check on the loaded view — `view.meta()` mirrors the document's map.
+fn view_watches(view: &ForgeView) -> bool {
+    view.meta()
+        .get("watch")
+        .and_then(Json::as_str)
+        .is_some_and(manifest::truthy)
+}
+
+/// `watch` declared in `meta:` or in the project's `[forge]` — either marks
+/// the file for hot-reload.
+fn file_watches(view: &ForgeView, shared: &SharedState) -> bool {
+    view_watches(view) || shared.borrow().project_watch
+}
 const BLANK: &str = "$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json\nforge: \"0.1\"\nbase: gpui-kit\n\nroot:\n  VStack:\n  style:\n    padding: 16px\n  children:\n    - Text: Hello, Forge!\n";
 
 // One demo per widget set, shared with `examples/` and the docs site (#129).
@@ -92,6 +123,13 @@ struct Shared {
     /// The open project's root — `project_iconset` only applies to docs
     /// under it; files opened elsewhere fall back to lucide.
     project_dir: Option<PathBuf>,
+    /// The project's `[forge] watch` — when true, opened docs hot-reload
+    /// even without their own `meta.watch`, and `watch_manifest` tracks the
+    /// `forge.toml` itself.
+    project_watch: bool,
+    /// The `forge.toml` currently being watched — `watch_manifest` exits
+    /// when this no longer matches its path (project switched).
+    manifest_watching: Option<PathBuf>,
     /// Undo/redo — snapshots of `(document, editor source)` taken before each
     /// mutation, so a step back restores the editor text exactly.
     undo: Vec<(Document, String)>,
@@ -296,20 +334,30 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         catalogs: check::catalogs(),
         project_iconset: None,
         project_dir: None,
+        project_watch: false,
+        manifest_watching: None,
         undo: Vec::new(),
         redo: Vec::new(),
     }));
 
     let mut view = ForgeView::new(shared.borrow().catalogs.clone());
-    let (doc, diagnostics) = check::check(SHELL, BASE_ID, &shared.borrow().catalogs);
+    let shell = file_src("studio.forge.yaml", SHELL);
+    let (doc, diagnostics) = check::check(&shell, BASE_ID, &shared.borrow().catalogs);
     for d in &diagnostics {
         eprintln!(
             "studio.forge.yaml:{}:{}: {}",
             d.pos.line, d.pos.col, d.message
         );
     }
+    // `meta.watch` on the shell marks it for hot-reload. A broken parse
+    // spawns the watcher anyway — it's the recovery path for the fix.
+    let shell_watched = doc.as_ref().map_or(true, doc_watches);
     if let Some(doc) = doc {
         view.set_document(doc, cx);
+    }
+    let shell_path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("studio.forge.yaml");
+    if shell_watched && shell_path.is_file() {
+        watch_shell(shell_path, shared.clone(), cx);
     }
     refresh_recent_menu(&mut view, &load_recents(), cx);
 
@@ -441,7 +489,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
                 "spec": gpui_forge_runtime::forge_spec::SPEC_VERSION,
                 "base": BASE_ID,
             },
-            "editor": { "source": WELCOME },
+            "editor": { "source": file_src("welcome.forge.yaml", WELCOME) },
             "preview": { "state": "" },
             "status": { "message": "ready — every panel you see is a Forge document" },
         }),
@@ -550,10 +598,11 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         );
     });
 
+    let src = file_src("welcome.forge.yaml", WELCOME);
     load_source(
         &mut view,
         "welcome.forge.yaml",
-        WELCOME,
+        &src,
         Some(std::path::Path::new(env!("CARGO_MANIFEST_DIR"))),
         &shared,
         cx,
@@ -1467,7 +1516,9 @@ fn rename_file(view: &mut ForgeView, shared: SharedState, cx: &mut Context<Forge
     }
     if shared.borrow().file.as_deref() == Some(from.as_path()) {
         shared.borrow_mut().file = Some(to.clone());
-        watch_file(to.clone(), shared.clone(), cx);
+        if file_watches(view, &shared) {
+            watch_file(to.clone(), shared.clone(), cx);
+        }
     }
     refresh_files(view, &parent, cx);
     refresh_assets(view, &parent, cx);
@@ -2713,6 +2764,14 @@ fn load_project(
     // scopes to docs under `project_dir` — a file opened elsewhere falls
     // back to lucide.
     shared.borrow_mut().project_iconset = manifest_section(&src, "icons", "set");
+    // `[forge] watch = true` — opened docs hot-reload and the manifest
+    // itself is polled (one watcher per forge.toml; `watch_manifest`
+    // re-enters here on change without re-spawning).
+    let watching = manifest_section(&src, "forge", "watch").is_some_and(|v| manifest::truthy(&v));
+    shared.borrow_mut().project_watch = watching;
+    if !watching {
+        shared.borrow_mut().manifest_watching = None;
+    }
     let dir = toml.parent().map(|p| p.to_path_buf()).unwrap_or_default();
     shared.borrow_mut().project_dir = Some(dir.clone());
     add_icon_root(assets_root(&dir));
@@ -2727,6 +2786,10 @@ fn load_project(
     refresh_files(view, &dir, cx);
     refresh_assets(view, &dir, cx);
     refresh_themes(view, &dir, cx);
+    if watching && shared.borrow().manifest_watching.as_deref() != Some(toml.as_path()) {
+        shared.borrow_mut().manifest_watching = Some(toml.clone());
+        watch_manifest(toml.clone(), shared.clone(), cx);
+    }
     load_file(doc_path, view, shared, cx);
 }
 
@@ -2749,7 +2812,10 @@ fn load_file(
             load_source(view, &name, &src, dir.as_deref(), &shared, cx);
             let recents = record_recent(&path);
             refresh_recent_menu(view, &recents, cx);
-            watch_file(path.clone(), shared.clone(), cx);
+            // `meta.watch` or project `[forge] watch` — hot-reload on save.
+            if file_watches(view, &shared) {
+                watch_file(path.clone(), shared.clone(), cx);
+            }
             // The project tree highlights `studio.file_selected` — keep it on
             // the open file whichever way it was opened (tree, recents, menu).
             view.update_state(
@@ -2995,8 +3061,11 @@ fn watch_file(path: PathBuf, shared: SharedState, cx: &mut Context<ForgeView>) {
             };
             let path = path.clone();
             let shared = shared.clone();
-            view.update(cx, move |view, cx| {
-                if source(view) != src {
+            let keep = view
+                .update(cx, move |view, cx| {
+                    if source(view) == src {
+                        return true;
+                    }
                     let name = path
                         .file_name()
                         .map(|n| n.to_string_lossy().into_owned())
@@ -3004,7 +3073,105 @@ fn watch_file(path: PathBuf, shared: SharedState, cx: &mut Context<ForgeView>) {
                     let dir = path.parent().map(|p| p.to_path_buf());
                     load_source(view, &name, &src, dir.as_deref(), &shared, cx);
                     status(view, "reloaded — file changed on disk", cx);
-                }
+                    // A reload that dropped `meta.watch` ends the watch.
+                    file_watches(view, &shared)
+                })
+                .unwrap_or(false);
+            if !keep {
+                return;
+            }
+        }
+    })
+    .detach();
+}
+
+/// `meta.watch` on `studio.forge.yaml` — the shell hot-reloads itself.
+/// Valid reloads swap in via `set_document` (view state survives); a parse
+/// failure keeps the last-good document and reports the first diagnostic
+/// in the status bar instead of blanking the window. Removing `watch` from
+/// a valid reload ends the watch.
+fn watch_shell(path: PathBuf, shared: SharedState, cx: &mut Context<ForgeView>) {
+    cx.spawn(async move |view, cx| {
+        let mut mtime = std::fs::metadata(&path)
+            .ok()
+            .and_then(|m| m.modified().ok());
+        loop {
+            cx.background_executor()
+                .timer(std::time::Duration::from_secs(1))
+                .await;
+            let new = std::fs::metadata(&path)
+                .ok()
+                .and_then(|m| m.modified().ok());
+            if new.is_none() || new == mtime {
+                continue;
+            }
+            mtime = new;
+            let Ok(src) = std::fs::read_to_string(&path) else {
+                continue;
+            };
+            let shared = shared.clone();
+            let keep = view
+                .update(cx, move |view, cx| {
+                    let catalogs = shared.borrow().catalogs.clone();
+                    let (doc, diagnostics) = check::check(&src, BASE_ID, &catalogs);
+                    match doc {
+                        Some(doc) => {
+                            let keep = doc_watches(&doc);
+                            view.set_document(doc, cx);
+                            status(view, "shell reloaded — studio.forge.yaml changed", cx);
+                            keep
+                        }
+                        None => {
+                            let msg = diagnostics
+                                .first()
+                                .map(|d| {
+                                    format!(
+                                        "studio.forge.yaml:{}:{}: {}",
+                                        d.pos.line, d.pos.col, d.message
+                                    )
+                                })
+                                .unwrap_or_else(|| "studio.forge.yaml failed to parse".into());
+                            status(view, &msg, cx);
+                            // Keep polling — the next edit may fix it.
+                            true
+                        }
+                    }
+                })
+                .unwrap_or(false);
+            if !keep {
+                return;
+            }
+        }
+    })
+    .detach();
+}
+
+/// `[forge] watch` — polls the project manifest and re-runs `load_project`
+/// on change so `document`/`icons`/`assets`/`themes` edits apply live.
+/// Exits when `manifest_watching` moves to a different `forge.toml`.
+fn watch_manifest(toml: PathBuf, shared: SharedState, cx: &mut Context<ForgeView>) {
+    cx.spawn(async move |view, cx| {
+        let mut mtime = std::fs::metadata(&toml)
+            .ok()
+            .and_then(|m| m.modified().ok());
+        loop {
+            cx.background_executor()
+                .timer(std::time::Duration::from_secs(1))
+                .await;
+            if shared.borrow().manifest_watching.as_deref() != Some(toml.as_path()) {
+                return;
+            }
+            let new = std::fs::metadata(&toml)
+                .ok()
+                .and_then(|m| m.modified().ok());
+            if new.is_none() || new == mtime {
+                continue;
+            }
+            mtime = new;
+            let toml = toml.clone();
+            let shared = shared.clone();
+            view.update(cx, move |view, cx| {
+                load_project(toml, view, shared, cx);
             })
             .ok();
         }
@@ -3441,7 +3608,9 @@ fn save_as(shared: SharedState, cx: &mut Context<ForgeView>) {
                     shared.borrow_mut().file = Some(path.clone());
                     let recents = record_recent(&path);
                     refresh_recent_menu(view, &recents, cx);
-                    watch_file(path.clone(), shared.clone(), cx);
+                    if file_watches(view, &shared) {
+                        watch_file(path.clone(), shared.clone(), cx);
+                    }
                     view.update_state(&parse_path("studio.file").unwrap(), Json::String(name), cx);
                     status(view, &format!("saved {}", path.display()), cx);
                 }
