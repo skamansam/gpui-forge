@@ -19,6 +19,7 @@ state:
   studio.widget_set: string
   studio.widget_sets: list
   studio.diagnostics: string
+  studio.problem_variant: string
   studio.file: string
   studio.host: string
   studio.project: string
@@ -446,12 +447,10 @@ sourceTab: &sourceTab
             grow: true
             min-height: 0
             border: 1px
-        - GroupBox: Problems
-          variant: Outline
-          children:
-            - Text: "{$studio.diagnostics}"
-              style:
-                size: sm
+        - Alert:
+          message: "{$studio.diagnostics}"
+          variant: $studio.problem_variant
+          banner: true
 
 
 # ============================================================================
@@ -754,12 +753,10 @@ inspector: &inspector
                           children:
                             - forge.InspectorField:
                               item: $item
-    - GroupBox: Diagnostics
-      variant: Outline
-      children:
-        - Text: "{$studio.diagnostics}"
-          style:
-            size: sm
+    - Alert:
+      message: "{$studio.diagnostics}"
+      variant: $studio.problem_variant
+      banner: true
     - GroupBox: View state
       variant: Outline
       children:

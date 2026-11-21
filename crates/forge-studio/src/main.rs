@@ -1776,6 +1776,11 @@ fn host_event(
                 Json::String(text),
                 cx,
             );
+            view.update_state(
+                &parse_path("studio.problem_variant").unwrap(),
+                Json::String(if items.is_empty() { "Success".into() } else { "Error".into() }),
+                cx,
+            );
             view.update_state(&parse_path("studio.markers").unwrap(), markers, cx);
         }
         HostEvent::Call(call) => {
@@ -3130,6 +3135,11 @@ fn watch_shell(path: PathBuf, shared: SharedState, cx: &mut Context<ForgeView>) 
                                 cx,
                             );
                             view.update_state(
+                                &parse_path("studio.problem_variant").unwrap(),
+                                Json::String(problem_variant(&diagnostics)),
+                                cx,
+                            );
+                            view.update_state(
                                 &parse_path("studio.markers").unwrap(),
                                 Json::Array(Vec::new()),
                                 cx,
@@ -3143,6 +3153,11 @@ fn watch_shell(path: PathBuf, shared: SharedState, cx: &mut Context<ForgeView>) 
                             view.update_state(
                                 &parse_path("studio.diagnostics").unwrap(),
                                 Json::String(problems(&diagnostics)),
+                                cx,
+                            );
+                            view.update_state(
+                                &parse_path("studio.problem_variant").unwrap(),
+                                Json::String(problem_variant(&diagnostics)),
                                 cx,
                             );
                             view.update_state(
@@ -3244,6 +3259,11 @@ fn load_source(
         &mut state,
         &parse_path("studio.diagnostics").unwrap(),
         Json::String(problems(&diagnostics)),
+    );
+    set_path(
+        &mut state,
+        &parse_path("studio.problem_variant").unwrap(),
+        Json::String(problem_variant(&diagnostics)),
     );
     set_path(
         &mut state,
@@ -3579,6 +3599,11 @@ fn reload(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView
     view.update_state(
         &parse_path("studio.diagnostics").unwrap(),
         Json::String(problems(&diagnostics)),
+        cx,
+    );
+    view.update_state(
+        &parse_path("studio.problem_variant").unwrap(),
+        Json::String(problem_variant(&diagnostics)),
         cx,
     );
     view.update_state(
@@ -4187,6 +4212,16 @@ fn problem_count(diagnostics: &[Diagnostic]) -> String {
         0 => "ok".into(),
         1 => "1 problem".into(),
         n => format!("{n} problems"),
+    }
+}
+
+/// `studio.problem_variant` — the Diagnostics panel renders an `Alert` bound
+/// to this: `Success` (green) clean, `Error` (red) with any diagnostic.
+fn problem_variant(diagnostics: &[Diagnostic]) -> String {
+    if diagnostics.is_empty() {
+        "Success".into()
+    } else {
+        "Error".into()
     }
 }
 

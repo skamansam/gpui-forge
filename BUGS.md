@@ -28,7 +28,7 @@
 - [x] why is the grow and shrinl style numeric? — ANSWER/FIXED: flex factors are genuinely numeric (`grow: 2` = 2× siblings; `true` = 1.0). The real bug: Inspector seeded `grow: true` as text "true" in a numeric box, and string edits stored `Value::String` which every style arm dropped — nothing applied live. `style_edit_value` now lexes strings (`8px`/`true`/`row`/`#hex`/`$theme.x`); Factor/Fraction bools seed as `1`/`0`
 - [x] when I type into the gap-x field, the gap field changes, and vice versa — FIXED: cached widget entities were keyed positionally, so a reordered row reused an entity whose subscription still wrote the old bound path; cache keys now carry `bind_salt` (bound paths) and style rows use stable registry order
 - [x] the inspector panel should stay the same size and be scrollable — fixed earlier: width 280px, shrink false, overflow scroll on the docked column + overflow scroll on Properties/Style tab bodies 
-- [ ] the problems panel should be like a red alert when there are issues and a green alert when there are no issues
+- [x] the problems panel should be like a red alert when there are issues and a green alert when there are no issues — done: studio.problem_variant (Success/Error) is published at every diagnostics write site; both panels now render a banner Alert bound to it
 - [x] ctrl+s should save the current document — done: SaveDocument action bound to ctrl-s (+ cmd-s), fires save_document on the render root so it works regardless of focus; falls back to save-as prompt when no file is open
 - [ ] there should be a project tab that allows editing the project file IF a project is open
 - [ ] the menus need the correct icons
