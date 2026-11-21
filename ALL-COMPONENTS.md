@@ -1466,6 +1466,8 @@ github: https://github.com/
 - [x] Preview
 - [x] Outline
 - [x] Inspector
+- [x] InspectorField
+- [x] Icons
 - [x] Files
 - [x] Palette
 - [x] Showcase

@@ -4,7 +4,7 @@
 
 Every component set Forge understands, what each provides, and how to enable it. A document picks a rendering base with `base:` and pulls adapter libraries in through `use:` imports — see [adapters](adapters.md).
 
-**962 supported elements** across 21 sets. 317 upstream exports were reviewed and deliberately not exposed — each carries a reason below (value types, traits, engine handles, or runtime requirements a declarative document cannot express).
+**964 supported elements** across 21 sets. 317 upstream exports were reviewed and deliberately not exposed — each carries a reason below (value types, traits, engine handles, or runtime requirements a declarative document cannot express).
 
 | Set | Enable | Supported | Reviewed — not widgets |
 | --- | --- | --- | --- |
@@ -27,7 +27,7 @@ Every component set Forge understands, what each provides, and how to enable it.
 | [iced Components](#iced-components) | `base: iced` | 28 | 7 |
 | [bezel Components](#bezel-components) | `base: bezel` (scaffold) | 6 | 0 |
 | [adabraka Components](#adabraka-components) | catalog only (scaffold) | 85 | 38 |
-| [forge built-ins](#forge-built-ins) | always available | 7 | 0 |
+| [forge built-ins](#forge-built-ins) | always available | 9 | 0 |
 | [template-lib Components](#template-lib-components) | adapter scaffold | 1 | 0 |
 
 ## GPUI-KIT Components
@@ -694,9 +694,9 @@ Every component set Forge understands, what each provides, and how to enable it.
 
 > `forge.*` — Forge tooling elements rendered by the runtime itself.
 
-<details><summary><strong>7 supported elements</strong></summary>
+<details><summary><strong>9 supported elements</strong></summary>
 
-`Preview` `Outline` `Inspector` `Files` `Palette` `Showcase` `Vars`
+`Preview` `Outline` `Inspector` `InspectorField` `Icons` `Files` `Palette` `Showcase` `Vars`
 
 </details>
 

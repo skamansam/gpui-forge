@@ -42,11 +42,22 @@ Save writes the *preserving* writer's output — your anchors, comments, and
 formatting stay put wherever the writer can prove they're unchanged. The
 status bar shows the open `file` path and `project` dir.
 
+## The Project tab
+
+With a `forge.toml` open, a **Project** tab appears next to the document
+tabs (`if: $studio.project`). It edits the manifest itself — the file
+loads into an editor, and **Apply** writes `forge.toml` back to disk and
+re-loads the project, so `document`/`icons`/`assets`/`themes` changes take
+effect without reopening.
+
 ## Watching for external changes
 
-Studio watches the open file on disk: if another editor or `forge fmt -w`
-rewrites it, Studio reloads the source and re-checks the document — no
-manual refresh.
+Watching is declared, not automatic. `meta: {watch: "true"}` on a document
+(or `[forge] watch = true` in the project manifest, which also watches
+`forge.toml` itself) tells Studio to poll the file: a change re-checks and
+re-renders it — no manual refresh — and a broken edit keeps the last-good
+copy while the parse error lands in the status bar and diagnostics markers.
+Studio's own shell (`studio.forge.yaml`) opts in the same way.
 
 ## Dialogs
 

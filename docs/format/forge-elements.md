@@ -152,8 +152,11 @@ scan, `nonce:` busts the cache). `search:` adds a filter box;
 - `Palette` — the widget-catalog drag source; `all:` widens its search
   scope across sets.
 - `Showcase` — the widget gallery used by `start: gallery`.
-- `Vars` — the state/variables editor; binds a state root and edits
-  values in place.
+- `Vars` — the state/variables table for a `forge.Preview`'s document
+  (`of:`). Rows edit in place with typed widgets (`bool`→Checkbox,
+  `number`→NumberInput, `enum`→Select, objects→JSON Textarea); `count:`
+  binds out the row total. See
+  [state-inspector.md](state-inspector.md).
 
 ---
 

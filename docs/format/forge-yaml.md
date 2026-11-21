@@ -48,7 +48,7 @@ root:
 | `forge` | yes | Spec version, as a string (`"0.1"`) — see Versioning below |
 | `base` | no | Base component system (`gpui-kit`, `bezel`, `adabraka`, `gpui-0.2`, and planned non-GPUI bases `ratatui`, `iced`). Defaults to the project's `forge.toml` |
 | `use` | no | Map of import alias → `"<library-id> [<version-req>]"` |
-| `meta` | no | Map of string → string (title, description, …) |
+| `meta` | no | Map of string → string (title, description, …). `meta: {watch: "true"}` opts the document into Studio hot reload — edits on disk re-check and re-render it, and a parse failure keeps the last-good copy (diagnostics land in the status bar + markers). |
 | `root` | yes | The root node |
 
 ### Base and library prerequisites
