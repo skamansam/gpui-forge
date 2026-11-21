@@ -3776,6 +3776,7 @@ fn place_component(
             Json::String(path.clone()),
             cx,
         );
+        echo_selected(view, cx);
         view.update_state(&parse_path("studio.placing").unwrap(), Json::Null, cx);
         view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(true), cx);
         status(view, &format!("placed {tag} at {path}"), cx);
@@ -3860,6 +3861,7 @@ fn move_node(
             Json::String(path.clone()),
             cx,
         );
+        echo_selected(view, cx);
         view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(true), cx);
         status(view, &format!("moved {src} under {target}"), cx);
         sync_source(view, &preview, cx);
@@ -3930,6 +3932,7 @@ fn insert_at(
             Json::String(path.clone()),
             cx,
         );
+        echo_selected(view, cx);
         view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(true), cx);
         status(view, &format!("placed {tag} at {path}"), cx);
         sync_source(view, &preview, cx);
@@ -4029,6 +4032,7 @@ fn remove_component(view: &mut ForgeView, shared: &SharedState, cx: &mut Context
         Json::String(parent),
         cx,
     );
+    echo_selected(view, cx);
     view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(true), cx);
     status(view, &format!("removed {path}"), cx);
     if let Some(doc) = preview.read(cx).document().cloned() {
@@ -4297,4 +4301,19 @@ fn select_node(view: &mut ForgeView, _args: &[String], cx: &mut Context<ForgeVie
         Json::String(format!("selected {path}")),
         cx,
     );
+    echo_selected(view, cx);
+}
+
+/// Shell-side `document.selected` writes must reach the preview's own state —
+/// the canvas paints its accent frame off the preview's copy, so a structure
+/// click otherwise selects in the panel but never highlights on canvas.
+fn echo_selected(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
+    let path = parse_path("document.selected").unwrap();
+    let value = get_path(view.state(), &path).cloned().unwrap_or(Json::Null);
+    let preview = view.preview("canvas", cx);
+    preview.update(cx, |p, cx| {
+        if get_path(p.state(), &path) != Some(&value) {
+            p.update_state(&path, value.clone(), cx);
+        }
+    });
 }
