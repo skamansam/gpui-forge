@@ -401,6 +401,17 @@ impl ForgeView {
 
     pub fn set_document(&mut self, doc: Document, cx: &mut Context<Self>) {
         self.meta = crate::render::doc_meta(&doc);
+        // Seed `state:` declarations — a declared-but-unwritten path gets its
+        // type's zero value so bound widgets and `forge.Vars` see it, the
+        // same boilerplate `forge build --codegen` emits for built apps.
+        // Only absent/null paths seed: live values survive a reload.
+        for (path, ty) in &doc.state {
+            let Ok(p) = parse_path(path) else { continue };
+            let missing = get_path(&self.state, &p).is_none_or(|v| v.is_null());
+            if missing {
+                set_path(&mut self.state, &p, state_default(ty));
+            }
+        }
         self.doc = Some(doc);
         cx.notify();
     }
@@ -6952,6 +6963,28 @@ fn style_rows(set: &Entries) -> Vec<(String, Option<Value>)> {
         }
     }
     rows
+}
+
+/// The zero value a `state:` declaration seeds — `string`→`""`, `bool`→
+/// `false`, `number`/`slider`→`0`, `list`→`[]`, `object`/`map`→`{}`,
+/// `color`→`"#000000"`, `enum(a | b)`→first variant, anything else `null`.
+fn state_default(ty: &str) -> Json {
+    match ty {
+        "string" => Json::String(String::new()),
+        "bool" => Json::Bool(false),
+        "number" | "slider" => Json::from(0),
+        "list" => Json::Array(Vec::new()),
+        "object" | "map" => Json::Object(Default::default()),
+        "color" => Json::String("#000000".into()),
+        t if t.starts_with("enum") => t
+            .strip_prefix("enum")
+            .and_then(|s| s.strip_prefix('('))
+            .and_then(|s| s.strip_suffix(')'))
+            .and_then(|s| s.split('|').next())
+            .map(|v| Json::String(v.trim().to_owned()))
+            .unwrap_or(Json::Null),
+        _ => Json::Null,
+    }
 }
 
 /// What an unset style key seeds `document.edits.style.<key>` with —

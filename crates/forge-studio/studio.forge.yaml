@@ -430,11 +430,17 @@ iconsTab: &iconsTab
             - Text: Category
               if: $studio.icon_categories
               style: {size: xs, color: $theme.muted_foreground}
-            - Select#icons_cat:
+            - Select#icons_cat: 
               if: $studio.icon_categories
               options: $studio.icon_categories
               value: bind $studio.icon_category
               style: {width: 160px}
+            - Text: Size
+              style: {size: xs, color: $theme.muted_foreground}
+            - Select#icons_size:
+              options: [XSmall, Small, Medium, Large]
+              value: bind $studio.icon_size
+              style: {width: 120px}
             - Text: Suffix
               if: $studio.icon_themes
               style: {size: xs, color: $theme.muted_foreground}
@@ -443,12 +449,6 @@ iconsTab: &iconsTab
               each: th
               checked: $th.checked
               on change: toggle_icon_theme($th.key)
-            - Text: Size
-              style: {size: xs, color: $theme.muted_foreground}
-            - Select#icons_size:
-              options: [XSmall, Small, Medium, Large]
-              value: bind $studio.icon_size
-              style: {width: 120px}
         - HStack:
           style: {gap: 8px, align: center}
           children:
