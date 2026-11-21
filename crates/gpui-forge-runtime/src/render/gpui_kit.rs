@@ -1286,10 +1286,18 @@ impl ForgeView {
             .find(|e| e.event == "select")
             .map(|e| e.handler.name.clone());
 
+        // `bare:` — the doc lays out its own chrome around the grid from the
+        // published outputs (`categories`/`themes`/`meta`/`status`/
+        // `attribution`), so none of the synthesized header/search/footer
+        // UI — or its entities — gets built. The grid stays here either way:
+        // measured-width virtualization + per-cell materialization aren't
+        // doc-expressible. Same contract as `forge.Inspector`'s data mode.
+        let bare = self.prop_bool(node, "bare");
         // Filter row — labeled pickers: `Iconset`, `Category`, `Suffix`.
         // Each is a synthesized `Select` bound to its prop's path (or an
         // internal slot); a pinned static prop hides its picker since it IS
         // the filter. `search:` renders on its own row below.
+        let chrome = !bare;
         let label = |text: &str, cx: &mut Context<Self>| {
             div()
                 .text_xs()
@@ -1301,7 +1309,7 @@ impl ForgeView {
             .props
             .iter()
             .any(|(k, v)| k == "set" && !matches!(v, Value::Binding { .. }));
-        if sets.len() > 1 && !static_set {
+        if chrome && sets.len() > 1 && !static_set {
             let bind = set_path
                 .clone()
                 .unwrap_or_else(|| parse_path("studio.icons_set").expect("static path"));
@@ -1315,7 +1323,7 @@ impl ForgeView {
                 )),
             );
         }
-        let search_row = if self.prop_bool(node, "search") {
+        let search_row = if chrome && self.prop_bool(node, "search") {
             let search_key = format!("{key}-search");
             let state = match self.inputs.get(&search_key) {
                 Some(state) => state.clone(),
@@ -1373,7 +1381,7 @@ impl ForgeView {
             .props
             .iter()
             .any(|(k, v)| k == "theme" && !matches!(v, Value::Binding { .. }));
-        if cats.len() > 1 && !static_cat {
+        if chrome && cats.len() > 1 && !static_cat {
             let mut options = vec!["[all]".to_owned()];
             options.extend(cats.iter().map(|(k, _)| k.clone()));
             let bind = cat_path
@@ -1399,7 +1407,7 @@ impl ForgeView {
         // Suffix/prefix themes are checkboxes (multi-select, OR semantics)
         // labeled by the dominant kind. Checked state lives in the bound
         // array; each click toggles one entry in place.
-        if themes.len() > 1 && !static_theme {
+        if chrome && themes.len() > 1 && !static_theme {
             use crate::iconify::ThemeKind;
             let bind = theme_path
                 .clone()
@@ -1461,12 +1469,15 @@ impl ForgeView {
                 header = header.child(cb);
             }
         }
-        // Size dropdown — `studio.icon_size` drives icon size + cell stride;
-        // sits beside the other filters per #bugs.
-        {
+        // Size dropdown — `size:` drives icon size + cell stride; sits
+        // beside the other filters per #bugs.
+        if chrome {
+            let size_bind = self
+                .two_way(node, "size")
+                .unwrap_or_else(|| parse_path("studio.icon_size").expect("static path"));
             let size_sel = picker(
                 vec!["XSmall".into(), "Small".into(), "Medium".into(), "Large".into()],
-                parse_path("studio.icon_size").expect("static path"),
+                size_bind,
             );
             header = header.child(label("Size", cx)).child(
                 div().w(px(120.)).child(self.render_node(
@@ -1573,12 +1584,19 @@ impl ForgeView {
         // handle's bounds, populated after first layout; the window viewport
         // minus sidebar chrome estimates the first frame). Resizes re-render
         // and re-wrap.
-        // `studio.icon_size` (XSmall/Small/Medium/Large) sizes both the icon
-        // glyphs and the cell stride; unset = Medium, the original 88px.
-        let icon_size = get_path(self.state(), &parse_path("studio.icon_size").unwrap())
-            .and_then(|j| j.as_str())
-            .unwrap_or("Medium")
-            .to_owned();
+        // `size:` (XSmall/Small/Medium/Large) sizes both the icon glyphs and
+        // the cell stride; the legacy `studio.icon_size` slot is the fallback
+        // for docs that never bound the prop. Unset = Medium, the original
+        // 88px.
+        let icon_size = self
+            .prop_text(node, "size")
+            .filter(|s| !s.is_empty())
+            .or_else(|| {
+                get_path(self.state(), &parse_path("studio.icon_size").unwrap())
+                    .and_then(|j| j.as_str())
+                    .map(str::to_owned)
+            })
+            .unwrap_or_else(|| "Medium".to_owned());
         let (cell, row_h) = match icon_size.as_str() {
             "XSmall" => (56., 44.),
             "Small" => (72., 60.),
@@ -1651,21 +1669,132 @@ impl ForgeView {
             rows.extend(members.chunks(cols).map(|c| IconRow::Icons(c.to_vec())));
         }
         let row_count = rows.len();
+        let fmt_bytes = |n: u64| {
+            if n >= 1 << 20 {
+                format!("{:.1} MB", n as f64 / (1 << 20) as f64)
+            } else if n >= 1 << 10 {
+                format!("{:.0} KB", n as f64 / (1 << 10) as f64)
+            } else {
+                format!("{n} B")
+            }
+        };
+        // Data-mode outputs — bound out-props publish everything the built-in
+        // chrome renders so a doc can lay out its own (`bare:` suppresses the
+        // chrome; the grid draws either way). `categories` includes the
+        // computed Uncategorized bucket so a yaml picker can select it;
+        // `themes` carries each option's encoded key + checked flag so a
+        // doc-side checkbox row can toggle `theme:` through a host hook;
+        // `meta`/`status`/`attribution` cover license info, download state
+        // and the attribution warning.
+        {
+            let outs = [
+                ("categories", self.two_way(node, "categories")),
+                ("themes", self.two_way(node, "themes")),
+                ("meta", self.two_way(node, "meta")),
+                ("status", self.two_way(node, "status")),
+                ("attribution", self.two_way(node, "attribution")),
+            ];
+            if outs.iter().any(|(_, o)| o.is_some()) {
+                let entry = crate::iconify::catalog_entry(&set);
+                let line1 = if license_title.is_empty() {
+                    set_title.clone()
+                } else {
+                    format!("{set_title} · {license_title}")
+                };
+                let mut bits: Vec<String> = Vec::new();
+                if let Some(total) = entry.as_ref().and_then(|e| e["total"].as_u64()) {
+                    bits.push(format!("{total} icons"));
+                }
+                if let Some(author) = entry
+                    .as_ref()
+                    .and_then(|e| e["author"]["name"].as_str())
+                {
+                    bits.push(format!("by {author}"));
+                }
+                if let Some(version) = entry.as_ref().and_then(|e| e["version"].as_str()) {
+                    bits.push(format!("v{version}"));
+                }
+                if let Some(palette) = entry.as_ref().and_then(|e| e["palette"].as_str()) {
+                    bits.push(palette.to_owned());
+                }
+                if let Some(secs) = crate::iconify::last_modified(&set) {
+                    bits.push(format!("updated {}", crate::iconify::epoch_ymd(secs)));
+                }
+                let (dl_label, dl_pct) = match dl {
+                    Some((done, total)) => (
+                        if total > 0 {
+                            format!(
+                                "Downloading {set}… {} / {}",
+                                fmt_bytes(done),
+                                fmt_bytes(total)
+                            )
+                        } else {
+                            format!("Downloading {set}… {}", fmt_bytes(done))
+                        },
+                        if total > 0 {
+                            done as f64 / total as f64 * 100.
+                        } else {
+                            0.
+                        },
+                    ),
+                    None => (String::new(), 0.),
+                };
+                for (name, out) in outs {
+                    let Some(path) = out else { continue };
+                    let value = match name {
+                        // Empty for category-less sets — a doc-side `if:`
+                        // hides its picker rather than showing a lone
+                        // `[all]`; the built-in picker hides the same way.
+                        "categories" => Json::Array(if cats.is_empty() {
+                            Vec::new()
+                        } else {
+                            std::iter::once(Json::String("[all]".into()))
+                                .chain(cats.iter().map(|(k, _)| Json::String(k.clone())))
+                                .collect()
+                        }),
+                        "themes" => Json::Array(
+                            themes
+                                .iter()
+                                .map(|(k, t, title)| {
+                                    serde_json::json!({
+                                        "key": theme_sel_encode(*k, t),
+                                        "title": title,
+                                        "checked": theme_checked
+                                            .iter()
+                                            .any(|(k2, t2)| k2 == k && t2 == t),
+                                    })
+                                })
+                                .collect(),
+                        ),
+                        "meta" => serde_json::json!({
+                            "set": set,
+                            "title": set_title,
+                            "license": license_title,
+                            "spdx": spdx,
+                            "line1": line1,
+                            "line2": bits.join(" · "),
+                        }),
+                        "status" => serde_json::json!({
+                            "downloading": dl.is_some(),
+                            "label": dl_label,
+                            "percent": dl_pct,
+                            "error": dl_error.clone().unwrap_or_default(),
+                        }),
+                        "attribution" => Json::Bool(crate::iconify::spdx_needs_attribution(&spdx)),
+                        _ => continue,
+                    };
+                    if get_path(self.state(), &path) != Some(&value) {
+                        self.update_state(&path, value, cx);
+                    }
+                }
+            }
+        }
         let body = if row_count == 0 {
             if let Some((done, total)) = dl {
                 let pct = if total > 0 {
                     (done as f32 / total as f32) * 100.
                 } else {
                     0.
-                };
-                let fmt_bytes = |n: u64| {
-                    if n >= 1 << 20 {
-                        format!("{:.1} MB", n as f64 / (1 << 20) as f64)
-                    } else if n >= 1 << 10 {
-                        format!("{:.0} KB", n as f64 / (1 << 10) as f64)
-                    } else {
-                        format!("{n} B")
-                    }
                 };
                 let label = if total > 0 {
                     format!(
@@ -1860,13 +1989,16 @@ impl ForgeView {
         // `size_full` passes a bounded parent's height through to the inner
         // scroll slot (`flex_1/min_h_0`), same convention as `forge.Files`.
         let mut root = v_flex().size_full().gap_2();
-        root = root.child(header);
-        if let Some(search_row) = search_row {
-            root = root.child(search_row);
+        if chrome {
+            root = root.child(header);
+            if let Some(search_row) = search_row {
+                root = root.child(search_row);
+            }
+            // License/attribution panel sits above the grid — it carries the
+            // set's legal info and shouldn't hide below the fold.
+            root = root.child(footer);
         }
-        // License/attribution panel sits above the grid — it carries the
-        // set's legal info and shouldn't hide below the fold.
-        root.child(footer).child(body).into_any_element()
+        root.child(body).into_any_element()
     }
 
     /// `forge.Files` (#148) — a file tree. Two listing modes: `of:` names a

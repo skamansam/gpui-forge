@@ -139,7 +139,9 @@ elements:
       set (default: the view's resolved iconset — `meta.iconset`, `[icons] set`
       in forge.toml, else lucide); `sets:` publishes the discovered sets;
       `search:` adds a filter box (`query:` exposes it). A click writes
-      `selected` and fires `select` with the icon name."
+      `selected` and fires `select` with the icon name. `bare:` renders the
+      grid alone — the doc builds its own chrome from the bound
+      `categories`/`themes`/`meta`/`status`/`attribution` outputs."
     component: gpui_forge_runtime::render::ForgeView
     props:
       set:
@@ -175,6 +177,43 @@ elements:
         type: string
         bindable: true
         summary: The clicked icon's name; the matching cell highlights.
+      size:
+        type: string
+        bindable: true
+        summary: "Icon size — XSmall/Small/Medium/Large (default Medium).
+          Sizes glyphs, cell stride and row height."
+      bare:
+        type: bool
+        summary: "Grid only — the doc lays out its own chrome (pickers,
+          search, license panel) from the `categories`/`themes`/`meta`/
+          `status`/`attribution` outputs. The grid stays internal: it owns
+          measured-width virtualization and per-cell materialization."
+      categories:
+        type: string
+        bindable: true
+        summary: "Publishes `['[all]', …]` — the browsed set's category
+          names for a doc-side picker (includes a computed Uncategorized)."
+      themes:
+        type: string
+        bindable: true
+        summary: "Publishes `[{key, title, checked}]` — one entry per
+          theme/suffix option; a doc-side checkbox toggles `theme:` through
+          a host hook by `key`."
+      meta:
+        type: string
+        bindable: true
+        summary: "Publishes `{set, title, license, spdx, line1, line2}` —
+          set name, license + SPDX, and two preformatted info lines."
+      status:
+        type: string
+        bindable: true
+        summary: "Publishes `{downloading, label, percent, error}` — live
+          set-download state for a doc-side progress bar / retry UI."
+      attribution:
+        type: string
+        bindable: true
+        summary: "Publishes bool — true when the set's SPDX license
+          requires shipping its notice with the built app."
     events:
       select: string
     children: none

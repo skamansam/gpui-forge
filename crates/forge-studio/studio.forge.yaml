@@ -56,6 +56,11 @@ state:
   studio.icons_query: string
   studio.icon_category: string
   studio.icon_theme: list
+  studio.icon_themes: list
+  studio.icon_categories: list
+  studio.icon_meta: object
+  studio.icon_status: object
+  studio.icon_attribution: bool
 
 # ============================================================================
 # THE APP MENU
@@ -404,25 +409,102 @@ assetsTab: &assetsTab
 # `icons/<set>/` the asset source layers in. `set`/`selected`/`query` bind
 # out so the doc can restyle the grid; click a cell to write `studio.icon`.
 
+# The chrome is doc-owned: `forge.Icons` runs `bare` (grid only) and
+# publishes `categories`/`themes`/`meta`/`status`/`attribution` for the
+# pickers, license panel and download state below. Filters write the same
+# bound state the widget reads; `on select` still copies the icon.
 iconsTab: &iconsTab
   children:
     - VStack:
       style: {grow: true, min-height: 0, gap: 8px, padding: 8px}
       children:
         - HStack:
-          style: {gap: 8px}
+          style: {gap: 8px, align: center, wrap: true}
           children:
-            - Text: "{$studio.iconset} · {$studio.icon}"
-              style: {grow: true, size: sm, color: $theme.muted_foreground}
+            - Text: Iconset
+              style: {size: xs, color: $theme.muted_foreground}
+            - Select#icons_set:
+              options: $studio.iconsets
+              value: bind $studio.iconset
+              style: {width: 160px}
+            - Text: Category
+              if: $studio.icon_categories
+              style: {size: xs, color: $theme.muted_foreground}
+            - Select#icons_cat:
+              if: $studio.icon_categories
+              options: $studio.icon_categories
+              value: bind $studio.icon_category
+              style: {width: 160px}
+            - Text: Suffix
+              if: $studio.icon_themes
+              style: {size: xs, color: $theme.muted_foreground}
+            - Checkbox: "{$th.title}"
+              for: $studio.icon_themes
+              each: th
+              checked: $th.checked
+              on change: toggle_icon_theme($th.key)
+            - Text: Size
+              style: {size: xs, color: $theme.muted_foreground}
+            - Select#icons_size:
+              options: [XSmall, Small, Medium, Large]
+              value: bind $studio.icon_size
+              style: {width: 120px}
+        - HStack:
+          style: {gap: 8px, align: center}
+          children:
+            - Text: Search
+              style: {size: xs, color: $theme.muted_foreground}
+            - Input#icons_search:
+              value: bind $studio.icons_query
+              placeholder: filter icons…
+              style: {grow: true}
+        - Text: "{$studio.icon_meta.line1}"
+          if: $studio.icon_meta.line1
+          style: {size: xs, color: $theme.muted_foreground}
+        - Text: "{$studio.icon_meta.line2}"
+          if: $studio.icon_meta.line2
+          style: {size: xs, color: $theme.muted_foreground}
+        - VStack:
+          if: $studio.icon_status.downloading
+          style: {gap: 4px}
+          children:
+            - Text: "{$studio.icon_status.label}"
+              style: {size: sm, color: $theme.muted_foreground}
+            - Progress:
+              value: $studio.icon_status.percent
+        - VStack:
+          if: $studio.icon_status.error
+          style: {gap: 4px}
+          children:
+            - Alert:
+              message: "{$studio.icon_status.error}"
+              title: Icon set download failed
+              variant: Error
+              banner: true
+            - Button: Retry
+              variant: Secondary
+              on click: retry_iconset($studio.iconset)
+        - Alert:
+          if: $studio.icon_attribution
+          message: "This icon set is licensed under terms that require shipping its license text and copyright notices with the built app."
+          title: Attribution required
+          variant: Error
+          banner: true
         - forge.Icons#icons:
           style: {grow: true, min-height: 0}
+          bare: true
           sets: bind $studio.iconsets
           set: bind $studio.iconset
           selected: bind $studio.icon
           query: bind $studio.icons_query
           category: bind $studio.icon_category
           theme: bind $studio.icon_theme
-          search: true
+          size: bind $studio.icon_size
+          categories: bind $studio.icon_categories
+          themes: bind $studio.icon_themes
+          meta: bind $studio.icon_meta
+          status: bind $studio.icon_status
+          attribution: bind $studio.icon_attribution
           on select: icon_copy
 
 

@@ -518,6 +518,9 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "open_path",
         "open_recent",
         "files_scope",
+        "icon_copy",
+        "toggle_icon_theme",
+        "retry_iconset",
         "create_project",
         "preview_in_host",
         "raise_host",
@@ -1017,6 +1020,31 @@ fn dispatch(
         "icon_copy" => {
             if let Some(name) = args.first() {
                 icon_copy(view, name, shared, cx);
+            }
+        }
+        // Icons-tab: the yaml-side theme checkboxes toggle one encoded
+        // `s:`/`p:` entry in `studio.icon_theme`; `forge.Icons` re-derives
+        // the filter + re-publishes `checked` flags from there.
+        "toggle_icon_theme" => {
+            if let Some(k) = args.first() {
+                let p = parse_path("studio.icon_theme").expect("static path");
+                let mut arr = get_path(view.state(), &p)
+                    .and_then(|j| j.as_array())
+                    .cloned()
+                    .unwrap_or_default();
+                match arr.iter().position(|v| v.as_str() == Some(k.as_str())) {
+                    Some(ix) => {
+                        arr.remove(ix);
+                    }
+                    None => arr.push(Json::String(k.clone())),
+                }
+                view.update_state(&p, Json::Array(arr), cx);
+            }
+        }
+        // Icons-tab: Retry on a failed set download.
+        "retry_iconset" => {
+            if let Some(set) = args.first() {
+                gpui_forge_runtime::iconify::retry(set, cx);
             }
         }
         "create_project" => create_project(view, shared.clone(), cx),
