@@ -133,6 +133,10 @@
 		<h3>Projects, not just files</h3>
 		<p><code>forge.toml</code> groups documents, themes, iconsets and asset directories — multi-file apps get a project tree, shared settings and hot-reloading manifests.</p>
 	</div>
+	<div>
+		<h3>Element templates</h3>
+		<p><code>forge.*</code> elements publish data on bound out-props and render your <code>children:</code> per item under <code>$item</code> — the icon browser's cells are plain Forge yaml. A <code>List</code> <code>for:</code> child virtualizes the same way.</p>
+	</div>
 </section>
 
 <section class="ecosystem">

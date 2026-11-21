@@ -37999,7 +37999,9 @@
                 ]
               },
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "meta": {
@@ -38197,7 +38199,9 @@
                 ]
               },
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "meta": {

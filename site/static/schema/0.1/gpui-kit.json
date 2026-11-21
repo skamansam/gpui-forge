@@ -23595,7 +23595,9 @@
                 ]
               },
               "children": {
-                "maxItems": 0,
+                "items": {
+                  "$ref": "#/definitions/node"
+                },
                 "type": "array"
               },
               "meta": {

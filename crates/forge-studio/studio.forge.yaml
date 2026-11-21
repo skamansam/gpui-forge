@@ -507,6 +507,20 @@ iconsTab: &iconsTab
           status: bind $studio.icon_status
           attribution: bind $studio.icon_attribution
           on select: icon_copy
+          # Scoped children — the cell template. The runtime keeps the
+          # measured grid frame (pinned width, rings, hover, click→`selected`);
+          # these children render inside each box with `$item` =
+          # {name, set, selected, downloaded}.
+          children:
+            - Icon: $item.name
+              set: $item.set
+              size: $studio.icon_size
+            - Text: "{$item.name}"
+              if: $item.downloaded
+              style: {size: xs, color: $theme.success}
+              else:
+                - Text: "{$item.name}"
+                  style: {size: xs, color: $theme.muted_foreground}
 
 
 # ============================================================================

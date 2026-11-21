@@ -235,6 +235,22 @@ root:
 - `else:` is valid on `if`, `for` (empty list) and `match` (no arm matched).
 - Only one control key per node — nest blocks for combined conditions (`for` + `if` inside).
 - `match` uses `case`/`else` instead of `children`, and cannot be an element modifier.
+- A `List`/`VirtualList` whose *single* child is a `for:` block renders one
+  virtualized row per item instead of one row holding the whole expansion —
+  `each:`/`index:`/`key:` scope the row template exactly as they do inline,
+  and `else:` is the row shown for an empty list:
+
+  ```yaml
+  - List:
+      selected: bind $picked
+    - for: $items
+      each: item
+      key: item.id
+      children:
+        - Text: "{$item.name}"
+      else:
+        - Text: "Nothing here"
+  ```
 
 ### File paths in `src`
 

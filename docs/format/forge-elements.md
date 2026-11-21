@@ -6,7 +6,7 @@ requirement — and they exist so tooling UIs (icon browsers, inspectors,
 file trees, palettes) can be built **in Forge** instead of embedding
 native chrome into the runtime.
 
-Two usage styles:
+Three usage styles:
 
 - **Standalone** — drop the element in and get a working widget with
   built-in chrome (pickers, search boxes, labels).
@@ -15,6 +15,25 @@ Two usage styles:
   lays the UI out itself with `for:`/`if:` and ordinary elements. This is
   how Forge Studio's own sidebars work — the generated UI is kept minimal
   and variables drive everything.
+- **Scoped children** — an element that takes `children:` renders the
+  template itself, once per item it owns, with the item pushed as `$item`
+  (the same scope mechanism `for:` uses). The runtime keeps the parts the
+  document can't express — measured layout, virtualization, fetch
+  machinery — and the document owns what goes inside each frame. No
+  `children:` → the element's built-in default renders, so a template is
+  always an override, never a requirement.
+
+### The custom-widget contract
+
+Those last two styles are how a `forge.*` element becomes a *custom
+widget*: **in-props parameterize, out-props publish data, `children:`
+templates render inside the element's scope.** A custom widget is a
+runtime piece that knows something the doc language can't say (how to
+virtualize 1800 rows, probe an asset source, walk a file tree) and
+declares the rest — its data and its template points — as bound props
+and scoped children. Studio's inspector is `forge.Inspector` + `for:`;
+its icon browser is `forge.Icons` + bound outputs + a `children:` cell
+template; `List`'s `for:` child is the same idea for any element.
 
 ---
 
@@ -58,6 +77,56 @@ built-in chrome renders. With `bare: true` the chrome isn't built at all.
 
 - `select(name)` — an icon cell was clicked. Studio's copy-to-`assets/icons` is one line: `on select: icon_copy`.
 
+### Scoped children — the cell template
+
+`children:` on `forge.Icons` replaces what goes **inside** each grid cell.
+The template renders once per icon with `$item` pushed as
+`{name, set, selected, downloaded}`:
+
+- `name` — the icon's name (`home`), `set` — its set (`lucide`,
+  `heroicons`, an iconify set)
+- `selected` — the bound `selected:` value equals this icon's `name`
+- `downloaded` — already materialized under `assets/icons/` (always
+  false for bundled sets)
+
+The runtime keeps the cell frame — the pinned column width that aligns
+the grid, the selected accent fill, the downloaded ring, hover, tooltip
+and the click that writes `selected`/`select`. Everything visual inside
+the box is the doc's. Scope vars resolve in props (`name: $item.name`),
+interpolate in text (`"{$item.name}"`), and bake into event args
+(`on click: my_hook($item.name)`).
+
+```yaml
+- forge.Icons:
+    bare: true
+    set: bind $studio.iconset
+    size: bind $studio.icon_size
+    selected: bind $studio.icon
+    on select: icon_copy
+    children:
+      - Icon: $item.name
+        set: $item.set
+        size: $studio.icon_size
+      - Text: "{$item.name}"
+        if: $item.downloaded
+        style: {size: xs, color: $theme.success}
+        else:
+          - Text: "{$item.name}"
+            style: {size: xs, color: $theme.muted_foreground}
+```
+
+Leave `children:` off and the built-in glyph + name cell renders. This is
+exactly what Studio's Icons tab does — its cell layout is editable Forge
+yaml.
+
+### `Icon` — lazy icon element
+
+`Icon` resolves names through the same probe the grid uses: `set:` (or a
+`set:name` prefix on `name:`) picks the set, missing iconify names queue
+the set's fetch and show a placeholder until bytes land, and bundled
+files stay canonical on collision. `size:` takes a px length or
+`XSmall`/`Small`/`Medium`/`Large` (12/14/16/24px).
+
 ### Example — doc-owned chrome (the Studio pattern)
 
 ```yaml
@@ -92,9 +161,10 @@ built-in chrome renders. With `bare: true` the chrome isn't built at all.
     on select: icon_copy
 ```
 
-The grid itself stays internal — measured-width virtualization and the
+The grid *frame* stays internal — measured-width virtualization and the
 per-cell "is this SVG materialized yet" probing aren't expressible in the
-document language. Everything *around* it is.
+document language. Everything around it — and now everything inside each
+cell — is.
 
 ---
 

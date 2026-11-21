@@ -314,10 +314,37 @@ struct ForgeListDelegate {
     selected: Rc<std::cell::Cell<Option<IndexPath>>>,
 }
 
+impl ForgeListDelegate {
+    /// A single `for:` child is the row template — one virtualized row per
+    /// resolved item instead of one row rendering the whole loop eagerly.
+    /// Item rows re-resolve each call, so bound lists stay live; an empty
+    /// source renders `else:` as the only row.
+    fn for_control(&self) -> Option<&Control> {
+        match self.children.as_slice() {
+            [child] => match &child.control {
+                Some(c @ Control::For { .. }) => Some(c),
+                _ => None,
+            },
+            _ => None,
+        }
+    }
+}
+
 impl ListDelegate for ForgeListDelegate {
     type Item = ListItem;
 
-    fn items_count(&self, _: usize, _: &gpui_kit::App) -> usize {
+    fn items_count(&self, _: usize, app: &gpui_kit::App) -> usize {
+        if let Some(Control::For {
+            source, otherwise, ..
+        }) = self.for_control()
+        {
+            let n = self
+                .view
+                .upgrade()
+                .map(|view| view.read(app).for_items(source).len())
+                .unwrap_or(0);
+            return usize::from(n == 0 && !otherwise.is_empty()).max(n);
+        }
         self.children.len()
     }
 
@@ -327,8 +354,59 @@ impl ListDelegate for ForgeListDelegate {
         window: &mut Window,
         cx: &mut Context<ListState<Self>>,
     ) -> Option<Self::Item> {
-        let node = self.children.get(ix.row)?.clone();
         let key = format!("{}/{}", self.key, ix.row);
+        if self.for_control().is_some() {
+            let node = self.children[0].clone();
+            let key2 = key.clone();
+            let els = try_update(&self.view, cx, "list row", |view, cx| {
+                let Some(Control::For {
+                    source,
+                    each,
+                    index,
+                    key: key_path,
+                    otherwise,
+                }) = node.control.clone()
+                else {
+                    return Vec::new();
+                };
+                match view.for_items(&source).get(ix.row).cloned() {
+                    Some(item) => {
+                        view.scopes.push((each, item));
+                        if let Some(index) = &index {
+                            view.scopes.push((index.clone(), Json::from(ix.row)));
+                        }
+                        // `key: item.id` — resolve the member path against
+                        // the scoped item for stable identity (default:
+                        // position), same as `expand`'s for branch.
+                        let item_key = key_path
+                            .as_ref()
+                            .and_then(|path| {
+                                let resolved = view.resolve(&Value::Binding {
+                                    path: path.clone(),
+                                    mode: BindingMode::OneWay,
+                                });
+                                resolved
+                                    .as_str()
+                                    .map(str::to_owned)
+                                    .or_else(|| (!resolved.is_null()).then(|| resolved.to_string()))
+                            })
+                            .unwrap_or_else(|| ix.row.to_string());
+                        let out =
+                            view.render_target(&node, &format!("{key2}/{item_key}"), window, cx);
+                        view.scopes
+                            .truncate(view.scopes.len() - 1 - usize::from(index.is_some()));
+                        out
+                    }
+                    // Row 0 on an empty source renders `else:`.
+                    None => view.render_kids(&otherwise, &key, window, cx),
+                }
+            });
+            return match els {
+                Ok(els) => Some(ListItem::new(ix).children(els)),
+                Err(()) => None,
+            };
+        }
+        let node = self.children.get(ix.row)?.clone();
         try_update(&self.view, cx, "list render", |view, cx| {
             ListItem::new(ix).children(view.expand(&node, &key, window, cx))
         })
@@ -2020,10 +2098,16 @@ impl ForgeView {
         } else {
             let key = key.to_owned();
             let icon_size = icon_size.clone();
+            // Scoped children — `children:` is the cell template, rendered
+            // once per icon with `$item` =
+            // `{name, set, selected, downloaded}` pushed (the same scope
+            // mechanism `for:` uses). No children → the built-in
+            // glyph+name cell renders.
+            let cell_tpl = node.children.clone();
             uniform_list(
                 format!("{key}-grid"),
                 row_count,
-                move |range, _window, cx| {
+                move |range, window, cx| {
                     range
                         .map(|ix| match &rows[ix] {
                             // Section header — a label row the same height
@@ -2047,24 +2131,6 @@ impl ForgeView {
                             IconRow::Icons(names) => {
                                 let mut row = div().flex().flex_row().gap(px(gap_px)).h(px(row_h));
                                 for name in names {
-                                    // Never point `path()` at bytes that don't
-                                    // exist — the image cache retains a failed
-                                    // load forever. An iconify name resolvable
-                                    // in the cached set JSON renders through
-                                    // the `svg()` layer; otherwise the whole
-                                    // set's one fetch is queued and a
-                                    // placeholder shows until `refresh_windows`
-                                    // flips everything local.
-                                    let cell_icon = if materialized.contains(name)
-                                        || crate::iconify::icon_cached(&set, name)
-                                        || !crate::iconify::known_set(&set)
-                                    {
-                                        icon_set(&set, name)
-                                    } else {
-                                        crate::iconify::ensure_set(&set, cx);
-                                        icon("image")
-                                    }
-                                    .with_size(size(&icon_size));
                                     let active = selected.as_deref() == Some(name.as_str());
                                     // A materialized name means the icon is
                                     // already on disk under `assets/icons/` —
@@ -2077,46 +2143,97 @@ impl ForgeView {
                                     let handler = select_handler.clone();
                                     let cell_name = name.clone();
                                     let weak = weak.clone();
-                                    row = row.child(
-                                        div()
-                                            .id(format!("{key}-{name}"))
-                                            .flex()
-                                            .flex_col()
-                                            .items_center()
-                                            .justify_center()
-                                            .gap_1()
-                                            // Pinned to the shared column
-                                            // width — every row's cells are
-                                            // the same box, so columns align
-                                            // and partial rows left-pack.
-                                            .w(px(cell_w))
-                                            .flex_shrink_0()
-                                            .p_2()
-                                            .rounded_md()
-                                            .cursor_pointer()
-                                            .when(active, |d| d.bg(cx.theme().accent))
-                                            .when(on_disk, |d| {
-                                                d.border_1()
-                                                    .border_color(cx.theme().success.opacity(0.6))
+                                    let mut cell_div = div()
+                                        .id(format!("{key}-{name}"))
+                                        .flex()
+                                        .flex_col()
+                                        .items_center()
+                                        .justify_center()
+                                        .gap_1()
+                                        // Pinned to the shared column
+                                        // width — every row's cells are
+                                        // the same box, so columns align
+                                        // and partial rows left-pack.
+                                        .w(px(cell_w))
+                                        .flex_shrink_0()
+                                        .p_2()
+                                        .rounded_md()
+                                        .cursor_pointer()
+                                        .when(active, |d| d.bg(cx.theme().accent))
+                                        .when(on_disk, |d| {
+                                            d.border_1()
+                                                .border_color(cx.theme().success.opacity(0.6))
+                                        })
+                                        .hover(|d| d.bg(cx.theme().accent.opacity(0.4)));
+                                    if cell_tpl.is_empty() {
+                                        // Never point `path()` at bytes that
+                                        // don't exist — the image cache
+                                        // retains a failed load forever. An
+                                        // iconify name resolvable in the
+                                        // cached set JSON renders through
+                                        // the `svg()` layer; otherwise the
+                                        // whole set's one fetch is queued
+                                        // and a placeholder shows until
+                                        // `refresh_windows` flips
+                                        // everything local.
+                                        let cell_icon = if materialized.contains(name)
+                                            || crate::iconify::icon_cached(&set, name)
+                                            || !crate::iconify::known_set(&set)
+                                        {
+                                            icon_set(&set, name)
+                                        } else {
+                                            crate::iconify::ensure_set(&set, cx);
+                                            icon("image")
+                                        }
+                                        .with_size(size(&icon_size));
+                                        cell_div = cell_div.child(cell_icon).child(
+                                            div()
+                                                .w_full()
+                                                .h(px(16.))
+                                                .text_xs()
+                                                .text_center()
+                                                .text_color(if on_disk {
+                                                    cx.theme().success
+                                                } else {
+                                                    cx.theme().muted_foreground
+                                                })
+                                                .whitespace_nowrap()
+                                                .overflow_hidden()
+                                                .text_ellipsis()
+                                                .child(name.clone()),
+                                        );
+                                    } else {
+                                        // The doc's template — the runtime's
+                                        // own probe stays out (the doc's
+                                        // `Icon` resolves lazily itself).
+                                        let item = serde_json::json!({
+                                            "name": name,
+                                            "set": set,
+                                            "selected": active,
+                                            "downloaded": on_disk,
+                                        });
+                                        let tpl_key = format!("{key}/{name}");
+                                        let weak2 = weak.clone();
+                                        cell_div = cell_div.children(
+                                            try_update(&weak2, cx, "icon cell", |view, cx| {
+                                                view.scopes.push(("item".to_owned(), item));
+                                                let mut out = Vec::new();
+                                                for (ci, child) in cell_tpl.iter().enumerate() {
+                                                    out.extend(view.expand(
+                                                        child,
+                                                        &format!("{tpl_key}/{ci}"),
+                                                        &mut *window,
+                                                        cx,
+                                                    ));
+                                                }
+                                                view.scopes.pop();
+                                                out
                                             })
-                                            .hover(|d| d.bg(cx.theme().accent.opacity(0.4)))
-                                            .child(cell_icon)
-                                            .child(
-                                                div()
-                                                    .w_full()
-                                                    .h(px(16.))
-                                                    .text_xs()
-                                                    .text_center()
-                                                    .text_color(if on_disk {
-                                                        cx.theme().success
-                                                    } else {
-                                                        cx.theme().muted_foreground
-                                                    })
-                                                    .whitespace_nowrap()
-                                                    .overflow_hidden()
-                                                    .text_ellipsis()
-                                                    .child(name.clone()),
-                                            )
+                                            .unwrap_or_default(),
+                                        );
+                                    }
+                                    row = row.child(
+                                        cell_div
                                             .tooltip({
                                                 let tip = name.clone();
                                                 move |_, cx| {
@@ -5246,10 +5363,20 @@ impl ForgeView {
                     ),
                 };
                 let element = svg().path(doc_icon_path(&set, &name, cx));
-                // `svg()` has no intrinsic size — default to 16px like a Medium icon.
+                // `svg()` has no intrinsic size — `size:` takes a px length
+                // or the catalog enum (gpui-kit's steps: 12/14/16/24px);
+                // default 16px like a Medium icon.
                 let element = match self.prop(node, "size").and_then(length) {
                     Some(size) => element.w(size).h(size),
-                    None => element.w_4().h_4(),
+                    None => {
+                        let s = match self.prop_text(node, "size").as_deref() {
+                            Some("XSmall") => 12.,
+                            Some("Small") => 14.,
+                            Some("Large") => 24.,
+                            _ => 16.,
+                        };
+                        element.w(px(s)).h(px(s))
+                    }
                 };
                 element
                     .when_some(color, |e, c| e.text_color(c))
