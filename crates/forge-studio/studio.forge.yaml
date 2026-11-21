@@ -814,7 +814,7 @@ body: &body
                 padding: 8px
               children:
                 - Tabs#panes:
-                  variant: Pill
+                  variant: Tab
                   style:
                     grow: true
                     min-height: 0

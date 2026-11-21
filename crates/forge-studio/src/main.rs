@@ -3118,19 +3118,45 @@ fn watch_shell(path: PathBuf, shared: SharedState, cx: &mut Context<ForgeView>) 
                         Some(doc) => {
                             let keep = doc_watches(&doc);
                             view.set_document(doc, cx);
+                            // Clear any reload diagnostics a broken edit left.
+                            view.update_state(
+                                &parse_path("studio.diagnostics").unwrap(),
+                                Json::String(problems(&diagnostics)),
+                                cx,
+                            );
+                            view.update_state(
+                                &parse_path("studio.markers").unwrap(),
+                                Json::Array(Vec::new()),
+                                cx,
+                            );
                             status(view, "shell reloaded — studio.forge.yaml changed", cx);
                             keep
                         }
                         None => {
-                            let msg = diagnostics
-                                .first()
-                                .map(|d| {
-                                    format!(
-                                        "studio.forge.yaml:{}:{}: {}",
-                                        d.pos.line, d.pos.col, d.message
-                                    )
-                                })
-                                .unwrap_or_else(|| "studio.forge.yaml failed to parse".into());
+                            // Surface on every channel `load_source` uses:
+                            // status bar + diagnostics panel + editor markers.
+                            view.update_state(
+                                &parse_path("studio.diagnostics").unwrap(),
+                                Json::String(problems(&diagnostics)),
+                                cx,
+                            );
+                            view.update_state(
+                                &parse_path("studio.markers").unwrap(),
+                                markers(&diagnostics),
+                                cx,
+                            );
+                            let msg = format!(
+                                "shell reload failed — {}",
+                                diagnostics
+                                    .first()
+                                    .map(|d| {
+                                        format!(
+                                            "studio.forge.yaml:{}:{}: {}",
+                                            d.pos.line, d.pos.col, d.message
+                                        )
+                                    })
+                                    .unwrap_or_else(|| "invalid yaml".into())
+                            );
                             status(view, &msg, cx);
                             // Keep polling — the next edit may fix it.
                             true
