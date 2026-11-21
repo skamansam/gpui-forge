@@ -62,7 +62,7 @@ state:
 # ============================================================================
 appMenu: &appMenu
   label: File
-  icon: hamburger
+  icon: file
   size: Small
   variant: Ghost
   children:
@@ -70,7 +70,7 @@ appMenu: &appMenu
       icon: file-plus
       on click: new_document()
     - MenuItem: New Project…
-      icon: package-open
+      icon: package-plus
       on click: open_dialog("new-project")
     - MenuItem: Open…
       icon: folder-open
@@ -85,7 +85,6 @@ appMenu: &appMenu
       icon: sparkles
       on click: format_document()
     - MenuSeparator:
-    - MenuSeparator:
     - MenuItem: Save
       icon: save
       on click: save_document()
@@ -95,11 +94,11 @@ appMenu: &appMenu
       on click: open_dialog("preferences")
     - MenuSeparator:
     - MenuItem: Test error
-      icon: alert-circle
+      icon: bug
       on click: test_error()
 
 editMenu: &editMenu
-  icon: hamburger
+  icon: pencil
   label: Edit
   size: Small
   variant: Ghost
@@ -120,11 +119,11 @@ editMenu: &editMenu
       on click: open_dialog("preferences")
     - MenuSeparator:
     - MenuItem: Test error
-      icon: alert-circle
+      icon: bug
       on click: test_error()
 
 projectMenu: &projectMenu
-  icon: hamburger
+  icon: package
   label: Project
   size: Small
   variant: Ghost
@@ -152,7 +151,7 @@ projectMenu: &projectMenu
       on click: open_dialog("preferences")
     - MenuSeparator:
     - MenuItem: Test error
-      icon: alert-circle
+      icon: bug
       on click: test_error()
 
 # ============================================================================
