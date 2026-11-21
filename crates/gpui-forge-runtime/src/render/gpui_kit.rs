@@ -613,7 +613,39 @@ impl ForgeView {
                         .checked(value.as_bool().unwrap_or(false))
                         .into_any_element(),
                 ),
-                Some("number") | Some("slider") => {
+                // Numbers get a NumberInput — a slider suggests a bounded
+                // range a bare `number` decl doesn't carry. `slider` keeps
+                // the slider for docs that ask for one.
+                Some("number") => {
+                    let s = match self.inputs.get(&state_key) {
+                        Some(s) => s.clone(),
+                        None => {
+                            let s = cx.new(|cx| {
+                                InputState::new(window, cx).default_value(display.clone())
+                            });
+                            let path = parse_path(&path).unwrap();
+                            let preview = preview.clone();
+                            let sub = cx.subscribe(&s, move |_this, s, event, cx| {
+                                if matches!(event, InputEvent::Change) {
+                                    let v = s.read(cx).value().to_string();
+                                    // Only write parseable numbers — a
+                                    // half-typed `-`/`8.` shouldn't clobber
+                                    // the state the row is editing.
+                                    if let Ok(n) = v.parse::<f64>() {
+                                        preview.update(cx, |v, cx| {
+                                            v.update_state(&path, Json::from(n), cx)
+                                        });
+                                    }
+                                }
+                            });
+                            self.subscriptions.push(sub);
+                            self.inputs.insert(state_key.clone(), s.clone());
+                            s
+                        }
+                    };
+                    Some(NumberInput::new(&s).w_full().into_any_element())
+                }
+                Some("slider") => {
                     let s = self.sliders.get(&state_key).cloned().unwrap_or_else(|| {
                         let s = cx.new(|_cx| {
                             SliderState::new()

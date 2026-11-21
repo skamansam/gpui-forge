@@ -37,3 +37,5 @@
 - [x] the Vars editor rows don't align — labels took natural width so every editor's left edge landed somewhere different. Now a table: fixed 200px label column (muted, truncated paths with a full-path tooltip) + flexible widget column, a "variable / value" header row, and the add-var row on the same gridlines.
 
 - [x] Vars tab needed a variable count — `forge.Vars` got a `count:` out-prop publishing the flattened row count; the shell binds `studio.vars_count` and the header text shows "There are N variables in this forge file."
+
+- [x] Vars editor showed `number` vars as sliders — swapped to `NumberInput` (stepper buttons + typed value); only writes parseable numbers so partial input can't clobber state. Explicit `slider` decls still get a Slider.
