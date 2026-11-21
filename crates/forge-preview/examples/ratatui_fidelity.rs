@@ -62,7 +62,10 @@ fn ansi(cols: u16, rows: u16, draw: impl FnOnce(&mut Frame)) -> Vec<u8> {
 fn show(cols: u16, rows: u16, label: &str, bytes: &[u8]) {
     let mut emu = forge_term::Emulator::new(cols, rows);
     emu.feed(bytes);
-    println!("=== {label} ({cols}x{rows}, {} ANSI bytes) ===", bytes.len());
+    println!(
+        "=== {label} ({cols}x{rows}, {} ANSI bytes) ===",
+        bytes.len()
+    );
     let mut styled = 0usize;
     for line in emu.lines() {
         let mut s = String::new();

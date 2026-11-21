@@ -1,0 +1,1 @@
+Icons from the `mdi` set (Apache 2.0) via iconify.design — vendored on use.

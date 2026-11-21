@@ -9,10 +9,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 
 /// `meta:<key>` from a parsed document — doc-level app identity.
-fn doc_meta<'a>(
-    doc: &'a gpui_forge_runtime::forge_spec::Document,
-    key: &str,
-) -> Option<&'a str> {
+fn doc_meta<'a>(doc: &'a gpui_forge_runtime::forge_spec::Document, key: &str) -> Option<&'a str> {
     doc.meta
         .iter()
         .find(|(k, _)| k == key)
@@ -665,12 +662,30 @@ document = "app.forge.yaml"
 "#
         ),
     );
+    let year = {
+        // Days since epoch → civil year (Howard Hinnant's algorithm).
+        let days = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_secs() / 86_400)
+            .unwrap_or(0) as i64;
+        let z = days + 719_468;
+        let era = z.div_euclid(146_097);
+        let doe = z.rem_euclid(146_097);
+        let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146_096) / 365;
+        let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+        let mp = (5 * doy + 2) / 153;
+        let month = mp + if mp < 10 { 3 } else { -9 };
+        era * 400 + yoe + i64::from(month <= 2)
+    };
     write(
         &dir.join("app.forge.yaml"),
         &format!(
             r#"$schema: {}
 forge: "0.1"
 base: {base}
+
+meta:
+  title: {name}
 
 root:
   VStack:
@@ -679,6 +694,35 @@ root:
     gap: 8px
   children:
     - Text: Hello, Forge!
+    - Button: About {name}
+      on click: open_dialog("about")
+
+# The app's About window — update the copyright line, and the icon
+# attribution when `[icons] set` or a vendored `assets/icons/<set>/` adds
+# another iconset (iconify licenses mostly require it).
+Dialog#about:
+  title: About {name}
+  style:
+    padding: 24px
+    gap: 8px
+    radius: 8px
+    background: $theme.background
+  children:
+    - VStack:
+      style:
+        gap: 4px
+      children:
+        - Text: "{name}"
+          style: {{size: xl, weight: semibold}}
+        - Text: "Version 0.1.0"
+          style: {{size: sm, color: $theme.muted_foreground}}
+        - Text: "© {year} {name} contributors"
+          style: {{size: sm, color: $theme.muted_foreground}}
+        - Separator:
+        - Text: "Icons"
+          style: {{size: sm, weight: semibold}}
+        - Text: "Lucide Icons — ISC License — https://lucide.dev"
+          style: {{size: xs, color: $theme.muted_foreground}}
 "#,
             gpui_forge_runtime::forge_spec::yaml_schema::schema_url(&base)
         ),
@@ -1120,8 +1164,11 @@ fn bundle(m_dir: &Path, manifest: &ForgeToml, name: &str, binary: &Path) -> i32 
         )
         .0
     });
-    let meta =
-        |key: &str| doc.as_ref().and_then(|d| doc_meta(d, key)).map(str::to_owned);
+    let meta = |key: &str| {
+        doc.as_ref()
+            .and_then(|d| doc_meta(d, key))
+            .map(str::to_owned)
+    };
     let title = meta("title").unwrap_or_else(|| {
         if manifest.package.title.is_empty() {
             name.replace('-', " ")
@@ -1141,9 +1188,7 @@ fn bundle(m_dir: &Path, manifest: &ForgeToml, name: &str, binary: &Path) -> i32 
         // paths like `assets/logo.png` resolve against the AppRun cwd.
         if !manifest.assets.dir.is_empty() {
             let assets = m_dir.join(&manifest.assets.dir);
-            let dest = assets
-                .file_name()
-                .map(|n| appdir.join("usr/bin").join(n));
+            let dest = assets.file_name().map(|n| appdir.join("usr/bin").join(n));
             if assets.is_dir()
                 && let Some(dest) = dest
             {
@@ -2355,7 +2400,6 @@ fn skeleton_cmd(rest: &[String]) -> i32 {
     }
     0
 }
-
 
 /// A `state:` entry's seed value — recognized type names get type defaults;
 /// anything else is a literal (`sel: gpui-kit` seeds `"gpui-kit"`,

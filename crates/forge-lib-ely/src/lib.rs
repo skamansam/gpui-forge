@@ -261,7 +261,9 @@ impl Ely {
             })
             .detach();
         }
-        self.terminals.borrow_mut().insert(key.to_owned(), t.clone());
+        self.terminals
+            .borrow_mut()
+            .insert(key.to_owned(), t.clone());
         t
     }
 
@@ -710,10 +712,7 @@ fn launch_of(node: &Node) -> ely_terminal::Launch {
     if !command.is_empty() {
         let mut words = command.split_whitespace();
         if let Some(program) = words.next() {
-            launch.program = Some((
-                program.to_string(),
-                words.map(str::to_string).collect(),
-            ));
+            launch.program = Some((program.to_string(), words.map(str::to_string).collect()));
         }
     }
     if let Some(cwd) = prop_str_opt(node, "cwd") {
@@ -3772,14 +3771,10 @@ impl ForgeLibrary for Ely {
             "ToolbarSeparator" => Some(ToolbarSeparator.into_any_element()),
             "AnsiText" => Some(AnsiText::new(prop_str(node, "text")).into_any_element()),
             "LogViewer" => Some(log_viewer_of(node, key, view, cx).into_any_element()),
-            "ShellSelector" => {
-                Some(shell_selector_of(node, key, view, cx).into_any_element())
-            }
+            "ShellSelector" => Some(shell_selector_of(node, key, view, cx).into_any_element()),
             #[cfg(not(target_family = "wasm"))]
             "Terminal" => Some(self.terminal(node, key, view, cx).into_any_element()),
-            "TerminalToolbar" => {
-                Some(terminal_toolbar_of(node, key, view, cx).into_any_element())
-            }
+            "TerminalToolbar" => Some(terminal_toolbar_of(node, key, view, cx).into_any_element()),
             "TitleBar" => {
                 let mut t = TitleBar::new(key.to_string());
                 if let Some(title) = prop_str_opt(node, "title") {

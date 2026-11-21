@@ -1,0 +1,27 @@
+- [x] The right sidebar (structure, inspector, etc) needs to be on the canvas tab only because it is only usable there.
+- [x] The Structure list should be a treeview with expandable/collapsible nodes.
+- [x] The Inspector should have the inspector button beside the name "Inspector" instead of inside the area.
+- [x] When using the inspector, the interactions hsould be disbaled. I should not be able to click on an element and stuff happens that hides that element.
+- [x] In the inspector, the element and path should not be in a table, they should just be the first row of the element, in the format "#{Element Name} - #{Path}"
+- [x] the properties in the inspector need labels.
+- [x] the files should open when double-clicked. the active files should be highlighted with the primary color.
+- [x] Closing the window does not quit the app — the forge-studio process keeps running headless.
+- [x] the icons in the icon browser are not showing up. iconsets tested: la, lets-icons, line-md, k8s. lucide is showing up.
+- [x] the icon browser header inouts should be labeled with iconset, suffix, category, and search
+- [x] the icon browser should have the filtering on the first line (iconset, suffix, category) and the search on its own line
+- [x] the icon browser should copy the icon to the assets/icons folder when clicked
+- [x] the the icons in the assets/icons folder should be highlighted in the browser to show that it is currently downloaded
+- [x] the generated skeleton should include an about window in the currently selected widget set that has the app name, version, and copyright, and proper attribution of the included iconsets.
+- [ ] after opening a file or project, if there is only one  document opened, the current directory needs to be scanned for all files, and those files should be added to the file tree. when they are addded, they need to be added in a directory-like manner that reflects where they are located in the file system instead of a flat list. This should be a new global preference - whether to show a flat list or a tree view.
+- [ ] after opening the forge.toml project, clicking on the src folder in the project tree does nothing.
+- [ ] after opening the forge.toml project, there is a message in the status line that says forge.toml has no forge.document
+- [ ] the iconbrowser should have a size dropdown to show different icon sizes. it should be beside the current filters, so iconset, category, suffix, and size should be on one line
+- [ ] the license warnign should be at the top of the window, along with the 
+- [ ] the widget palette should have a search bar at the top. the seach should filter the widgets in the palette by default, but have a checkbox that can search through all widgets sets
+- [ ] the palette shoudl scroll if there are more widgets than can be displayed
+- [ ] when collapsing all the groups int eh palette, and the length of the palette gets shorter than the window, the status bar moves up the window. it should stay at the bottom. (i think the window's main VStack is shrinking). Then when dragging a palette item to the canvas, the main contents shrinks horizontally. Once the main  vstack gets "detached" from the window with these bugs, it never seems to go back properly.
+- [ ] when an item is selected for inspection, the structure panel should highlight the selected item
+- [ ] when an item is being inspected, the item in the canvas should be highlighted
+- [ ] why is the grow and shrinl style numeric?
+- [ ] when I type into the gap-x field, the gap field changes, and vice versa
+- [ ] the inspector panel should stay the same size and be scrollable 

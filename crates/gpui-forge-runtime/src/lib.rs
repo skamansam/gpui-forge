@@ -35,6 +35,10 @@ compile_error!(
 ))]
 pub mod render;
 
+/// Iconify catalog browsing + vendoring — gpui-kit only (needs `http_client`).
+#[cfg(feature = "base-gpui-kit")]
+pub mod iconify;
+
 pub use forge_spec;
 
 /// Rendered documents lay the element tree out recursively on the main

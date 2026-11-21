@@ -23519,6 +23519,136 @@
           "if": {
             "not": {
               "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.Icons(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.Icons(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "category": {
+                "description": "IconifyJSON category filter — a bound prop gets a picker over the set's categories (`[all]` resets); static pins it.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "on select": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "query": {
+                "description": "Search text — bound, external writes reseed the field.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "search": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Show the filter box; its text goes to `query:` or an internal slot."
+              },
+              "selected": {
+                "description": "The clicked icon's name; the matching cell highlights.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "set": {
+                "description": "Iconset name to browse — `lucide` or a set dir under `icons/`. Bound, it's a two-way picker for `studio.iconset`-style state.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "sets": {
+                "description": "Bind target for the discovered set list — `[\"heroicons\", \"lucide\"]`.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "theme": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": [
+                        "string",
+                        "number",
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{|bind\\s)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "IconifyJSON theme filter — `prefixes`/`suffixes` variations (`baseline-`, `-filled`). Bound shows one checkbox per theme and holds a `['s:key'/'p:key']` list (empty = no filter; unset defaults to the `''` no-suffix themes). A static string pins one theme by title."
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Icons(#[\\w-]+| \\.[\\w-]+)?|category|children|on (select)|query|search|selected|set|sets|style|theme|tooltip)$"
+            }
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
                 "pattern": "^(?![a-z][\\w-]*\\.Image(#[\\w-]+| \\.[\\w-]+)?$).*$"
               }
             }
@@ -24785,6 +24915,24 @@
                 "maxItems": 0,
                 "type": "array"
               },
+              "header": {
+                "description": "Bind target for the header line — `Element - path #id`.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "items": {
+                "description": "Bind target for the field descriptor list: a leading `kind:ref` refname entry then one `kind:prop` entry per catalog prop — `{kind,name,label,type,options,description,required,value}`.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "of": {
                 "type": [
                   "string",
@@ -24814,6 +24962,15 @@
               "style": {
                 "$ref": "#/definitions/style"
               },
+              "styles": {
+                "description": "Bind target for style entries — `[{kind:style,name,label,value}]`.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "tooltip": {
                 "description": "Universal prop — hover tooltip text.",
                 "type": [
@@ -24825,11 +24982,144 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Inspector(#[\\w-]+| \\.[\\w-]+)?|children|of|placeholder|selected|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Inspector(#[\\w-]+| \\.[\\w-]+)?|children|header|items|of|placeholder|selected|style|styles|tooltip)$"
             },
             "required": [
               "of"
             ]
+          }
+        },
+        {
+          "if": {
+            "not": {
+              "propertyNames": {
+                "pattern": "^(?![a-z][\\w-]*\\.InspectorField(#[\\w-]+| \\.[\\w-]+)?$).*$"
+              }
+            }
+          },
+          "then": {
+            "patternProperties": {
+              "^[a-z][\\w-]*\\.InspectorField(#[\\w-]+| \\.[\\w-]+)?$": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Positional content — mapped to the element's primary prop."
+              }
+            },
+            "properties": {
+              "children": {
+                "maxItems": 0,
+                "type": "array"
+              },
+              "item": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "The `{$item}` map from a `for:` over `items:`/`styles:` — `{kind,name,type,options}` are read from it."
+              },
+              "kind": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "prop",
+                      "ref",
+                      "style"
+                    ]
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Which `document.edits.*` namespace the field writes."
+              },
+              "name": {
+                "description": "Prop/style name — overrides `item.name`.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "options": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": [
+                        "string",
+                        "number",
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Enum choices for `type: enum` — overrides `item.options`."
+              },
+              "style": {
+                "$ref": "#/definitions/style"
+              },
+              "tooltip": {
+                "description": "Universal prop — hover tooltip text.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "type": {
+                "anyOf": [
+                  {
+                    "enum": [
+                      "string",
+                      "bool",
+                      "enum",
+                      "number",
+                      "color",
+                      "length",
+                      "icon",
+                      "list",
+                      "map"
+                    ]
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Control kind — overrides `item.type`."
+              }
+            },
+            "propertyNames": {
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.InspectorField(#[\\w-]+| \\.[\\w-]+)?|children|item|kind|name|options|style|tooltip|type)$"
+            }
           }
         },
         {
@@ -46446,7 +46736,7 @@
         }
       },
       "propertyNames": {
-        "pattern": "^((QuestionnaireChoice|InputGroupTextarea|QuestionnaireItem|CommandSeparator|InputGroupButton|DescriptionItem|DescriptionList|InputGroupAddon|InputGroupInput|SidebarMenuItem|BreadcrumbItem|DropdownButton|InputGroupText|MessageContent|ProgressCircle|ResizablePanel|AccordionItem|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|Questionnaire|SettingsGroup|SidebarFooter|SidebarHeader|ThemeSwitcher|CommandGroup|DropdownMenu|Notification|SwitchButton|TableCaption|WindowBorder|AlertDialog|AvatarGroup|Collapsible|ColorPicker|CommandItem|ContextMenu|NumberInput|SankeyChart|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|VirtualList|Attachment|Breadcrumb|DatePicker|GridLayout|InputGroup|Pagination|RadarChart|RadioGroup|Scrollable|Accordion|Clipboard|DataTable|FocusTrap|FormField|HoverCard|LineChart|Resizable|Separator|StatusBar|TableBody|TableCell|TableHead|TimeField|BarChart|Calendar|Carousel|Checkbox|Combobox|GroupBox|MenuItem|OtpInput|PieChart|Progress|Settings|Skeleton|TableRow|TextView|Textarea|TitleBar|TreeItem|Command|Message|Popover|Shimmer|Sidebar|Spinner|Stepper|Toolbar|Avatar|Bubble|Button|Dialog|Editor|HStack|Marker|Rating|Select|Slider|Switch|Toggle|VStack|Alert|Badge|Empty|Image|Input|Label|Radio|Sheet|Table|Diff|Form|Grid|Icon|Link|List|Tabs|Text|Tree|Box|Kbd|Tab|Tag)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(BackForwardNavigation|FloatingActionButton|IntersectionObserver|QuestionnaireChoice|InputGroupTextarea|NavigationMenuItem|NotificationCenter|ParticleBackground|RelativeDatePicker|QuestionnaireItem|SwipeableListItem|AnimatedGradient|CommandSeparator|ConfirmationCard|ConnectionStatus|DirectoryListing|InputGroupButton|MenuCheckboxItem|OfflineIndicator|RefreshIndicator|SegmentedControl|ToolbarSeparator|AnimatePresence|ContextMenuArea|DateRangePicker|DescriptionItem|DescriptionList|EllipsisTooltip|ExpressionInput|FloatingToolbar|InputGroupAddon|InputGroupInput|MaterialSurface|OptionSeparator|RatingIndicator|SavingIndicator|SidebarMenuItem|TabOverflowMenu|TableOfContents|TerminalToolbar|TypingIndicator|AnimatedNumber|BreadcrumbItem|CommandPalette|DateTimePicker|DirtyIndicator|DropdownButton|DurationPicker|GradientEditor|InputGroupText|LoadingOverlay|MenuGroupLabel|MenuRadioGroup|MessageContent|MiddleEllipsis|NavigationMenu|ProgressCircle|PullDownButton|ResizablePanel|SearchableMenu|SelectableList|SelectableText|SkeletonAvatar|TimezoneSelect|TooltipTrigger|TrendIndicator|WindowControls|WindowSwitcher|AccordionItem|ActivityRings|BulkActionBar|CheckboxGroup|ConfirmButton|ConfirmDialog|CrashReporter|ErrorBoundary|FloatingPanel|InlineMessage|KeyValueInput|MenuRadioItem|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|PasswordInput|PropertyGroup|QuarterPicker|Questionnaire|QuickSwitcher|SettingsGroup|ShellSelector|SidebarFooter|SidebarHeader|SkeletonTable|StatusBarItem|StatusMessage|ThemeSwitcher|ToastViewport|ToolbarButton|ActivityFeed|Autocomplete|AvatarUpload|CheckboxCard|CommandGroup|CopyableText|CurrencyText|DateTimeText|DropdownMenu|DurationText|ExternalLink|FileSizeText|GradientText|HeatmapTable|InfiniteList|MasterDetail|MentionInput|MenuLinkItem|Notification|OverflowMenu|ProgressRing|PromptDialog|PropertyGrid|QuickActions|RelativeTime|ResizeBorder|ScrollShadow|SignaturePad|SkeletonCard|SkeletonText|SortableList|StickyHeader|SwitchButton|TableCaption|TableToolbar|TimelineItem|ToggleButton|ToolbarGroup|ToolbarInput|TransferList|UpdateBanner|UpdateDialog|WindowBorder|ActionSheet|ActivityBar|AlertDialog|AspectRatio|AvatarGroup|BeforeAfter|ButtonGroup|ChoiceChips|Collapsible|ColorPicker|ColorSwatch|ColumnShell|CommandItem|ContextMenu|EmojiPicker|FormSection|GroupedList|HelpTooltip|HotkeyInput|MaskedInput|MonthPicker|MultiSelect|NumberField|NumberInput|OptionGroup|OutlineView|PageControl|PathControl|PercentText|PopupButton|PreviewCard|ProgressBar|RangeSlider|SankeyChart|ScrollToTop|SearchField|SearchInput|SecureField|SettingItem|SettingPage|ShareButton|ShellColumn|ShimmerText|SidebarMenu|SplitButton|Spreadsheet|StepperItem|TableFooter|TableHeader|ToggleGroup|ToolbarLink|VirtualList|ZoomControl|Attachment|Blockquote|Breadcrumb|CardHeader|ColumnView|Comparison|CopyButton|CountBadge|CronEditor|DatePicker|DigitEntry|Disclosure|EditorTabs|EmailInput|EmptyState|EyeDropper|FieldArray|FontPicker|GridLayout|IconButton|IconPicker|InlineEdit|InlineForm|InputAddon|InputGroup|NumberText|Pagination|PhoneInput|PivotTable|PluralText|RadarChart|RadioGroup|RegexInput|ResultView|ScrollArea|Scrollable|ScrubInput|SimpleGrid|SyncStatus|TimePicker|TokenField|Transition|TreeSelect|Typewriter|UploadList|WeekPicker|YearPicker|Accordion|ActionBar|Changelog|Clipboard|CodeInput|ColorWell|Container|Countdown|DataTable|ErrorView|FileInput|FocusTrap|FormError|FormField|FormLabel|Highlight|HoverCard|ImageView|ImageWell|Inspector|JsonInput|LineChart|ListInput|LogViewer|MenuGroup|PaneGroup|Paragraph|PathInput|QuickOpen|RadioCard|Resizable|Separator|Sparkline|SplitPane|SplitView|Statistic|StatusBar|TableBody|TableCell|TableHead|TableView|TextField|TimeField|TreeTable|UnitInput|Watermark|Activity|AnsiText|AppShell|Backdrop|BarChart|Calendar|Carousel|Cascader|Checkbox|ComboBox|Combobox|Confetti|DataGrid|DotBadge|DropZone|Ellipsis|Fieldset|FileTree|GoToLine|GroupBox|KbdCombo|LazyLoad|Lightbox|ListItem|LoadMore|MenuItem|NavGroup|OTPField|OtpInput|Overline|PieChart|PinInput|Progress|Sections|Settings|Showcase|Skeleton|Subtitle|Suspense|TableRow|TagInput|Terminal|TextView|Textarea|Timeline|TitleBar|TreeItem|UrlInput|UsageBar|UserChip|Vibrancy|Viewport|Barcode|Callout|Caption|Command|Divider|Gallery|Heading|KpiCard|ListBox|Marquee|Masonry|Measure|MenuBar|Menubar|Message|NavItem|Outline|Palette|PieMenu|Popover|Preview|Release|Reorder|Section|Shimmer|Sidebar|Spinner|Stagger|Stepper|Submenu|Toolbar|Tooltip|Anchor|Avatar|Banner|Bubble|Button|Canvas|Dialog|Drawer|Editor|HStack|Marker|Option|Player|QrCode|Rating|Ripple|Select|Slider|Switch|TabBar|Toggle|VStack|Viewer|Window|Wizard|ZStack|Alert|Badge|Blink|Board|Chart|Emoji|Empty|Field|Files|Flash|Frame|Gauge|Image|Input|Label|Meter|Panel|Pulse|Radio|Shake|Sheet|Stars|Steps|Table|Timer|Title|Card|Code|Diff|Dock|Flip|Form|Glow|Grid|Icon|Knob|Link|List|Menu|Page|Peek|Tabs|Text|Tree|Vars|Well|Box|Kbd|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<|(if|for|with|match|else|each|index|key|as|is|not|case .+))$"
+        "pattern": "^((QuestionnaireChoice|InputGroupTextarea|QuestionnaireItem|CommandSeparator|InputGroupButton|DescriptionItem|DescriptionList|InputGroupAddon|InputGroupInput|SidebarMenuItem|BreadcrumbItem|DropdownButton|InputGroupText|MessageContent|ProgressCircle|ResizablePanel|AccordionItem|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|Questionnaire|SettingsGroup|SidebarFooter|SidebarHeader|ThemeSwitcher|CommandGroup|DropdownMenu|Notification|SwitchButton|TableCaption|WindowBorder|AlertDialog|AvatarGroup|Collapsible|ColorPicker|CommandItem|ContextMenu|NumberInput|SankeyChart|SettingItem|SettingPage|SidebarMenu|StepperItem|TableFooter|TableHeader|VirtualList|Attachment|Breadcrumb|DatePicker|GridLayout|InputGroup|Pagination|RadarChart|RadioGroup|Scrollable|Accordion|Clipboard|DataTable|FocusTrap|FormField|HoverCard|LineChart|Resizable|Separator|StatusBar|TableBody|TableCell|TableHead|TimeField|BarChart|Calendar|Carousel|Checkbox|Combobox|GroupBox|MenuItem|OtpInput|PieChart|Progress|Settings|Skeleton|TableRow|TextView|Textarea|TitleBar|TreeItem|Command|Message|Popover|Shimmer|Sidebar|Spinner|Stepper|Toolbar|Avatar|Bubble|Button|Dialog|Editor|HStack|Marker|Rating|Select|Slider|Switch|Toggle|VStack|Alert|Badge|Empty|Image|Input|Label|Radio|Sheet|Table|Diff|Form|Grid|Icon|Link|List|Tabs|Text|Tree|Box|Kbd|Tab|Tag)(#[\\w-]+| \\.[\\w-]+)?|[a-z][\\w-]*\\.(BackForwardNavigation|FloatingActionButton|IntersectionObserver|QuestionnaireChoice|InputGroupTextarea|NavigationMenuItem|NotificationCenter|ParticleBackground|RelativeDatePicker|QuestionnaireItem|SwipeableListItem|AnimatedGradient|CommandSeparator|ConfirmationCard|ConnectionStatus|DirectoryListing|InputGroupButton|MenuCheckboxItem|OfflineIndicator|RefreshIndicator|SegmentedControl|ToolbarSeparator|AnimatePresence|ContextMenuArea|DateRangePicker|DescriptionItem|DescriptionList|EllipsisTooltip|ExpressionInput|FloatingToolbar|InputGroupAddon|InputGroupInput|MaterialSurface|OptionSeparator|RatingIndicator|SavingIndicator|SidebarMenuItem|TabOverflowMenu|TableOfContents|TerminalToolbar|TypingIndicator|AnimatedNumber|BreadcrumbItem|CommandPalette|DateTimePicker|DirtyIndicator|DropdownButton|DurationPicker|GradientEditor|InputGroupText|InspectorField|LoadingOverlay|MenuGroupLabel|MenuRadioGroup|MessageContent|MiddleEllipsis|NavigationMenu|ProgressCircle|PullDownButton|ResizablePanel|SearchableMenu|SelectableList|SelectableText|SkeletonAvatar|TimezoneSelect|TooltipTrigger|TrendIndicator|WindowControls|WindowSwitcher|AccordionItem|ActivityRings|BulkActionBar|CheckboxGroup|ConfirmButton|ConfirmDialog|CrashReporter|ErrorBoundary|FloatingPanel|InlineMessage|KeyValueInput|MenuRadioItem|MenuSeparator|MessageAvatar|MessageFooter|MessageHeader|PasswordInput|PropertyGroup|QuarterPicker|Questionnaire|QuickSwitcher|SettingsGroup|ShellSelector|SidebarFooter|SidebarHeader|SkeletonTable|StatusBarItem|StatusMessage|ThemeSwitcher|ToastViewport|ToolbarButton|ActivityFeed|Autocomplete|AvatarUpload|CheckboxCard|CommandGroup|CopyableText|CurrencyText|DateTimeText|DropdownMenu|DurationText|ExternalLink|FileSizeText|GradientText|HeatmapTable|InfiniteList|MasterDetail|MentionInput|MenuLinkItem|Notification|OverflowMenu|ProgressRing|PromptDialog|PropertyGrid|QuickActions|RelativeTime|ResizeBorder|ScrollShadow|SignaturePad|SkeletonCard|SkeletonText|SortableList|StickyHeader|SwitchButton|TableCaption|TableToolbar|TimelineItem|ToggleButton|ToolbarGroup|ToolbarInput|TransferList|UpdateBanner|UpdateDialog|WindowBorder|ActionSheet|ActivityBar|AlertDialog|AspectRatio|AvatarGroup|BeforeAfter|ButtonGroup|ChoiceChips|Collapsible|ColorPicker|ColorSwatch|ColumnShell|CommandItem|ContextMenu|EmojiPicker|FormSection|GroupedList|HelpTooltip|HotkeyInput|MaskedInput|MonthPicker|MultiSelect|NumberField|NumberInput|OptionGroup|OutlineView|PageControl|PathControl|PercentText|PopupButton|PreviewCard|ProgressBar|RangeSlider|SankeyChart|ScrollToTop|SearchField|SearchInput|SecureField|SettingItem|SettingPage|ShareButton|ShellColumn|ShimmerText|SidebarMenu|SplitButton|Spreadsheet|StepperItem|TableFooter|TableHeader|ToggleGroup|ToolbarLink|VirtualList|ZoomControl|Attachment|Blockquote|Breadcrumb|CardHeader|ColumnView|Comparison|CopyButton|CountBadge|CronEditor|DatePicker|DigitEntry|Disclosure|EditorTabs|EmailInput|EmptyState|EyeDropper|FieldArray|FontPicker|GridLayout|IconButton|IconPicker|InlineEdit|InlineForm|InputAddon|InputGroup|NumberText|Pagination|PhoneInput|PivotTable|PluralText|RadarChart|RadioGroup|RegexInput|ResultView|ScrollArea|Scrollable|ScrubInput|SimpleGrid|SyncStatus|TimePicker|TokenField|Transition|TreeSelect|Typewriter|UploadList|WeekPicker|YearPicker|Accordion|ActionBar|Changelog|Clipboard|CodeInput|ColorWell|Container|Countdown|DataTable|ErrorView|FileInput|FocusTrap|FormError|FormField|FormLabel|Highlight|HoverCard|ImageView|ImageWell|Inspector|JsonInput|LineChart|ListInput|LogViewer|MenuGroup|PaneGroup|Paragraph|PathInput|QuickOpen|RadioCard|Resizable|Separator|Sparkline|SplitPane|SplitView|Statistic|StatusBar|TableBody|TableCell|TableHead|TableView|TextField|TimeField|TreeTable|UnitInput|Watermark|Activity|AnsiText|AppShell|Backdrop|BarChart|Calendar|Carousel|Cascader|Checkbox|ComboBox|Combobox|Confetti|DataGrid|DotBadge|DropZone|Ellipsis|Fieldset|FileTree|GoToLine|GroupBox|KbdCombo|LazyLoad|Lightbox|ListItem|LoadMore|MenuItem|NavGroup|OTPField|OtpInput|Overline|PieChart|PinInput|Progress|Sections|Settings|Showcase|Skeleton|Subtitle|Suspense|TableRow|TagInput|Terminal|TextView|Textarea|Timeline|TitleBar|TreeItem|UrlInput|UsageBar|UserChip|Vibrancy|Viewport|Barcode|Callout|Caption|Command|Divider|Gallery|Heading|KpiCard|ListBox|Marquee|Masonry|Measure|MenuBar|Menubar|Message|NavItem|Outline|Palette|PieMenu|Popover|Preview|Release|Reorder|Section|Shimmer|Sidebar|Spinner|Stagger|Stepper|Submenu|Toolbar|Tooltip|Anchor|Avatar|Banner|Bubble|Button|Canvas|Dialog|Drawer|Editor|HStack|Marker|Option|Player|QrCode|Rating|Ripple|Select|Slider|Switch|TabBar|Toggle|VStack|Viewer|Window|Wizard|ZStack|Alert|Badge|Blink|Board|Chart|Emoji|Empty|Field|Files|Flash|Frame|Gauge|Icons|Image|Input|Label|Meter|Panel|Pulse|Radio|Shake|Sheet|Stars|Steps|Table|Timer|Title|Card|Code|Diff|Dock|Flip|Form|Glow|Grid|Icon|Knob|Link|List|Menu|Page|Peek|Tabs|Text|Tree|Vars|Well|Box|Kbd|Tab|Tag|Tex)(#[\\w-]+| \\.[\\w-]+)?|on [a-z_][A-Za-z0-9_-]*|[a-z_][A-Za-z0-9_-]*|<<|(if|for|with|match|else|each|index|key|as|is|not|case .+))$"
       },
       "type": "object"
     },

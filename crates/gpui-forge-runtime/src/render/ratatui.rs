@@ -6,7 +6,7 @@
 //! directly and `render` draws into a `ratatui::Frame`. The host
 //! (`forge-preview-ratatui`) owns the terminal.
 
-use crate::render::{doc_meta, get_path, lookup_path, set_path};
+use crate::render::{doc_meta, get_path, lookup_path, set_path, style_edit_value};
 use forge_spec::catalog::Catalog;
 use forge_spec::{Document, Node, Path, Segment, Unit, Value};
 use ratatui::Frame;
@@ -152,11 +152,7 @@ impl ForgeView {
 
     /// `Style` tab write-through — `doc.set_style`.
     pub fn set_node_style(&mut self, path: &str, name: &str, json: &Json) {
-        let value = if json.is_null() {
-            None
-        } else {
-            Some(Value::String(json.as_str().unwrap_or_default().to_owned()))
-        };
+        let value = style_edit_value(json);
         if let Some(doc) = self.doc.as_mut() {
             doc.set_style(path, name, value);
         }
@@ -380,9 +376,10 @@ impl ForgeView {
     fn boolean(&self, node: &Node, name: &str, fallback: bool) -> bool {
         match node.props.iter().find(|(k, _)| k == name).map(|(_, v)| v) {
             Some(Value::Bool(b)) => *b,
-            Some(Value::Binding { path, .. }) => {
-                self.lookup(path).and_then(Json::as_bool).unwrap_or(fallback)
-            }
+            Some(Value::Binding { path, .. }) => self
+                .lookup(path)
+                .and_then(Json::as_bool)
+                .unwrap_or(fallback),
             _ => fallback,
         }
     }
@@ -748,10 +745,11 @@ impl ForgeView {
                     .enumerate()
                     .map(|(i, v)| (i as f64, *v))
                     .collect();
-                let (mut y_lo, mut y_hi) = data.iter().fold(
-                    (f64::INFINITY, f64::NEG_INFINITY),
-                    |(lo, hi), v| (lo.min(*v), hi.max(*v)),
-                );
+                let (mut y_lo, mut y_hi) = data
+                    .iter()
+                    .fold((f64::INFINITY, f64::NEG_INFINITY), |(lo, hi), v| {
+                        (lo.min(*v), hi.max(*v))
+                    });
                 if y_lo >= y_hi {
                     (y_lo, y_hi) = (0.0, 1.0);
                 }
@@ -767,10 +765,12 @@ impl ForgeView {
                 }
                 frame.render_widget(
                     Chart::new(vec![ds])
-                        .x_axis(Axis::default().bounds([
-                            self.num(node, "x_min", 0.0),
-                            self.num(node, "x_max", x_hi),
-                        ]))
+                        .x_axis(
+                            Axis::default().bounds([
+                                self.num(node, "x_min", 0.0),
+                                self.num(node, "x_max", x_hi),
+                            ]),
+                        )
                         .y_axis(Axis::default().bounds([
                             self.num(node, "y_min", y_lo),
                             self.num(node, "y_max", y_hi),
@@ -780,10 +780,12 @@ impl ForgeView {
             }
             "Calendar" => {
                 let declared = self.prop_text(node, "date");
-                let date = parse_date(&declared)
-                    .unwrap_or_else(|| time::OffsetDateTime::now_utc().date());
+                let date =
+                    parse_date(&declared).unwrap_or_else(|| time::OffsetDateTime::now_utc().date());
                 let events = CalendarEventStore::today(
-                    Style::default().fg(Color::Cyan).add_modifier(Modifier::BOLD),
+                    Style::default()
+                        .fg(Color::Cyan)
+                        .add_modifier(Modifier::BOLD),
                 );
                 let header = Style::default().add_modifier(Modifier::BOLD);
                 frame.render_widget(

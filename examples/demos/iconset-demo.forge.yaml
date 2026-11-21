@@ -1,0 +1,58 @@
+# Iconset demo — `meta.iconset` switches the document's icons off the bundled
+# lucide set. `heroicons` is bundled with Forge Studio; a project can supply
+# its own set at `<assets>/icons/<set>/` + `[icons] set` in forge.toml.
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
+forge: "0.1"
+base: gpui-kit
+use:
+  forge: forge
+meta:
+  title: Iconset demo
+  iconset: heroicons
+
+root:
+  VStack:
+  style:
+    padding: 24px
+    gap: 16px
+  children:
+    - Text: "Heroicons — meta.iconset: heroicons"
+      style: {size: lg, weight: semibold}
+    - Text: "`Icon` elements and `icon:` props resolve against the document's
+        iconset instead of lucide."
+      style: {size: sm, color: $theme.muted_foreground}
+    - HStack:
+      style: {gap: 16px}
+      children:
+        - Icon: home
+          size: Large
+        - Icon: bolt
+          size: Large
+        - Icon: heart
+          size: Large
+        - Icon: star
+          size: Large
+        - Icon: camera
+          size: Large
+        - Icon: cloud
+          size: Large
+        - Icon: cog
+          size: Large
+    - HStack:
+      style: {gap: 8px}
+      children:
+        - Button: New file
+          icon: document
+          variant: Primary
+        - Button: Edit
+          icon: pencil
+        - Button: Delete
+          icon: trash
+          variant: Danger
+    - Alert: "This document renders heroicons — `Icon`, `Button.icon`, and the
+        `forge.Icons` browser all resolve against `meta.iconset`."
+      title: Iconset loaded
+      variant: Success
+    - forge.Icons:
+      style: {grow: true, min-height: 0}
+      search: true

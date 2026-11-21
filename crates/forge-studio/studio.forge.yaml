@@ -41,6 +41,15 @@ state:
   status.message: string
   vars_add.path: string
   vars_add.value: string
+  inspector.items: list
+  inspector.styles: list
+  inspector.header: string
+  studio.iconset: string
+  studio.iconsets: list
+  studio.icon: string
+  studio.icons_query: string
+  studio.icon_category: string
+  studio.icon_theme: list
 
 # ============================================================================
 # THE APP MENU
@@ -323,6 +332,56 @@ assetsTab: &assetsTab
 
 
 # ============================================================================
+# THE ICONS TAB
+# ============================================================================
+# `forge.Icons` browses the app icon catalog — `lucide` (bundled) plus any
+# `icons/<set>/` the asset source layers in. `set`/`selected`/`query` bind
+# out so the doc can restyle the grid; click a cell to write `studio.icon`.
+
+HStack: &iconGrid
+  style: {gap: 8px}
+  children:
+    - Text: "Icons"
+      style: {grow: true, size: sm, color: $theme.muted_foreground}
+
+VStack: &iconsHeader
+  style: {gap: 8px}
+  children:
+    - Text: "Icons"
+      style: {grow: true, size: sm, color: $theme.muted_foreground}
+
+newIconsTab: &newIconsTab
+  children:
+    - VStack:
+      style: {grow: true, min-height: 0, gap: 8px, padding: 8px}
+      children:
+        <<: *iconsHeader
+        <<: *iconGrid
+
+
+iconsTab: &iconsTab
+  children:
+    - VStack:
+      style: {grow: true, min-height: 0, gap: 8px, padding: 8px}
+      children:
+        - HStack:
+          style: {gap: 8px}
+          children:
+            - Text: "{$studio.iconset} · {$studio.icon}"
+              style: {grow: true, size: sm, color: $theme.muted_foreground}
+        - forge.Icons#icons:
+          style: {grow: true, min-height: 0}
+          sets: bind $studio.iconsets
+          set: bind $studio.iconset
+          selected: bind $studio.icon
+          query: bind $studio.icons_query
+          category: bind $studio.icon_category
+          theme: bind $studio.icon_theme
+          search: true
+          on select: icon_copy
+
+
+# ============================================================================
 # THE SOURCE TAB
 # ============================================================================
 sourceTab: &sourceTab
@@ -559,6 +618,112 @@ varsTab: &varsTab
 
 
 # ============================================================================
+# THE INSPECTOR PANEL
+# ============================================================================
+inspector: &inspector
+  style:
+    width: 280px
+    height: full
+    min-height: 0
+    padding: 8px
+    gap: 8px
+  children:
+    - GroupBox: Structure
+      variant: Outline
+      style:
+        min-height: 120px
+      children:
+        - forge.Outline#structure:
+          of: canvas
+          selected: bind $document.selected
+          on select: select_node()
+          placeholder: no document
+          style:
+            grow: true
+            min-height: 200px
+    # The action buttons sit beside the "Inspector" name, not inside the box —
+    # the GroupBox look is replicated: muted title row over an outlined surface.
+    - VStack:
+      style: {gap: 12px, grow: true, min-height: 0}
+      children:
+        - HStack:
+          style: {align: center}
+          children:
+            - Text: Inspector
+              style: {grow: true, color: $theme.muted_foreground, line-height: 125%}
+            - Button:
+              icon: crosshair
+              variant: Ghost
+              size: Small
+              tooltip: Pick element in preview
+              on click: pick()
+            - Button:
+              icon: trash-2
+              variant: Ghost
+              size: Small
+              tooltip: Delete selected element
+              on click: remove_component()
+        - VStack:
+          style: {grow: true, min-height: 0, border: 1px, border-color: $theme.border, radius: 6px, padding: 12px, gap: 8px}
+          children:
+            # Data mode — Inspector publishes items/styles/header; the field
+            # layout is ours (FormField label + forge.InspectorField control).
+            - forge.Inspector#props:
+              of: canvas
+              selected: bind $document.selected
+              items: bind $inspector.items
+              styles: bind $inspector.styles
+              header: bind $inspector.header
+              placeholder: nothing selected
+            - Text: "{$inspector.header}"
+              style: {size: sm, weight: medium}
+            - Tabs:
+              style: {grow: true, min-height: 0}
+              children:
+                - Tab: Properties
+                  children:
+                    - VStack:
+                      style: {grow: true, min-height: 0, overflow: scroll, gap: 10px, padding: [8px, 0]}
+                      children:
+                        - FormField: "{$item.label}"
+                          for: $inspector.items
+                          each: item
+                          else:
+                            - Text: "no catalog props"
+                              style: {size: xs, color: $theme.muted_foreground}
+                          children:
+                            - forge.InspectorField:
+                              item: $item
+                - Tab: Style
+                  children:
+                    - VStack:
+                      style: {grow: true, min-height: 0, overflow: scroll, gap: 10px, padding: [8px, 0]}
+                      children:
+                        - FormField: "{$item.label}"
+                          for: $inspector.styles
+                          each: item
+                          else:
+                            - Text: "no style entries"
+                              style: {size: xs, color: $theme.muted_foreground}
+                          children:
+                            - forge.InspectorField:
+                              item: $item
+    - GroupBox: Diagnostics
+      variant: Outline
+      children:
+        - Text: "{$studio.diagnostics}"
+          style:
+            size: sm
+    - GroupBox: View state
+      variant: Outline
+      children:
+        - Text: "{$preview.state}"
+          style:
+            size: xs
+            color: $theme.muted_foreground
+
+
+# ============================================================================
 # THE PREVIEW TAB
 # ============================================================================
 previewTab: &previewTab
@@ -599,66 +764,11 @@ previewTab: &previewTab
               style:
                 size: xs
                 color: $theme.muted_foreground
+        # Structure/Inspector only make sense against the canvas, so they live
+        # inside this tab — docked at its right edge like the palette's left.
+        - VStack#inspector:
+          <<: *inspector
 
-
-# ============================================================================
-# THE INSPECTOR PANEL
-# ============================================================================
-inspector: &inspector
-  style:
-    width: 280px
-    padding: 8px
-    gap: 8px
-    overflow: scroll
-  children:
-    - GroupBox: Structure
-      variant: Outline
-      style:
-        min-height: 120px
-      children:
-        - forge.Outline#structure:
-          of: canvas
-          selected: bind $document.selected
-          on select: select_node()
-          placeholder: no document
-          style:
-            grow: true
-            min-height: 200px
-    - GroupBox: Inspector
-      variant: Outline
-      children:
-        - HStack:
-          style: {justify: end}
-          children:
-            - Button:
-              icon: crosshair
-              variant: Ghost
-              size: Small
-              tooltip: Pick element in preview
-              on click: pick()
-            - Button:
-              icon: trash-2
-              variant: Ghost
-              size: Small
-              tooltip: Delete selected element
-              on click: remove_component()
-        - forge.Inspector#props:
-          of: canvas
-          selected: bind $document.selected
-          placeholder: nothing selected
-    - GroupBox: Diagnostics
-      variant: Outline
-      children:
-        - Text: "{$studio.diagnostics}"
-          style:
-            size: sm
-    - GroupBox: View state
-      variant: Outline
-      children:
-        - Text: "{$preview.state}"
-          style:
-            size: xs
-            color: $theme.muted_foreground
 
 # ============================================================================
 # THE MAIN BODY
@@ -709,7 +819,7 @@ body: &body
                   folders: $studio.files_folders
                   highlights: $studio.files_highlights
                   selected: bind $studio.file_selected
-                  on select: open_path($studio.file_selected)
+                  # Single click selects/highlights; double-click (`open`) loads.
                   on open: open_path($studio.file_selected)
                   placeholder: no .forge.yaml files here
                   style: {grow: true, min-height: 0, min-width: 0}
@@ -743,9 +853,8 @@ body: &body
                       <<: *themesTab
                     - Tab: Assets
                       <<: *assetsTab
-
-                - VStack#inspector:
-                  <<: *inspector
+                    - Tab: Icons
+                      <<: *iconsTab
 
 
 # ============================================================================
@@ -818,6 +927,18 @@ Dialog#preferences:
                         value: bind $studio.files_highlights
                         placeholder: "*.forge.yaml = bold; *.json = green"
                         on change: persist_prefs()
+          - SettingPage: Icons
+            children:
+              - SettingsGroup: Iconify cache
+                children:
+                  - SettingItem: Cache directory
+                    children:
+                      - Input:
+                        value: bind $studio.icon_cache
+                        placeholder: "~/.cache/gpui-forge/iconify"
+                        on change: apply_icon_cache()
+                  - Text: Iconify sets, name catalogs and vendored SVGs are stored here. Empty means the platform default cache dir.
+                    style: {size: xs, color: $theme.muted_foreground}
 
 # ============================================================================
 # THE NEW PROJECT DIALOG

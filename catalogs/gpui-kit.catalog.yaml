@@ -944,7 +944,9 @@ elements:
         default: true
       label-indent:
         type: bool
-        default: false
+        # `Field`'s own default is `true` — `false` here would hide labels on
+        # every FormField that doesn't opt back in.
+        default: true
       align:
         type: enum
         values: [Start, Center, End]

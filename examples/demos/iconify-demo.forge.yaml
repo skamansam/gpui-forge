@@ -1,0 +1,59 @@
+# Iconify demo — `meta.iconset: mdi` names an iconify-catalog set (Material
+# Design Icons). On open, Forge Studio vendors just the icons this doc uses
+# into `assets/icons/mdi/` beside the file; until then `doc_icon` renders
+# them from api.iconify.design over https.
+$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
+forge: "0.1"
+base: gpui-kit
+use:
+  forge: forge
+meta:
+  title: Iconify demo
+  iconset: mdi
+
+root:
+  VStack:
+  style:
+    padding: 24px
+    gap: 16px
+  children:
+    - Text: "Material Design Icons — meta.iconset: mdi"
+      style: {size: lg, weight: semibold}
+    - Text: "Opening this doc vendors `assets/icons/mdi/` with just these
+        names — check the file tree."
+      style: {size: sm, color: $theme.muted_foreground}
+    - HStack:
+      style: {gap: 16px}
+      children:
+        - Icon: home
+          size: Large
+        - Icon: rocket-launch
+          size: Large
+        - Icon: heart
+          size: Large
+        - Icon: star
+          size: Large
+        - Icon: camera
+          size: Large
+        - Icon: cloud
+          size: Large
+        - Icon: cog
+          size: Large
+    - HStack:
+      style: {gap: 8px}
+      children:
+        - Button: New file
+          icon: file-plus
+          variant: Primary
+        - Button: Edit
+          icon: pencil
+        - Button: Delete
+          icon: delete
+          variant: Danger
+    - Alert: "Vendored mdi icons — `Icon`, `Button.icon`, and the Icons
+        browser all resolve against `meta.iconset`."
+      title: Iconset loaded
+      variant: Success
+    - forge.Icons:
+      style: {grow: true, min-height: 0}
+      search: true

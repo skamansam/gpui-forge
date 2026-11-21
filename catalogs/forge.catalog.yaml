@@ -73,6 +73,9 @@ elements:
 
   Inspector:
     summary: Property table for the selected node in a `forge.Preview`'s document.
+      Binding `items`/`styles`/`header` turns it into a data provider — it
+      publishes descriptors and renders nothing; lay the fields out yourself
+      with `for:` + `forge.InspectorField`.
     component: gpui_forge_runtime::render::ForgeView
     props:
       of:
@@ -82,9 +85,98 @@ elements:
         type: string
         bindable: true
         summary: Node index path to inspect — the same path `forge.Outline` writes.
+      items:
+        type: string
+        bindable: true
+        summary: "Bind target for the field descriptor list: a leading
+          `kind:ref` refname entry then one `kind:prop` entry per catalog prop
+          — `{kind,name,label,type,options,description,required,value}`."
+      styles:
+        type: string
+        bindable: true
+        summary: "Bind target for style entries — `[{kind:style,name,label,value}]`."
+      header:
+        type: string
+        bindable: true
+        summary: "Bind target for the header line — `Element - path #id`."
       placeholder:
         type: string
         summary: Shown when nothing is selected.
+    children: none
+
+  InspectorField:
+    summary: The prop editor for one `forge.Inspector` item — `kind` picks the
+      `document.edits.*` namespace (prop/ref/style) and `type` the widget
+      (bool→Switch, enum→Select, number→NumberInput, color→ColorPicker,
+      else Input). Fires `prop_changed`/`refname_changed`/`style_changed`.
+      Wrap in `FormField` for a label.
+    component: gpui_forge_runtime::render::ForgeView
+    props:
+      item:
+        type: map
+        summary: "The `{$item}` map from a `for:` over `items:`/`styles:` —
+          `{kind,name,type,options}` are read from it."
+      name:
+        type: string
+        summary: Prop/style name — overrides `item.name`.
+      kind:
+        type: enum
+        values: [prop, ref, style]
+        summary: Which `document.edits.*` namespace the field writes.
+      type:
+        type: enum
+        values: [string, bool, enum, number, color, length, icon, list, map]
+        summary: Control kind — overrides `item.type`.
+      options:
+        type: list<string>
+        summary: "Enum choices for `type: enum` — overrides `item.options`."
+    children: none
+
+  Icons:
+    summary: "Icon browser — a searchable grid of the app's icon catalog
+      (`icons/<name>.svg` is `lucide`, the bundled set; `icons/<set>/<name>.svg`
+      is a named set the host layers in). `set:` picks or binds the browsed
+      set (default: the view's resolved iconset — `meta.iconset`, `[icons] set`
+      in forge.toml, else lucide); `sets:` publishes the discovered sets;
+      `search:` adds a filter box (`query:` exposes it). A click writes
+      `selected` and fires `select` with the icon name."
+    component: gpui_forge_runtime::render::ForgeView
+    props:
+      set:
+        type: string
+        bindable: true
+        summary: "Iconset name to browse — `lucide` or a set dir under
+          `icons/`. Bound, it's a two-way picker for `studio.iconset`-style state."
+      sets:
+        type: string
+        bindable: true
+        summary: Bind target for the discovered set list — `["heroicons", "lucide"]`.
+      search:
+        type: bool
+        summary: Show the filter box; its text goes to `query:` or an internal slot.
+      query:
+        type: string
+        bindable: true
+        summary: Search text — bound, external writes reseed the field.
+      category:
+        type: string
+        bindable: true
+        summary: "IconifyJSON category filter — a bound prop gets a picker
+          over the set's categories (`[all]` resets); static pins it."
+      theme:
+        type: list<string>
+        bindable: true
+        summary: "IconifyJSON theme filter — `prefixes`/`suffixes` variations
+          (`baseline-`, `-filled`). Bound shows one checkbox per theme and
+          holds a `['s:key'/'p:key']` list (empty = no filter; unset defaults
+          to the `''` no-suffix themes). A static string pins one theme by
+          title."
+      selected:
+        type: string
+        bindable: true
+        summary: The clicked icon's name; the matching cell highlights.
+    events:
+      select: string
     children: none
 
   Files:

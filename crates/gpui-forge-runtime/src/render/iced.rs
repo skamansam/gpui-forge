@@ -6,7 +6,7 @@
 //! as `Message`s — `on click:` bindings become `Message::Hooks`, two-way
 //! inputs become `Message::Input`/`Toggle`/`Slide` writes.
 
-use crate::render::{doc_meta, get_path, lookup_path, set_path};
+use crate::render::{doc_meta, get_path, lookup_path, set_path, style_edit_value};
 use forge_spec::catalog::Catalog;
 use forge_spec::{Document, Node, Path, Segment, Unit, Value};
 use iced::widget::{
@@ -148,11 +148,7 @@ impl ForgeView {
 
     /// `Style` tab write-through — `doc.set_style`.
     pub fn set_node_style(&mut self, path: &str, name: &str, json: &Json) {
-        let value = if json.is_null() {
-            None
-        } else {
-            Some(Value::String(json.as_str().unwrap_or_default().to_owned()))
-        };
+        let value = style_edit_value(json);
         if let Some(doc) = self.doc.as_mut() {
             doc.set_style(path, name, value);
         }

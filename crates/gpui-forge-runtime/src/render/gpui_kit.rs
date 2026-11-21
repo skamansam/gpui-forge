@@ -7,7 +7,7 @@
 use std::collections::{HashMap, HashSet};
 use std::rc::Rc;
 
-use crate::render::{get_path, set_path};
+use crate::render::{get_path, set_path, style_edit_value};
 use forge_spec::catalog::{Catalog, Children, PropType};
 use forge_spec::value::parse_path;
 use forge_spec::yaml;
@@ -230,6 +230,14 @@ pub struct ForgeView {
     /// Always clamped back under `root:` at render time, so a project switch
     /// or a removed folder self-heals without explicit resets.
     files_nav: HashMap<String, String>,
+    /// `forge.Icons` search text per element key — `query:` can bind it out.
+    icons_queries: HashMap<String, String>,
+    /// `forge.Icons` grid scroll handles per element key — the handle's
+    /// bounds are how the cell-column count tracks the rendered width.
+    icons_scrolls: HashMap<String, UniformListScrollHandle>,
+    /// The host's iconset (`[icons] set` in forge.toml) — a document's
+    /// `meta.iconset` overrides it, and `lucide` is the bundled default.
+    project_iconset: Option<String>,
     selects: HashMap<String, Entity<SelectState<Options>>>,
     /// The shared `ThemeSwitcher` select — one Light/Dark state per view.
     theme_select: Option<Entity<SelectState<Options>>>,
@@ -274,6 +282,15 @@ pub struct ForgeView {
     /// Click-to-place mode — the pick click writes `studio.drop_target` and
     /// fires `place_component` instead of selecting.
     placing: bool,
+    /// Pick hit zones — `(bounds, path)` per rendered node, written by each
+    /// node's zone `canvas` during prepaint while `pick` is on. The single
+    /// top-level pick overlay hit-tests these to find the deepest node under
+    /// the pointer — nested per-node overlays can't, because the root's
+    /// overlay shadows every descendant in dispatch order.
+    pick_zones: Rc<std::cell::RefCell<Vec<(Bounds<Pixels>, String)>>>,
+    /// The pick zone under the pointer — each zone canvas paints its accent
+    /// frame while its path matches, so only the deepest node highlights.
+    pick_hover: Rc<std::cell::RefCell<Option<String>>>,
     /// Drag & drop — rendered nodes are drag sources (`ForgeDrag::Node`) and
     /// drop targets (writes `studio.drop_target`, fires `drop_component` /
     /// `move_node`). Host enables on the preview.
@@ -348,6 +365,9 @@ impl ForgeView {
             files_cache: HashMap::new(),
             files_queries: HashMap::new(),
             files_nav: HashMap::new(),
+            icons_queries: HashMap::new(),
+            icons_scrolls: HashMap::new(),
+            project_iconset: None,
             selects: HashMap::new(),
             theme_select: None,
             comboboxes: HashMap::new(),
@@ -371,6 +391,8 @@ impl ForgeView {
             base_dir: None,
             pick: false,
             placing: false,
+            pick_zones: Rc::new(std::cell::RefCell::new(Vec::new())),
+            pick_hover: Rc::new(std::cell::RefCell::new(None)),
             dnd: false,
             empty_text: None,
             scopes: Vec::new(),
@@ -970,6 +992,751 @@ impl ForgeView {
             .into_any_element()
     }
 
+    /// `forge.Icons` — a searchable grid of the app's icon catalog, read
+    /// from `AssetSource::list("icons/")`. `icons/<name>.svg` is `lucide`
+    /// (the bundled set); `icons/<set>/<name>.svg` marks a named iconset
+    /// (`icons/heroicons/…`), which the host's asset source layers in.
+    /// `set:` picks/binds the browsed set, `sets:` publishes the discovered
+    /// sets, `search:` adds a filter box (`query:` exposes its text), and a
+    /// click writes `selected` + fires `select` with the icon name.
+    /// `category:`/`theme:` bind IconifyJSON metadata filters — categories
+    /// (an icon shows under every category it belongs to) and theme
+    /// prefixes/suffixes (`baseline-`, `-filled`); a bound prop gets a
+    /// picker, a static one pins the filter. Names sort naturally so the
+    /// grid order never shifts under state changes.
+    fn icons(
+        &mut self,
+        node: &Node,
+        key: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        let paths = cx.asset_source().list("icons/").unwrap_or_default();
+        let mut by_set: HashMap<String, Vec<String>> = HashMap::new();
+        for path in &paths {
+            let Some(stem) = path
+                .strip_prefix("icons/")
+                .and_then(|rest| rest.strip_suffix(".svg"))
+            else {
+                continue;
+            };
+            match stem.split_once('/') {
+                Some((set, name)) => by_set
+                    .entry(set.to_owned())
+                    .or_default()
+                    .push(name.to_owned()),
+                None => by_set
+                    .entry("lucide".into())
+                    .or_default()
+                    .push(stem.to_owned()),
+            }
+        }
+        // Iconify-catalog sets list even with no local files — picking one
+        // browses it over `https` and lazily fetches its name list.
+        for set in crate::iconify::sets() {
+            by_set.entry(set).or_default();
+        }
+        for names in by_set.values_mut() {
+            names.sort();
+        }
+        let mut sets: Vec<String> = by_set.keys().cloned().collect();
+        sets.sort();
+        // Catalog fetch — fire-once per session; `refresh_windows` re-renders
+        // on land. Always asked for so a stale `sets.json` refreshes too.
+        crate::iconify::ensure_sets(cx);
+        // `set:` — bound or static; absent means the view's own iconset. An
+        // empty value (bound or static) falls back too, then gets seeded so
+        // the picker and grid agree on first render.
+        let set_path = self.two_way(node, "set");
+        let set = set_path
+            .as_ref()
+            .and_then(|p| self.lookup(p))
+            .and_then(|j| j.as_str())
+            .map(str::to_owned)
+            .or_else(|| self.prop_text(node, "set"))
+            .filter(|s| !s.is_empty())
+            .unwrap_or_else(|| self.iconset().to_owned());
+        if let Some(p) = &set_path {
+            let empty = self
+                .lookup(p)
+                .and_then(|j| j.as_str())
+                .unwrap_or_default()
+                .is_empty();
+            if empty {
+                self.update_state(p, Json::String(set.clone()), cx);
+            }
+        }
+        if let Some(p) = self.two_way(node, "sets") {
+            let value = Json::Array(sets.iter().map(|s| Json::String(s.clone())).collect());
+            if get_path(self.state(), &p) != Some(&value) {
+                self.update_state(&p, value, cx);
+            }
+        }
+        // `query:` — bound state like `forge.Files`', else a per-element slot.
+        let query_path = self.two_way(node, "query");
+        let query = match &query_path {
+            Some(p) => self
+                .lookup(p)
+                .and_then(|j| j.as_str())
+                .unwrap_or_default()
+                .to_owned(),
+            None => self.icons_queries.get(key).cloned().unwrap_or_default(),
+        };
+        // Iconify-catalog sets route through `ensure_set` — uncached sets get
+        // their one IconifyJSON fetch, cached sets a `lastModified` check,
+        // all fire-once. Only mergeable sets fetch: heroicons' iconify names
+        // and suffix themes join the bundled listing; lucide's flat
+        // `icons/` namespace can't merge and its categories are vendored,
+        // so its IconifyJSON buys nothing.
+        if iconify_mergeable(&set) && crate::iconify::known_set(&set) {
+            crate::iconify::ensure_set(&set, cx);
+        }
+        let filter = query.to_lowercase();
+        // Names = locally-materialized files ∪ the iconify name list — a
+        // partially-vendored set still browses its whole catalog.
+        let materialized: std::collections::HashSet<String> = by_set
+            .get(&set)
+            .cloned()
+            .unwrap_or_default()
+            .into_iter()
+            .collect();
+        let mut names: Vec<String> = materialized.iter().cloned().collect();
+        if iconify_mergeable(&set) {
+            for name in crate::iconify::names(&set) {
+                if !materialized.contains(&name) {
+                    names.push(name);
+                }
+            }
+        }
+        names.retain(|n| filter.is_empty() || n.to_lowercase().contains(&filter));
+        // Natural sort keeps the grid stable across re-renders —
+        // `materialized` came from a `HashSet`, so any state change used to
+        // reshuffle every cell.
+        names.sort_by(|a, b| crate::iconify::nat_cmp(a, b));
+
+        // `category:` — IconifyJSON `categories` buckets (an icon shows under
+        // every category it belongs to); `theme:` — `prefixes`/`suffixes`
+        // variations. Either binds (a picker renders) or pins statically.
+        let mut cats = crate::iconify::categories(&set);
+        let themes = crate::iconify::themes(&set);
+        let cat_path = self.two_way(node, "category");
+        let theme_path = self.two_way(node, "theme");
+        let resolve = |path: &Option<Path>, name: &str| {
+            path.as_ref()
+                .and_then(|p| self.lookup(p))
+                .and_then(|j| j.as_str())
+                .map(str::to_owned)
+                .or_else(|| self.prop_text(node, name))
+                .unwrap_or_default()
+        };
+        let cat = resolve(&cat_path, "category");
+        // `""`/`"[all]"` = show every group; a bound value pointing at a
+        // category the set doesn't have resets to the sentinel.
+        if !cat.is_empty()
+            && cat != "[all]"
+            && !cats.iter().any(|(k, _)| *k == cat)
+            && let Some(p) = &cat_path
+        {
+            self.update_state(p, Json::String("[all]".into()), cx);
+        }
+        // `theme:` — multi-select. Bound state holds a `["s:key"/"p:key"]`
+        // array; a bare string is back-compat (the old Select stored
+        // titles); unset defaults to the no-suffix `""` themes so variant
+        // sets open on their base icons. All-checked or empty = no filter.
+        let theme_raw: Option<Json> = theme_path
+            .as_ref()
+            .and_then(|p| self.lookup(p).cloned())
+            .or_else(|| self.prop_text(node, "theme").map(Json::String));
+        let theme_checked = theme_selection(&themes, theme_raw.as_ref());
+        if let Some(p) = &theme_path {
+            let canonical = Json::Array(
+                theme_checked
+                    .iter()
+                    .map(|(k, t)| Json::String(theme_sel_encode(*k, t)))
+                    .collect(),
+            );
+            if self.lookup(p) != Some(&canonical) {
+                self.update_state(p, canonical, cx);
+            }
+        }
+        if !theme_checked.is_empty() && theme_checked.len() < themes.len() {
+            names.retain(|n| {
+                theme_checked
+                    .iter()
+                    .any(|(k, t)| crate::iconify::theme_matches(&themes, *k, t, n))
+            });
+        }
+        let weak = cx.entity().downgrade();
+        let selected_path = self.two_way(node, "selected");
+        let selected = selected_path
+            .as_ref()
+            .and_then(|p| self.lookup(p))
+            .and_then(|j| j.as_str())
+            .map(str::to_owned);
+        let select_handler = node
+            .events
+            .iter()
+            .find(|e| e.event == "select")
+            .map(|e| e.handler.name.clone());
+
+        // Filter row — labeled pickers: `Iconset`, `Category`, `Suffix`.
+        // Each is a synthesized `Select` bound to its prop's path (or an
+        // internal slot); a pinned static prop hides its picker since it IS
+        // the filter. `search:` renders on its own row below.
+        let label = |text: &str, cx: &mut Context<Self>| {
+            div()
+                .text_xs()
+                .text_color(cx.theme().muted_foreground)
+                .child(text.to_owned())
+        };
+        let mut header = div().flex().flex_row().flex_wrap().items_center().gap_2();
+        let mut any_filter = false;
+        let static_set = node
+            .props
+            .iter()
+            .any(|(k, v)| k == "set" && !matches!(v, Value::Binding { .. }));
+        if sets.len() > 1 && !static_set {
+            let bind = set_path
+                .clone()
+                .unwrap_or_else(|| parse_path("studio.icons_set").expect("static path"));
+            let select = picker(sets.clone(), bind);
+            header = header.child(label("Iconset", cx)).child(
+                div().w(px(160.)).child(self.render_node(
+                    &select,
+                    &format!("{key}-set"),
+                    window,
+                    cx,
+                )),
+            );
+            any_filter = true;
+        }
+        let search_row = if self.prop_bool(node, "search") {
+            let search_key = format!("{key}-search");
+            let state = match self.inputs.get(&search_key) {
+                Some(state) => state.clone(),
+                None => {
+                    let state = cx.new(|cx| {
+                        InputState::new(window, cx)
+                            .placeholder("filter icons…")
+                            .default_value(query.clone())
+                    });
+                    let path = query_path.clone();
+                    let state_key = key.to_owned();
+                    let subscription = cx.subscribe(&state, move |this, state, event, cx| {
+                        if let InputEvent::Change = event {
+                            let value = state.read(cx).value().to_string();
+                            this.icons_queries.insert(state_key.clone(), value.clone());
+                            if let Some(path) = &path {
+                                this.write(path, Json::String(value), cx);
+                            }
+                            cx.notify();
+                        }
+                    });
+                    self.subscriptions.push(subscription);
+                    self.inputs.insert(search_key, state.clone());
+                    state
+                }
+            };
+            if query_path.is_some() && state.read(cx).value() != query {
+                state.update(cx, |s, cx| s.set_value(query.clone(), window, cx));
+            }
+            Some(
+                div()
+                    .flex()
+                    .flex_row()
+                    .items_center()
+                    .gap_2()
+                    .child(label("Search", cx))
+                    .child(
+                        div()
+                            .flex_1()
+                            .min_w_0()
+                            .child(Input::new(&state).cleanable(true)),
+                    ),
+            )
+        } else {
+            None
+        };
+        // Category + suffix/theme pickers join the set picker on the filter
+        // row — same bound-or-static rules; a bound slot holding no valid
+        // option seeds the "[all]" sentinel.
+        let static_cat = node
+            .props
+            .iter()
+            .any(|(k, v)| k == "category" && !matches!(v, Value::Binding { .. }));
+        let static_theme = node
+            .props
+            .iter()
+            .any(|(k, v)| k == "theme" && !matches!(v, Value::Binding { .. }));
+        if cats.len() > 1 && !static_cat {
+            let mut options = vec!["[all]".to_owned()];
+            options.extend(cats.iter().map(|(k, _)| k.clone()));
+            let bind = cat_path
+                .clone()
+                .unwrap_or_else(|| parse_path("studio.icons_cat").expect("static path"));
+            let cur = self
+                .lookup(&bind)
+                .and_then(|j| j.as_str())
+                .unwrap_or_default();
+            if !options.iter().any(|o| o == cur) {
+                self.update_state(&bind, Json::String("[all]".into()), cx);
+            }
+            let select = picker(options, bind);
+            header = header.child(label("Category", cx)).child(
+                div().w(px(160.)).child(self.render_node(
+                    &select,
+                    &format!("{key}-cat"),
+                    window,
+                    cx,
+                )),
+            );
+            any_filter = true;
+        }
+        // Suffix/prefix themes are checkboxes (multi-select, OR semantics)
+        // labeled by the dominant kind. Checked state lives in the bound
+        // array; each click toggles one entry in place.
+        if themes.len() > 1 && !static_theme {
+            use crate::iconify::ThemeKind;
+            let bind = theme_path
+                .clone()
+                .unwrap_or_else(|| parse_path("studio.icons_theme").expect("static path"));
+            let theme_label = if themes.iter().all(|(k, _, _)| *k == ThemeKind::Prefix) {
+                "Prefix"
+            } else if themes.iter().all(|(k, _, _)| *k == ThemeKind::Suffix) {
+                "Suffix"
+            } else {
+                "Theme"
+            };
+            header = header.child(label(theme_label, cx));
+            for (kind, tkey, title) in themes.iter() {
+                let kind = *kind;
+                let checked = theme_checked.iter().any(|(k, t)| *k == kind && t == tkey);
+                let tkey = tkey.clone();
+                let bind2 = bind.clone();
+                let themes2 = themes.clone();
+                let weak2 = weak.clone();
+                let cb = Checkbox::new(SharedString::from(format!(
+                    "{key}-th-{}",
+                    theme_sel_encode(kind, &tkey)
+                )))
+                .label(title.clone())
+                .checked(checked)
+                .on_click(move |v: &bool, _w: &mut Window, cx: &mut App| {
+                    let (v, tkey, bind2, themes2) =
+                        (*v, tkey.clone(), bind2.clone(), themes2.clone());
+                    try_update(&weak2, cx, "icon theme", move |this, cx| {
+                        let cur = this.lookup(&bind2).cloned();
+                        let mut sel = theme_selection(&themes2, cur.as_ref());
+                        let want = (kind, tkey);
+                        if v {
+                            if !sel.contains(&want) {
+                                sel.push(want);
+                            }
+                        } else {
+                            sel.retain(|x| *x != want);
+                        }
+                        // Stable order = checkbox order, not click order.
+                        sel.sort_by_key(|(k, t)| {
+                            themes2
+                                .iter()
+                                .position(|(k2, t2, _)| k2 == k && t2 == t)
+                                .unwrap_or(usize::MAX)
+                        });
+                        this.write(
+                            &bind2,
+                            Json::Array(
+                                sel.iter()
+                                    .map(|(k, t)| Json::String(theme_sel_encode(*k, t)))
+                                    .collect(),
+                            ),
+                            cx,
+                        );
+                    })
+                    .ok();
+                });
+                header = header.child(cb);
+            }
+            any_filter = true;
+        }
+        // License line + attribution alert for the browsed set. Bundled sets
+        // have static licenses; iconify sets carry catalog metadata (`name`,
+        // `license.title/spdx`). Any license not in the no-attribution list
+        // legally requires shipping the notice with the built app. Computed
+        // before `set` moves into the list closure.
+        let (set_title, license_title, spdx) = match set.as_str() {
+            "lucide" => ("Lucide".to_owned(), "ISC".to_owned(), "ISC".to_owned()),
+            "heroicons" => ("Heroicons".to_owned(), "MIT".to_owned(), "MIT".to_owned()),
+            _ => crate::iconify::set_info(&set)
+                .unwrap_or_else(|| (set.clone(), String::new(), String::new())),
+        };
+        let mut footer = v_flex().gap_1();
+        if !license_title.is_empty() {
+            footer = footer.child(
+                div()
+                    .text_xs()
+                    .text_color(cx.theme().muted_foreground)
+                    .child(format!("{set_title} · {license_title}")),
+            );
+        }
+        // Second line — size/author/version from the catalog entry and the
+        // set file's `lastModified`.
+        if let Some(entry) = crate::iconify::catalog_entry(&set) {
+            let mut bits: Vec<String> = Vec::new();
+            if let Some(total) = entry["total"].as_u64() {
+                bits.push(format!("{total} icons"));
+            }
+            if let Some(author) = entry["author"]["name"].as_str() {
+                bits.push(format!("by {author}"));
+            }
+            if let Some(version) = entry["version"].as_str() {
+                bits.push(format!("v{version}"));
+            }
+            if let Some(palette) = entry["palette"].as_str() {
+                bits.push(palette.to_owned());
+            }
+            if let Some(secs) = crate::iconify::last_modified(&set) {
+                bits.push(format!("updated {}", crate::iconify::epoch_ymd(secs)));
+            }
+            if !bits.is_empty() {
+                footer = footer.child(
+                    div()
+                        .text_xs()
+                        .text_color(cx.theme().muted_foreground)
+                        .child(bits.join(" · ")),
+                );
+            }
+        }
+        // Download state — a live bar while a set fetches, an error + retry
+        // when it failed (the request key stays consumed until `retry`).
+        let dl = crate::iconify::download_progress(&set);
+        let dl_error = crate::iconify::fetch_error(&set);
+        // Live download state in the footer while the grid still has content
+        // — a re-fetch (stale check / migrate) shouldn't blank the browser.
+        if let Some((done, total)) = dl {
+            let pct = if total > 0 {
+                (done as f32 / total as f32) * 100.
+            } else {
+                0.
+            };
+            footer = footer.child(
+                div()
+                    .h(px(4.))
+                    .w_full()
+                    .child(Progress::new(format!("{key}-dl-bar")).value(pct)),
+            );
+        }
+        if let Some(err) = &dl_error {
+            footer = footer.child(
+                div()
+                    .text_xs()
+                    .text_color(cx.theme().danger)
+                    .child(format!("{set}: {err}")),
+            );
+        }
+        if crate::iconify::spdx_needs_attribution(&spdx) {
+            footer = footer.child(
+                Alert::new(
+                    format!("{key}-attr"),
+                    format!(
+                        "`{set_title}` is licensed {license_title} — the built app must ship its license text and copyright notices."
+                    ),
+                )
+                .with_variant(AlertVariant::Error)
+                .title("Attribution required")
+                .banner(),
+            );
+        }
+        // Cells — icon over its name; `selected` highlights, click writes the
+        // bound path and fires `select` with the name baked as its arg. A
+        // `uniform_list` of fixed-height rows virtualizes the ~1800-icon lucide
+        // catalog — a flat flex-wrap grid of that many SVGs hangs layout.
+        // Column count follows the list's measured width (the tracked scroll
+        // handle's bounds, populated after first layout; the window viewport
+        // minus sidebar chrome estimates the first frame). Resizes re-render
+        // and re-wrap.
+        const CELL: f32 = 88.; // ~76px cell + gutter
+        let scroll = self
+            .icons_scrolls
+            .entry(key.to_owned())
+            .or_default()
+            .clone();
+        let measured = scroll.0.borrow().base_handle.bounds().size.width;
+        let w: f32 = if measured > px(0.) {
+            measured.into()
+        } else {
+            (window.viewport_size().width - px(360.)).into()
+        };
+        let cols = ((w / CELL).floor() as usize).max(1);
+        // Category grouping — `[all]`/unset renders every non-empty category
+        // as a section (an icon in multiple categories appears under each);
+        // a selection narrows to that one group. Sets without categories
+        // render flat with no headers. Empty groups emit no rows at all.
+        // Recompute Uncategorized against the merged, filtered name list —
+        // `categories()` derives it from iconify names only, which misses
+        // bundled-set extras and materialized copies a set file never saw.
+        if !cats.is_empty() {
+            let categorized: std::collections::HashSet<&str> = cats
+                .iter()
+                .filter(|(k, _)| k != "Uncategorized")
+                .flat_map(|(_, l)| l.iter().map(String::as_str))
+                .collect();
+            let mut unc: Vec<String> = names
+                .iter()
+                .filter(|n| !categorized.contains(n.as_str()))
+                .cloned()
+                .collect();
+            cats.retain(|(k, _)| k != "Uncategorized");
+            if !unc.is_empty() {
+                unc.sort_by(|a, b| crate::iconify::nat_cmp(a, b));
+                cats.push(("Uncategorized".to_owned(), unc));
+                cats.sort_by(|a, b| a.0.cmp(&b.0));
+            }
+        }
+
+        enum IconRow {
+            Header(String),
+            Icons(Vec<String>),
+        }
+        let grouped = !cats.is_empty();
+        let groups: Vec<(String, Vec<String>)> = if grouped {
+            let valid: std::collections::HashSet<&String> = names.iter().collect();
+            cats.iter()
+                .filter(|(k, _)| cat.is_empty() || cat == "[all]" || *k == cat)
+                .map(|(k, list)| {
+                    let mut members: Vec<String> =
+                        list.iter().filter(|n| valid.contains(n)).cloned().collect();
+                    members.sort_by(|a, b| crate::iconify::nat_cmp(a, b));
+                    (k.clone(), members)
+                })
+                .filter(|(_, members)| !members.is_empty())
+                .collect()
+        } else {
+            vec![(String::new(), names.clone())]
+        };
+        let mut rows: Vec<IconRow> = Vec::new();
+        for (title, members) in groups {
+            if grouped {
+                rows.push(IconRow::Header(format!("{title} · {}", members.len())));
+            }
+            rows.extend(members.chunks(cols).map(|c| IconRow::Icons(c.to_vec())));
+        }
+        let row_count = rows.len();
+        let body = if row_count == 0 {
+            if let Some((done, total)) = dl {
+                let pct = if total > 0 {
+                    (done as f32 / total as f32) * 100.
+                } else {
+                    0.
+                };
+                let fmt_bytes = |n: u64| {
+                    if n >= 1 << 20 {
+                        format!("{:.1} MB", n as f64 / (1 << 20) as f64)
+                    } else if n >= 1 << 10 {
+                        format!("{:.0} KB", n as f64 / (1 << 10) as f64)
+                    } else {
+                        format!("{n} B")
+                    }
+                };
+                let label = if total > 0 {
+                    format!(
+                        "Downloading {set}… {} / {}",
+                        fmt_bytes(done),
+                        fmt_bytes(total)
+                    )
+                } else {
+                    format!("Downloading {set}… {}", fmt_bytes(done))
+                };
+                div()
+                    .flex_1()
+                    .min_h_0()
+                    .flex()
+                    .flex_col()
+                    .items_center()
+                    .justify_center()
+                    .gap_2()
+                    .child(
+                        div()
+                            .text_sm()
+                            .text_color(cx.theme().muted_foreground)
+                            .child(label),
+                    )
+                    .child(
+                        div()
+                            .w(px(320.))
+                            .child(Progress::new(format!("{key}-dl")).value(pct)),
+                    )
+                    .into_any_element()
+            } else if let Some(err) = &dl_error {
+                let set2 = set.clone();
+                v_flex()
+                    .flex_1()
+                    .min_h_0()
+                    .items_center()
+                    .justify_center()
+                    .gap_2()
+                    .child(
+                        Alert::new(format!("{key}-err"), format!("{set}: {err}"))
+                            .with_variant(AlertVariant::Error)
+                            .title("Icon set download failed")
+                            .banner(),
+                    )
+                    .child(
+                        Button::new(SharedString::from(format!("{key}-retry")))
+                            .label("Retry")
+                            .with_variant(ButtonVariant::Secondary)
+                            .on_click(move |_, _, cx| crate::iconify::retry(&set2, cx)),
+                    )
+                    .into_any_element()
+            } else {
+                placeholder("no icons in this set".to_owned(), cx)
+            }
+        } else {
+            let key = key.to_owned();
+            uniform_list(
+                format!("{key}-grid"),
+                row_count,
+                move |range, _window, cx| {
+                    range
+                        .map(|ix| match &rows[ix] {
+                            // Section header — a label row the same height
+                            // as icon rows so `uniform_list`'s fixed stride
+                            // stays valid. Bottom-aligned so the title sits
+                            // just above its grid.
+                            IconRow::Header(title) => div()
+                                .flex()
+                                .flex_row()
+                                .items_end()
+                                .h(px(84.))
+                                .pb_1()
+                                .child(
+                                    div()
+                                        .text_sm()
+                                        .font_weight(FontWeight::SEMIBOLD)
+                                        .text_color(cx.theme().foreground)
+                                        .child(title.clone()),
+                                )
+                                .into_any_element(),
+                            IconRow::Icons(names) => {
+                                let mut row = div().flex().flex_row().gap_2().h(px(84.));
+                                for name in names {
+                                    // Never point `path()` at bytes that don't
+                                    // exist — the image cache retains a failed
+                                    // load forever. An iconify name resolvable
+                                    // in the cached set JSON renders through
+                                    // the `svg()` layer; otherwise the whole
+                                    // set's one fetch is queued and a
+                                    // placeholder shows until `refresh_windows`
+                                    // flips everything local.
+                                    let cell_icon = if materialized.contains(name)
+                                        || crate::iconify::icon_cached(&set, name)
+                                        || !crate::iconify::known_set(&set)
+                                    {
+                                        icon_set(&set, name)
+                                    } else {
+                                        crate::iconify::ensure_set(&set, cx);
+                                        icon("image")
+                                    };
+                                    let active = selected.as_deref() == Some(name.as_str());
+                                    // A materialized name means the icon is
+                                    // already on disk under `assets/icons/` —
+                                    // ring it so the browser reads "have it"
+                                    // at a glance. Bundled sets are all
+                                    // embedded, so the mark adds no signal.
+                                    let on_disk = materialized.contains(name)
+                                        && !BUNDLED_SETS.contains(&set.as_str());
+                                    let select_path = selected_path.clone();
+                                    let handler = select_handler.clone();
+                                    let cell_name = name.clone();
+                                    let weak = weak.clone();
+                                    row = row.child(
+                                        div()
+                                            .id(format!("{key}-{name}"))
+                                            .flex()
+                                            .flex_col()
+                                            .items_center()
+                                            .gap_1()
+                                            .flex_1()
+                                            .min_w_0()
+                                            .p_2()
+                                            .rounded_md()
+                                            .cursor_pointer()
+                                            .when(active, |d| d.bg(cx.theme().accent))
+                                            .when(on_disk, |d| {
+                                                d.border_1()
+                                                    .border_color(cx.theme().success.opacity(0.6))
+                                            })
+                                            .hover(|d| d.bg(cx.theme().accent.opacity(0.4)))
+                                            .child(cell_icon)
+                                            .child(
+                                                div()
+                                                    .text_xs()
+                                                    .text_color(if on_disk {
+                                                        cx.theme().success
+                                                    } else {
+                                                        cx.theme().muted_foreground
+                                                    })
+                                                    .overflow_hidden()
+                                                    .child(name.clone()),
+                                            )
+                                            .tooltip({
+                                                let tip = name.clone();
+                                                move |_, cx| {
+                                                    cx.new(|_| Tooltip::new(tip.clone())).into()
+                                                }
+                                            })
+                                            .on_click(move |_, _, cx| {
+                                                let name = cell_name.clone();
+                                                try_update(&weak, cx, "icon select", |this, cx| {
+                                                    if let Some(path) = &select_path {
+                                                        this.write(
+                                                            path,
+                                                            Json::String(name.clone()),
+                                                            cx,
+                                                        );
+                                                    }
+                                                    if let Some(handler) = &handler {
+                                                        let synth = Node {
+                                                            events: vec![EventBinding {
+                                                                event: "select".into(),
+                                                                handler: HandlerRef {
+                                                                    name: handler.clone(),
+                                                                    args: vec![Value::String(
+                                                                        name.clone(),
+                                                                    )],
+                                                                },
+                                                            }],
+                                                            ..Default::default()
+                                                        };
+                                                        this.fire(&synth, "select", cx);
+                                                    }
+                                                })
+                                                .ok();
+                                            }),
+                                    );
+                                }
+                                row.into_any_element()
+                            }
+                        })
+                        .collect()
+                },
+            )
+            .track_scroll(&scroll)
+            .flex_1()
+            .min_h_0()
+            .into_any_element()
+        };
+        // `size_full` passes a bounded parent's height through to the inner
+        // scroll slot (`flex_1/min_h_0`), same convention as `forge.Files`.
+        let mut root = v_flex().size_full().gap_2();
+        if any_filter {
+            root = root.child(header);
+        }
+        if let Some(search_row) = search_row {
+            root = root.child(search_row);
+        }
+        root.child(body).child(footer).into_any_element()
+    }
+
     /// `forge.Files` (#148) — a file tree. Two listing modes: `of:` names a
     /// state path holding a JSON listing (`[{name, path, dir, children}]`),
     /// `root:` names a directory the element scans itself — `filter:` globs
@@ -987,6 +1754,14 @@ impl ForgeView {
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let sel = self.two_way(node, "selected");
+        // The bound value marks the "active" row (the open file in Studio) —
+        // external writes highlight its row even when the tree's own click
+        // selection sits elsewhere.
+        let sel_value = sel
+            .as_ref()
+            .and_then(|p| self.lookup(p))
+            .and_then(|j| j.as_str())
+            .map(str::to_owned);
         let show_icons = self.prop(node, "icons").is_none_or(|v| self.truthy(v));
         let icon_map = self
             .prop(node, "icon-map")
@@ -1171,6 +1946,16 @@ impl ForgeView {
             );
         }
 
+        // Collapse state survives the items rebuild below — the tree only
+        // flattens `expanded` flags on the items it was last given, so they
+        // carry over by id.
+        let previous = self
+            .trees
+            .get(key)
+            .map(|state| tree_expansion(state.read(cx)))
+            .unwrap_or_default();
+        let mut items = items;
+        carry_expansion(&mut items, &previous);
         let tree = if items.is_empty() {
             placeholder(
                 if query.is_empty() {
@@ -1182,7 +1967,7 @@ impl ForgeView {
             )
         } else {
             self.files_tree(
-                node, key, sel, show_icons, icon_map, highlights, navigate, items, cx,
+                node, key, sel, sel_value, show_icons, icon_map, highlights, navigate, items, cx,
             )
         };
         // The `Tree` virtualizes rows off a uniform_list — it needs a
@@ -1208,13 +1993,16 @@ impl ForgeView {
     }
 
     /// The `Tree` half of `forge.Files` — rows carry the click/select/context
-    /// wiring; `files` wraps it with the search header when needed.
+    /// wiring; `files` wraps it with the search header when needed. `sel_value`
+    /// is the `selected:` bind's current value — the row whose id matches is
+    /// painted active regardless of where the tree's own click selection sits.
     #[allow(clippy::too_many_arguments)]
     fn files_tree(
         &mut self,
         node: &Node,
         key: &str,
         sel: Option<Path>,
+        sel_value: Option<String>,
         show_icons: bool,
         icon_map: Vec<(String, String)>,
         highlights: Vec<(String, FileHighlight)>,
@@ -1242,6 +2030,7 @@ impl ForgeView {
             let mut item = ListItem::new(ix);
             let path = entry.item().id.to_string();
             let is_dir = path.ends_with('/');
+            let active = sel_value.as_deref() == Some(path.as_str());
             let sel = sel.clone();
             let files_node = files_node.clone();
             let weak = weak.clone();
@@ -1259,6 +2048,7 @@ impl ForgeView {
                 .flex_row()
                 .items_center()
                 .gap_1p5()
+                .pl(px(entry.depth() as f32 * 14.))
                 .when_some(highlight, |d, hl| {
                     let d = match hl.weight {
                         Some(w) => d.font_weight(w),
@@ -1341,7 +2131,7 @@ impl ForgeView {
                 })
                 .child(entry.item().label.to_string());
             item = item.child(row);
-            item.selected(selected)
+            item.selected(selected || active)
         })
         .into_any_element()
     }
@@ -2009,7 +2799,7 @@ impl ForgeView {
     }
 
     /// Builds an `Avatar` from a node — used directly and per child of `AvatarGroup`.
-    fn avatar(&self, node: &Node) -> Avatar {
+    fn avatar(&self, node: &Node, cx: &mut App) -> Avatar {
         let mut avatar = Avatar::new();
         if let Some(name) = self.prop_text(node, "name") {
             avatar = avatar.name(name);
@@ -2018,7 +2808,7 @@ impl ForgeView {
             avatar = avatar.src(src);
         }
         if let Some(name) = self.prop_text(node, "icon") {
-            avatar = avatar.placeholder(icon(&name));
+            avatar = avatar.placeholder(self.doc_icon(&name, cx));
         }
         avatar
     }
@@ -2189,11 +2979,7 @@ impl ForgeView {
 
     /// `Style` tab write-through — `style_changed` → `doc.set_style`.
     pub fn set_node_style(&mut self, path: &str, name: &str, json: &Json, cx: &mut Context<Self>) {
-        let value = if json.is_null() {
-            None
-        } else {
-            Some(Value::String(json.as_str().unwrap_or_default().to_owned()))
-        };
+        let value = style_edit_value(json);
         if let Some(doc) = self.doc.as_mut() {
             doc.set_style(path, name, value);
             cx.notify();
@@ -2216,6 +3002,8 @@ impl ForgeView {
     pub fn set_pick(&mut self, pick: bool, cx: &mut Context<Self>) {
         self.pick = pick;
         self.placing = false;
+        self.pick_zones.borrow_mut().clear();
+        *self.pick_hover.borrow_mut() = None;
         cx.notify();
     }
 
@@ -2224,6 +3012,8 @@ impl ForgeView {
     pub fn set_placing(&mut self, placing: bool, cx: &mut Context<Self>) {
         self.pick = placing;
         self.placing = placing;
+        self.pick_zones.borrow_mut().clear();
+        *self.pick_hover.borrow_mut() = None;
         cx.notify();
     }
 
@@ -2251,6 +3041,33 @@ impl ForgeView {
             self.catalogs.push(cat);
         }
         self.libraries.push(Rc::new(lib));
+    }
+
+    /// The host's iconset — `[icons] set` in forge.toml. `meta.iconset` on
+    /// the document itself still wins; `lucide` is the bundled default.
+    pub fn set_project_iconset(&mut self, set: Option<String>) {
+        self.project_iconset = set;
+    }
+
+    /// The iconset document icons resolve against — `meta.iconset`, then the
+    /// project setting, then `lucide`.
+    fn iconset(&self) -> &str {
+        self.meta
+            .get("iconset")
+            .and_then(|j| j.as_str())
+            .or(self.project_iconset.as_deref())
+            .unwrap_or("lucide")
+    }
+
+    /// A document-facing icon (`icon:` props, `Icon` elements) — follows
+    /// `iconset()`. Chrome glyphs (chevrons, file rows, toolbar) stay on the
+    /// bundled lucide set via `icon()`. The asset-source probe resolves every
+    /// local layer (embedded, fs roots, iconify cache); only when bytes are
+    /// missing *and* the set is iconify-hosted does it queue a lazy fetch and
+    /// show a placeholder — the image cache retains a failed load, so the
+    /// real path must not render until the SVG exists.
+    fn doc_icon(&self, name: &str, cx: &mut App) -> Icon {
+        doc_icon_for(self.iconset(), name, cx)
     }
 
     /// Resolves `src` against `base_dir` when relative — `std::fs` calls use this
@@ -2306,6 +3123,7 @@ impl ForgeView {
     /// Each field binds `document.edits.<prop>`. `prop_changed` writes through to the doc.
     fn inspector(
         &mut self,
+        node: &Node,
         target: &Node,
         path: &str,
         key: &str,
@@ -2338,8 +3156,11 @@ impl ForgeView {
                     self.update_state(&edit_path, json, cx);
                 }
             }
-            for (name, value) in &target.style {
-                let json = self.value_json(value);
+            for (name, value) in style_rows(&target.style) {
+                let json = value
+                    .as_ref()
+                    .map(|v| self.value_json(v))
+                    .unwrap_or_else(|| unset_style_seed(&name));
                 match parse_path(&format!("document.edits.style.{name}")) {
                     Ok(edit_path) => self.update_state(&edit_path, json, cx),
                     Err(e) => self.report(format!("style `{name}` skipped: {e}")),
@@ -2353,64 +3174,83 @@ impl ForgeView {
                 );
             }
         }
-        let mut rows = vec![
-            DescriptionItem::new("element").value(target.element.to_string()),
-            DescriptionItem::new("path").value(path.to_owned()),
-        ];
+        // First row — `Element - path`, with ` #id`/` &ref` tailing it when
+        // the node has them.
+        let mut header_text = format!("{} - {}", target.element, path);
         if let Some(id) = &target.id {
-            rows.push(DescriptionItem::new("id").value(id.clone()));
+            header_text = format!("{header_text} #{id}");
         }
-        if let Some(refname) = &target.refname {
-            rows.push(DescriptionItem::new("ref").value(format!("&{refname}")));
+        // Data mode — binding `items`/`styles`/`header` switches the element
+        // to a data provider: the doc lays out the fields itself with
+        // `for:` + `forge.InspectorField`; nothing renders here.
+        let items_out = self.two_way(node, "items");
+        let styles_out = self.two_way(node, "styles");
+        let header_out = self.two_way(node, "header");
+        if items_out.is_some() || styles_out.is_some() || header_out.is_some() {
+            let mut items = vec![serde_json::json!({
+                "kind": "ref", "name": "refname", "label": "refname",
+                "type": "string",
+                "description": "ref  —  `<<: *name` ",
+                "value": target.refname.clone().unwrap_or_default()
+            })];
+            for prop in &props {
+                let value = target
+                    .props
+                    .iter()
+                    .find(|(k, _)| k == &prop.name)
+                    .map(|(_, v)| self.value_json(v))
+                    .unwrap_or(Json::Null);
+                items.push(serde_json::json!({
+                    "kind": "prop", "name": prop.name, "label": prop.name,
+                    "type": prop_type_name(&prop.ty),
+                    "options": match &prop.ty { PropType::Enum(v) => v.clone(), _ => vec![] },
+                    "description": prop.summary.clone().unwrap_or_default(),
+                    "required": prop.required,
+                    "value": value,
+                }));
+            }
+            let styles: Vec<Json> = style_rows(&target.style)
+                .iter()
+                .map(|(name, v)| {
+                    let value = v.as_ref().map(|v| self.value_json(v)).unwrap_or(Json::Null);
+                    let (ty, options) = style_item_type(name, &value);
+                    serde_json::json!({
+                        "kind": "style", "name": name, "label": name,
+                        "type": ty, "options": options, "value": value,
+                    })
+                })
+                .collect();
+            for (out, value) in [
+                (items_out, Json::Array(items)),
+                (styles_out, Json::Array(styles)),
+                (header_out, Json::String(header_text)),
+            ] {
+                if let Some(p) = out
+                    && get_path(self.state(), &p) != Some(&value)
+                {
+                    self.update_state(&p, value, cx);
+                }
+            }
+            return div().into_any_element();
         }
-        let header = DescriptionList::vertical().children(rows);
-        // One `FormField` per catalog prop, each binding `document.edits.<prop>` and
-        // firing `prop_changed(<prop>)` — the app writes the new value into the doc.
-        let fields: Vec<Node> = props
+        let header = div()
+            .text_sm()
+            .font_weight(FontWeight::MEDIUM)
+            .child(header_text);
+        // One `FormField` per catalog prop — the control nodes come from the
+        // same `inspector_control` helper `forge.InspectorField` dispatches on.
+        let mut fields: Vec<Node> = props
             .iter()
             .filter_map(|prop| {
-                let path = match parse_path(&format!("document.edits.{}", prop.name)) {
-                    Ok(path) => path,
-                    Err(e) => {
-                        self.report(format!("prop `{}` skipped: {e}", prop.name));
-                        return None;
-                    }
-                };
-                let bind = Value::Binding {
-                    path,
-                    mode: BindingMode::TwoWay,
-                };
-                let (element, bind_prop, extra) = match &prop.ty {
-                    PropType::Bool => ("Switch", "checked", vec![]),
-                    PropType::Enum(values) => (
-                        "Select",
-                        "value",
-                        vec![(
-                            "options".to_owned(),
-                            Value::List(values.iter().map(|v| Value::Enum(v.clone())).collect()),
-                        )],
-                    ),
-                    PropType::Number => ("NumberInput", "value", vec![]),
-                    PropType::Color => ("ColorPicker", "value", vec![]),
-                    _ => ("Input", "value", vec![]),
-                };
-                let mut props = vec![(bind_prop.to_owned(), bind)];
-                props.extend(extra);
-                let control = Node {
-                    element: ElementRef {
-                        namespace: None,
-                        name: element.into(),
+                let control = inspector_control(
+                    "prop",
+                    &prop.name,
+                    prop_type_name(&prop.ty),
+                    match &prop.ty {
+                        PropType::Enum(v) => v.clone(),
+                        _ => vec![],
                     },
-                    props,
-                    events: vec![EventBinding {
-                        event: "change".into(),
-                        handler: HandlerRef {
-                            name: "prop_changed".into(),
-                            args: vec![Value::String(prop.name.clone())],
-                        },
-                    }],
-                    ..Default::default()
-                };
+                )?;
                 Some(Node {
                     element: ElementRef {
                         namespace: None,
@@ -2424,8 +3264,7 @@ impl ForgeView {
             .collect();
         // `ref` block name — editable: `refname_changed` writes `<<: *name`
         // (or a new `name: &name` block) through the preserving writer.
-        let mut fields = fields;
-        if let Ok(bind) = parse_path("document.edits.refname") {
+        if let Some(control) = inspector_control("ref", "refname", "string", vec![]) {
             fields.insert(
                 0,
                 Node {
@@ -2434,33 +3273,7 @@ impl ForgeView {
                         name: "FormField".into(),
                     },
                     props: vec![("label".to_owned(), Value::String("refname".into()))],
-                    children: vec![Node {
-                        element: ElementRef {
-                            namespace: None,
-                            name: "Input".into(),
-                        },
-                        props: vec![
-                            (
-                                "value".to_owned(),
-                                Value::Binding {
-                                    path: bind,
-                                    mode: BindingMode::TwoWay,
-                                },
-                            ),
-                            (
-                                "placeholder".to_owned(),
-                                Value::String("ref block name".into()),
-                            ),
-                        ],
-                        events: vec![EventBinding {
-                            event: "change".into(),
-                            handler: HandlerRef {
-                                name: "refname_changed".into(),
-                                args: vec![],
-                            },
-                        }],
-                        ..Default::default()
-                    }],
+                    children: vec![control],
                     ..Default::default()
                 },
             );
@@ -2475,65 +3288,47 @@ impl ForgeView {
                 ..Default::default()
             }]
         } else {
+            // `Form` ignores `style:` — the scroll styles go on a wrapping
+            // `VStack`, which renders through `container()` → scrollbar.
             vec![Node {
                 element: ElementRef {
                     namespace: None,
-                    name: "Form".into(),
+                    name: "VStack".into(),
                 },
-                props: vec![("label-layout".to_owned(), Value::Enum("Vertical".into()))],
-                children: fields,
+                style: inspector_scroll_style(),
+                children: vec![Node {
+                    element: ElementRef {
+                        namespace: None,
+                        name: "Form".into(),
+                    },
+                    props: vec![("label-layout".to_owned(), Value::Enum("Vertical".into()))],
+                    children: fields,
+                    ..Default::default()
+                }],
                 ..Default::default()
             }]
         };
-        // Style tab — one `Input` per `style:` entry, bound `document.edits.style.<name>`.
-        let style_children = if target.style.is_empty() {
-            vec![Node {
-                element: ElementRef {
-                    namespace: None,
-                    name: "Text".into(),
-                },
-                content: Some(Value::String("no style entries".into())),
-                ..Default::default()
-            }]
-        } else {
-            vec![Node {
+        // Style tab — one typed control per `KEYS` entry (set first, then
+        // unset), bound `document.edits.style.<name>`; keyword styles render
+        // Selects led by `[none]` (clears the entry but keeps the row).
+        let style_children = vec![Node {
+            element: ElementRef {
+                namespace: None,
+                name: "VStack".into(),
+            },
+            style: inspector_scroll_style(),
+            children: vec![Node {
                 element: ElementRef {
                     namespace: None,
                     name: "Form".into(),
                 },
                 props: vec![("label-layout".to_owned(), Value::Enum("Vertical".into()))],
-                children: target
-                    .style
+                children: style_rows(&target.style)
                     .iter()
-                    .filter_map(|(name, _)| {
-                        let path = match parse_path(&format!("document.edits.style.{name}")) {
-                            Ok(path) => path,
-                            Err(e) => {
-                                self.report(format!("style `{name}` skipped: {e}"));
-                                return None;
-                            }
-                        };
-                        let control = Node {
-                            element: ElementRef {
-                                namespace: None,
-                                name: "Input".into(),
-                            },
-                            props: vec![(
-                                "value".to_owned(),
-                                Value::Binding {
-                                    path,
-                                    mode: BindingMode::TwoWay,
-                                },
-                            )],
-                            events: vec![EventBinding {
-                                event: "change".into(),
-                                handler: HandlerRef {
-                                    name: "style_changed".into(),
-                                    args: vec![Value::String(name.clone())],
-                                },
-                            }],
-                            ..Default::default()
-                        };
+                    .filter_map(|(name, v)| {
+                        let value = v.as_ref().map(|v| self.value_json(v)).unwrap_or(Json::Null);
+                        let (ty, options) = style_item_type(name, &value);
+                        let control = inspector_control("style", name, ty, options)?;
                         Some(Node {
                             element: ElementRef {
                                 namespace: None,
@@ -2546,8 +3341,9 @@ impl ForgeView {
                     })
                     .collect(),
                 ..Default::default()
-            }]
-        };
+            }],
+            ..Default::default()
+        }];
         let tabs = Node {
             element: ElementRef {
                 namespace: None,
@@ -2586,6 +3382,55 @@ impl ForgeView {
             .into_any_element()
     }
 
+    /// Renders `forge.InspectorField` — the prop editor for one inspector item.
+    /// `item:` takes the `{$item}` descriptor from a `for:` over `items:`/`styles:`;
+    /// `kind`/`name`/`type`/`options` props override or supply the same fields.
+    /// The control binds `document.edits.*` and fires `*_changed` just like the
+    /// built-in layout does — wrap it in `FormField` for a label.
+    fn inspector_field(
+        &mut self,
+        node: &Node,
+        key: &str,
+        window: &mut Window,
+        cx: &mut Context<Self>,
+    ) -> AnyElement {
+        let item = self.prop(node, "item").map(|v| self.resolve(v));
+        let item_str = |name: &str| -> Option<String> {
+            item.as_ref()
+                .and_then(|j| j.get(name))
+                .and_then(|j| j.as_str())
+                .map(str::to_owned)
+        };
+        let kind = self
+            .prop_text(node, "kind")
+            .or_else(|| item_str("kind"))
+            .unwrap_or_else(|| "prop".into());
+        let ty = self
+            .prop_text(node, "type")
+            .or_else(|| item_str("type"))
+            .unwrap_or_else(|| "string".into());
+        let options: Vec<String> = self
+            .prop(node, "options")
+            .and_then(|v| self.resolve(v).as_array().cloned())
+            .or_else(|| {
+                item.as_ref()
+                    .and_then(|j| j.get("options"))
+                    .and_then(|j| j.as_array())
+                    .cloned()
+            })
+            .unwrap_or_default()
+            .into_iter()
+            .filter_map(|j| j.as_str().map(str::to_owned))
+            .collect();
+        let Some(name) = self.prop_text(node, "name").or_else(|| item_str("name")) else {
+            return placeholder("InspectorField: needs `item` or `name`".to_owned(), cx);
+        };
+        match inspector_control(&kind, &name, &ty, options) {
+            Some(control) => self.render_node(&control, key, window, cx),
+            None => placeholder(format!("InspectorField: bad name `{name}`"), cx),
+        }
+    }
+
     /// Renders `forge.Outline` — a `Tree` of the document's nodes. Rows carry a click
     /// handler that writes `bind selected` and fires `select` with the node index path.
     fn outline(
@@ -2596,8 +3441,22 @@ impl ForgeView {
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let sel = self.two_way(node, "selected");
+        let sel_value = sel
+            .as_ref()
+            .and_then(|p| self.lookup(p))
+            .and_then(|j| j.as_str())
+            .map(str::to_owned);
+        // Collapse state survives the items rebuild — the tree only flattens
+        // `expanded` flags on the items it was last given, so they carry over
+        // by id. Without this every state write snapped all folders back open.
+        let previous = self
+            .trees
+            .get(key)
+            .map(|state| tree_expansion(state.read(cx)))
+            .unwrap_or_default();
         let mut items = Vec::new();
         self.outline_data(&doc.root, "0".to_owned(), &mut items);
+        carry_expansion(&mut items, &previous);
         let state = match self.trees.get(key) {
             Some(state) => {
                 state.update(cx, |state, cx| {
@@ -2626,11 +3485,26 @@ impl ForgeView {
             let drop_id = id.clone();
             let drop_weak = drop_weak.clone();
             let ghost: SharedString = entry.item().label.to_string().into();
+            let active = sel_value.as_deref() == Some(entry.item().id.as_str());
             let row = div()
                 .id(format!("outline-row-{}", entry.item().id))
                 .flex()
                 .flex_row()
                 .items_center()
+                .gap_1p5()
+                .pl(px(entry.depth() as f32 * 14.))
+                .child(if entry.is_folder() {
+                    icon(if entry.is_expanded() {
+                        "chevron-down"
+                    } else {
+                        "chevron-right"
+                    })
+                    .with_size(size("XSmall"))
+                    .into_any_element()
+                } else {
+                    // Leaf spacer aligns the label with folder labels.
+                    div().w(px(12.)).into_any_element()
+                })
                 .on_mouse_down(MouseButton::Left, move |_, _, cx| {
                     try_update(&weak, cx, "event", |this, cx| {
                         if let Some(path) = &sel {
@@ -2666,7 +3540,7 @@ impl ForgeView {
                 })
                 .child(entry.item().label.to_string());
             item = item.child(row);
-            item.selected(selected)
+            item.selected(selected || active)
         })
         .into_any_element()
     }
@@ -2759,7 +3633,7 @@ impl ForgeView {
             .disable(self.prop_bool(node, "disabled"))
             .default_open(self.prop_bool(node, "open"));
         if let Some(name) = self.prop_text(node, "icon") {
-            item = item.icon(icon(&name));
+            item = item.icon(self.doc_icon(&name, cx));
         }
         if !kids.is_empty() {
             item = item.children(kids);
@@ -2799,7 +3673,13 @@ impl ForgeView {
                 self.prop(node, "visible"),
                 Some(Value::Bool(false))
             ))
-            .label_indent(self.prop_bool(node, "label-indent"));
+            // `Field`'s own default is `true` — only an explicit prop turns the
+            // label area off. `prop_bool` returns `false` for absent props,
+            // which used to suppress every label.
+            .label_indent(
+                self.prop(node, "label-indent")
+                    .is_none_or(|v| self.truthy(v)),
+            );
         match self.prop_text(node, "align").as_deref() {
             Some("center") => field = field.items_center(),
             Some("end") => field = field.items_end(),
@@ -3207,11 +4087,28 @@ impl ForgeView {
                         .and_then(|preview| preview.read(cx).doc.clone())
                         .and_then(|doc| doc.node_at(&path).cloned());
                     match target {
-                        Some(target) => self.inspector(&target, &path, key, window, cx),
-                        None => placeholder(empty_text, cx),
+                        Some(target) => self.inspector(node, &target, &path, key, window, cx),
+                        None => {
+                            // Data mode still publishes (emptied) outputs so
+                            // `for:` loops over them collapse cleanly.
+                            for (out, value) in [
+                                (self.two_way(node, "items"), Json::Array(vec![])),
+                                (self.two_way(node, "styles"), Json::Array(vec![])),
+                                (self.two_way(node, "header"), Json::String(String::new())),
+                            ] {
+                                if let Some(p) = out
+                                    && get_path(self.state(), &p) != Some(&value)
+                                {
+                                    self.update_state(&p, value, cx);
+                                }
+                            }
+                            placeholder(empty_text, cx)
+                        }
                     }
                 }
+                (Some("forge"), "InspectorField") => self.inspector_field(node, key, window, cx),
                 (Some("forge"), "Palette") => self.palette(node, key, cx),
+                (Some("forge"), "Icons") => self.icons(node, key, window, cx),
                 (Some("forge"), "Files") => self.files(node, key, window, cx),
                 (Some("forge"), "Showcase") => self.showcase(node, key, window, cx),
                 (Some("forge"), "Vars") => self.vars(node, key, window, cx),
@@ -3351,7 +4248,9 @@ impl ForgeView {
                         &self.prop_text(node, "variant").unwrap_or_default(),
                     ))
                     .with_size(size(&self.prop_text(node, "size").unwrap_or_default()))
-                    .when_some(self.prop_text(node, "icon"), |b, name| b.icon(icon(&name)))
+                    .when_some(self.prop_text(node, "icon"), |b, name| {
+                        b.icon(self.doc_icon(&name, cx))
+                    })
                     .when_some(self.prop_text(node, "tooltip"), |b, t| b.tooltip(t))
                     .disabled(self.prop_bool(node, "disabled"))
                     .loading(self.prop_bool(node, "loading"))
@@ -3377,7 +4276,7 @@ impl ForgeView {
                     .with_size(size(&self.prop_text(node, "size").unwrap_or_default()))
                     .disabled(self.prop_bool(node, "disabled"));
                 if let Some(name) = self.prop_text(node, "icon") {
-                    button = button.icon(icon(&name));
+                    button = button.icon(self.doc_icon(&name, cx));
                 }
                 let items: Vec<(String, Option<String>, bool, bool, Node)> = node
                     .children
@@ -3396,8 +4295,9 @@ impl ForgeView {
                         )
                     })
                     .collect();
+                let iconset = self.iconset().to_owned();
                 button
-                    .dropdown_menu(move |menu, _, _| {
+                    .dropdown_menu(move |menu, _, cx| {
                         let mut menu = menu;
                         for (label, icon_name, disabled, checked, child) in &items {
                             if child.element.name.as_str() == "MenuSeparator" {
@@ -3406,7 +4306,7 @@ impl ForgeView {
                             }
                             let mut item = PopupMenuItem::new(label.clone());
                             if let Some(name) = icon_name {
-                                item = item.icon(icon(name));
+                                item = item.icon(doc_icon_for(&iconset, name, cx));
                             }
                             item = item.disabled(*disabled).checked(*checked);
                             let weak = weak2.clone();
@@ -3690,7 +4590,15 @@ impl ForgeView {
                     .into_any_element()
             }
             "Tabs" => {
-                let bound = self.prop(node, "selected").and_then(|v| self.number(v));
+                // `selected` only controls the bar when the node sets it —
+                // the catalog ships `default: 0`, and `prop()` resolves that
+                // for unset nodes, which would pin every Tabs to index 0 and
+                // swallow clicks. Read the node's own props.
+                let bound = node
+                    .props
+                    .iter()
+                    .find(|(k, _)| k == "selected")
+                    .and_then(|(_, v)| self.number(v));
                 let selected = bound
                     .map(|n| n as usize)
                     .or_else(|| self.tabs.get(key).copied())
@@ -3792,7 +4700,7 @@ impl ForgeView {
                     header = header.media(
                         EmptyMedia::new()
                             .with_variant(EmptyMediaVariant::Icon)
-                            .child(icon(&name)),
+                            .child(self.doc_icon(&name, cx)),
                     );
                 }
                 if let Some(title) = self.prop_text(node, "title") {
@@ -3844,7 +4752,7 @@ impl ForgeView {
             "Icon" => {
                 let color = self.prop(node, "color").and_then(|v| color(v, cx));
                 let name = self.prop_text(node, "name").unwrap_or_default();
-                let element = svg().path(format!("icons/{name}.svg"));
+                let element = svg().path(icon_path(&self.iconset(), &name));
                 // `svg()` has no intrinsic size — default to 16px like a Medium icon.
                 let element = match self.prop(node, "size").and_then(length) {
                     Some(size) => element.w(size).h(size),
@@ -3882,7 +4790,9 @@ impl ForgeView {
             "Spinner" => {
                 let color = self.prop(node, "color").and_then(|v| color(v, cx));
                 Spinner::new()
-                    .when_some(self.prop_text(node, "icon"), |s, name| s.icon(icon(&name)))
+                    .when_some(self.prop_text(node, "icon"), |s, name| {
+                        s.icon(self.doc_icon(&name, cx))
+                    })
                     .when_some(color, |s, c| s.color(c))
                     .into_any_element()
             }
@@ -3901,7 +4811,9 @@ impl ForgeView {
                         self.prop(node, "visible"),
                         Some(Value::Bool(false))
                     ))
-                    .when_some(self.prop_text(node, "icon"), |a, name| a.icon(icon(&name)))
+                    .when_some(self.prop_text(node, "icon"), |a, name| {
+                        a.icon(self.doc_icon(&name, cx))
+                    })
                     .when_some(color, |a, c| a.icon(icon("info").text_color(c)))
                     .into_any_element()
             }
@@ -4102,12 +5014,12 @@ impl ForgeView {
                 }
                 bar.into_any_element()
             }
-            "Avatar" => self.avatar(node).into_any_element(),
+            "Avatar" => self.avatar(node, cx).into_any_element(),
             "AvatarGroup" => {
                 let avatars: Vec<Avatar> = node
                     .children
                     .iter()
-                    .map(|child| self.avatar(child))
+                    .map(|child| self.avatar(child, cx))
                     .collect();
                 AvatarGroup::new()
                     .children(avatars)
@@ -4126,7 +5038,7 @@ impl ForgeView {
                         let mut item =
                             StepperItem::new().disabled(self.prop_bool(child, "disabled"));
                         if let Some(name) = self.prop_text(child, "icon") {
-                            item = item.icon(icon(&name));
+                            item = item.icon(self.doc_icon(&name, cx));
                         }
                         if let Some(label) = self.prop_text(child, "label") {
                             item = item.child(label);
@@ -4263,7 +5175,7 @@ impl ForgeView {
                         .disabled(self.prop_bool(child, "disabled"))
                         .child(v_flex().children(kids));
                     if let Some(name) = self.prop_text(child, "icon") {
-                        item = item.icon(icon(&name));
+                        item = item.icon(self.doc_icon(&name, cx));
                     }
                     accordion = accordion.item(move |_| item);
                 }
@@ -4425,8 +5337,7 @@ impl ForgeView {
                 let state = match &self.theme_select {
                     Some(state) => state.clone(),
                     None => {
-                        let dark =
-                            gpui_kit::component::theme::Theme::global(cx).is_dark();
+                        let dark = gpui_kit::component::theme::Theme::global(cx).is_dark();
                         let state = cx.new(|cx| {
                             SelectState::new(
                                 vec!["Light".into(), "Dark".into()],
@@ -4468,7 +5379,7 @@ impl ForgeView {
                         message.alignment(gpui_kit::component::message::MessageAlignment::End);
                 }
                 if let Some(name) = self.prop_text(node, "avatar") {
-                    message = message.avatar(icon(&name));
+                    message = message.avatar(self.doc_icon(&name, cx));
                 }
                 for (i, child) in node.children.iter().enumerate() {
                     let kids = self.slot_children(child, &format!("{key}/{i}"), window, cx);
@@ -4704,7 +5615,7 @@ impl ForgeView {
                         if let Ok(row) = try_update(&weak, cx, "tree row", |view, cx| {
                             let mut row = div().flex().flex_row().gap_2();
                             if let Some(name) = view.prop_text(&node, "icon") {
-                                row = row.child(icon(&name));
+                                row = row.child(view.doc_icon(&name, cx));
                             }
                             if let Some(label) = view.prop_text(&node, "label") {
                                 row = row.child(label);
@@ -4823,7 +5734,7 @@ impl ForgeView {
                     note = note.title(title);
                 }
                 if let Some(name) = self.prop_text(node, "icon") {
-                    note = note.icon(icon(&name));
+                    note = note.icon(self.doc_icon(&name, cx));
                 }
                 // `Notification` is a `Render` view, not an element — wrap it
                 // in an entity so it joins the tree.
@@ -4986,11 +5897,12 @@ impl ForgeView {
                     })
                     .collect();
                 let weak_menu = weak.clone();
+                let iconset = self.iconset().to_owned();
                 div()
                     .flex()
                     .id(id)
                     .children(kids)
-                    .context_menu(move |menu, _, _| {
+                    .context_menu(move |menu, _, cx| {
                         let mut menu = menu;
                         for (label, icon_name, disabled, checked, child) in &items {
                             if child.element.name.as_str() == "MenuSeparator" {
@@ -4999,7 +5911,7 @@ impl ForgeView {
                             }
                             let mut item = PopupMenuItem::new(label.clone());
                             if let Some(name) = icon_name {
-                                item = item.icon(icon(name));
+                                item = item.icon(doc_icon_for(&iconset, name, cx));
                             }
                             item = item.disabled(*disabled).checked(*checked);
                             let weak = weak_menu.clone();
@@ -5142,14 +6054,14 @@ impl ForgeView {
                         state
                     }
                 };
-                let command_item = |this: &Self, child: &Node| {
+                let mut command_item = |this: &Self, child: &Node| {
                     let label = this
                         .prop_text(child, "label")
                         .or_else(|| child.content.as_ref().map(|v| this.text(v)))
                         .unwrap_or_default();
                     let mut item = CommandItem::new().label(label);
                     if let Some(name) = this.prop_text(child, "icon") {
-                        item = item.icon(icon(&name));
+                        item = item.icon(this.doc_icon(&name, cx));
                     }
                     item
                 };
@@ -5420,7 +6332,7 @@ impl ForgeView {
             "InputGroupButton" => {
                 let mut button = InputGroupButton::new(id);
                 if let Some(name) = self.prop_text(node, "icon") {
-                    button = button.icon(icon(&name));
+                    button = button.icon(self.doc_icon(&name, cx));
                 }
                 if let Some(label) = self.prop_text(node, "label") {
                     button = button.label(label);
@@ -5501,56 +6413,37 @@ impl ForgeView {
         };
         let path = key.replacen("root", "0", 1).replace('/', ".");
         let element = if self.pick {
-            // Element-picker — an absolute overlay ON TOP of the element so
-            // clicks/hover land here, not on the child's own handlers.
-            let weak = cx.entity().downgrade();
-            let cancel_weak = weak.clone();
+            // Element-picker — each node records its rect into `pick_zones`
+            // so the single top-level pick overlay can resolve the deepest
+            // node under the pointer (per-node click overlays can't: the
+            // root's shadows every descendant in dispatch order). The zone
+            // canvas also paints the accent frame while it is `pick_hover`.
+            let zones = self.pick_zones.clone();
+            let hover = self.pick_hover.clone();
             let accent = cx.theme().accent;
-            let path = path.clone();
+            let zone_path = path.clone();
+            let frame_path = path.clone();
             div()
                 .relative()
                 .child(element)
                 .child(
-                    div()
-                        .id(format!("pick-{key}"))
-                        .absolute()
-                        .inset_0()
-                        .cursor_pointer()
-                        .hover(move |s| s.bg(accent.alpha(0.35)).border_2().border_color(accent))
-                        .on_click(move |_, _, cx| {
-                            try_update(&weak, cx, "pick", |p, cx| {
-                                p.pick = false;
-                                if p.placing {
-                                    p.placing = false;
-                                    p.write(
-                                        &parse_path("studio.drop_target").unwrap(),
-                                        Json::String(path.clone()),
-                                        cx,
-                                    );
-                                    p.fire_call("place_component", vec![path.clone()], cx);
-                                } else {
-                                    p.write(
-                                        &parse_path("document.selected").unwrap(),
-                                        Json::String(path.clone()),
-                                        cx,
-                                    );
-                                }
-                                cx.notify();
-                            })
-                            .ok();
-                        })
-                        .on_mouse_down(MouseButton::Right, {
-                            let weak = cancel_weak;
-                            move |_, _, cx| {
-                                try_update(&weak, cx, "cancel-place", |p, cx| {
-                                    p.pick = false;
-                                    p.placing = false;
-                                    p.fire_call("cancel_place", vec![], cx);
-                                    cx.notify();
-                                })
-                                .ok();
+                    canvas(
+                        move |bounds, _window, _cx| {
+                            let mut zones = zones.borrow_mut();
+                            match zones.iter_mut().find(|(_, p)| *p == zone_path) {
+                                Some(entry) => entry.0 = bounds,
+                                None => zones.push((bounds, zone_path.clone())),
                             }
-                        }),
+                        },
+                        move |bounds, (), window, _cx| {
+                            if hover.borrow().as_deref() == Some(frame_path.as_str()) {
+                                window.paint_quad(fill(bounds, accent.alpha(0.15)));
+                                window.paint_quad(outline(bounds, accent, BorderStyle::Solid));
+                            }
+                        },
+                    )
+                    .absolute()
+                    .inset_0(),
                 )
                 .into_any_element()
         } else {
@@ -5654,8 +6547,188 @@ impl ForgeView {
     }
 }
 
-/// The tag a palette item inserts — the `insert_component('Tag')` arg on the
-/// node's click handler doubles as its drag payload.
+/// `id → expanded` for every item a `TreeState` holds — roots and descendants
+/// alike (collapsed subtrees live in their parent's `children`, not entries).
+fn tree_expansion(state: &TreeState) -> HashMap<SharedString, bool> {
+    fn walk(item: &TreeItem, map: &mut HashMap<SharedString, bool>) {
+        map.insert(item.id.clone(), item.is_expanded());
+        for child in &item.children {
+            walk(child, map);
+        }
+    }
+    let mut map = HashMap::new();
+    for ix in 0.. {
+        match state.entry(ix) {
+            Some(entry) => walk(entry.item(), &mut map),
+            None => break,
+        }
+    }
+    map
+}
+
+/// Applies a prior `tree_expansion` map to freshly built items by id, so a
+/// rebuild doesn't snap every folder back open. `TreeItem::expanded` consumes,
+/// but the flag lives in a shared `Rc` cell — a clone writes it in place.
+fn carry_expansion(items: &mut [TreeItem], previous: &HashMap<SharedString, bool>) {
+    for item in items {
+        if let Some(&expanded) = previous.get(&item.id) {
+            item.clone().expanded(expanded);
+        }
+        carry_expansion(&mut item.children, previous);
+    }
+}
+
+/// `PropType` → the `type` string inspector items carry — the same token
+/// `forge.InspectorField` dispatches on.
+fn prop_type_name(ty: &PropType) -> &'static str {
+    match ty {
+        PropType::Bool => "bool",
+        PropType::Enum(_) => "enum",
+        PropType::Number => "number",
+        PropType::Length => "length",
+        PropType::Color => "color",
+        PropType::Icon => "icon",
+        PropType::List(_) => "list",
+        PropType::Map => "map",
+        PropType::String => "string",
+    }
+}
+
+/// The scrolling fill column inspector tab bodies use — `min-height: 0`
+/// lets it shrink below content height so `overflow: scroll` engages.
+fn inspector_scroll_style() -> Entries {
+    vec![
+        ("grow".into(), Value::Bool(true)),
+        (
+            "min-height".into(),
+            Value::Number {
+                value: 0.0,
+                unit: None,
+            },
+        ),
+        ("overflow".into(), Value::Enum("scroll".into())),
+    ]
+}
+
+/// Every style key the inspector lists — set entries first in `style:`
+/// order, then the rest of `KEYS`, so clearing a value (`[none]`, an empty
+/// input) removes the entry without its row disappearing.
+fn style_rows(set: &Entries) -> Vec<(String, Option<Value>)> {
+    let mut rows: Vec<(String, Option<Value>)> = set
+        .iter()
+        .map(|(name, value)| (name.clone(), Some(value.clone())))
+        .collect();
+    for (key, _) in forge_spec::style::KEYS {
+        if set.iter().any(|(name, _)| name == key) {
+            continue;
+        }
+        rows.push(((*key).to_owned(), None));
+    }
+    rows
+}
+
+/// What an unset style key seeds `document.edits.style.<key>` with —
+/// `[none]` for keyword styles (the Select's clear option), else `null`.
+fn unset_style_seed(key: &str) -> Json {
+    use forge_spec::style::{StyleType, key_type};
+    match key_type(key) {
+        Some(StyleType::Keyword(_)) | Some(StyleType::LengthOrKeyword(_)) => {
+            Json::String("[none]".into())
+        }
+        _ => Json::Null,
+    }
+}
+
+/// A style key's `type`/`options` for `forge.Inspector` items and the
+/// built-in layout — keyword styles become Selects led by `[none]` (the
+/// clear sentinel `style_edit_value` maps to removal); a current value
+/// outside the keyword list is kept selectable as the second option.
+fn style_item_type(name: &str, value: &Json) -> (&'static str, Vec<String>) {
+    use forge_spec::style::{StyleType, key_type};
+    let words = match key_type(name) {
+        Some(StyleType::Keyword(words)) | Some(StyleType::LengthOrKeyword(words)) => words,
+        Some(StyleType::Bool) => return ("bool", vec![]),
+        Some(StyleType::Factor) | Some(StyleType::Fraction) => return ("number", vec![]),
+        _ => return ("string", vec![]),
+    };
+    let mut options: Vec<String> = vec!["[none]".to_owned()];
+    options.extend(words.iter().map(|w| (*w).to_owned()));
+    if let Some(current) = value.as_str()
+        && !current.is_empty()
+        && current != "[none]"
+        && !words.contains(&current)
+    {
+        options.insert(1, current.to_owned());
+    }
+    ("enum", options)
+}
+
+/// The control node one inspector row renders — `kind` picks the
+/// `document.edits.*` namespace and `*_changed` event, `type` the widget.
+/// Shared by `forge.Inspector`'s built-in layout and `forge.InspectorField`.
+fn inspector_control(kind: &str, name: &str, ty: &str, options: Vec<String>) -> Option<Node> {
+    let (edit_path, event, args) = match kind {
+        "ref" => (
+            "document.edits.refname".to_owned(),
+            "refname_changed".to_owned(),
+            vec![],
+        ),
+        "style" => (
+            format!("document.edits.style.{name}"),
+            "style_changed".to_owned(),
+            vec![Value::String(name.to_owned())],
+        ),
+        _ => (
+            format!("document.edits.{name}"),
+            "prop_changed".to_owned(),
+            vec![Value::String(name.to_owned())],
+        ),
+    };
+    let path = parse_path(&edit_path).ok()?;
+    // `kind` picks the edit namespace/event (above); `ty` alone picks the
+    // widget so `style` rows get the same typed controls as props.
+    let (element, bind_prop, extra) = match ty {
+        "bool" => ("Switch", "checked", vec![]),
+        "enum" => (
+            "Select",
+            "value",
+            vec![(
+                "options".to_owned(),
+                Value::List(options.into_iter().map(Value::Enum).collect()),
+            )],
+        ),
+        "number" => ("NumberInput", "value", vec![]),
+        "color" => ("ColorPicker", "value", vec![]),
+        _ => ("Input", "value", vec![]),
+    };
+    let mut props = vec![(
+        bind_prop.to_owned(),
+        Value::Binding {
+            path,
+            mode: BindingMode::TwoWay,
+        },
+    )];
+    props.extend(extra);
+    if kind == "ref" {
+        props.push((
+            "placeholder".to_owned(),
+            Value::String("ref block name".into()),
+        ));
+    }
+    Some(Node {
+        element: ElementRef {
+            namespace: None,
+            name: element.into(),
+        },
+        props,
+        events: vec![EventBinding {
+            event: "change".into(),
+            handler: HandlerRef { name: event, args },
+        }],
+        ..Default::default()
+    })
+}
+
 /// Truthiness of a resolved state `Json` — `if:` with no `is:`/`not:` test.
 /// State path for a remote pane's streamed output — a pane `id` can carry
 /// hyphens (`preview-iced`) that binding paths don't parse, so the state
@@ -5699,6 +6772,8 @@ fn literal(json: Json) -> Value {
     }
 }
 
+/// The tag a palette item inserts — the `insert_component('Tag')` arg on the
+/// node's click handler doubles as its drag payload.
 fn component_tag(node: &Node) -> Option<String> {
     node.events
         .iter()
@@ -5732,7 +6807,8 @@ impl Render for ForgeView {
             window.push_notification((NotificationType::Error, message), cx);
         }
         let weak = cx.entity().downgrade();
-        div()
+        let pick_weak = weak.clone();
+        let root = div()
             .id("forge-canvas")
             .size_full()
             .bg(background)
@@ -5748,7 +6824,88 @@ impl Render for ForgeView {
                 })
                 .ok();
             })
-            .children(content)
+            .children(content);
+        if !self.pick {
+            return root;
+        }
+        // One overlay over the whole canvas — topmost, so its swallowed
+        // mousedown keeps every element below inert (clicks, row selects,
+        // toggles, drag starts). Selection resolves the deepest node by
+        // hit-testing `pick_zones` rather than relying on listener order.
+        self.pick_zones.borrow_mut().clear();
+        let zones_move = self.pick_zones.clone();
+        let zones_click = self.pick_zones.clone();
+        let hover = self.pick_hover.clone();
+        let click_weak = pick_weak.clone();
+        let cancel_weak = pick_weak;
+        root.relative().child(
+            div()
+                .id("pick-overlay")
+                .absolute()
+                .inset_0()
+                .cursor_pointer()
+                .occlude()
+                .on_mouse_move(move |event, window, _cx| {
+                    // Zones are pushed deepest-first (each node's canvas
+                    // prepaints after its descendants), so the first
+                    // containing zone is the deepest node under the pointer.
+                    let hit = zones_move
+                        .borrow()
+                        .iter()
+                        .find(|(bounds, _)| bounds.contains(&event.position))
+                        .map(|(_, path)| path.clone());
+                    let mut hover = hover.borrow_mut();
+                    if *hover != hit {
+                        *hover = hit;
+                        window.refresh();
+                    }
+                })
+                .on_click(move |event, _, cx| {
+                    let ClickEvent::Mouse(click) = event else {
+                        return;
+                    };
+                    let Some(path) = zones_click
+                        .borrow()
+                        .iter()
+                        .find(|(bounds, _)| bounds.contains(&click.up.position))
+                        .map(|(_, path)| path.clone())
+                    else {
+                        return;
+                    };
+                    try_update(&click_weak, cx, "pick", |p, cx| {
+                        p.pick = false;
+                        if p.placing {
+                            p.placing = false;
+                            p.write(
+                                &parse_path("studio.drop_target").unwrap(),
+                                Json::String(path.clone()),
+                                cx,
+                            );
+                            p.fire_call("place_component", vec![path.clone()], cx);
+                        } else {
+                            p.write(
+                                &parse_path("document.selected").unwrap(),
+                                Json::String(path.clone()),
+                                cx,
+                            );
+                        }
+                        cx.notify();
+                    })
+                    .ok();
+                })
+                .on_mouse_down(MouseButton::Left, |_, _, cx| {
+                    cx.stop_propagation();
+                })
+                .on_mouse_down(MouseButton::Right, move |_, _, cx| {
+                    try_update(&cancel_weak, cx, "cancel-place", |p, cx| {
+                        p.pick = false;
+                        p.placing = false;
+                        p.fire_call("cancel_place", vec![], cx);
+                        cx.notify();
+                    })
+                    .ok();
+                }),
+        )
     }
 }
 
@@ -6067,8 +7224,145 @@ fn anchor(name: &str) -> Anchor {
     }
 }
 
+/// `icons/<set>/<name>.svg` — `lucide` (the bundled set) keeps the flat
+/// `icons/` prefix; any other set looks under its own directory, which the
+/// host's `AssetSource` layers over the embedded catalog.
+fn icon_path(set: &str, name: &str) -> String {
+    match set {
+        "" | "lucide" => format!("icons/{name}.svg"),
+        set => format!("icons/{set}/{name}.svg"),
+    }
+}
+
+/// Sets canonical to the bundled catalog — iconify hosts its own versions
+/// under these names; fetching them would mix versions in the same `icons/`
+/// namespace, so they never go through `iconify::ensure_set`.
+const BUNDLED_SETS: &[&str] = &["lucide", "heroicons"];
+
+/// Iconify names can merge into a set's listing only where `icon_path` maps
+/// them into the `icons/<set>/` namespace the synth layer serves — embedded
+/// files still win on collision. Flat-namespaced bundled sets (`lucide`:
+/// `icons/<name>.svg`) can't merge; those names would never resolve.
+fn iconify_mergeable(set: &str) -> bool {
+    !matches!(set, "" | "lucide")
+}
+
+/// A synthesized `Select` node two-way-bound to `bind` — the icon browser's
+/// set/category/theme pickers.
+fn picker(options: Vec<String>, bind: Path) -> Node {
+    Node {
+        element: ElementRef {
+            namespace: None,
+            name: "Select".into(),
+        },
+        props: vec![
+            (
+                "options".to_owned(),
+                Value::List(options.into_iter().map(Value::Enum).collect()),
+            ),
+            (
+                "value".to_owned(),
+                Value::Binding {
+                    path: bind,
+                    mode: BindingMode::TwoWay,
+                },
+            ),
+        ],
+        ..Default::default()
+    }
+}
+
+/// Theme keys encode `"s:<key>"`/`"p:<key>"` in bound state so prefix and
+/// suffix entries never collide; `""` keys (default themes) survive as
+/// bare `"s:"`/`"p:"`.
+fn theme_sel_encode(kind: crate::iconify::ThemeKind, key: &str) -> String {
+    let k = if kind == crate::iconify::ThemeKind::Prefix {
+        "p"
+    } else {
+        "s"
+    };
+    format!("{k}:{key}")
+}
+
+fn theme_sel_decode(s: &str) -> Option<(crate::iconify::ThemeKind, String)> {
+    if let Some(k) = s.strip_prefix("p:") {
+        Some((crate::iconify::ThemeKind::Prefix, k.to_owned()))
+    } else {
+        s.strip_prefix("s:")
+            .map(|k| (crate::iconify::ThemeKind::Suffix, k.to_owned()))
+    }
+}
+
+/// Checked `(kind, key)` pairs for the icon browser's theme checkboxes.
+/// `raw` is the bound `theme` value: a `["s:key"/"p:key"]` array, or a bare
+/// string for back-compat (`"[all]"`, or a theme title the old Select
+/// wrote). Empty/unset state defaults to the `""` no-suffix entries so
+/// variant sets open on their base icons — "show all" is reached by
+/// checking every box, not by emptying the list.
+fn theme_selection(
+    themes: &[(crate::iconify::ThemeKind, String, String)],
+    raw: Option<&Json>,
+) -> Vec<(crate::iconify::ThemeKind, String)> {
+    let default = || -> Vec<(crate::iconify::ThemeKind, String)> {
+        let d: Vec<_> = themes
+            .iter()
+            .filter(|(_, k, _)| k.is_empty())
+            .map(|(k, t, _)| (*k, t.clone()))
+            .collect();
+        if d.is_empty() {
+            themes.iter().map(|(k, t, _)| (*k, t.clone())).collect()
+        } else {
+            d
+        }
+    };
+    match raw {
+        Some(Json::Array(a)) => {
+            let sel: Vec<_> = a
+                .iter()
+                .filter_map(|v| v.as_str())
+                .filter_map(theme_sel_decode)
+                .filter(|(k, t)| themes.iter().any(|(k2, t2, _)| k2 == k && t2 == t))
+                .collect();
+            if sel.is_empty() { default() } else { sel }
+        }
+        Some(Json::String(s)) if s == "[all]" => {
+            themes.iter().map(|(k, t, _)| (*k, t.clone())).collect()
+        }
+        Some(Json::String(s)) => themes
+            .iter()
+            .find(|(_, _, t)| t == s)
+            .map(|(k, t, _)| vec![(*k, t.clone())])
+            .unwrap_or_else(default),
+        _ => default(),
+    }
+}
+
+/// `name` in `set` — see `icon_path`.
+fn icon_set(set: &str, name: &str) -> Icon {
+    Icon::empty().path(icon_path(set, name))
+}
+
+/// `doc_icon` for closures that captured `iconset` rather than `self`. The
+/// `AssetSource::load` probe covers every local layer — embedded lucide,
+/// bundled sets, fs roots, vendored files, the iconify cache — so only a
+/// genuinely-remote name queues a fetch and shows a placeholder (the image
+/// cache retains a failed load, so the real path can't render early).
+fn doc_icon_for(set: &str, name: &str, cx: &mut App) -> Icon {
+    let path = icon_path(set, name);
+    if cx.asset_source().load(&path).ok().flatten().is_some() {
+        return Icon::empty().path(path);
+    }
+    // Missing locally — queue the iconify fetch only where the name
+    // resolves in the `icons/<set>/` namespace (bundled lucide's flat paths
+    // can never synthesize). Bundled files stay canonical on collision.
+    if iconify_mergeable(set) && crate::iconify::known_set(set) {
+        crate::iconify::ensure_set(set, cx);
+    }
+    icon("image")
+}
+
 fn icon(name: &str) -> Icon {
-    Icon::empty().path(format!("icons/{name}.svg"))
+    Icon::empty().path(icon_path("lucide", name))
 }
 
 fn button_variant(name: &str) -> ButtonVariant {

@@ -31,6 +31,12 @@ document = "crates/forge-studio/studio.forge.yaml"
 # `./themes` beside this manifest when uncommented out entirely.
 # dir = "themes"
 
+# [icons]
+# Iconset for document icons (`Icon` elements, `icon:` props) — `lucide`
+# (bundled) by default; a set name resolves `icons/<set>/<name>.svg` against
+# the project's assets dir. A doc's own `meta.iconset` overrides this.
+# set = "heroicons"
+
 # [libraries]
 # Extra dependency pins added to generated app Cargo.toml (`use:` imports
 # already pin adapter crates — this is for everything else).

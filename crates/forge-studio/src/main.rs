@@ -81,6 +81,13 @@ struct Shared {
     /// here and it's forwarded to the preview host as `base_dir`.
     dir: Option<PathBuf>,
     catalogs: Vec<Catalog>,
+    /// The open project's `[icons] set` — forwarded to the canvas preview as
+    /// its `project_iconset` for docs under `project_dir`; a document's own
+    /// `meta.iconset` overrides it.
+    project_iconset: Option<String>,
+    /// The open project's root — `project_iconset` only applies to docs
+    /// under it; files opened elsewhere fall back to lucide.
+    project_dir: Option<PathBuf>,
     /// Undo/redo — snapshots of `(document, editor source)` taken before each
     /// mutation, so a step back restores the editor text exactly.
     undo: Vec<(Document, String)>,
@@ -165,107 +172,117 @@ type SharedState = Rc<RefCell<Shared>>;
 /// The hook context type for `#[forge_hook]` wrappers.
 type HookCtx = SharedState;
 
+mod studio_assets;
+use studio_assets::{StudioAssets, add_icon_root};
+
 fn main() {
     // The shell document alone needs ~10MB of layout stack — re-exec under
     // a raised rlimit before gpui starts.
     gpui_forge_runtime::ensure_main_stack();
-    gpui_kit::application()
-        .with_assets(gpui_kit::assets::AllAssets)
-        .run(|cx| {
-            gpui_kit::init(cx);
-            cx.bind_keys([gpui::KeyBinding::new(
-                "escape",
-                gpui_forge_runtime::render::CancelPick,
-                None,
-            )]);
-            // Reap the preview hosts on any quit path — the `quit` hook is
-            // only one of them (window close, Cmd-Q…). Pane hosts live in
-            // HOSTS — without this they'd orphan and survive Studio's exit.
-            cx.on_app_quit(|_| async move {
-                if let Some(mut host) = HOST.lock().unwrap().take() {
-                    let _ = host.child.kill();
-                    let _ = host.child.wait();
-                }
-                for (_, (_, mut host)) in HOSTS.lock().unwrap().drain() {
-                    let _ = host.child.kill();
-                    let _ = host.child.wait();
-                }
-            })
-            .detach();
-            // #150 — restore persisted geometry. The saved rect counts as
-            // visible when its title-bar strip still overlaps a live
-            // display (a display may have been unplugged); size floors sit
-            // at #149's eventual minimum. Anything else → centered.
-            let prefs = load_prefs();
-            let key = |k: &str| prefs.get(k).and_then(Json::as_f64);
-            let centered = |cx: &App| Bounds::centered(None, size(px(1400.0), px(900.0)), cx);
-            let bounds = match (
-                key("window_x"),
-                key("window_y"),
-                key("window_w"),
-                key("window_h"),
-            ) {
-                (Some(x), Some(y), Some(w), Some(h)) => {
-                    let w = w.max(640.0);
-                    let h = h.max(400.0);
-                    let visible = cx.displays().iter().any(|d| {
-                        let db = d.bounds();
-                        let (dx0, dy0) = (f32::from(db.origin.x), f32::from(db.origin.y));
-                        let (dx1, dy1) = (
-                            dx0 + f32::from(db.size.width),
-                            dy0 + f32::from(db.size.height),
-                        );
-                        let (x, y, w) = (x as f32, y as f32, w as f32);
-                        let iw = (x + w).min(dx1) - x.max(dx0);
-                        let ih = (y + 30.0).min(dy1) - y.max(dy0);
-                        iw >= 100.0 && ih >= 10.0
-                    });
-                    if visible {
-                        Bounds::new(
-                            point(px(x as f32), px(y as f32)),
-                            size(px(w as f32), px(h as f32)),
-                        )
-                    } else {
-                        centered(cx)
-                    }
-                }
-                _ => centered(cx),
-            };
-            let maximized = prefs
-                .get("window_maximized")
-                .and_then(Json::as_bool)
-                .unwrap_or(false);
-            let options = WindowOptions {
-                app_id: Some("gpui-forge".into()),
-                window_bounds: Some(if maximized {
-                    WindowBounds::Maximized(bounds)
+    add_icon_root(std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets"));
+    gpui_kit::application().with_assets(StudioAssets).run(|cx| {
+        gpui_kit::init(cx);
+        cx.bind_keys([gpui::KeyBinding::new(
+            "escape",
+            gpui_forge_runtime::render::CancelPick,
+            None,
+        )]);
+        // Reap the preview hosts on any quit path — the `quit` hook is
+        // only one of them (window close, Cmd-Q…). Pane hosts live in
+        // HOSTS — without this they'd orphan and survive Studio's exit.
+        cx.on_app_quit(|_| async move {
+            if let Some(mut host) = HOST.lock().unwrap().take() {
+                let _ = host.child.kill();
+                let _ = host.child.wait();
+            }
+            for (_, (_, mut host)) in HOSTS.lock().unwrap().drain() {
+                let _ = host.child.kill();
+                let _ = host.child.wait();
+            }
+        })
+        .detach();
+        // The windowed shell IS the app — quit when its last window closes so
+        // no headless process lingers.
+        cx.on_window_closed(|cx, _| {
+            if cx.windows().is_empty() {
+                cx.quit();
+            }
+        })
+        .detach();
+        // #150 — restore persisted geometry. The saved rect counts as
+        // visible when its title-bar strip still overlaps a live
+        // display (a display may have been unplugged); size floors sit
+        // at #149's eventual minimum. Anything else → centered.
+        let prefs = load_prefs();
+        let key = |k: &str| prefs.get(k).and_then(Json::as_f64);
+        let centered = |cx: &App| Bounds::centered(None, size(px(1400.0), px(900.0)), cx);
+        let bounds = match (
+            key("window_x"),
+            key("window_y"),
+            key("window_w"),
+            key("window_h"),
+        ) {
+            (Some(x), Some(y), Some(w), Some(h)) => {
+                let w = w.max(640.0);
+                let h = h.max(400.0);
+                let visible = cx.displays().iter().any(|d| {
+                    let db = d.bounds();
+                    let (dx0, dy0) = (f32::from(db.origin.x), f32::from(db.origin.y));
+                    let (dx1, dy1) = (
+                        dx0 + f32::from(db.size.width),
+                        dy0 + f32::from(db.size.height),
+                    );
+                    let (x, y, w) = (x as f32, y as f32, w as f32);
+                    let iw = (x + w).min(dx1) - x.max(dx0);
+                    let ih = (y + 30.0).min(dy1) - y.max(dy0);
+                    iw >= 100.0 && ih >= 10.0
+                });
+                if visible {
+                    Bounds::new(
+                        point(px(x as f32), px(y as f32)),
+                        size(px(w as f32), px(h as f32)),
+                    )
                 } else {
-                    WindowBounds::Windowed(bounds)
-                }),
-                titlebar: Some(TitlebarOptions {
-                    title: Some("Forge Studio".into()),
-                    appears_transparent: true,
-                    traffic_light_position: None,
-                }),
-                app_owns_titlebar_drag: true,
-                ..Default::default()
-            };
-            gpui_kit::open_window(options, cx, |_, cx| {
-                // Default to the OS appearance — the theme switch still
-                // overrides to explicit Light/Dark.
-                use gpui_kit::WindowAppearance;
-                Theme::change(
-                    match cx.window_appearance() {
-                        WindowAppearance::Dark | WindowAppearance::VibrantDark => ThemeMode::Dark,
-                        _ => ThemeMode::Light,
-                    },
-                    None,
-                    cx,
-                );
-                cx.new(build_shell)
-            })
-            .expect("failed to open window");
-        });
+                    centered(cx)
+                }
+            }
+            _ => centered(cx),
+        };
+        let maximized = prefs
+            .get("window_maximized")
+            .and_then(Json::as_bool)
+            .unwrap_or(false);
+        let options = WindowOptions {
+            app_id: Some("gpui-forge".into()),
+            window_bounds: Some(if maximized {
+                WindowBounds::Maximized(bounds)
+            } else {
+                WindowBounds::Windowed(bounds)
+            }),
+            titlebar: Some(TitlebarOptions {
+                title: Some("Forge Studio".into()),
+                appears_transparent: true,
+                traffic_light_position: None,
+            }),
+            app_owns_titlebar_drag: true,
+            ..Default::default()
+        };
+        gpui_kit::open_window(options, cx, |_, cx| {
+            // Default to the OS appearance — the theme switch still
+            // overrides to explicit Light/Dark.
+            use gpui_kit::WindowAppearance;
+            Theme::change(
+                match cx.window_appearance() {
+                    WindowAppearance::Dark | WindowAppearance::VibrantDark => ThemeMode::Dark,
+                    _ => ThemeMode::Light,
+                },
+                None,
+                cx,
+            );
+            cx.new(build_shell)
+        })
+        .expect("failed to open window");
+    });
 }
 
 fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
@@ -273,6 +290,8 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         file: None,
         dir: None,
         catalogs: check::catalogs(),
+        project_iconset: None,
+        project_dir: None,
         undo: Vec::new(),
         redo: Vec::new(),
     }));
@@ -334,6 +353,12 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     all_themes.push("--- Dark Themes ---".to_string());
     all_themes.extend(dark_themes.iter().cloned());
     let prefs = load_prefs();
+    // Global pref — a custom iconify cache root, applied before any fetch.
+    if let Some(dir) = prefs.get("icon_cache").and_then(|j| j.as_str())
+        && !dir.is_empty()
+    {
+        gpui_forge_runtime::iconify::set_cache_dir(Some(dir.into()));
+    }
     let theme_name = prefs
         .get("theme")
         .and_then(|j| j.as_str())
@@ -393,6 +418,12 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
                     .get("files_highlights")
                     .and_then(|j| j.as_str())
                     .unwrap_or("*.forge.yaml = bold; *.json = green"),
+                // Iconify cache root — Preferences → Icons; empty means the
+                // platform default (`~/.cache/gpui-forge/iconify`).
+                "icon_cache": prefs
+                    .get("icon_cache")
+                    .and_then(|j| j.as_str())
+                    .unwrap_or(""),
                 "file": "welcome.forge.yaml",
                 // Assets tab — `refresh_assets` rewrites dir + listing when a
                 // document/project loads.
@@ -423,6 +454,8 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "new_document",
         "open_document",
         "open_project",
+        "open_path",
+        "open_recent",
         "files_scope",
         "create_project",
         "preview_in_host",
@@ -436,6 +469,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "cycle_preview_base",
         "persist_preview_base",
         "persist_prefs",
+        "apply_icon_cache",
         "source_changed",
         "copy_snippet",
         "insert_component",
@@ -915,6 +949,13 @@ fn dispatch(
         "open_document" => open_document(shared.clone(), cx),
         "open_project" => open_project(shared.clone(), cx),
         "files_scope" => files_scope(view, cx),
+        // Icons-tab: clicking a cell copies its SVG into the open project's
+        // `assets/icons[<set>]/` so the built app ships it.
+        "icon_copy" => {
+            if let Some(name) = args.first() {
+                icon_copy(view, name, shared, cx);
+            }
+        }
         "create_project" => create_project(view, shared.clone(), cx),
         "preview_in_host" => preview_in_host(view, shared.clone(), cx),
         "raise_host" => host_send(&json!({"cmd":"raise"})),
@@ -999,6 +1040,19 @@ fn dispatch(
         // Preferences → Files — bound `studio.files_*` changes flush to
         // `~/.gpui-forge/settings.toml` on every control change.
         "persist_prefs" => save_prefs(view),
+        // Preferences → Icons — the iconify cache root takes effect
+        // immediately (memos cleared), then persists like the other prefs.
+        "apply_icon_cache" => {
+            let dir = view
+                .state()
+                .get("studio")
+                .and_then(|s| s.get("icon_cache"))
+                .and_then(|j| j.as_str())
+                .unwrap_or_default()
+                .to_owned();
+            gpui_forge_runtime::iconify::set_cache_dir((!dir.is_empty()).then(|| dir.into()));
+            save_prefs(view);
+        }
         "source_changed" => reload(view, shared, cx),
         // copy_snippet/insert_component: registry hooks
         "place_component" => place_component(view, args, shared, cx),
@@ -1808,7 +1862,11 @@ fn manifest_value(src: &str, key: &str) -> Option<String> {
 /// `key = "…"` inside a `[section]` of a `forge.toml` — section-aware so
 /// `[assets] dir` doesn't read a `[forge] dir` by accident.
 fn manifest_section(src: &str, section: &str, key: &str) -> Option<String> {
-    let body = src.split(&format!("[{section}]")).nth(1)?.split('[').next()?;
+    let body = src
+        .split(&format!("[{section}]"))
+        .nth(1)?
+        .split('[')
+        .next()?;
     body.lines().map(str::trim).find_map(|l| {
         l.strip_prefix(key)?
             .trim_start_matches('=')
@@ -1822,9 +1880,8 @@ fn manifest_section(src: &str, section: &str, key: &str) -> Option<String> {
 /// Media globs the Assets tab lists — images, video, fonts. Keep the
 /// `forge.Files` `filter:` in `studio.forge.yaml` in sync.
 const ASSET_GLOBS: &[&str] = &[
-    "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp", "*.svg", "*.ico", "*.bmp",
-    "*.avif", "*.mp4", "*.webm", "*.mov", "*.mkv", "*.ttf", "*.otf", "*.woff",
-    "*.woff2",
+    "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp", "*.svg", "*.ico", "*.bmp", "*.avif", "*.mp4",
+    "*.webm", "*.mov", "*.mkv", "*.ttf", "*.otf", "*.woff", "*.woff2",
 ];
 
 const IMAGE_EXTS: &[&str] = &[
@@ -1852,11 +1909,7 @@ fn assets_root(root: &std::path::Path) -> PathBuf {
 /// Seeds the Assets tab: `studio.assets_dir` names the browsed root and
 /// `studio.asset_files` is the flattened media listing the thumbnail/grid
 /// zooms iterate.
-fn refresh_assets(
-    view: &mut ForgeView,
-    root: &std::path::Path,
-    cx: &mut Context<ForgeView>,
-) {
+fn refresh_assets(view: &mut ForgeView, root: &std::path::Path, cx: &mut Context<ForgeView>) {
     let dir = assets_root(root);
     view.update_state(
         &parse_path("studio.assets_dir").unwrap(),
@@ -1891,11 +1944,7 @@ fn themes_root(root: &std::path::Path) -> PathBuf {
 /// shipped catalog. Registry entries are keyed by theme name — a project
 /// theme with the same name replaces the shipped one, matching `forge
 /// build`'s project-wins merge.
-fn refresh_themes(
-    view: &mut ForgeView,
-    root: &std::path::Path,
-    cx: &mut Context<ForgeView>,
-) {
+fn refresh_themes(view: &mut ForgeView, root: &std::path::Path, cx: &mut Context<ForgeView>) {
     // A doc refresh names the doc's folder — when a project is open its
     // themes are the ones that matter, so prefer the project root.
     let project = view.state()["studio"]["project"]
@@ -2679,7 +2728,14 @@ fn load_project(
         status(view, "forge.toml has no forge.document", cx);
         return;
     };
+    // `[icons] set` — a non-lucide iconset served from the project's
+    // `<assets>/icons/<set>/` directory; `meta.iconset` on a doc wins. It
+    // scopes to docs under `project_dir` — a file opened elsewhere falls
+    // back to lucide.
+    shared.borrow_mut().project_iconset = manifest_section(&src, "icons", "set");
     let dir = toml.parent().map(|p| p.to_path_buf()).unwrap_or_default();
+    shared.borrow_mut().project_dir = Some(dir.clone());
+    add_icon_root(assets_root(&dir));
     let doc_path = dir.join(&rel);
     view.update_state(
         &parse_path("studio.project").unwrap(),
@@ -2708,7 +2764,14 @@ fn load_file(
             load_source(view, &name, &src, dir.as_deref(), &shared, cx);
             let recents = record_recent(&path);
             refresh_recent_menu(view, &recents, cx);
-            watch_file(path, shared.clone(), cx);
+            watch_file(path.clone(), shared.clone(), cx);
+            // The project tree highlights `studio.file_selected` — keep it on
+            // the open file whichever way it was opened (tree, recents, menu).
+            view.update_state(
+                &parse_path("studio.file_selected").unwrap(),
+                Json::String(path.display().to_string()),
+                cx,
+            );
             view.update_state(&parse_path("studio.tab").unwrap(), Json::from(2), cx);
         }
         Err(e) => status(view, &format!("cannot read {}: {e}", path.display()), cx),
@@ -2815,6 +2878,9 @@ fn save_prefs(view: &ForgeView) {
         let highlights = files("files_highlights");
         let highlights = highlights.as_str().unwrap_or_default();
         body += &format!("files_folders = \"{folders}\"\nfiles_highlights = \"{highlights}\"\n");
+        let icon_cache = files("icon_cache");
+        let icon_cache = icon_cache.as_str().unwrap_or_default();
+        body += &format!("icon_cache = \"{icon_cache}\"\n");
         // #150 — last observed geometry, when the poll task has seen any.
         if let Some(w) = *LAST_WINDOW.lock().unwrap() {
             body += &format!(
@@ -3030,10 +3096,35 @@ fn load_source(
         );
     }
     if let Some(doc) = doc {
+        // Vendor-on-use — download just the icons this doc references into
+        // `<assets>/icons/<set>/`, then re-render so they resolve locally.
+        vendor_doc_icons(dir, &doc, &shared, cx);
         view.set_preview_document("canvas", doc, cx);
+        // `[icons] set` scopes to docs under the project root — a file opened
+        // elsewhere, or with no project loaded, resolves icons as lucide.
+        let iconset = {
+            let shared = shared.borrow();
+            dir.is_some_and(|d| {
+                shared
+                    .project_dir
+                    .as_ref()
+                    .is_some_and(|root| d.starts_with(root))
+            })
+            .then(|| shared.project_iconset.clone())
+            .flatten()
+        };
+        let root = dir.map(assets_root);
+        view.preview("canvas", cx).update(cx, |p, _| {
+            p.set_project_iconset(iconset);
+            if let Some(dir) = dir {
+                p.set_base_dir(dir.to_path_buf());
+            }
+        });
         if let Some(dir) = dir {
-            view.preview("canvas", cx)
-                .update(cx, |p, _| p.set_base_dir(dir.to_path_buf()));
+            add_icon_root(dir.join("assets"));
+        }
+        if let Some(root) = root {
+            add_icon_root(root);
         }
     }
     host_send_source(view, shared);
@@ -3049,6 +3140,175 @@ fn load_source(
     }
 }
 
+/// Icons-tab copy — writes the clicked icon's SVG into the open document's
+/// `assets/icons[<set>]/` so the built app ships it, plus the set's
+/// `LICENSE.txt` on first copy. Iconify sets synthesize bytes locally from
+/// the cached `IconifyJSON`; bundled/vendored icons load straight from the
+/// asset source. Lands under a registered icon root, so the browser's
+/// "on disk" ring shows on the next render.
+fn icon_copy(view: &mut ForgeView, name: &str, shared: &SharedState, cx: &mut Context<ForgeView>) {
+    let set = get_path(view.state(), &parse_path("studio.iconset").unwrap())
+        .and_then(|j| j.as_str())
+        .unwrap_or_default()
+        .to_owned();
+    let bundled = matches!(set.as_str(), "" | "lucide" | "heroicons");
+    let rel = if bundled {
+        format!("icons/{name}.svg")
+    } else {
+        format!("icons/{set}/{name}.svg")
+    };
+    let Some(bytes) = cx.asset_source().load(&rel).ok().flatten() else {
+        status(
+            view,
+            &format!("icon `{name}` isn't available locally yet"),
+            cx,
+        );
+        return;
+    };
+    let Some(dir) = shared.borrow().dir.clone() else {
+        status(view, "open a document first — no assets/ to copy into", cx);
+        return;
+    };
+    let dest_dir = if bundled {
+        assets_root(&dir).join("icons")
+    } else {
+        assets_root(&dir).join("icons").join(&set)
+    };
+    let dest = dest_dir.join(format!("{name}.svg"));
+    match std::fs::create_dir_all(&dest_dir).and_then(|_| std::fs::write(&dest, &bytes)) {
+        Ok(()) => {
+            // Ship attribution with the first copied icon of a licensed set.
+            if !bundled
+                && let Some((title, license, _spdx)) = gpui_forge_runtime::iconify::set_info(&set)
+            {
+                let lic = dest_dir.join("LICENSE.txt");
+                if !lic.exists() {
+                    let _ = std::fs::write(
+                        &lic,
+                        format!("{title} icon set\nLicense: {license}\nhttps://iconify.design/\n"),
+                    );
+                }
+            }
+            status(
+                view,
+                &format!("copied {set}:{name} → {}", dest.display()),
+                cx,
+            );
+        }
+        Err(e) => status(view, &format!("copy failed: {e}"), cx),
+    }
+    cx.refresh_windows();
+}
+
+/// Vendor-on-use — walks a freshly-loaded doc for `icon:` props and `Icon`
+/// element names under a non-lucide iconset, then downloads just those SVGs
+/// into `<assets>/icons/<set>/`. The files land under the registered icon
+/// root, so the next render resolves them through the normal asset path —
+/// a project accumulates exactly the icons it uses.
+fn vendor_doc_icons(
+    dir: Option<&std::path::Path>,
+    doc: &Document,
+    shared: &SharedState,
+    cx: &mut Context<ForgeView>,
+) {
+    let Some(dir) = dir else { return };
+    // Same precedence as the preview's `iconset()` — `meta.iconset`, then a
+    // project-scoped `[icons] set`, then lucide (nothing to vendor).
+    let iconset = doc
+        .meta
+        .iter()
+        .find(|(k, _)| k == "iconset")
+        .map(|(_, v)| v.clone())
+        .or_else(|| {
+            let shared = shared.borrow();
+            dir.starts_with(shared.project_dir.as_ref()?)
+                .then(|| shared.project_iconset.clone())
+                .flatten()
+        })
+        .unwrap_or_default();
+    if matches!(iconset.as_str(), "" | "lucide") {
+        return;
+    }
+    let mut names = Vec::new();
+    collect_icon_names(&doc.root, &mut names);
+    if names.is_empty() {
+        return;
+    }
+    let dest = assets_root(dir).join("icons").join(&iconset);
+    let set_name = iconset.clone();
+    cx.spawn(async move |_, cx| {
+        // Blocking ureq fetches go on the background executor — a
+        // non-iconify set (e.g. a custom local one) errors out rather than
+        // 404ing per icon, since `vendor_blocking` gates on the catalog.
+        let result = cx
+            .background_executor()
+            .spawn(async move {
+                gpui_forge_runtime::iconify::vendor_blocking(&iconset, &names, &dest)
+                    .map(|(n, missing)| (n, missing, dest))
+            })
+            .await;
+        match result {
+            Ok((0, _, _)) => {}
+            Ok((n, missing, dest)) => {
+                eprintln!("[icons] vendored {n} icons → {}", dest.display());
+                if !missing.is_empty() {
+                    eprintln!("[icons] not found in `{set_name}`: {}", missing.join(", "));
+                }
+            }
+            Err(e) => eprintln!("[icons] vendor failed: {e}"),
+        }
+        // Fresh files under the assets root resolve on the next render.
+        let _ = cx.update(|app| app.refresh_windows());
+    })
+    .detach();
+}
+
+/// Every icon name a node tree references — `Icon` element content/`name`
+/// and any element's `icon:` prop — recursing `children` and control-flow
+/// branch lists (`else:`, `match` cases).
+fn collect_icon_names(node: &gpui_forge_runtime::forge_spec::model::Node, out: &mut Vec<String>) {
+    use gpui_forge_runtime::forge_spec::model::{Control, Value};
+    let as_name = |v: &Value| match v {
+        Value::String(s) | Value::Enum(s) => Some(s.clone()),
+        _ => None,
+    };
+    if node.element.name == "Icon"
+        && let Some(name) = node
+            .props
+            .iter()
+            .find(|(k, _)| k == "name")
+            .and_then(|(_, v)| as_name(v))
+            .or_else(|| node.content.as_ref().and_then(&as_name))
+    {
+        out.push(name);
+    }
+    if let Some(name) = node
+        .props
+        .iter()
+        .find(|(k, _)| k == "icon")
+        .and_then(|(_, v)| as_name(v))
+    {
+        out.push(name);
+    }
+    fn walk(nodes: &[gpui_forge_runtime::forge_spec::model::Node], out: &mut Vec<String>) {
+        for child in nodes {
+            collect_icon_names(child, out);
+        }
+    }
+    walk(&node.children, out);
+    match &node.control {
+        Some(Control::If { otherwise, .. })
+        | Some(Control::For { otherwise, .. })
+        | Some(Control::Match { otherwise, .. }) => walk(otherwise, out),
+        _ => {}
+    }
+    if let Some(Control::Match { cases, .. }) = &node.control {
+        for case in cases {
+            walk(&case.children, out);
+        }
+    }
+}
+
 /// The sidebar's "project" button — toggles `studio.project_dir` between the
 /// project root (`studio.project`, set by `open_project`) and the current
 /// document's folder (`studio.doc_dir`).
@@ -3056,9 +3316,18 @@ fn files_scope(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
     let (project, doc_dir, current) = {
         let state = view.state();
         (
-            state["studio"]["project"].as_str().unwrap_or_default().to_owned(),
-            state["studio"]["doc_dir"].as_str().unwrap_or_default().to_owned(),
-            state["studio"]["project_dir"].as_str().unwrap_or_default().to_owned(),
+            state["studio"]["project"]
+                .as_str()
+                .unwrap_or_default()
+                .to_owned(),
+            state["studio"]["doc_dir"]
+                .as_str()
+                .unwrap_or_default()
+                .to_owned(),
+            state["studio"]["project_dir"]
+                .as_str()
+                .unwrap_or_default()
+                .to_owned(),
         )
     };
     // No project open → the only scope is the document's folder.

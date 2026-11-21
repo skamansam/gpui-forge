@@ -63,7 +63,7 @@ mod iced;
 ))]
 pub use iced::*;
 
-use forge_spec::{Path, PathSegment};
+use forge_spec::{Path, PathSegment, Value};
 use serde_json::Value as Json;
 
 /// Reads `path` out of a JSON state tree — `a.b` walks objects, `a.0` indexes
@@ -101,6 +101,23 @@ pub fn doc_meta(doc: &forge_spec::Document) -> Json {
             .map(|(k, v)| (k.clone(), Json::String(v.clone())))
             .collect(),
     )
+}
+
+/// A `style_changed` write's `Json` as a style `Value` — `null`, `""` and
+/// the `[none]` Select sentinel all remove the entry (`None`); bools/numbers
+/// map to real `Value`s instead of being flattened to strings.
+pub fn style_edit_value(json: &Json) -> Option<Value> {
+    if json.is_null() || json.as_str().is_some_and(|s| s.is_empty() || s == "[none]") {
+        return None;
+    }
+    Some(match json {
+        Json::Bool(b) => Value::Bool(*b),
+        Json::Number(n) => Value::Number {
+            value: n.as_f64().unwrap_or_default(),
+            unit: None,
+        },
+        _ => Value::String(json.as_str().unwrap_or_default().to_owned()),
+    })
 }
 
 /// Writes `value` at `path` in a JSON state tree, creating objects/arrays as
