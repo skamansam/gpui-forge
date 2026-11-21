@@ -109,6 +109,30 @@
 		<h3>Named refs, edited in place</h3>
 		<p><code>&amp;name</code> blocks share structure via <code>&lt;&lt;: *name</code>; edits splice into the ref block so named refs stay intact across saves.</p>
 	</div>
+	<div>
+		<h3>State, bound two ways</h3>
+		<p><code>bind $path</code> wires any prop to document state, and the state inspector shows every write live — the same <code>for:</code>/<code>if:</code> scopes drive whole layouts.</p>
+	</div>
+	<div>
+		<h3>Variables editor</h3>
+		<p><code>forge.Vars</code> edits document state in place — add paths, tweak values, watch the canvas react. Inspector fields publish <code>document.edits.*</code> the same way.</p>
+	</div>
+	<div>
+		<h3>Widget palette</h3>
+		<p><code>forge.Palette</code> is a searchable catalog of every component — drag a widget onto the canvas, or widen the search across all imported sets.</p>
+	</div>
+	<div>
+		<h3>Icon browser</h3>
+		<p><code>forge.Icons</code> browses bundled lucide, vendored sets and the whole Iconify catalog — filtered, themed, virtualized. A click materializes the SVG into your project's <code>assets/icons/</code>.</p>
+	</div>
+	<div>
+		<h3>Custom widgets &amp; iconsets</h3>
+		<p>Implement <code>ForgeLibrary</code> in Rust and <code>use:</code> it like any library; ship your own icons as an <code>icons/&lt;set&gt;/</code> directory and they browse and render alongside lucide.</p>
+	</div>
+	<div>
+		<h3>Projects, not just files</h3>
+		<p><code>forge.toml</code> groups documents, themes, iconsets and asset directories — multi-file apps get a project tree, shared settings and hot-reloading manifests.</p>
+	</div>
 </section>
 
 <section class="ecosystem">
