@@ -39,3 +39,5 @@
 - [x] Vars tab needed a variable count — `forge.Vars` got a `count:` out-prop publishing the flattened row count; the shell binds `studio.vars_count` and the header text shows "There are N variables in this forge file."
 
 - [x] Vars editor showed `number` vars as sliders — swapped to `NumberInput` (stepper buttons + typed value); only writes parseable numbers so partial input can't clobber state. Explicit `slider` decls still get a Slider.
+
+- [x] Vars editor bool/enum/slider rows couldn't be changed — they rendered `checked`/`selected` display-only widgets with no write-back. Checkbox now writes the click through, enum Selects write `SelectEvent::Confirm`, and sliders write `SliderEvent::Change` into the preview's state.

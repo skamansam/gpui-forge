@@ -608,11 +608,23 @@ impl ForgeView {
             // Slider, enum → Select, color → Input (hex), slider → Slider —
             // undeclared falls back to the Json type below.
             let typed_edit: Option<AnyElement> = match var_type(&path) {
-                Some("bool") => Some(
-                    Checkbox::new(SharedString::from(format!("vars-bool-{key}-{path}")))
-                        .checked(value.as_bool().unwrap_or(false))
-                        .into_any_element(),
-                ),
+                Some("bool") => {
+                    // Click writes the new value into the preview's state —
+                    // `checked` alone made a display-only box that ignored
+                    // clicks entirely.
+                    let cb_path = parse_path(&path).unwrap();
+                    let pv = preview.clone();
+                    Some(
+                        Checkbox::new(SharedString::from(format!("vars-bool-{key}-{path}")))
+                            .checked(value.as_bool().unwrap_or(false))
+                            .on_click(move |v: &bool, _w, cx| {
+                                pv.update(cx, |view, cx| {
+                                    view.update_state(&cb_path, Json::Bool(*v), cx)
+                                });
+                            })
+                            .into_any_element(),
+                    )
+                }
                 // Numbers get a NumberInput — a slider suggests a bounded
                 // range a bare `number` decl doesn't carry. `slider` keeps
                 // the slider for docs that ask for one.
@@ -646,14 +658,30 @@ impl ForgeView {
                     Some(NumberInput::new(&s).w_full().into_any_element())
                 }
                 Some("slider") => {
-                    let s = self.sliders.get(&state_key).cloned().unwrap_or_else(|| {
-                        let s = cx.new(|_cx| {
-                            SliderState::new()
-                                .default_value(value.as_f64().unwrap_or_default() as f32)
-                        });
-                        self.sliders.insert(state_key.clone(), s.clone());
-                        s
-                    });
+                    let s = match self.sliders.get(&state_key) {
+                        Some(s) => s.clone(),
+                        None => {
+                            let s = cx.new(|_cx| {
+                                SliderState::new()
+                                    .default_value(value.as_f64().unwrap_or_default() as f32)
+                            });
+                            let path = parse_path(&path).unwrap();
+                            let preview = preview.clone();
+                            let sub = cx.subscribe(&s, move |_this, _s, event, cx| {
+                                let SliderEvent::Change(value) = event else {
+                                    return;
+                                };
+                                if let SliderValue::Single(v) = value {
+                                    preview.update(cx, |view, cx| {
+                                        view.update_state(&path, Json::from(*v), cx)
+                                    });
+                                }
+                            });
+                            self.subscriptions.push(sub);
+                            self.sliders.insert(state_key.clone(), s.clone());
+                            s
+                        }
+                    };
                     Some(Slider::new(&s).w_full().into_any_element())
                 }
                 Some(t) if t.starts_with("enum") || t == "select" => {
@@ -683,11 +711,32 @@ impl ForgeView {
                         .as_str()
                         .and_then(|s| options.iter().position(|o| o == s))
                         .map(IndexPath::new);
-                    let s = self.selects.get(&state_key).cloned().unwrap_or_else(|| {
-                        let s = cx.new(|cx| SelectState::new(options, selected, window, cx));
-                        self.selects.insert(state_key.clone(), s.clone());
-                        s
-                    });
+                    let s = match self.selects.get(&state_key) {
+                        Some(s) => s.clone(),
+                        None => {
+                            let s = cx
+                                .new(|cx| SelectState::new(options, selected, window, cx));
+                            let path = parse_path(&path).unwrap();
+                            let preview = preview.clone();
+                            let sub = cx.subscribe(
+                                &s,
+                                move |_this, _s, event: &SelectEvent<Options>, cx| {
+                                    if let SelectEvent::Confirm(Some(v)) = event {
+                                        preview.update(cx, |view, cx| {
+                                            view.update_state(
+                                                &path,
+                                                Json::String(v.to_string()),
+                                                cx,
+                                            )
+                                        });
+                                    }
+                                },
+                            );
+                            self.subscriptions.push(sub);
+                            self.selects.insert(state_key.clone(), s.clone());
+                            s
+                        }
+                    };
                     Some(Select::new(&s).w_full().into_any_element())
                 }
                 Some("color") => {
