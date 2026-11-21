@@ -241,15 +241,18 @@ root:
   and `else:` is the row shown for an empty list:
 
   ```yaml
-  - List:
-      selected: bind $picked
-    - for: $items
-      each: item
-      key: item.id
-      children:
-        - Text: "{$item.name}"
-      else:
-        - Text: "Nothing here"
+  forge: "0.1"
+  root:
+    List:
+    selected: bind $picked
+    children:
+      - for: $items
+        each: item
+        key: item.id
+        children:
+          - Text: "{$item.name}"
+        else:
+          - Text: "Nothing here"
   ```
 
 ### File paths in `src`
