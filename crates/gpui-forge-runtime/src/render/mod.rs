@@ -123,9 +123,7 @@ pub fn style_edit_value(json: &Json) -> Option<Value> {
         },
         Json::String(s) => Color::parse_hex(s)
             .map(Value::Color)
-            .or_else(|| {
-                forge_spec::value::parse_value(s, forge_spec::value::Quoting::Plain).ok()
-            })
+            .or_else(|| forge_spec::value::parse_value(s, forge_spec::value::Quoting::Plain).ok())
             .unwrap_or_else(|| Value::String(s.clone())),
         _ => Value::String(json.as_str().unwrap_or_default().to_owned()),
     })

@@ -507,6 +507,9 @@ elements:
       name:
         type: icon
         required: true
+      set:
+        type: string
+        summary: Icon set override — a `set:name` prefix on `name:` wins over this.
       size:
         type: enum
         values: [XSmall, Small, Medium, Large]

@@ -229,11 +229,7 @@ fn main() {
         gpui_kit::init(cx);
         cx.bind_keys([
             gpui::KeyBinding::new("escape", gpui_forge_runtime::render::CancelPick, None),
-            gpui::KeyBinding::new(
-                "ctrl-s",
-                gpui_forge_runtime::render::SaveDocument,
-                None,
-            ),
+            gpui::KeyBinding::new("ctrl-s", gpui_forge_runtime::render::SaveDocument, None),
             // Never fires on Linux/Windows; keeps the binding for macOS.
             gpui::KeyBinding::new("cmd-s", gpui_forge_runtime::render::SaveDocument, None),
         ]);
@@ -360,7 +356,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     }
     // `meta.watch` on the shell marks it for hot-reload. A broken parse
     // spawns the watcher anyway — it's the recovery path for the fix.
-    let shell_watched = doc.as_ref().map_or(true, doc_watches);
+    let shell_watched = doc.as_ref().is_none_or(doc_watches);
     if let Some(doc) = doc {
         view.set_document(doc, cx);
     }
@@ -1812,7 +1808,11 @@ fn host_event(
             );
             view.update_state(
                 &parse_path("studio.problem_variant").unwrap(),
-                Json::String(if items.is_empty() { "Success".into() } else { "Error".into() }),
+                Json::String(if items.is_empty() {
+                    "Success".into()
+                } else {
+                    "Error".into()
+                }),
                 cx,
             );
             view.update_state(&parse_path("studio.markers").unwrap(), markers, cx);
@@ -3353,7 +3353,7 @@ fn load_source(
     if let Some(doc) = doc {
         // Vendor-on-use — download just the icons this doc references into
         // `<assets>/icons/<set>/`, then re-render so they resolve locally.
-        vendor_doc_icons(dir, &doc, &shared, cx);
+        vendor_doc_icons(dir, &doc, shared, cx);
         view.set_preview_document("canvas", doc, cx);
         // `[icons] set` scopes to docs under the project root — a file opened
         // elsewhere, or with no project loaded, resolves icons as lucide.
@@ -3513,7 +3513,7 @@ fn vendor_doc_icons(
             Err(e) => eprintln!("[icons] vendor failed: {e}"),
         }
         // Fresh files under the assets root resolve on the next render.
-        let _ = cx.update(|app| app.refresh_windows());
+        cx.update(|app| app.refresh_windows());
     })
     .detach();
 }
@@ -3533,7 +3533,7 @@ fn collect_icon_names(node: &gpui_forge_runtime::forge_spec::model::Node, out: &
             .iter()
             .find(|(k, _)| k == "name")
             .and_then(|(_, v)| as_name(v))
-            .or_else(|| node.content.as_ref().and_then(&as_name))
+            .or_else(|| node.content.as_ref().and_then(as_name))
     {
         out.push(name);
     }

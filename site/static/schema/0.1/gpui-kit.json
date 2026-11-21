@@ -2595,6 +2595,15 @@
                   "null"
                 ]
               },
+              "set": {
+                "description": "Icon set override — a `set:name` prefix on `name:` wins over this.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "size": {
                 "anyOf": [
                   {
@@ -2628,7 +2637,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Icon(#[\\w-]+| \\.[\\w-]+)?|children|color|name|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Icon(#[\\w-]+| \\.[\\w-]+)?|children|color|name|set|size|style|tooltip)$"
             }
           }
         },
@@ -23328,6 +23337,15 @@
                   "null"
                 ]
               },
+              "set": {
+                "description": "Icon set override — a `set:name` prefix on `name:` wins over this.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "size": {
                 "anyOf": [
                   {
@@ -23386,7 +23404,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Icon(#[\\w-]+| \\.[\\w-]+)?|children|color|icon|name|size|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Icon(#[\\w-]+| \\.[\\w-]+)?|children|color|icon|name|set|size|style|tooltip)$"
             }
           }
         },
@@ -23535,6 +23553,38 @@
               }
             },
             "properties": {
+              "attribution": {
+                "description": "Publishes bool — true when the set's SPDX license requires shipping its notice with the built app.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "bare": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Grid only — the doc lays out its own chrome (pickers, search, license panel) from the `categories`/`themes`/`meta`/ `status`/`attribution` outputs. The grid stays internal: it owns measured-width virtualization and per-cell materialization."
+              },
+              "categories": {
+                "description": "Publishes `['[all]', …]` — the browsed set's category names for a doc-side picker (includes a computed Uncategorized).",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "category": {
                 "description": "IconifyJSON category filter — a bound prop gets a picker over the set's categories (`[all]` resets); static pins it.",
                 "type": [
@@ -23547,6 +23597,15 @@
               "children": {
                 "maxItems": 0,
                 "type": "array"
+              },
+              "meta": {
+                "description": "Publishes `{set, title, license, spdx, line1, line2}` — set name, license + SPDX, and two preformatted info lines.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
               },
               "on select": {
                 "type": [
@@ -23604,6 +23663,24 @@
                   "null"
                 ]
               },
+              "size": {
+                "description": "Icon size — XSmall/Small/Medium/Large (default Medium). Sizes glyphs, cell stride and row height.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
+              "status": {
+                "description": "Publishes `{downloading, label, percent, error}` — live set-download state for a doc-side progress bar / retry UI.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "style": {
                 "$ref": "#/definitions/style"
               },
@@ -23630,6 +23707,15 @@
                 ],
                 "description": "IconifyJSON theme filter — `prefixes`/`suffixes` variations (`baseline-`, `-filled`). Bound shows one checkbox per theme and holds a `['s:key'/'p:key']` list (empty = no filter; unset defaults to the `''` no-suffix themes). A static string pins one theme by title."
               },
+              "themes": {
+                "description": "Publishes `[{key, title, checked}]` — one entry per theme/suffix option; a doc-side checkbox toggles `theme:` through a host hook by `key`.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "tooltip": {
                 "description": "Universal prop — hover tooltip text.",
                 "type": [
@@ -23641,7 +23727,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Icons(#[\\w-]+| \\.[\\w-]+)?|category|children|on (select)|query|search|selected|set|sets|style|theme|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Icons(#[\\w-]+| \\.[\\w-]+)?|attribution|bare|categories|category|children|meta|on (select)|query|search|selected|set|sets|size|status|style|theme|themes|tooltip)$"
             }
           }
         },
@@ -45669,6 +45755,15 @@
                 "maxItems": 0,
                 "type": "array"
               },
+              "count": {
+                "description": "Publishes the flattened variable count — how many rows the inspector is showing.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "of": {
                 "description": "The `forge.Preview` element id whose document state is inspected — `of: canvas`.",
                 "type": [
@@ -45692,7 +45787,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Vars(#[\\w-]+| \\.[\\w-]+)?|children|of|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Vars(#[\\w-]+| \\.[\\w-]+)?|children|count|of|style|tooltip)$"
             }
           }
         },

@@ -6,7 +6,7 @@
 //! as `Message`s — `on click:` bindings become `Message::Hooks`, two-way
 //! inputs become `Message::Input`/`Toggle`/`Slide` writes.
 
-use crate::render::{doc_meta, get_path, lookup_path, set_path, style_edit_value};
+use crate::render::{doc_meta, lookup_path, set_path, style_edit_value};
 use forge_spec::catalog::Catalog;
 use forge_spec::{Document, Node, Path, Segment, Unit, Value};
 use iced::widget::{

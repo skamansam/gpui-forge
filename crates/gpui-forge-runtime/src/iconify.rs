@@ -218,10 +218,11 @@ pub fn categories(set: &str) -> Vec<(String, Vec<String>)> {
         .as_ref()
         .map(|j| parse_categories_map(&j["categories"]))
         .unwrap_or_default();
-    if out.is_empty() && set == "lucide" {
-        if let Ok(v) = serde_json::from_str::<Json>(LUCIDE_CATEGORIES) {
-            out = parse_categories_map(&v["categories"]);
-        }
+    if out.is_empty()
+        && set == "lucide"
+        && let Ok(v) = serde_json::from_str::<Json>(LUCIDE_CATEGORIES)
+    {
+        out = parse_categories_map(&v["categories"]);
     }
     let Some(j) = j else {
         out.sort_by(|a, b| a.0.cmp(&b.0));
@@ -621,6 +622,7 @@ pub fn retry(set: &str, cx: &mut App) {
 }
 
 /// One blocking GET → response bytes; errors on non-2xx.
+#[cfg(not(target_arch = "wasm32"))]
 fn get_body(uri: &str) -> io::Result<Vec<u8>> {
     let mut response = ureq::get(uri).call().map_err(io::Error::other)?;
     if !response.status().is_success() {
@@ -641,6 +643,7 @@ fn get_body(uri: &str) -> io::Result<Vec<u8>> {
 /// `get_body` with byte tracking — publishes `(done, total)` under `set` in
 /// the progress map so the browser can render a live bar. Callers own the
 /// entry's lifecycle (inserted lazily here, removed after the await).
+#[cfg(not(target_arch = "wasm32"))]
 fn get_body_tracked(uri: &str, set: &str) -> io::Result<Vec<u8>> {
     let mut response = ureq::get(uri).call().map_err(io::Error::other)?;
     if !response.status().is_success() {
@@ -674,6 +677,22 @@ fn get_body_tracked(uri: &str, set: &str) -> io::Result<Vec<u8>> {
             .insert(set.to_string(), (body.len() as u64, total));
     }
     Ok(body)
+}
+
+/// Blocking GETs don't exist on wasm — the canvas only renders icons already
+/// in the asset layer (bundled sets), so a fetch request errors cleanly.
+#[cfg(target_arch = "wasm32")]
+fn get_body(uri: &str) -> io::Result<Vec<u8>> {
+    Err(io::Error::other(format!(
+        "{uri}: icon fetches are unavailable on wasm"
+    )))
+}
+
+/// See `get_body` — the tracked variant never runs under wasm.
+#[cfg(target_arch = "wasm32")]
+fn get_body_tracked(uri: &str, set: &str) -> io::Result<Vec<u8>> {
+    let _ = set;
+    get_body(uri)
 }
 
 /// Fetch the catalog index — `api.iconify.design/collections` → `sets.json`,
@@ -739,7 +758,7 @@ pub fn ensure_sets(cx: &mut App) {
             set_error("catalog", e.to_string());
             eprintln!("[icons] catalog fetch failed: {e}");
         }
-        let _ = cx.update(|app| app.refresh_windows());
+        cx.update(|app| app.refresh_windows());
     })
     .detach();
 }
@@ -758,7 +777,7 @@ fn queue_fetch(set: &str, cx: &mut App) {
             if download_progress(&watched).is_none() {
                 break;
             }
-            let _ = cx.update(|app| app.refresh_windows());
+            cx.update(|app| app.refresh_windows());
         }
     })
     .detach();
@@ -775,7 +794,7 @@ fn queue_fetch(set: &str, cx: &mut App) {
             eprintln!("[icons] set fetch failed for {set3}: {e}");
         }
         progress().lock().unwrap().remove(&set3);
-        let _ = cx.update(|app| app.refresh_windows());
+        cx.update(|app| app.refresh_windows());
     })
     .detach();
 }
@@ -809,7 +828,7 @@ pub fn ensure_set(set: &str, cx: &mut App) {
                     .background_executor()
                     .spawn(async move { fetch_set_blocking(&set) })
                     .await;
-                let _ = cx.update(|app| app.refresh_windows());
+                cx.update(|app| app.refresh_windows());
             }
         })
         .detach();

@@ -287,7 +287,7 @@ pub struct ForgeView {
     /// top-level pick overlay hit-tests these to find the deepest node under
     /// the pointer — nested per-node overlays can't, because the root's
     /// overlay shadows every descendant in dispatch order.
-    pick_zones: Rc<std::cell::RefCell<Vec<(Bounds<Pixels>, String)>>>,
+    pick_zones: PickZones,
     /// The pick zone under the pointer — each zone canvas paints its accent
     /// frame while its path matches, so only the deepest node highlights.
     pick_hover: Rc<std::cell::RefCell<Option<String>>>,
@@ -302,7 +302,8 @@ pub struct ForgeView {
     scopes: Vec<(String, Json)>,
 }
 
-/// Walks `json` down a spec `Path` — the read side of `set_path`.
+type PickZones = Rc<std::cell::RefCell<Vec<(Bounds<Pixels>, String)>>>;
+
 /// A `ListDelegate` that renders `List` children on demand. `render_item` is called
 /// several times per row per paint (measure then paint). Rows are rebuilt per call
 /// through the owning view rather than handed out once.
@@ -572,32 +573,29 @@ impl ForgeView {
             }
         }
 
-        let mut list = div()
-            .flex()
-            .flex_col()
-            .child(
-                div()
-                    .flex()
-                    .flex_row()
-                    .gap_3()
-                    .pb_1()
-                    .child(
-                        div()
-                            .w(px(200.))
-                            .flex_shrink_0()
-                            .text_xs()
-                            .text_color(cx.theme().muted_foreground)
-                            .child("variable"),
-                    )
-                    .child(
-                        div()
-                            .flex_grow(1.0)
-                            .min_w_0()
-                            .text_xs()
-                            .text_color(cx.theme().muted_foreground)
-                            .child("value"),
-                    ),
-            );
+        let mut list = div().flex().flex_col().child(
+            div()
+                .flex()
+                .flex_row()
+                .gap_3()
+                .pb_1()
+                .child(
+                    div()
+                        .w(px(200.))
+                        .flex_shrink_0()
+                        .text_xs()
+                        .text_color(cx.theme().muted_foreground)
+                        .child("variable"),
+                )
+                .child(
+                    div()
+                        .flex_grow(1.0)
+                        .min_w_0()
+                        .text_xs()
+                        .text_color(cx.theme().muted_foreground)
+                        .child("value"),
+                ),
+        );
         for (path, value) in rows {
             let state_key = format!("vars-{key}-{path}");
             let display = match &value {
@@ -714,8 +712,7 @@ impl ForgeView {
                     let s = match self.selects.get(&state_key) {
                         Some(s) => s.clone(),
                         None => {
-                            let s = cx
-                                .new(|cx| SelectState::new(options, selected, window, cx));
+                            let s = cx.new(|cx| SelectState::new(options, selected, window, cx));
                             let path = parse_path(&path).unwrap();
                             let preview = preview.clone();
                             let sub = cx.subscribe(
@@ -872,9 +869,7 @@ impl ForgeView {
                                     )
                                     .tooltip({
                                         let tip = format!("${path}");
-                                        move |_, cx| {
-                                            cx.new(|_| Tooltip::new(tip.clone())).into()
-                                        }
+                                        move |_, cx| cx.new(|_| Tooltip::new(tip.clone())).into()
                                     }),
                             )
                             .child(div().flex_grow(1.0).min_w_0().child(row_edit)),
@@ -1189,9 +1184,7 @@ impl ForgeView {
         let search_state = match self.inputs.get(&format!("{key}-pal-search")) {
             Some(state) => state.clone(),
             None => {
-                let state = cx.new(|cx| {
-                    InputState::new(window, cx).placeholder("search widgets…")
-                });
+                let state = cx.new(|cx| InputState::new(window, cx).placeholder("search widgets…"));
                 let subscription = cx.subscribe(&state, move |this, state, event, cx| {
                     if let InputEvent::Change = event {
                         let value = state.read(cx).value().to_string();
@@ -1643,17 +1636,23 @@ impl ForgeView {
                 .two_way(node, "size")
                 .unwrap_or_else(|| parse_path("studio.icon_size").expect("static path"));
             let size_sel = picker(
-                vec!["XSmall".into(), "Small".into(), "Medium".into(), "Large".into()],
+                vec![
+                    "XSmall".into(),
+                    "Small".into(),
+                    "Medium".into(),
+                    "Large".into(),
+                ],
                 size_bind,
             );
-            header = header.child(label("Size", cx)).child(
-                div().w(px(120.)).child(self.render_node(
-                    &size_sel,
-                    &format!("{key}-size"),
-                    window,
-                    cx,
-                )),
-            );
+            header =
+                header
+                    .child(label("Size", cx))
+                    .child(div().w(px(120.)).child(self.render_node(
+                        &size_sel,
+                        &format!("{key}-size"),
+                        window,
+                        cx,
+                    )));
         }
         // License line + attribution alert for the browsed set. Bundled sets
         // have static licenses; iconify sets carry catalog metadata (`name`,
@@ -1877,10 +1876,7 @@ impl ForgeView {
                 if let Some(total) = entry.as_ref().and_then(|e| e["total"].as_u64()) {
                     bits.push(format!("{total} icons"));
                 }
-                if let Some(author) = entry
-                    .as_ref()
-                    .and_then(|e| e["author"]["name"].as_str())
-                {
+                if let Some(author) = entry.as_ref().and_then(|e| e["author"]["name"].as_str()) {
                     bits.push(format!("by {author}"));
                 }
                 if let Some(version) = entry.as_ref().and_then(|e| e["version"].as_str()) {
@@ -2049,11 +2045,7 @@ impl ForgeView {
                                 )
                                 .into_any_element(),
                             IconRow::Icons(names) => {
-                                let mut row = div()
-                                    .flex()
-                                    .flex_row()
-                                    .gap(px(gap_px))
-                                    .h(px(row_h));
+                                let mut row = div().flex().flex_row().gap(px(gap_px)).h(px(row_h));
                                 for name in names {
                                     // Never point `path()` at bytes that don't
                                     // exist — the image cache retains a failed
@@ -2405,7 +2397,6 @@ impl ForgeView {
             .get(&skey)
             .map(|state| tree_expansion(state.read(cx)))
             .unwrap_or_default();
-        let mut items = items;
         carry_expansion(&mut items, &previous);
         let tree = if items.is_empty() {
             placeholder(
@@ -2822,6 +2813,7 @@ impl ForgeView {
         cx.notify();
     }
 
+    /// Walks `json` down a spec `Path` — the read side of `set_path`.
     fn lookup(&self, path: &Path) -> Option<&Json> {
         let mut segments = path.0.iter();
         // `meta.*` reads the document's `meta:` map — a constant namespace.
@@ -5241,7 +5233,19 @@ impl ForgeView {
             "Icon" => {
                 let color = self.prop(node, "color").and_then(|v| color(v, cx));
                 let name = self.prop_text(node, "name").unwrap_or_default();
-                let element = svg().path(icon_path(&self.iconset(), &name));
+                // `set:` (or a `set:name` prefix) picks the icon set — default
+                // is the doc's `meta.iconset`/project iconset. A name missing
+                // locally queues the iconify fetch where resolvable and shows
+                // a placeholder until the SVG lands.
+                let (set, name) = match name.split_once(':') {
+                    Some((set, name)) => (set.to_string(), name.to_string()),
+                    None => (
+                        self.prop_text(node, "set")
+                            .unwrap_or_else(|| self.iconset().to_owned()),
+                        name,
+                    ),
+                };
+                let element = svg().path(doc_icon_path(&set, &name, cx));
                 // `svg()` has no intrinsic size — default to 16px like a Medium icon.
                 let element = match self.prop(node, "size").and_then(length) {
                     Some(size) => element.w(size).h(size),
@@ -7889,18 +7893,24 @@ fn icon_set(set: &str, name: &str) -> Icon {
 /// bundled sets, fs roots, vendored files, the iconify cache — so only a
 /// genuinely-remote name queues a fetch and shows a placeholder (the image
 /// cache retains a failed load, so the real path can't render early).
-fn doc_icon_for(set: &str, name: &str, cx: &mut App) -> Icon {
+/// Probe-then-fetch icon path resolution — never hands `path()` bytes that
+/// don't exist (the image cache retains a failed load forever). Missing
+/// locally, the iconify fetch is queued only where the name resolves in the
+/// `icons/<set>/` namespace the synth layer serves (bundled lucide's flat
+/// paths can never synthesize); bundled files stay canonical on collision.
+fn doc_icon_path(set: &str, name: &str, cx: &mut App) -> String {
     let path = icon_path(set, name);
     if cx.asset_source().load(&path).ok().flatten().is_some() {
-        return Icon::empty().path(path);
+        return path;
     }
-    // Missing locally — queue the iconify fetch only where the name
-    // resolves in the `icons/<set>/` namespace (bundled lucide's flat paths
-    // can never synthesize). Bundled files stay canonical on collision.
     if iconify_mergeable(set) && crate::iconify::known_set(set) {
         crate::iconify::ensure_set(set, cx);
     }
-    icon("image")
+    icon_path("lucide", "image")
+}
+
+fn doc_icon_for(set: &str, name: &str, cx: &mut App) -> Icon {
+    Icon::empty().path(doc_icon_path(set, name, cx))
 }
 
 fn icon(name: &str) -> Icon {

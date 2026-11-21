@@ -36,7 +36,6 @@ time = { version = "0.3", optional = true }
 # iced base (#113): Elm-architecture toolkit — view()/update()/Element.
 iced = { version = "0.13", optional = true }
 serde_json = "1"
-ureq = "3"
 dirs = "6"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
@@ -45,6 +44,9 @@ dirs = "6"
 # Native-only: alacritty_terminal pulls `polling`, which has no wasm32 impl;
 # the web canvas renders ratatui through its own path instead.
 forge-term = { path = "../forge-term", optional = true }
+# Iconify fetches are blocking GETs — native-only; `ureq`→`rustls`→`ring`→
+# `getrandom 0.2` can't compile for `wasm32-unknown-unknown`.
+ureq = "3"
 
 
 # `cargo run -p gpui-forge-runtime --example render -- <doc.forge.yaml>`
