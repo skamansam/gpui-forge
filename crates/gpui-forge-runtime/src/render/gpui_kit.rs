@@ -1297,7 +1297,6 @@ impl ForgeView {
                 .child(text.to_owned())
         };
         let mut header = div().flex().flex_row().flex_wrap().items_center().gap_2();
-        let mut any_filter = false;
         let static_set = node
             .props
             .iter()
@@ -1315,7 +1314,6 @@ impl ForgeView {
                     cx,
                 )),
             );
-            any_filter = true;
         }
         let search_row = if self.prop_bool(node, "search") {
             let search_key = format!("{key}-search");
@@ -1397,7 +1395,6 @@ impl ForgeView {
                     cx,
                 )),
             );
-            any_filter = true;
         }
         // Suffix/prefix themes are checkboxes (multi-select, OR semantics)
         // labeled by the dominant kind. Checked state lives in the bound
@@ -1463,7 +1460,22 @@ impl ForgeView {
                 });
                 header = header.child(cb);
             }
-            any_filter = true;
+        }
+        // Size dropdown — `studio.icon_size` drives icon size + cell stride;
+        // sits beside the other filters per #bugs.
+        {
+            let size_sel = picker(
+                vec!["XSmall".into(), "Small".into(), "Medium".into(), "Large".into()],
+                parse_path("studio.icon_size").expect("static path"),
+            );
+            header = header.child(label("Size", cx)).child(
+                div().w(px(120.)).child(self.render_node(
+                    &size_sel,
+                    &format!("{key}-size"),
+                    window,
+                    cx,
+                )),
+            );
         }
         // License line + attribution alert for the browsed set. Bundled sets
         // have static licenses; iconify sets carry catalog metadata (`name`,
@@ -1561,7 +1573,18 @@ impl ForgeView {
         // handle's bounds, populated after first layout; the window viewport
         // minus sidebar chrome estimates the first frame). Resizes re-render
         // and re-wrap.
-        const CELL: f32 = 88.; // ~76px cell + gutter
+        // `studio.icon_size` (XSmall/Small/Medium/Large) sizes both the icon
+        // glyphs and the cell stride; unset = Medium, the original 88px.
+        let icon_size = get_path(self.state(), &parse_path("studio.icon_size").unwrap())
+            .and_then(|j| j.as_str())
+            .unwrap_or("Medium")
+            .to_owned();
+        let (cell, row_h) = match icon_size.as_str() {
+            "XSmall" => (56., 44.),
+            "Small" => (72., 60.),
+            "Large" => (120., 108.),
+            _ => (88., 84.),
+        };
         let scroll = self
             .icons_scrolls
             .entry(key.to_owned())
@@ -1573,7 +1596,7 @@ impl ForgeView {
         } else {
             (window.viewport_size().width - px(360.)).into()
         };
-        let cols = ((w / CELL).floor() as usize).max(1);
+        let cols = ((w / cell).floor() as usize).max(1);
         // Category grouping — `[all]`/unset renders every non-empty category
         // as a section (an icon in multiple categories appears under each);
         // a selection narrows to that one group. Sets without categories
@@ -1699,6 +1722,7 @@ impl ForgeView {
             }
         } else {
             let key = key.to_owned();
+            let icon_size = icon_size.clone();
             uniform_list(
                 format!("{key}-grid"),
                 row_count,
@@ -1713,7 +1737,7 @@ impl ForgeView {
                                 .flex()
                                 .flex_row()
                                 .items_end()
-                                .h(px(84.))
+                                .h(px(row_h))
                                 .pb_1()
                                 .child(
                                     div()
@@ -1724,7 +1748,7 @@ impl ForgeView {
                                 )
                                 .into_any_element(),
                             IconRow::Icons(names) => {
-                                let mut row = div().flex().flex_row().gap_2().h(px(84.));
+                                let mut row = div().flex().flex_row().gap_2().h(px(row_h));
                                 for name in names {
                                     // Never point `path()` at bytes that don't
                                     // exist — the image cache retains a failed
@@ -1742,7 +1766,8 @@ impl ForgeView {
                                     } else {
                                         crate::iconify::ensure_set(&set, cx);
                                         icon("image")
-                                    };
+                                    }
+                                    .with_size(size(&icon_size));
                                     let active = selected.as_deref() == Some(name.as_str());
                                     // A materialized name means the icon is
                                     // already on disk under `assets/icons/` —
@@ -1835,13 +1860,13 @@ impl ForgeView {
         // `size_full` passes a bounded parent's height through to the inner
         // scroll slot (`flex_1/min_h_0`), same convention as `forge.Files`.
         let mut root = v_flex().size_full().gap_2();
-        if any_filter {
-            root = root.child(header);
-        }
+        root = root.child(header);
         if let Some(search_row) = search_row {
             root = root.child(search_row);
         }
-        root.child(body).child(footer).into_any_element()
+        // License/attribution panel sits above the grid — it carries the
+        // set's legal info and shouldn't hide below the fold.
+        root.child(footer).child(body).into_any_element()
     }
 
     /// `forge.Files` (#148) — a file tree. Two listing modes: `of:` names a
