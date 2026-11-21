@@ -108,7 +108,7 @@ use serde_json::Value as Json;
 /// Called with `hook(args)` when an event fires and no hook is registered for its name.
 pub type HookSink = Rc<dyn Fn(&str, &mut ForgeView, &mut Context<ForgeView>)>;
 
-gpui::actions!(gpui_forge_runtime, [CancelPick]);
+gpui::actions!(gpui_forge_runtime, [CancelPick, SaveDocument]);
 
 /// A drag payload: `Component` comes from palette items (`insert_component`
 /// handlers), `Node` from existing document nodes (reparent drags).
@@ -6978,6 +6978,7 @@ impl Render for ForgeView {
         }
         let weak = cx.entity().downgrade();
         let pick_weak = weak.clone();
+        let save_weak = weak.clone();
         let root = div()
             .id("forge-canvas")
             .size_full()
@@ -6991,6 +6992,12 @@ impl Render for ForgeView {
                         p.fire_call("cancel_place", vec![], cx);
                     }
                     cx.notify();
+                })
+                .ok();
+            })
+            .on_action::<SaveDocument>(move |_, _, cx| {
+                try_update(&save_weak, cx, "save", |p, cx| {
+                    p.fire_call("save_document", vec![], cx);
                 })
                 .ok();
             })

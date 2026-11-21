@@ -224,11 +224,16 @@ fn main() {
     add_icon_root(std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("assets"));
     gpui_kit::application().with_assets(StudioAssets).run(|cx| {
         gpui_kit::init(cx);
-        cx.bind_keys([gpui::KeyBinding::new(
-            "escape",
-            gpui_forge_runtime::render::CancelPick,
-            None,
-        )]);
+        cx.bind_keys([
+            gpui::KeyBinding::new("escape", gpui_forge_runtime::render::CancelPick, None),
+            gpui::KeyBinding::new(
+                "ctrl-s",
+                gpui_forge_runtime::render::SaveDocument,
+                None,
+            ),
+            // Never fires on Linux/Windows; keeps the binding for macOS.
+            gpui::KeyBinding::new("cmd-s", gpui_forge_runtime::render::SaveDocument, None),
+        ]);
         // Reap the preview hosts on any quit path — the `quit` hook is
         // only one of them (window close, Cmd-Q…). Pane hosts live in
         // HOSTS — without this they'd orphan and survive Studio's exit.

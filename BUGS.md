@@ -29,6 +29,6 @@
 - [x] when I type into the gap-x field, the gap field changes, and vice versa — FIXED: cached widget entities were keyed positionally, so a reordered row reused an entity whose subscription still wrote the old bound path; cache keys now carry `bind_salt` (bound paths) and style rows use stable registry order
 - [x] the inspector panel should stay the same size and be scrollable — fixed earlier: width 280px, shrink false, overflow scroll on the docked column + overflow scroll on Properties/Style tab bodies 
 - [ ] the problems panel should be like a red alert when there are issues and a green alert when there are no issues
-- [ ] ctrl+s should save the current document
+- [x] ctrl+s should save the current document — done: SaveDocument action bound to ctrl-s (+ cmd-s), fires save_document on the render root so it works regardless of focus; falls back to save-as prompt when no file is open
 - [ ] there should be a project tab that allows editing the project file IF a project is open
 - [ ] the menus need the correct icons
