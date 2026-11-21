@@ -1782,6 +1782,11 @@ impl ForgeView {
             (window.viewport_size().width - px(360.)).into()
         };
         let cols = ((w / cell).floor() as usize).max(1);
+        // One fixed content width for EVERY cell — `w/cols` minus the
+        // inter-cell gap. `flex_1`/caps gave full and partial rows different
+        // widths; a pinned width puts every column on the same grid.
+        let gap_px = 8.0_f32;
+        let cell_w = ((w - (cols.saturating_sub(1) as f32) * gap_px) / cols as f32).max(24.);
         // Category grouping — `[all]`/unset renders every non-empty category
         // as a section (an icon in multiple categories appears under each);
         // a selection narrows to that one group. Sets without categories
@@ -2044,7 +2049,11 @@ impl ForgeView {
                                 )
                                 .into_any_element(),
                             IconRow::Icons(names) => {
-                                let mut row = div().flex().flex_row().gap_2().h(px(row_h));
+                                let mut row = div()
+                                    .flex()
+                                    .flex_row()
+                                    .gap(px(gap_px))
+                                    .h(px(row_h));
                                 for name in names {
                                     // Never point `path()` at bytes that don't
                                     // exist — the image cache retains a failed
@@ -2084,17 +2093,12 @@ impl ForgeView {
                                             .items_center()
                                             .justify_center()
                                             .gap_1()
-                                            // `flex_1` alone stretched a
-                                            // partial row's cells across the
-                                            // width — columns misaligned row
-                                            // to row. Capping at the stride
-                                            // keeps every cell the same box:
-                                            // full rows still share the
-                                            // width evenly, short rows stay
-                                            // column-aligned and left-pack.
-                                            .flex_1()
-                                            .min_w_0()
-                                            .max_w(px(cell))
+                                            // Pinned to the shared column
+                                            // width — every row's cells are
+                                            // the same box, so columns align
+                                            // and partial rows left-pack.
+                                            .w(px(cell_w))
+                                            .flex_shrink_0()
                                             .p_2()
                                             .rounded_md()
                                             .cursor_pointer()
