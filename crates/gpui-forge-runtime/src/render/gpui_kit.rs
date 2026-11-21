@@ -990,13 +990,32 @@ impl ForgeView {
                 .child(row);
             grid = grid.item(move |_| item);
         }
+        // The palette fills its docked slot (`size_full`) — a content-height
+        // column let collapse-all shrink the whole window chain (status bar
+        // floated). The library selector pins at top; the accordion groups
+        // scroll inside the leftover space.
+        let handle = self
+            .scroll_handles
+            .entry(format!("{key}-palette-scroll"))
+            .or_default()
+            .clone();
         div()
             .flex()
             .flex_col()
             .gap_2()
-            .w_full()
+            .size_full()
+            .min_h_0()
             .child(selector)
-            .child(grid)
+            .child(
+                div()
+                    .id(SharedString::from(format!("{key}-groups")))
+                    .track_scroll(&handle)
+                    .overflow_y_scrollbar()
+                    .id(SharedString::from(format!("{key}-groups-scrollbar")))
+                    .flex_1()
+                    .min_h_0()
+                    .child(grid),
+            )
             .into_any_element()
     }
 
