@@ -74,6 +74,13 @@ pub struct ForgeView {
     /// write the focused binding, `Enter`/`Space` fire the node's event
     /// calls. The rect is the widget's drawn area, so `on_mouse` hit-tests.
     focusables: Vec<(Path, FocusKind, Calls, Rect)>,
+    /// Every rendered node's `(doc path, drawn rect)`, rebuilt each render.
+    /// The sender resolves pointer cells to doc paths through it for the
+    /// designer's drop-hover and drop (#156).
+    zones: Vec<(String, Rect)>,
+    /// The highlighted drop target — `(doc path, rect)` — painted as an
+    /// accent frame over the zone while a drag hovers it.
+    drop_target: Option<(String, Rect)>,
     focused: usize,
     /// `for`/`with` scope vars — `(name, value)` frames pushed while control
     /// children expand (same contract as the GPUI twins).
@@ -112,6 +119,8 @@ impl ForgeView {
             base_dir: None,
             previews: HashMap::new(),
             focusables: Vec::new(),
+            zones: Vec::new(),
+            drop_target: None,
             focused: 0,
             scopes: Vec::new(),
             theme: HashMap::new(),
@@ -858,15 +867,49 @@ impl ForgeView {
         }
     }
 
+    /// The deepest node under a cell — the smallest containing zone wins,
+    /// so a drop targets the inner widget, not its frame.
+    fn zone_at(&self, col: u16, row: u16) -> Option<(String, Rect)> {
+        let pos = Position::new(col, row);
+        self.zones
+            .iter()
+            .filter(|(_, r)| r.contains(pos))
+            .min_by_key(|(_, r)| r.area() as u32)
+            .map(|(p, r)| (p.clone(), *r))
+    }
+
+    /// The doc path of the deepest node under a cell — the drag source
+    /// the sender reports on `down` (#156).
+    pub fn zone_path_at(&self, col: u16, row: u16) -> Option<String> {
+        self.zone_at(col, row).map(|(p, _)| p)
+    }
+
+    /// A streamed `drop-hover` — marks the zone the next frame highlights
+    /// and returns its doc path for the sender to echo.
+    pub fn drop_hover(&mut self, col: u16, row: u16) -> Option<String> {
+        let found = self.zone_at(col, row);
+        self.drop_target = found.clone();
+        found.map(|(p, _)| p)
+    }
+
+    /// A streamed `drop` — resolves the target cell to a doc path and
+    /// clears the highlight. `None` means the drop missed every zone.
+    pub fn drop_at(&mut self, col: u16, row: u16) -> Option<String> {
+        let found = self.zone_at(col, row).map(|(p, _)| p);
+        self.drop_target = None;
+        found
+    }
+
     // ── rendering ────────────────────────────────────────────────────────────
 
     /// Draws the document into `frame` — called by the host's event loop.
     pub fn render(&mut self, frame: &mut Frame) {
         self.focusables.clear();
+        self.zones.clear();
         let area = frame.area();
         if let Some(doc) = self.doc.clone() {
             for node in self.expand(&doc.root) {
-                self.render_node(&node, area, frame);
+                self.render_node(&node, "0", area, frame);
             }
         } else if let Some(text) = self.empty_text.clone() {
             frame.render_widget(
@@ -876,9 +919,22 @@ impl ForgeView {
                 area,
             );
         }
+        // The sender's drop hover — an accent frame over the target zone,
+        // the TUI twin of the gpui canvas's accent outline.
+        if let Some((_, r)) = self.drop_target {
+            frame.render_widget(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(Color::Yellow)),
+                r,
+            );
+        }
     }
 
-    fn render_node(&mut self, node: &Node, area: Rect, frame: &mut Frame) {
+    fn render_node(&mut self, node: &Node, path: &str, area: Rect, frame: &mut Frame) {
+        // Map doc path → drawn rect so the sender resolves pointer cells
+        // to drop targets and drag sources.
+        self.zones.push((path.to_owned(), area));
         if node.element.namespace.as_deref() == Some("forge") {
             if node.element.name == "Preview" {
                 let id = self.prop_text(node, "id");
@@ -891,7 +947,7 @@ impl ForgeView {
                     let doc = view.doc.clone();
                     if let Some(doc) = doc {
                         for node in view.expand(&doc.root) {
-                            view.render_node(&node, area, frame);
+                            view.render_node(&node, "0", area, frame);
                         }
                     }
                 }
@@ -915,8 +971,8 @@ impl ForgeView {
             return;
         }
         match node.element.name.as_str() {
-            "VStack" => self.render_children(node, area, frame, Direction::Vertical),
-            "HStack" => self.render_children(node, area, frame, Direction::Horizontal),
+            "VStack" => self.render_children(node, path, area, frame, Direction::Vertical),
+            "HStack" => self.render_children(node, path, area, frame, Direction::Horizontal),
             "Block" | "Paper" | "Card" => {
                 let title = self.prop_text(node, "title");
                 let mut block = Block::default()
@@ -939,7 +995,7 @@ impl ForgeView {
                         );
                     }
                 } else {
-                    self.render_children(node, inner, frame, Direction::Vertical);
+                    self.render_children(node, path, inner, frame, Direction::Vertical);
                 }
             }
             "Text" | "Title" => {
@@ -1380,7 +1436,14 @@ impl ForgeView {
     /// Splits `area` into one chunk per child along `direction` and renders
     /// each child, honoring `width`/`height`/`flex`/`min-*`/`max-*` style
     /// entries — children without one take an equal `Fill` share.
-    fn render_children(&mut self, node: &Node, area: Rect, frame: &mut Frame, dir: Direction) {
+    fn render_children(
+        &mut self,
+        node: &Node,
+        path: &str,
+        area: Rect,
+        frame: &mut Frame,
+        dir: Direction,
+    ) {
         let expanded = self.expand_kids(&node.children);
         let constraints: Vec<Constraint> = expanded
             .iter()
@@ -1390,8 +1453,8 @@ impl ForgeView {
             .direction(dir)
             .constraints(constraints)
             .split(area);
-        for (child, chunk) in expanded.iter().zip(chunks.iter()) {
-            self.render_node(child, *chunk, frame);
+        for (i, (child, chunk)) in expanded.iter().zip(chunks.iter()).enumerate() {
+            self.render_node(child, &format!("{path}.{i}"), *chunk, frame);
         }
     }
 }

@@ -902,6 +902,17 @@ previewTab: &previewTab
               style:
                 grow: true
                 border: 1px
+            # #156 — the same document drawn by the ratatui host over its
+            # ANSI stream. No `doc:` — the pane mirrors studio.doc, so
+            # palette drops and node moves land on the edited document.
+            - forge.Preview#canvas_ratatui:
+              remote: ratatui
+              base: ratatui
+              mode: stream
+              style:
+                grow: true
+                min-height: 160px
+                border: 1px
             # #120 Phase 3 — the TUI's ANSI stream lands in `preview.frame`
             # ({seq, cols, rows, data}). The card's terminal emulator paints it.
             - Text: "frame {$preview.frame.seq}"

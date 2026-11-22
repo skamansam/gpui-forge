@@ -244,13 +244,16 @@ fn send_pane_mouse(
     if dx < px(0.) || dy < px(0.) {
         return;
     }
+    let (col, row) = ((dx / cell_w) as u16, (dy / cell_h) as u16);
+    // The last hover cell backs `on_drop`, which carries no position.
+    view.term_hover.insert(id.to_string(), (col, row));
     view.fire_call(
         "pane_mouse",
         vec![
             id.to_string(),
             kind.to_string(),
-            ((dx / cell_w) as u16).to_string(),
-            ((dy / cell_h) as u16).to_string(),
+            col.to_string(),
+            row.to_string(),
         ],
         cx,
     );
@@ -361,6 +364,13 @@ pub struct ForgeView {
     /// the host grid by real metrics, not a px-per-cell guess.
     /// Native-only populated — `forge_term` doesn't build on wasm.
     term_metrics: HashMap<String, CellMetrics>,
+    /// `forge.Preview` stream cards — the last cell a pointer event mapped
+    /// to. `on_drop` carries no position, so a drop reuses the last hover.
+    term_hover: HashMap<String, (u16, u16)>,
+    /// `forge.Preview` stream cards — `id` → the pointer is dragging inside
+    /// the card. Set on the first dragging move, read on `up` for the
+    /// in-card node move (#156).
+    term_drag: HashMap<String, bool>,
     /// Persistent `ScrollHandle`s keyed by scrollable element id — element-state
     /// GC drops scroll offsets on every `cx.notify` re-render. An explicit
     /// `track_scroll` handle keeps them alive.
@@ -560,6 +570,8 @@ impl ForgeView {
             term_bounds: HashMap::new(),
             term_focus: HashMap::new(),
             term_metrics: HashMap::new(),
+            term_hover: HashMap::new(),
+            term_drag: HashMap::new(),
             preview_srcs: HashMap::new(),
             scroll_handles: HashMap::new(),
             previews: HashMap::new(),
@@ -4720,15 +4732,24 @@ impl ForgeView {
                             .entry(id.clone())
                             .or_insert_with(|| cx.focus_handle())
                             .clone();
+                        // DnD edits the document the pane mirrors — only a
+                        // `doc:`-less stream pane previews studio.doc (#156).
+                        let editable = self.prop_text(&node, "doc").is_none_or(|d| d.is_empty());
                         let weak_k = weak.clone();
                         let weak_d = weak.clone();
                         let weak_u = weak.clone();
                         let weak_s = weak.clone();
+                        let weak_mv = weak.clone();
+                        let weak_dm = weak.clone();
+                        let weak_dp = weak.clone();
                         let focus_d = focus.clone();
                         let id_k = id.clone();
                         let id_d = id.clone();
                         let id_u = id.clone();
                         let id_s = id.clone();
+                        let id_mv = id.clone();
+                        let id_dm = id.clone();
+                        let id_dp = id.clone();
                         BoundsTracker::new(
                             div()
                                 .id(format!("preview-remote-{key}"))
@@ -4762,6 +4783,7 @@ impl ForgeView {
                                         return;
                                     }
                                     try_update(&weak_d, cx, "event", |this, cx| {
+                                        this.term_drag.insert(id_d.clone(), false);
                                         send_pane_mouse(
                                             this,
                                             &id_d,
@@ -4778,7 +4800,106 @@ impl ForgeView {
                                         return;
                                     }
                                     try_update(&weak_u, cx, "event", |this, cx| {
-                                        send_pane_mouse(this, &id_u, "up", ev.position, window, cx)
+                                        if editable
+                                            && this.term_drag.get(&id_u).copied().unwrap_or(false)
+                                        {
+                                            // Drag inside the card — a node
+                                            // move. `pane_move` resolves the
+                                            // source (`preview.panes.*.zone`)
+                                            // and the drop cell.
+                                            this.term_drag.insert(id_u.clone(), false);
+                                            let (col, row) = this
+                                                .term_hover
+                                                .get(&id_u)
+                                                .copied()
+                                                .unwrap_or_default();
+                                            this.fire_call(
+                                                "pane_move",
+                                                vec![
+                                                    id_u.clone(),
+                                                    col.to_string(),
+                                                    row.to_string(),
+                                                ],
+                                                cx,
+                                            );
+                                        } else {
+                                            send_pane_mouse(
+                                                this,
+                                                &id_u,
+                                                "up",
+                                                ev.position,
+                                                window,
+                                                cx,
+                                            )
+                                        }
+                                    })
+                                    .ok();
+                                })
+                                .on_mouse_move(move |ev: &MouseMoveEvent, window, cx| {
+                                    if !streaming || !editable || !ev.dragging() {
+                                        return;
+                                    }
+                                    // Dragging inside the card — mark the
+                                    // move-drag and hover the drop zone.
+                                    try_update(&weak_mv, cx, "event", |this, cx| {
+                                        this.term_drag.insert(id_mv.clone(), true);
+                                        send_pane_mouse(
+                                            this,
+                                            &id_mv,
+                                            "drop-hover",
+                                            ev.position,
+                                            window,
+                                            cx,
+                                        )
+                                    })
+                                    .ok();
+                                })
+                                // Palette/doc drags over the card — the host
+                                // resolves cells to doc paths (`zone`,
+                                // `drop_target`, `drop` events). The payload
+                                // stays here; `pane_drop` pairs it with the
+                                // resolved path at commit time (#156).
+                                .on_drag_move::<ForgeDrag>(move |ev, window, cx| {
+                                    if !streaming || !editable {
+                                        return;
+                                    }
+                                    try_update(&weak_dm, cx, "event", |this, cx| {
+                                        send_pane_mouse(
+                                            this,
+                                            &id_dm,
+                                            "drop-hover",
+                                            ev.event.position,
+                                            window,
+                                            cx,
+                                        )
+                                    })
+                                    .ok();
+                                })
+                                .on_drop::<ForgeDrag>(move |drag, _, cx| {
+                                    if !streaming || !editable {
+                                        return;
+                                    }
+                                    try_update(&weak_dp, cx, "drop", |this, cx| {
+                                        let (kind, payload) = match drag {
+                                            ForgeDrag::Component(t) => ("component", t.clone()),
+                                            ForgeDrag::Node(p) => ("node", p.clone()),
+                                        };
+                                        let (col, row) = this
+                                            .term_hover
+                                            .get(&id_dp)
+                                            .copied()
+                                            .unwrap_or_default();
+                                        this.fire_call(
+                                            "pane_drop",
+                                            vec![
+                                                id_dp.clone(),
+                                                kind.to_string(),
+                                                payload,
+                                                col.to_string(),
+                                                row.to_string(),
+                                            ],
+                                            cx,
+                                        );
                                     })
                                     .ok();
                                 })

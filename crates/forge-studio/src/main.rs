@@ -204,6 +204,14 @@ enum HostEvent {
         h: u32,
         data: String,
     },
+    /// #156 — stream-pane DnD: the deepest doc path under a `down` cell.
+    /// The sender stashes it as the drag source for a node move.
+    Zone(String),
+    /// #156 — the doc path a `drop-hover` currently highlights, or "".
+    DropTarget(String),
+    /// #156 — the doc path a `drop` resolved to, or "" on a miss. Carries
+    /// the commit — a pending pane payload pairs with it.
+    Drop(String),
     /// stdout reached EOF — the host exited (or was killed for a restart).
     Closed {
         generation: u64,
@@ -1083,6 +1091,55 @@ fn dispatch(
                 status(view, &format!("{id} <- mouse {kind} @{col},{row}"), cx);
             }
         }
+        // #156 — a ForgeDrag payload dropped on a stream card. Stash it,
+        // then `drop` — the host resolves the cell to a doc path and its
+        // `drop` event commits the pair via drop_component/move_node.
+        "pane_drop" => {
+            if let [id, kind, payload, col, row] = args {
+                PANE_DND
+                    .lock()
+                    .unwrap()
+                    .insert(id.clone(), (kind.clone(), payload.clone()));
+                pane_send(
+                    id,
+                    &json!({
+                        "cmd": "mouse",
+                        "kind": "drop",
+                        "col": col.parse::<u16>().unwrap_or(0),
+                        "row": row.parse::<u16>().unwrap_or(0),
+                    }),
+                );
+                status(view, &format!("{id} <- drop {payload}"), cx);
+            }
+        }
+        // A node dragged inside the card. The source path is the `zone`
+        // the host reported on `down`; the release cell is the target.
+        "pane_move" => {
+            if let [id, col, row] = args {
+                let src = get_path(view.state(), &pane_state_path(id, "zone"))
+                    .and_then(|j| j.as_str())
+                    .unwrap_or_default()
+                    .to_owned();
+                // The drop cmd clears the host's hover highlight even when
+                // no source zone was stashed — send it unconditionally.
+                if !src.is_empty() {
+                    PANE_DND
+                        .lock()
+                        .unwrap()
+                        .insert(id.clone(), ("node".to_string(), src.clone()));
+                }
+                pane_send(
+                    id,
+                    &json!({
+                        "cmd": "mouse",
+                        "kind": "drop",
+                        "col": col.parse::<u16>().unwrap_or(0),
+                        "row": row.parse::<u16>().unwrap_or(0),
+                    }),
+                );
+                status(view, &format!("{id} <- move {src}"), cx);
+            }
+        }
         "open_recent" => {
             if let Some(path) = args.first().map(PathBuf::from) {
                 load_file(path, view, shared.clone(), cx);
@@ -1903,6 +1960,9 @@ fn host_event(
                 status(view, "preview host exited", cx);
             }
         }
+        // Stream-pane DnD events — only pane hosts emit them; the pane
+        // reader maps each onto `preview.panes.<id>.*` in `pane_sync`.
+        HostEvent::Zone(_) | HostEvent::DropTarget(_) | HostEvent::Drop(_) => {}
     }
 }
 
@@ -2354,6 +2414,13 @@ static PANE_EVENTS: std::sync::LazyLock<(
     (tx, std::sync::Mutex::new(rx))
 });
 
+/// #156 — a drop's Studio-side payload awaiting the host's resolved path:
+/// `pane id → (kind, payload)` where `kind` is `component` or `node`.
+/// `pane_drop`/`pane_move` stash it; the pane's `drop` event commits it.
+static PANE_DND: std::sync::LazyLock<
+    std::sync::Mutex<std::collections::HashMap<String, (String, String)>>,
+> = std::sync::LazyLock::new(|| std::sync::Mutex::new(std::collections::HashMap::new()));
+
 /// The `Command` for a preview host — older-gpui bases can't talk to newer
 /// Wayland compositors (`UnsupportedVersion`), so non-default hosts get X11
 /// via XWayland. Streaming bases (iced/ratatui) have no window — the env is
@@ -2428,6 +2495,18 @@ fn spawn_pane(base: &str, id: &str) -> Option<(Host, StderrTail)> {
                     },
                     Some("diagnostics") => {
                         HostEvent::Diagnostics(v["items"].as_array().cloned().unwrap_or_default())
+                    }
+                    Some("call") => {
+                        HostEvent::Call(v["call"].as_str().unwrap_or_default().to_owned())
+                    }
+                    Some("zone") => {
+                        HostEvent::Zone(v["path"].as_str().unwrap_or_default().to_owned())
+                    }
+                    Some("drop_target") => {
+                        HostEvent::DropTarget(v["path"].as_str().unwrap_or_default().to_owned())
+                    }
+                    Some("drop") => {
+                        HostEvent::Drop(v["path"].as_str().unwrap_or_default().to_owned())
                     }
                     Some("frame") => HostEvent::Frame {
                         seq: v["seq"].as_u64().unwrap_or(0),
@@ -2567,6 +2646,64 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                                 &format!("preview pane `{pid}`: {} diagnostic(s)", items.len()),
                                 cx,
                             )
+                        }
+                        HostEvent::Zone(path) => {
+                            view.update_state(
+                                &pane_state_path(&pid, "zone"),
+                                Json::String(path),
+                                cx,
+                            );
+                        }
+                        HostEvent::DropTarget(path) => {
+                            view.update_state(
+                                &pane_state_path(&pid, "drop_target"),
+                                Json::String(path),
+                                cx,
+                            );
+                        }
+                        HostEvent::Drop(path) => {
+                            view.update_state(
+                                &pane_state_path(&pid, "drop"),
+                                Json::String(path.clone()),
+                                cx,
+                            );
+                            // A stashed pane payload pairs with the resolved
+                            // path — the same `drop_component`/`move_node`
+                            // the gpui canvas fires.
+                            if let Some((kind, payload)) =
+                                PANE_DND.lock().unwrap().remove(&pid)
+                            {
+                                if path.is_empty() {
+                                    status(
+                                        view,
+                                        &format!(
+                                            "preview pane `{pid}`: drop missed every node"
+                                        ),
+                                        cx,
+                                    );
+                                } else {
+                                    match kind.as_str() {
+                                        "component" => drop_component(
+                                            view,
+                                            &[payload, path.clone()],
+                                            &shared,
+                                            cx,
+                                        ),
+                                        _ => move_node(
+                                            view,
+                                            &[payload, path.clone()],
+                                            &shared,
+                                            cx,
+                                        ),
+                                    }
+                                }
+                            }
+                        }
+                        HostEvent::Call(call) => {
+                            // Hooks inside the pane's doc (`on <event>:`)
+                            // ride the same dispatch as the primary host's.
+                            let (name, args) = parse_call(&call);
+                            dispatch(view, &name, &args, &shared, cx);
                         }
                         _ => {}
                     }

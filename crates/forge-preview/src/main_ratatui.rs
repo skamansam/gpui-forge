@@ -174,7 +174,32 @@ fn main() {
                 // Wire input — Studio forwards these when the host has no
                 // /dev/tty of its own.
                 HostMsg::Key(key) => view.on_key(&key),
-                HostMsg::Mouse { kind, col, row } => view.on_mouse(&kind, col, row),
+                HostMsg::Mouse { kind, col, row } => match kind.as_str() {
+                    // Designer DnD — the sender drags over the card; the
+                    // view resolves the cell to a doc path. `zone` tells
+                    // the sender what a drag started on (#156).
+                    "zone" => emit(json!({
+                        "event": "zone",
+                        "path": view.zone_path_at(col, row).unwrap_or_default(),
+                    })),
+                    "drop-hover" => emit(json!({
+                        "event": "drop_target",
+                        "path": view.drop_hover(col, row).unwrap_or_default(),
+                    })),
+                    "drop" => emit(json!({
+                        "event": "drop",
+                        "path": view.drop_at(col, row).unwrap_or_default(),
+                    })),
+                    _ => {
+                        if kind == "down" {
+                            emit(json!({
+                                "event": "zone",
+                                "path": view.zone_path_at(col, row).unwrap_or_default(),
+                            }));
+                        }
+                        view.on_mouse(&kind, col, row);
+                    }
+                },
                 HostMsg::Quit => quit = true,
             }
         }
