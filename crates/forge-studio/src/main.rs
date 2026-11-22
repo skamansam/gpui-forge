@@ -624,6 +624,15 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     {
         load_file(path, &mut view, shared.clone(), cx);
     }
+    // FORGE_DEBUG_TAB=<n> forces the initial tab — headless harnesses have
+    // no clicks to reach the Theme tab, whose `if: $studio.tab` guard gates
+    // pane spawn.
+    if let Some(n) = std::env::var("FORGE_DEBUG_TAB")
+        .ok()
+        .and_then(|t| t.parse::<i32>().ok())
+    {
+        view.update_state(&parse_path("studio.tab").unwrap(), Json::from(n), cx);
+    }
     // Declared panes in the shell document (the Theme-tab theme preview)
     // spawn hosts from startup — no need to wait for a foreign-base open.
     pane_sync(shared.clone(), cx);
@@ -1054,6 +1063,10 @@ fn dispatch(
         "pane_key" => {
             if let [id, key] = args {
                 pane_send(id, &json!({"cmd":"key","key":key}));
+                // The demo docs have no bound widgets, so a forwarded key
+                // produces no visible change — the status line is the
+                // proof of the wire path.
+                status(view, &format!("{id} <- key {key}"), cx);
             }
         }
         "pane_mouse" => {
@@ -1067,6 +1080,7 @@ fn dispatch(
                         "row": row.parse::<u16>().unwrap_or(0),
                     }),
                 );
+                status(view, &format!("{id} <- mouse {kind} @{col},{row}"), cx);
             }
         }
         "open_recent" => {
@@ -2522,6 +2536,15 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                             data,
                         } if streams.contains(pid.as_str()) =>
                         {
+                            // Feed the emulator per event, in seq order —
+                            // the state slot below holds only the last
+                            // frame of a drain batch, so render-time
+                            // feeding would drop every burst except the
+                            // final diff (the full first frame was always
+                            // lost → blank grid).
+                            view.feed_term_frame(
+                                &pid, seq, cols, rows, data.as_bytes(),
+                            );
                             view.update_state(
                                 &pane_state_path(&pid, "frame"),
                                 serde_json::json!({"seq": seq, "cols": cols, "rows": rows, "data": data}),

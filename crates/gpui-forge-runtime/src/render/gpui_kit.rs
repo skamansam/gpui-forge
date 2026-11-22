@@ -652,6 +652,43 @@ impl ForgeView {
         self.preview_bounds.get(id).cloned()
     }
 
+    /// Feed one streaming `frame` event into the pane's terminal emulator —
+    /// resize to the frame grid, then append the bytes, once per seq. This
+    /// must run in the event path: the state's `preview.panes.<id>.frame`
+    /// slot only ever holds the LAST event of a poll batch, so feeding at
+    /// render time drops every burst frame except the final diff — the
+    /// full first frame is always lost and the grid stays blank.
+    #[cfg(not(target_arch = "wasm32"))]
+    pub fn feed_term_frame(&mut self, id: &str, seq: u64, cols: u16, rows: u16, data: &[u8]) {
+        let entry = self.term_panes.entry(id.to_owned()).or_insert_with(|| {
+            (
+                0,
+                std::rc::Rc::new(std::cell::RefCell::new(forge_term::Emulator::new(
+                    cols, rows,
+                ))),
+            )
+        });
+        // A respawned host restarts seq at 1 — its stream is a fresh
+        // terminal, so replace the emulator rather than layering the new
+        // stream onto the dead host's scrollback.
+        if seq < entry.0 {
+            *entry = (
+                0,
+                std::rc::Rc::new(std::cell::RefCell::new(forge_term::Emulator::new(
+                    cols, rows,
+                ))),
+            );
+        }
+        if seq != entry.0 {
+            {
+                let mut emu = entry.1.borrow_mut();
+                emu.resize(cols, rows);
+                emu.feed(data);
+            }
+            entry.0 = seq;
+        }
+    }
+
     /// The `forge.Preview` host for `id`, creating the nested view on first use.
     /// The child shares the parent's registered libraries so `alias.Name`
     /// elements render inside previews too.
@@ -4580,24 +4617,19 @@ impl ForgeView {
                                     j["rows"].as_u64().unwrap_or(24) as u16,
                                 ))
                             })
-                            .map(|(seq, data, cols, rows)| {
+                            .map(|(seq, _data, cols, rows)| {
+                                // Feeding lives in `feed_term_frame` on the
+                                // event path — see its comment. Render only
+                                // attaches the already-fed emulator.
                                 let entry =
                                     self.term_panes.entry(id.clone()).or_insert_with(|| {
                                         (
-                                            0,
+                                            seq,
                                             std::rc::Rc::new(std::cell::RefCell::new(
                                                 forge_term::Emulator::new(cols, rows),
                                             )),
                                         )
                                     });
-                                if seq != entry.0 {
-                                    {
-                                        let mut emu = entry.1.borrow_mut();
-                                        emu.resize(cols, rows);
-                                        emu.feed(data.as_bytes());
-                                    }
-                                    entry.0 = seq;
-                                }
                                 // Track the grid's painted rect so pointer
                                 // events map to (col, row) cells.
                                 let tcell = self
