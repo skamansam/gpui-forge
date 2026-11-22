@@ -62,9 +62,10 @@ pub struct ForgeView {
     /// the node's area (the TUI's flat model has no `Entity`, so the map
     /// holds views directly).
     previews: HashMap<String, ForgeView>,
-    /// Focusable inputs — `(node key, binding path)` rebuilt each render.
-    /// `Tab`/`Shift-Tab` cycles, typed keys write the focused binding.
-    focusables: Vec<(Path, FocusKind)>,
+    /// Focusable inputs — `(binding path, kind, resolved `on:` calls)`
+    /// rebuilt each render. `Tab`/`Shift-Tab` cycles, typed keys write the
+    /// focused binding, `Enter`/`Space` fire the node's event calls.
+    focusables: Vec<(Path, FocusKind, Calls)>,
     focused: usize,
     /// Flags staged for protocol parity — a TUI has no element picker, but the
     /// commands are acknowledged so hosts don't special-case the base.
@@ -225,28 +226,31 @@ impl ForgeView {
     /// `Tab`/`Shift-Tab` cycles focusable inputs. Printable keys write into
     /// the focused input's binding. `Enter`/`Space` fires toggle/select.
     pub fn on_key(&mut self, key: &str) {
-        let kind = self.focusables.get(self.focused).map(|(_, k)| *k);
+        let kind = self.focusables.get(self.focused).map(|(_, k, _)| *k);
         match (kind, key) {
             (_, "Tab") | (_, "BackTab") => {}
             (Some(FocusKind::Bool), "Enter") | (Some(FocusKind::Bool), " ") => {
-                if let Some((path, _)) = self.focusables.get(self.focused).cloned() {
+                if let Some((path, _, _)) = self.focusables.get(self.focused).cloned() {
                     let cur = self.lookup(&path).and_then(Json::as_bool).unwrap_or(false);
                     self.write(&path, Json::Bool(!cur));
                 }
+                self.fire_focused("change");
                 return;
             }
             (Some(FocusKind::Select), "Up") | (Some(FocusKind::Select), "k") => {
-                if let Some((path, _)) = self.focusables.get(self.focused).cloned() {
+                if let Some((path, _, _)) = self.focusables.get(self.focused).cloned() {
                     let cur = self.lookup(&path).and_then(Json::as_u64).unwrap_or(0);
                     self.write(&path, Json::from(cur.saturating_sub(1)));
                 }
+                self.fire_focused("select");
                 return;
             }
             (Some(FocusKind::Select), "Down") | (Some(FocusKind::Select), "j") => {
-                if let Some((path, _)) = self.focusables.get(self.focused).cloned() {
+                if let Some((path, _, _)) = self.focusables.get(self.focused).cloned() {
                     let cur = self.lookup(&path).and_then(Json::as_u64).unwrap_or(0);
                     self.write(&path, Json::from(cur + 1));
                 }
+                self.fire_focused("select");
                 return;
             }
             (Some(FocusKind::Input), "Backspace")
@@ -268,24 +272,51 @@ impl ForgeView {
                 }
             }
             "Enter" => {
-                // `on submit:` hooks on the focused node — the node's key
-                // identifies it. Events live on the node itself.
+                self.fire_focused("submit");
             }
             "Backspace" => {
-                if let Some((path, _)) = self.focusables.get(self.focused).cloned() {
+                if let Some((path, _, _)) = self.focusables.get(self.focused).cloned() {
                     let mut cur = self.json_text(&path);
                     cur.pop();
                     self.write(&path, Json::String(cur));
                 }
+                self.fire_focused("change");
             }
             c if c.chars().count() == 1 => {
-                if let Some((path, _)) = self.focusables.get(self.focused).cloned() {
+                if let Some((path, _, _)) = self.focusables.get(self.focused).cloned() {
                     let mut cur = self.json_text(&path);
                     cur.push_str(c);
                     self.write(&path, Json::String(cur));
                 }
+                self.fire_focused("change");
             }
             _ => {}
+        }
+    }
+
+    /// The node's `on:` bindings resolved to `(event, name, args)` — stored
+    /// on the focusable so `on_key` can fire them without re-walking the doc.
+    fn calls_for(&self, node: &Node) -> Calls {
+        node.events
+            .iter()
+            .map(|e| {
+                (
+                    e.event.clone(),
+                    e.handler.name.clone(),
+                    e.handler.args.iter().map(|a| self.text_of(a)).collect(),
+                )
+            })
+            .collect()
+    }
+
+    /// Fires the focused node's `on <event>:` calls through `fire_call`.
+    fn fire_focused(&mut self, event: &str) {
+        if let Some((_, _, calls)) = self.focusables.get(self.focused).cloned() {
+            for (e, name, args) in calls {
+                if e == event {
+                    self.fire_call(&name, args);
+                }
+            }
         }
     }
 
@@ -293,7 +324,7 @@ impl ForgeView {
     fn is_focused(&self, path: &Path) -> bool {
         self.focusables
             .get(self.focused)
-            .map(|(p, _)| p == path)
+            .map(|(p, _, _)| p == path)
             .unwrap_or(false)
     }
 
@@ -524,7 +555,9 @@ impl ForgeView {
             "List" | "Select" | "Tabs" => {
                 let binding = Self::binding_of(node, "selected");
                 if let Some(path) = &binding {
-                    self.focusables.push((path.clone(), FocusKind::Select));
+                    let calls = self.calls_for(node);
+                    self.focusables
+                        .push((path.clone(), FocusKind::Select, calls));
                 }
                 let focused = binding
                     .as_ref()
@@ -609,7 +642,9 @@ impl ForgeView {
                 let empty = value.is_empty();
                 let text = if empty { placeholder } else { value };
                 if let Some(path) = &binding {
-                    self.focusables.push((path.clone(), FocusKind::Input));
+                    let calls = self.calls_for(node);
+                    self.focusables
+                        .push((path.clone(), FocusKind::Input, calls));
                 }
                 let focused = binding
                     .as_ref()
@@ -641,7 +676,8 @@ impl ForgeView {
             "Checkbox" | "Switch" => {
                 let binding = Self::binding_of(node, "checked");
                 if let Some(path) = &binding {
-                    self.focusables.push((path.clone(), FocusKind::Bool));
+                    let calls = self.calls_for(node);
+                    self.focusables.push((path.clone(), FocusKind::Bool, calls));
                 }
                 let focused = binding
                     .as_ref()
@@ -837,12 +873,69 @@ impl ForgeView {
         }
     }
 
+    /// A style entry's numeric value and unit — `"40px"`, `30%`, `2fr` or a
+    /// bare number all parse. The unit picks the `Constraint` kind.
+    fn style_num(entries: &forge_spec::Entries, name: &str) -> Option<(f64, Option<Unit>)> {
+        entries
+            .iter()
+            .find(|(k, _)| k == name)
+            .and_then(|(_, v)| match v {
+                Value::Number { value, unit } => Some((*value, *unit)),
+                Value::String(s) => {
+                    let s = s.trim();
+                    let (num, unit) = if let Some(n) = s.strip_suffix("px") {
+                        (n, Some(Unit::Px))
+                    } else if let Some(n) = s.strip_suffix('%') {
+                        (n, Some(Unit::Percent))
+                    } else if let Some(n) = s.strip_suffix("fr") {
+                        (n, Some(Unit::Fr))
+                    } else {
+                        (s, None)
+                    };
+                    num.trim().parse::<f64>().ok().map(|v| (v, unit))
+                }
+                _ => None,
+            })
+    }
+
+    /// The `Constraint` one child earns along `dir`: an explicit `width` or
+    /// `height` fixes it. `min`/`max` bound it and `flex` shares the
+    /// leftover. A child with none of them takes an equal `Fill` share.
+    fn child_constraint(node: &Node, dir: Direction) -> Constraint {
+        let (size, min, max) = if dir == Direction::Horizontal {
+            ("width", "min-width", "max-width")
+        } else {
+            ("height", "min-height", "max-height")
+        };
+        let fill = |n: f64| Constraint::Fill(n.max(1.0) as u16);
+        if let Some((v, unit)) = Self::style_num(&node.style, size) {
+            return match unit {
+                Some(Unit::Percent) => Constraint::Percentage(v as u16),
+                Some(Unit::Fr) => fill(v),
+                _ => Constraint::Length(v as u16),
+            };
+        }
+        if let Some((v, _)) = Self::style_num(&node.style, min) {
+            return Constraint::Min(v as u16);
+        }
+        if let Some((v, _)) = Self::style_num(&node.style, max) {
+            return Constraint::Max(v as u16);
+        }
+        if let Some((v, _)) = Self::style_num(&node.style, "flex") {
+            return fill(v);
+        }
+        Constraint::Fill(1)
+    }
+
     /// Splits `area` into one chunk per child along `direction` and renders
-    /// each child — equal `Fill` shares for the scaffold. `flex`/`width`
-    /// style entries refine this in the port.
+    /// each child, honoring `width`/`height`/`flex`/`min-*`/`max-*` style
+    /// entries — children without one take an equal `Fill` share.
     fn render_children(&mut self, node: &Node, area: Rect, frame: &mut Frame, dir: Direction) {
-        let constraints: Vec<Constraint> =
-            node.children.iter().map(|_| Constraint::Fill(1)).collect();
+        let constraints: Vec<Constraint> = node
+            .children
+            .iter()
+            .map(|c| Self::child_constraint(c, dir))
+            .collect();
         let chunks = Layout::default()
             .direction(dir)
             .constraints(constraints)
@@ -853,7 +946,7 @@ impl ForgeView {
     }
 }
 
-/// `date` prop — `"YYYY-MM"` or `"YYYY-MM-DD"`; day defaults to the 1st.
+/// `date` prop — `"YYYY-MM"` or `"YYYY-MM-DD"`. Day defaults to the 1st.
 fn parse_date(text: &str) -> Option<time::Date> {
     let mut parts = text.split('-');
     let year: i32 = parts.next()?.parse().ok()?;
@@ -870,3 +963,8 @@ pub enum FocusKind {
     Bool,
     Select,
 }
+
+/// A resolved `on <event>:` call — `(event name, handler name, args)`.
+/// Args resolve at render time, so a fired call sees the document as of
+/// the last draw.
+type Calls = Vec<(String, String, Vec<String>)>;
