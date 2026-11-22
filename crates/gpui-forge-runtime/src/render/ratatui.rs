@@ -17,8 +17,9 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::calendar::{CalendarEventStore, Monthly};
 use ratatui::widgets::canvas::{Canvas, Map, MapResolution};
 use ratatui::widgets::{
-    Axis, BarChart, Block, BorderType, Borders, Chart, Clear, Dataset, Gauge, GraphType, List,
-    ListItem, Paragraph, RatatuiLogo, Sparkline, Tabs, Wrap,
+    Axis, BarChart, Block, BorderType, Borders, Chart, Clear, Dataset, Gauge, GraphType, LineGauge,
+    List, ListItem, Paragraph, RatatuiLogo, Scrollbar, ScrollbarOrientation, ScrollbarState,
+    Sparkline, Tabs, Wrap,
 };
 use serde_json::Value as Json;
 use std::collections::HashMap;
@@ -274,6 +275,10 @@ impl ForgeView {
         let kind = self.focusables.get(self.focused).map(|(_, k, _, _)| *k);
         match (kind, key) {
             (_, "Tab") | (_, "BackTab") => {}
+            (Some(FocusKind::Action), "Enter") | (Some(FocusKind::Action), " ") => {
+                self.fire_focused("click");
+                return;
+            }
             (Some(FocusKind::Bool), "Enter") | (Some(FocusKind::Bool), " ") => {
                 if let Some((path, _, _, _)) = self.focusables.get(self.focused).cloned() {
                     let cur = self.lookup(&path).and_then(Json::as_bool).unwrap_or(false);
@@ -843,6 +848,9 @@ impl ForgeView {
         self.focused = i;
         let (path, focus_kind, _, rect) = self.focusables[i].clone();
         match (focus_kind, kind) {
+            (FocusKind::Action, "down") => {
+                self.fire_focused("click");
+            }
             (FocusKind::Bool, "down") => {
                 let cur = self.lookup(&path).and_then(Json::as_bool).unwrap_or(false);
                 self.write(&path, Json::Bool(!cur));
@@ -1003,11 +1011,11 @@ impl ForgeView {
                 if node.element.name == "Title" {
                     style = style.add_modifier(Modifier::BOLD);
                 }
-                frame.render_widget(
-                    Paragraph::new(Line::from(Span::styled(self.node_text(node), style)))
-                        .wrap(Wrap { trim: true }),
-                    area,
-                );
+                let mut p = Paragraph::new(Line::from(Span::styled(self.node_text(node), style)));
+                if self.prop_text(node, "wrap") != "false" {
+                    p = p.wrap(Wrap { trim: true });
+                }
+                frame.render_widget(p, area);
             }
             "Divider" => {
                 frame.render_widget(
@@ -1019,16 +1027,26 @@ impl ForgeView {
                 frame.render_widget(Clear, area);
             }
             "Button" => {
-                let label = format!("[ {} ]", self.node_text(node));
-                frame.render_widget(
-                    Paragraph::new(label).style(
-                        Style::default()
-                            .fg(Color::Cyan)
-                            .add_modifier(Modifier::BOLD)
-                            .patch(self.node_style(node)),
-                    ),
-                    area,
+                // Buttons take focus by doc path — `on click:` fires on
+                // Enter/Space or a cell click, like the gpui twin.
+                let node_path = Path(
+                    path.split('.')
+                        .filter_map(|s| s.parse::<usize>().ok().map(PathSegment::Index))
+                        .collect(),
                 );
+                let calls = self.calls_for(node);
+                self.focusables
+                    .push((node_path.clone(), FocusKind::Action, calls, area));
+                let focused = self.is_focused(&node_path);
+                let label = format!("[ {} ]", self.node_text(node));
+                let mut style = Style::default()
+                    .fg(Color::Cyan)
+                    .add_modifier(Modifier::BOLD)
+                    .patch(self.node_style(node));
+                if focused {
+                    style = style.fg(Color::Black).bg(Color::Cyan);
+                }
+                frame.render_widget(Paragraph::new(label).style(style), area);
             }
             "List" | "Select" | "Tabs" => {
                 let binding = Self::binding_of(node, "selected");
@@ -1361,6 +1379,67 @@ impl ForgeView {
                     area,
                 );
             }
+            "LineGauge" => {
+                let value = self.num(node, "value", 0.0).clamp(0.0, 100.0);
+                let label = self.prop_text(node, "label");
+                let set = match self.prop_text(node, "set").as_str() {
+                    "thick" => symbols::line::THICK,
+                    "double" => symbols::line::DOUBLE,
+                    _ => symbols::line::NORMAL,
+                };
+                frame.render_widget(
+                    LineGauge::default()
+                        .block({
+                            let mut b = Block::default().borders(Borders::ALL);
+                            if let Some(c) = self.border_color(node) {
+                                b = b.border_style(c);
+                            }
+                            b
+                        })
+                        .filled_symbol(set.horizontal)
+                        .unfilled_symbol(set.horizontal)
+                        .filled_style(
+                            Style::default()
+                                .fg(Color::Green)
+                                .patch(self.node_style(node)),
+                        )
+                        .label(if label.is_empty() {
+                            format!("{value:.0}%")
+                        } else {
+                            label
+                        })
+                        .ratio(value / 100.0),
+                    area,
+                );
+            }
+            "Scrollbar" => {
+                let orient = match self.prop_text(node, "orientation").as_str() {
+                    "horizontal" => ScrollbarOrientation::HorizontalBottom,
+                    _ => ScrollbarOrientation::VerticalRight,
+                };
+                let content = self.num(node, "content_length", 10.0).max(1.0) as usize;
+                let pos = self.num(node, "position", 0.0).max(0.0) as usize;
+                let mut state = ScrollbarState::new(content).position(pos);
+                frame.render_stateful_widget(Scrollbar::new(orient), area, &mut state);
+            }
+            "Log" => {
+                // A scrollable text view — `offset` is the first drawn row,
+                // `wrap` reflows instead of clipping. For log tails and
+                // console panes where `Text` would clip.
+                let text = self.node_text(node);
+                let off = self.num(node, "offset", 0.0).max(0.0) as u16;
+                let mut p = Paragraph::new(text)
+                    .scroll((off, 0))
+                    .style(self.node_style(node));
+                if self.prop_text(node, "wrap") != "false" {
+                    p = p.wrap(Wrap { trim: false });
+                }
+                frame.render_widget(p, area);
+            }
+            "Spacer" => {
+                // Empty area — the `size` prop feeds `child_constraint`,
+                // nothing paints.
+            }
             "Logo" => {
                 let logo = if self.prop_text(node, "size") == "tiny" {
                     RatatuiLogo::tiny()
@@ -1414,6 +1493,14 @@ impl ForgeView {
             ("height", "min-height", "max-height")
         };
         let fill = |n: f64| Constraint::Fill(n.max(1.0) as u16);
+        // `Spacer`'s `size` prop is its extent — no style entry needed.
+        if node.element.name == "Spacer" {
+            if let Some((_, v)) = node.props.iter().find(|(k, _)| k == "size") {
+                if let Value::Number { value, .. } = v {
+                    return Constraint::Length((*value).max(0.0) as u16);
+                }
+            }
+        }
         if let Some((v, unit)) = Self::style_num(&node.style, size) {
             return match unit {
                 Some(Unit::Percent) => Constraint::Percentage(v as u16),
@@ -1517,12 +1604,14 @@ fn parse_date(text: &str) -> Option<time::Date> {
 }
 
 /// The interactivity a focused element accepts — Input = text editing,
-/// Bool = toggle (Checkbox/Switch), Select = arrow navigation (List/Tabs).
+/// Bool = toggle (Checkbox/Switch), Select = arrow navigation (List/Tabs),
+/// Action = fire `click` on Enter/Space/down (Button).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FocusKind {
     Input,
     Bool,
     Select,
+    Action,
 }
 
 /// A resolved `on <event>:` call — `(event name, handler name, args)`.

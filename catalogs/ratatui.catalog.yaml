@@ -27,6 +27,18 @@ elements:
     canvas: HStack
     children: any
 
+  Spacer:
+    icon: move-vertical
+    group: Layout
+    summary: Empty area of `size` cells — pushes siblings apart.
+    component: ratatui::layout::Constraint
+    canvas: Spacer
+    children: none
+    props:
+      size:
+        type: number
+        summary: Fixed extent in cells.
+
   Text:
     icon: pilcrow
     group: Display
@@ -40,12 +52,77 @@ elements:
         required: true
       wrap:
         type: bool
-        default: false
+        default: true
+
+  Title:
+    icon: heading
+    group: Display
+    summary: Bold text — a `Text` variant for headings.
+    component: ratatui::widgets::Paragraph
+    canvas: Text
+    content: text
+    props:
+      text: string
+      wrap:
+        type: bool
+        default: true
+
+  Divider:
+    icon: minus
+    group: Display
+    summary: One-row horizontal rule across its area.
+    component: ratatui::widgets::Block
+    canvas: Separator
+    children: none
+
+  Log:
+    icon: scroll-text
+    group: Display
+    summary: Scrollable text view — `offset` sets the first drawn row.
+    component: ratatui::widgets::Paragraph
+    canvas: ScrollView
+    content: text
+    children: none
+    props:
+      text: string
+      offset:
+        type: number
+        summary: First drawn row — scroll the view by writing state.
+      wrap:
+        type: bool
+        default: true
+        summary: Reflow lines instead of clipping them.
 
   Block:
     icon: square
     group: Display
     summary: Bordered block with optional title — the TUI frame primitive.
+    component: ratatui::widgets::Block
+    canvas: GroupBox
+    props:
+      title: string
+      borders:
+        type: bool
+        default: true
+    children: any
+
+  Paper:
+    icon: file
+    group: Display
+    summary: Rounded border block — a `Block` alias for panel grouping.
+    component: ratatui::widgets::Block
+    canvas: GroupBox
+    props:
+      title: string
+      borders:
+        type: bool
+        default: true
+    children: any
+
+  Card:
+    icon: id-card
+    group: Display
+    summary: Rounded border block — a `Block` alias for card grouping.
     component: ratatui::widgets::Block
     canvas: GroupBox
     props:
@@ -63,6 +140,7 @@ elements:
     canvas: List
     props:
       items: string
+      selected: number
       title: string
     events:
       select:
@@ -88,6 +166,51 @@ elements:
       value: number
       label: string
 
+  Progress:
+    icon: rectangle-horizontal
+    group: Feedback
+    summary: Filled gauge, 0–100 — a `Gauge` alias for progress bars.
+    component: ratatui::widgets::Gauge
+    canvas: Progress
+    props:
+      value: number
+      label: string
+
+  LineGauge:
+    icon: minus
+    group: Feedback
+    summary: One-row line gauge, 0–100 — a slimmer `Gauge`.
+    component: ratatui::widgets::LineGauge
+    canvas: Progress
+    children: none
+    props:
+      value: number
+      label: string
+      set:
+        type: enum
+        values: [normal, thick, double]
+        default: normal
+        summary: Line glyph set for the filled and unfilled runs.
+
+  Scrollbar:
+    icon: scroll
+    group: Feedback
+    summary: Scrollbar track — `position` of `content_length` rows.
+    component: ratatui::widgets::Scrollbar
+    canvas: ScrollBar
+    children: none
+    props:
+      orientation:
+        type: enum
+        values: [vertical, horizontal]
+        default: vertical
+      content_length:
+        type: number
+        summary: Total rows the thumb represents.
+      position:
+        type: number
+        summary: Current scroll row — bind it to move the thumb.
+
   Tabs:
     icon: layout-list
     group: Input
@@ -107,8 +230,73 @@ elements:
     component: ratatui::widgets::Paragraph
     canvas: Input
     props:
+      label: string
       placeholder: string
       value: string
+    events:
+      change:
+      submit:
+
+  TextInput:
+    icon: text-cursor-input
+    group: Input
+    summary: Single-line terminal input — an `Input` alias.
+    component: ratatui::widgets::Paragraph
+    canvas: Input
+    props:
+      label: string
+      placeholder: string
+      value: string
+    events:
+      change:
+      submit:
+
+  Button:
+    icon: mouse-pointer-click
+    group: Input
+    summary: Focusable action — `on click:` fires on Enter, Space or a click.
+    component: ratatui::widgets::Paragraph
+    canvas: Button
+    content: text
+    props:
+      text: string
+    events:
+      click:
+
+  Select:
+    icon: list
+    group: Input
+    summary: Arrow-key pick from `items` — `selected` binds the choice.
+    component: ratatui::widgets::List
+    canvas: Select
+    props:
+      items: string
+      selected: number
+      title: string
+    events:
+      select:
+
+  Checkbox:
+    icon: check-square
+    group: Input
+    summary: "`[x]`/`[ ]` toggle — `checked` binds the state."
+    component: ratatui::widgets::Paragraph
+    canvas: Checkbox
+    props:
+      checked: bool
+      text: string
+    events:
+      change:
+
+  Switch:
+    icon: toggle-right
+    group: Input
+    summary: "`[x]`/`[ ]` toggle — a `Checkbox` alias for switch semantics."
+    component: ratatui::widgets::Paragraph
+    canvas: Switch
+    props:
+      checked: bool
+      text: string
     events:
       change:
   BarChart:

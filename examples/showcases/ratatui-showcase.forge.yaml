@@ -60,3 +60,61 @@ root:
         title: "a Table"
         header: "name | status | load"
         rows: "web-1 | up | 0.62\nweb-2 | up | 0.41\ndb-1 | degraded | 0.91"
+      - HStack:
+        style: {gap: 1}
+        children:
+          - Block:
+            title: "controls"
+            children:
+              - VStack:
+                style: {gap: 1}
+                children:
+                  - Button:
+                    text: "deploy"
+                  - Checkbox:
+                    text: "enabled"
+                    checked: true
+                  - Switch:
+                    text: "dark mode"
+                  - Select:
+                    items: "small\nmedium\nlarge"
+                    selected: 1
+          - Block:
+            title: "form + feedback"
+            children:
+              - VStack:
+                style: {gap: 1}
+                children:
+                  - TextInput:
+                    label: "host"
+                    placeholder: "name"
+                  - Progress:
+                    value: 60
+                    label: "60%"
+                  - LineGauge:
+                    value: 40
+                    label: "40%"
+      - HStack:
+        style: {gap: 1}
+        children:
+          - Card:
+            title: "a Card"
+            children:
+              - Log:
+                text: "line one\nline two\nline three\nline four"
+                offset: 1
+          - Paper:
+            title: "a Paper"
+            children:
+              - VStack:
+                style: {gap: 1}
+                children:
+                  - Title:
+                    text: "a Title"
+                  - Divider:
+                  - Text: "Title, Divider and a Spacer below"
+                  - Spacer:
+                    size: 1
+                  - Scrollbar:
+                    content_length: 50
+                    position: 10
