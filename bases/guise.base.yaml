@@ -1,6 +1,6 @@
 # Base manifest — see docs/design/multi-base.md
 # Scaffold for #96 (vanilla GPUI 0.2 + guise). Registered so `forge new --base
-# guise`, Studio's picker and forge-web can target it; the render adapter that
+# guise`, Studio's picker and forge-web can target it. The render adapter that
 # lets a `base-guise` binary compile lands with the upstream-port work.
 base: "0.1"
 id: guise
@@ -11,7 +11,7 @@ gpui:
   crate: gpui
   version: "0.2.2"
 library:
-  crate: guise-ui        # published name; the library is `guise`
+  crate: guise-ui        # published name. The library is `guise`
   version: "1.10"
 toolchain: stable
 platforms: [linux, macos, windows]

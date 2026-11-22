@@ -6,7 +6,7 @@ edition = "2024"
 publish = false
 
 [dependencies]
-# `xtask components` — catalogs parse through forge-spec; `syn` indexes the
+# `xtask components` — catalogs parse through forge-spec. `syn` indexes the
 # upstream crate sources the drift check downloads from crates.io.
 forge-spec = { path = "../forge-spec" }
 serde = { version = "1", features = ["derive"] }

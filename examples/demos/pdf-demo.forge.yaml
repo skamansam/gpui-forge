@@ -1,4 +1,4 @@
-# gpui-pdf — virtualized PDF viewer; pages rasterize off-thread via hayro.
+# gpui-pdf — virtualized PDF viewer. Pages rasterize off-thread via hayro.
 # `src` is doc-relative — drop a `sample.pdf` next to this file to see pages.
 $schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
 forge: "0.1"

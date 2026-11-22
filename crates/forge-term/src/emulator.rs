@@ -75,7 +75,7 @@ fn map_color(color: AnsiColor) -> CellColor {
             }
             match named {
                 NamedColor::Background => CellColor::Background,
-                // Dim named colors fold onto their base index; the DIM flag
+                // Dim named colors fold onto their base index. The DIM flag
                 // still travels on the cell for paint-time dimming.
                 NamedColor::DimBlack
                 | NamedColor::DimRed
@@ -123,7 +123,7 @@ impl CellSnapshot {
     }
 }
 
-/// The cursor, in viewport coordinates; `None` when hidden or scrolled out.
+/// The cursor, in viewport coordinates. `None` when hidden or scrolled out.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CursorSnapshot {
     pub row: usize,
@@ -185,7 +185,7 @@ impl Emulator {
 
     /// Advance the state machine over decoded PTY output. Returns bytes the
     /// terminal wants written back (DSR/DA query responses) — for a headless
-    /// byte stream there's nowhere to send them; a PTY host would.
+    /// byte stream there's nowhere to send them. A PTY host would.
     pub fn feed(&mut self, bytes: &[u8]) -> Vec<u8> {
         self.parser.advance(&mut self.term, bytes);
         let mut out = Vec::new();
@@ -248,7 +248,7 @@ impl Emulator {
         (0..self.rows()).map(|r| self.line(r)).collect()
     }
 
-    /// Cursor in viewport coordinates; `None` when hidden or scrolled out.
+    /// Cursor in viewport coordinates. `None` when hidden or scrolled out.
     pub fn cursor(&self) -> Option<CursorSnapshot> {
         let content = self.term.renderable_content();
         let shape = match content.cursor.shape {

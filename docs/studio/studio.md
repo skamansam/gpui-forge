@@ -30,7 +30,7 @@ You can open `studio.forge.yaml` in Studio itself and watch the editor edit
 its own shell. When the format can't express what Studio needs, we extend
 the format rather than work around it.
 
-## Launching
+## Starting
 
 ```sh
 cargo xtask studio            # from the workspace — builds and runs it

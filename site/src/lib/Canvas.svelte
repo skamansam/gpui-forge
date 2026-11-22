@@ -1,7 +1,7 @@
 <!--
 	A live gpui-kit canvas (crates/forge-web-canvas compiled to WASM). GPUI draws into a
 	canvas on <body>, so the canvas runs in an iframe and this component talks to it with
-	postMessage; see static/canvas/index.html.
+	postMessage. See static/canvas/index.html.
 -->
 <script lang="ts" module>
 	export type Diagnostic = { line: number; col: number; message: string; hint: string | null };
@@ -41,7 +41,7 @@
 	const post = (message: object) => frame?.contentWindow?.postMessage(message, '*');
 
 	// State replaces the canvas's bindings (and resets its inputs), so it is only sent when it
-	// changes; YAML edits re-render against the current state.
+	// changes. YAML edits re-render against the current state.
 	$effect(() => {
 		const s = $state.snapshot(bindings);
 		if (ready) post({ type: 'forge:render', yaml, state: s ?? {} });

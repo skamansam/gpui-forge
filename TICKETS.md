@@ -5,7 +5,7 @@ Planned work — not bugs, not in progress.
 ## AI-driven UI automation
 
 Let AI agents drive Forge Studio: inspect the UI, click, type, read state,
-take screenshots — so an agent can walk the app, exercise features, and
+take screenshots. So an agent can walk the app, exercise features, and
 report/reproduce bugs without a human at the keyboard.
 
 **Approach — debug socket + CLI front-end (recommended).** Studio exposes a
@@ -30,8 +30,8 @@ forge drive query studio.iconset
 ```
 
 Why this first: no external protocol deps, testable headlessly in CI, and
-an MCP server can wrap the same socket later if we want it (MCP is just a
-thin protocol shim over the same primitives — not a design commitment now).
+an MCP server can wrap the same socket later if we want it. MCP is just a
+thin protocol shim over the same primitives, not a design commitment now.
 
 **Not now**: embedding an LLM inside studio (model/key management, heavy),
 or shipping a raw MCP server directly (extra dep tree, auth surface).

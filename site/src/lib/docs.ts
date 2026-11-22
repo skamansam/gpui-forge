@@ -22,7 +22,7 @@ const CATEGORY_ORDER: [id: string, title: string, blurb: string][] = [
 
 const CATEGORY_IDS = new Set(CATEGORY_ORDER.map(([id]) => id));
 
-// Within a category, pages follow this reading order; unlisted slugs sort last.
+// Within a category, pages follow this reading order. Unlisted slugs sort last.
 const PAGE_ORDER: Record<string, string[]> = {
 	start: ['getting-started'],
 	format: [

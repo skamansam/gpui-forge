@@ -242,7 +242,7 @@ const STYLE_SPEC: &str = include_str!("../../../docs/format/style-layout.md");
 #[test]
 fn style_spec_examples_are_valid() {
     assert!(STYLE_SPEC.contains("background: $theme.muted"));
-    // The example is a list item; check it as the root node.
+    // The example is a list item. Check it as the root node.
     let body = "  HStack:\n  style:\n    gap: 8px\n    padding: [8px, 12px]\n    align: center\n    justify: between\n    background: $theme.muted\n    radius: md\n";
     assert_one(body, "");
 }

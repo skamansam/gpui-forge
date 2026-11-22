@@ -82,7 +82,7 @@ pub fn get_path<'a>(json: &'a Json, path: &Path) -> Option<&'a Json> {
 }
 
 /// Binding lookup with the `meta` namespace: `meta.*` paths read the document
-/// meta object; anything else reads view state.
+/// meta object. Anything else reads view state.
 pub fn lookup_path<'a>(meta: &'a Json, state: &'a Json, path: &Path) -> Option<&'a Json> {
     let (root, segments) = match path.0.first() {
         Some(PathSegment::Field(name)) if name == "meta" => (meta, &path.0[1..]),
@@ -106,7 +106,7 @@ pub fn doc_meta(doc: &forge_spec::Document) -> Json {
 }
 
 /// A `style_changed` write's `Json` as a style `Value` — `null`, `""` and
-/// the `[none]` Select sentinel all remove the entry (`None`); bools/numbers
+/// the `[none]` Select sentinel all remove the entry (`None`). Bools/numbers
 /// map to real `Value`s instead of being flattened to strings. Strings go
 /// through the Forge value lexer (`8px` → length, `true` → bool, `row` →
 /// enum, `$theme.x` → token) — before this, a `gap: "8"` typed in the

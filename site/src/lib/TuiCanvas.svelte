@@ -1,6 +1,6 @@
 <!--
 	A terminal canvas (#137): the ratatui twin compiled to WASM renders a Forge
-	document into a TestBackend frame; we draw the rows as a monospace grid.
+	document into a TestBackend frame. We draw the rows as a monospace grid.
 	No iframe — it's a pure render_frame() call, unlike the GPUI canvases.
 -->
 <script lang="ts">

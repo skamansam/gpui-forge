@@ -7,7 +7,7 @@
 //! gpui-fast engine graph into the workspace.
 
 // Not on macOS: `MacPlatform::new` demands a `MainThreadMarker`, which only
-// exists on the real main thread — cargo test runs cases on worker threads,
+// exists on the real main thread. Cargo test runs cases on worker threads,
 // so a live App context can't be created there.
 #![cfg(not(target_os = "macos"))]
 
@@ -31,7 +31,7 @@ root:
       on click: go()
 "#;
 
-/// A no-op adapter — registered on the shell to prove nested previews share
+/// A no-op adapter. Registered on the shell to prove nested previews share
 /// the parent's `libraries` (alias.Name elements render instead of the
 /// "not provided by this adapter" placeholder).
 struct Stub;
@@ -86,7 +86,7 @@ fn forge_view_integration() {
             assert_eq!(doc.root.children[0].element.name, "Text");
         });
 
-        // Registered hooks fire; unknown names bubble to the host's sink.
+        // Registered hooks fire. Unknown names bubble to the host's sink.
         view.update(cx, |view, cx| {
             view.fire_call("go", vec!["'a'".into()], cx);
             view.fire_call("nope", vec!["42".into()], cx);

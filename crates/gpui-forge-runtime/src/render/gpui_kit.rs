@@ -285,7 +285,7 @@ pub struct ForgeView {
     /// Pick hit zones — `(bounds, path)` per rendered node, written by each
     /// node's zone `canvas` during prepaint while `pick` is on. The single
     /// top-level pick overlay hit-tests these to find the deepest node under
-    /// the pointer — nested per-node overlays can't, because the root's
+    /// the pointer. Nested per-node overlays can't, because the root's
     /// overlay shadows every descendant in dispatch order.
     pick_zones: PickZones,
     /// The pick zone under the pointer — each zone canvas paints its accent
@@ -317,7 +317,7 @@ struct ForgeListDelegate {
 impl ForgeListDelegate {
     /// A single `for:` child is the row template — one virtualized row per
     /// resolved item instead of one row rendering the whole loop eagerly.
-    /// Item rows re-resolve each call, so bound lists stay live; an empty
+    /// Item rows re-resolve each call, so bound lists stay live. An empty
     /// source renders `else:` as the only row.
     fn for_control(&self) -> Option<&Control> {
         match self.children.as_slice() {
@@ -548,7 +548,7 @@ impl ForgeView {
         self.write(path, value, cx);
     }
 
-    /// Text shown while the view has no document (used by `forge.Preview`).
+    /// Text displayed while the view has no document (used by `forge.Preview`).
     pub fn set_empty_text(&mut self, text: Option<String>) {
         self.empty_text = text;
     }
@@ -916,9 +916,9 @@ impl ForgeView {
                 }
             };
             // Table row — a fixed-width label column keeps every editor's
-            // left edge on the same gridline; long paths ellipsize with the
+            // left edge on the same gridline. Long paths ellipsize with the
             // full name on hover. `pt` optically aligns the label with the
-            // control's text; `items_start` keeps tall rows (textareas)
+            // control's text. `items_start` keeps tall rows (textareas)
             // anchored to the first line.
             list = list.child(
                 div()
@@ -1136,7 +1136,7 @@ impl ForgeView {
                 }
             });
 
-        // `studio.palette_all` widens the listing to every catalog — each
+        // `studio.palette_all` widens the listing to every catalog. Each
         // element still carries its own library's tag prefix, and groups are
         // prefixed with the library name so `gpui-kit` and `ely` items don't
         // collide. `studio.palette_query` filters element names.
@@ -1184,7 +1184,7 @@ impl ForgeView {
         // Open state lives in studio.palette_open (indices) — groups start open
         // (untracked == open) and header clicks toggle via the accordion callback.
         let open_path = parse_path("studio.palette_open").unwrap();
-        // `None` (never toggled) = every group open; an explicit `[]` =
+        // `None` (never toggled) = every group open. An explicit `[]` =
         // collapse-all — don't conflate them or the last collapse snaps
         // everything back open on the next render.
         let open_set: Option<Vec<usize>> = get_path(self.state(), &open_path)
@@ -1257,7 +1257,7 @@ impl ForgeView {
             grid = grid.item(move |_| item);
         }
         // Search input + "all sets" scope toggle — the query filters element
-        // names in the selected library by default; checking the box widens
+        // names in the selected library by default. Checking the box widens
         // the listing to every catalog (groups get a `lib ·` prefix).
         let search_state = match self.inputs.get(&format!("{key}-pal-search")) {
             Some(state) => state.clone(),
@@ -1309,7 +1309,7 @@ impl ForgeView {
 
         // The palette fills its docked slot (`size_full`) — a content-height
         // column let collapse-all shrink the whole window chain (status bar
-        // floated). The library selector pins at top; the accordion groups
+        // floated). The library selector pins at top. The accordion groups
         // scroll inside the leftover space.
         let handle = self
             .scroll_handles
@@ -1339,14 +1339,14 @@ impl ForgeView {
 
     /// `forge.Icons` — a searchable grid of the app's icon catalog, read
     /// from `AssetSource::list("icons/")`. `icons/<name>.svg` is `lucide`
-    /// (the bundled set); `icons/<set>/<name>.svg` marks a named iconset
+    /// (the bundled set). `icons/<set>/<name>.svg` marks a named iconset
     /// (`icons/heroicons/…`), which the host's asset source layers in.
     /// `set:` picks/binds the browsed set, `sets:` publishes the discovered
     /// sets, `search:` adds a filter box (`query:` exposes its text), and a
     /// click writes `selected` + fires `select` with the icon name.
     /// `category:`/`theme:` bind IconifyJSON metadata filters — categories
-    /// (an icon shows under every category it belongs to) and theme
-    /// prefixes/suffixes (`baseline-`, `-filled`); a bound prop gets a
+    /// (an icon displays under every category it belongs to) and theme
+    /// prefixes/suffixes (`baseline-`, `-filled`). A bound prop gets a
     /// picker, a static one pins the filter. Names sort naturally so the
     /// grid order never shifts under state changes.
     fn icons(
@@ -1377,7 +1377,7 @@ impl ForgeView {
             }
         }
         // Iconify-catalog sets list even with no local files — picking one
-        // browses it over `https` and lazily fetches its name list.
+        // browses it over `https` and lazily gets its name list.
         for set in crate::iconify::sets() {
             by_set.entry(set).or_default();
         }
@@ -1386,10 +1386,10 @@ impl ForgeView {
         }
         let mut sets: Vec<String> = by_set.keys().cloned().collect();
         sets.sort();
-        // Catalog fetch — fire-once per session; `refresh_windows` re-renders
+        // Catalog load — fire-once per session. `refresh_windows` re-renders
         // on land. Always asked for so a stale `sets.json` refreshes too.
         crate::iconify::ensure_sets(cx);
-        // `set:` — bound or static; absent means the view's own iconset. An
+        // `set:` — bound or static. Absent means the view's own iconset. An
         // empty value (bound or static) falls back too, then gets seeded so
         // the picker and grid agree on first render.
         let set_path = self.two_way(node, "set");
@@ -1428,9 +1428,9 @@ impl ForgeView {
             None => self.icons_queries.get(key).cloned().unwrap_or_default(),
         };
         // Iconify-catalog sets route through `ensure_set` — uncached sets get
-        // their one IconifyJSON fetch, cached sets a `lastModified` check,
-        // all fire-once. Only mergeable sets fetch: heroicons' iconify names
-        // and suffix themes join the bundled listing; lucide's flat
+        // their one IconifyJSON load, cached sets a `lastModified` check,
+        // all fire-once. Only mergeable sets load: heroicons' iconify names
+        // and suffix themes join the bundled listing. Lucide's flat
         // `icons/` namespace can't merge and its categories are vendored,
         // so its IconifyJSON buys nothing.
         if iconify_mergeable(&set) && crate::iconify::known_set(&set) {
@@ -1459,8 +1459,8 @@ impl ForgeView {
         // reshuffle every cell.
         names.sort_by(|a, b| crate::iconify::nat_cmp(a, b));
 
-        // `category:` — IconifyJSON `categories` buckets (an icon shows under
-        // every category it belongs to); `theme:` — `prefixes`/`suffixes`
+        // `category:` — IconifyJSON `categories` buckets (an icon displays under
+        // every category it belongs to). `theme:` — `prefixes`/`suffixes`
         // variations. Either binds (a picker renders) or pins statically.
         let mut cats = crate::iconify::categories(&set);
         let themes = crate::iconify::themes(&set);
@@ -1475,7 +1475,7 @@ impl ForgeView {
                 .unwrap_or_default()
         };
         let cat = resolve(&cat_path, "category");
-        // `""`/`"[all]"` = show every group; a bound value pointing at a
+        // `""`/`"[all]"` = display every group. A bound value pointing at a
         // category the set doesn't have resets to the sentinel.
         if !cat.is_empty()
             && cat != "[all]"
@@ -1485,8 +1485,8 @@ impl ForgeView {
             self.update_state(p, Json::String("[all]".into()), cx);
         }
         // `theme:` — multi-select. Bound state holds a `["s:key"/"p:key"]`
-        // array; a bare string is back-compat (the old Select stored
-        // titles); unset defaults to the no-suffix `""` themes so variant
+        // array. A bare string is back-compat (the old Select stored
+        // titles). Unset defaults to the no-suffix `""` themes so variant
         // sets open on their base icons. All-checked or empty = no filter.
         let theme_raw: Option<Json> = theme_path
             .as_ref()
@@ -1524,16 +1524,16 @@ impl ForgeView {
             .find(|e| e.event == "select")
             .map(|e| e.handler.name.clone());
 
-        // `bare:` — the doc lays out its own chrome around the grid from the
+        // `bare:`. The doc lays out its own chrome around the grid from the
         // published outputs (`categories`/`themes`/`meta`/`status`/
         // `attribution`), so none of the synthesized header/search/footer
-        // UI — or its entities — gets built. The grid stays here either way:
+        // UI. Or its entities — gets built. The grid stays here either way:
         // measured-width virtualization + per-cell materialization aren't
         // doc-expressible. Same contract as `forge.Inspector`'s data mode.
         let bare = self.prop_bool(node, "bare");
         // Filter row — labeled pickers: `Iconset`, `Category`, `Suffix`.
         // Each is a synthesized `Select` bound to its prop's path (or an
-        // internal slot); a pinned static prop hides its picker since it IS
+        // internal slot). A pinned static prop hides its picker since it IS
         // the filter. `search:` renders on its own row below.
         let chrome = !bare;
         let label = |text: &str, cx: &mut Context<Self>| {
@@ -1609,7 +1609,7 @@ impl ForgeView {
             None
         };
         // Category + suffix/theme pickers join the set picker on the filter
-        // row — same bound-or-static rules; a bound slot holding no valid
+        // row — same bound-or-static rules. A bound slot holding no valid
         // option seeds the "[all]" sentinel.
         let static_cat = node
             .props
@@ -1644,7 +1644,7 @@ impl ForgeView {
         }
         // Suffix/prefix themes are checkboxes (multi-select, OR semantics)
         // labeled by the dominant kind. Checked state lives in the bound
-        // array; each click toggles one entry in place.
+        // array. Each click toggles one entry in place.
         if chrome && themes.len() > 1 && !static_theme {
             use crate::iconify::ThemeKind;
             let bind = theme_path
@@ -1707,7 +1707,7 @@ impl ForgeView {
                 header = header.child(cb);
             }
         }
-        // Size dropdown — `size:` drives icon size + cell stride; sits
+        // Size dropdown — `size:` drives icon size + cell stride. Sits
         // beside the other filters per #bugs.
         if chrome {
             let size_bind = self
@@ -1733,7 +1733,7 @@ impl ForgeView {
                     )));
         }
         // License line + attribution alert for the browsed set. Bundled sets
-        // have static licenses; iconify sets carry catalog metadata (`name`,
+        // have static licenses. Iconify sets carry catalog metadata (`name`,
         // `license.title/spdx`). Any license not in the no-attribution list
         // legally requires shipping the notice with the built app. Computed
         // before `set` moves into the list closure.
@@ -1780,12 +1780,12 @@ impl ForgeView {
                 );
             }
         }
-        // Download state — a live bar while a set fetches, an error + retry
+        // Download state — a live bar while a set loads, an error + retry
         // when it failed (the request key stays consumed until `retry`).
         let dl = crate::iconify::download_progress(&set);
         let dl_error = crate::iconify::fetch_error(&set);
         // Live download state in the footer while the grid still has content
-        // — a re-fetch (stale check / migrate) shouldn't blank the browser.
+        // — a reload (stale check / migrate) shouldn't blank the browser.
         if let Some((done, total)) = dl {
             let pct = if total > 0 {
                 (done as f32 / total as f32) * 100.
@@ -1820,16 +1820,16 @@ impl ForgeView {
                 .banner(),
             );
         }
-        // Cells — icon over its name; `selected` highlights, click writes the
+        // Cells — icon over its name. `selected` highlights, click writes the
         // bound path and fires `select` with the name baked as its arg. A
         // `uniform_list` of fixed-height rows virtualizes the ~1800-icon lucide
         // catalog — a flat flex-wrap grid of that many SVGs hangs layout.
         // Column count follows the list's measured width (the tracked scroll
-        // handle's bounds, populated after first layout; the window viewport
+        // handle's bounds, populated after first layout. The window viewport
         // minus sidebar chrome estimates the first frame). Resizes re-render
         // and re-wrap.
         // `size:` (XSmall/Small/Medium/Large) sizes both the icon glyphs and
-        // the cell stride; the legacy `studio.icon_size` slot is the fallback
+        // the cell stride. The legacy `studio.icon_size` slot is the fallback
         // for docs that never bound the prop. Unset = Medium, the original
         // 88px.
         let icon_size = self
@@ -1861,14 +1861,14 @@ impl ForgeView {
         let cols = ((w / cell).floor() as usize).max(1);
         // One fixed content width for EVERY cell — `w/cols` minus the
         // inter-cell gap. `flex_1`/caps gave full and partial rows different
-        // widths; a pinned width puts every column on the same grid.
+        // widths. A pinned width puts every column on the same grid.
         let gap_px = 8.0_f32;
         let cell_w = ((w - (cols.saturating_sub(1) as f32) * gap_px) / cols as f32).max(24.);
         // Category grouping — `[all]`/unset renders every non-empty category
-        // as a section (an icon in multiple categories appears under each);
+        // as a section (an icon in multiple categories appears under each).
         // a selection narrows to that one group. Sets without categories
         // render flat with no headers. Empty groups emit no rows at all.
-        // Recompute Uncategorized against the merged, filtered name list —
+        // Recompute Uncategorized against the merged, filtered name list.
         // `categories()` derives it from iconify names only, which misses
         // bundled-set extras and materialized copies a set file never saw.
         if !cats.is_empty() {
@@ -1929,10 +1929,10 @@ impl ForgeView {
         };
         // Data-mode outputs — bound out-props publish everything the built-in
         // chrome renders so a doc can lay out its own (`bare:` suppresses the
-        // chrome; the grid draws either way). `categories` includes the
-        // computed Uncategorized bucket so a yaml picker can select it;
+        // chrome. The grid draws either way). `categories` includes the
+        // computed Uncategorized bucket so a yaml picker can select it.
         // `themes` carries each option's encoded key + checked flag so a
-        // doc-side checkbox row can toggle `theme:` through a host hook;
+        // doc-side checkbox row can toggle `theme:` through a host hook.
         // `meta`/`status`/`attribution` cover license info, download state
         // and the attribution warning.
         {
@@ -1989,8 +1989,8 @@ impl ForgeView {
                     let Some(path) = out else { continue };
                     let value = match name {
                         // Empty for category-less sets — a doc-side `if:`
-                        // hides its picker rather than showing a lone
-                        // `[all]`; the built-in picker hides the same way.
+                        // hides its picker rather than displaying a lone
+                        // `[all]`. The built-in picker hides the same way.
                         "categories" => Json::Array(if cats.is_empty() {
                             Vec::new()
                         } else {
@@ -2171,9 +2171,9 @@ impl ForgeView {
                                         // retains a failed load forever. An
                                         // iconify name resolvable in the
                                         // cached set JSON renders through
-                                        // the `svg()` layer; otherwise the
-                                        // whole set's one fetch is queued
-                                        // and a placeholder shows until
+                                        // the `svg()` layer. Otherwise the
+                                        // whole set's one load is queued
+                                        // and a placeholder displays until
                                         // `refresh_windows` flips
                                         // everything local.
                                         let cell_icon = if materialized.contains(name)
@@ -2296,9 +2296,9 @@ impl ForgeView {
         root.child(body).into_any_element()
     }
 
-    /// `forge.Files` (#148) — a file tree. Two listing modes: `of:` names a
+    /// `forge.Files` (#148). A file tree. Two listing modes: `of:` names a
     /// state path holding a JSON listing (`[{name, path, dir, children}]`),
-    /// `root:` names a directory the element scans itself — `filter:` globs
+    /// `root:` names a directory the element scans itself. `Filter:` globs
     /// limit file names, `depth:`/`hidden:` bound the scan, and a `nonce:`
     /// prop or the refresh button busts the cache after out-of-band changes.
     /// `search:` adds a filter box whose text `query:` exposes. `icons:` and
@@ -2313,8 +2313,8 @@ impl ForgeView {
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let sel = self.two_way(node, "selected");
-        // The bound value marks the "active" row (the open file in Studio) —
-        // external writes highlight its row even when the tree's own click
+        // The bound value marks the "active" row (the open file in Studio).
+        // External writes highlight its row even when the tree's own click
         // selection sits elsewhere.
         let sel_value = sel
             .as_ref()
@@ -2332,7 +2332,7 @@ impl ForgeView {
         let root = self.prop_text(node, "root").filter(|r| !r.is_empty());
         // `folders: navigate` — dir rows enter the folder in place instead of
         // expanding (`tree`, the default, expands in place). Only meaningful
-        // in `root:` mode; the current dir is clamped under `root:` so project
+        // in `root:` mode. The current dir is clamped under `root:` so project
         // switches and removed folders reset to the root.
         let navigate =
             root.is_some() && self.prop_text(node, "folders").as_deref() == Some("navigate");
@@ -2349,7 +2349,7 @@ impl ForgeView {
             None
         };
         // `of:` is an explicit state listing — when set it always wins over
-        // `root:`; absent, `root:` scans the filesystem itself.
+        // `root:`. Absent, `root:` scans the filesystem itself.
         let (data, cache_key) = if root.is_some() && self.prop(node, "of").is_none() {
             let filters = self
                 .prop(node, "filter")
@@ -2376,7 +2376,7 @@ impl ForgeView {
                 .clone()
                 .unwrap_or_else(|| root.clone().unwrap_or_default());
             // Navigate mode lists one folder flat — `depth:` still applies to
-            // the scan's child collection, but only the top level is shown.
+            // the scan's child collection, but only the top level is displayed.
             let depth = if navigate { 1 } else { depth };
             let cache_key = format!("{key}|{scan_root}|{filters:?}|{depth}|{hidden}|{nonce}");
             let entries = match self.files_cache.get(&cache_key) {
@@ -2406,7 +2406,7 @@ impl ForgeView {
             (data.as_array().cloned().unwrap_or_default(), None)
         };
 
-        // `query:` exposes the search text to the host; without it the
+        // `query:` exposes the search text to the host. Without it the
         // component keeps the query in `files_queries` keyed by element.
         let query_path = self.two_way(node, "query");
         let query = match &query_path {
@@ -2532,7 +2532,7 @@ impl ForgeView {
         // The `Tree` virtualizes rows off a uniform_list — it needs a
         // bounded slot or its scroll viewport is empty and nothing paints.
         // `size_full` on the column + `flex_1/min_h_0` on the tree slot lets
-        // a bounded parent pass its height through; unbounded parents fall
+        // a bounded parent pass its height through. Unbounded parents fall
         // back to content height and the list just renders every row.
         v_flex()
             .size_full()
@@ -2552,7 +2552,7 @@ impl ForgeView {
     }
 
     /// The `Tree` half of `forge.Files` — rows carry the click/select/context
-    /// wiring; `files` wraps it with the search header when needed. `sel_value`
+    /// wiring. `files` wraps it with the search header when needed. `sel_value`
     /// is the `selected:` bind's current value — the row whose id matches is
     /// painted active regardless of where the tree's own click selection sits.
     #[allow(clippy::too_many_arguments)]
@@ -2664,7 +2664,7 @@ impl ForgeView {
                 })
                 // #148 nice-to-haves — right-click file ops. The items call
                 // shell hooks (`files_new`/`files_reveal`/`files_rename`)
-                // with the row's path; a host without those hooks sees no
+                // with the row's path. A host without those hooks sees no
                 // action (the sink no-ops unknown calls).
                 .context_menu({
                     let weak = menu_weak.clone();
@@ -2836,7 +2836,7 @@ impl ForgeView {
             for def in defs {
                 let name = def.name.clone();
                 // Synthesized node: element name as positional content and
-                // sample values for props, so the widget shows a themed state.
+                // sample values for props, so the widget displays a themed state.
                 let mut props: Entries = Vec::new();
                 for p in &def.props {
                     if let Some(v) = sample_prop_value(p) {
@@ -3065,7 +3065,7 @@ impl ForgeView {
 
     /// `is:`/`not:`/`case` equality — numbers compare by value so a `u64`
     /// index write (`Json::from(usize)`) and a `4` literal (`f64`) agree.
-    /// serde_json `Number` equality is representation-strict; `4 != 4.0`.
+    /// serde_json `Number` equality is representation-strict. `4 != 4.0`.
     pub fn value_eq(&self, a: &Json, b: &Json) -> bool {
         match (a, b) {
             (Json::Number(x), Json::Number(y)) => x.as_f64() == y.as_f64(),
@@ -3087,7 +3087,7 @@ impl ForgeView {
     /// Renders `nodes` as siblings — control blocks and control-modified
     /// elements each expand to zero or more elements. A `for` loop, not
     /// `flat_map`: iterator adaptor frames cost kilobytes of stack each, and
-    /// this recurses once per document depth — deep docs overflow the
+    /// this recurses once per document depth. Deep docs overflow the
     /// default 8MB stack otherwise.
     fn render_kids(
         &mut self,
@@ -3604,7 +3604,7 @@ impl ForgeView {
     }
 
     /// The host's iconset — `[icons] set` in forge.toml. `meta.iconset` on
-    /// the document itself still wins; `lucide` is the bundled default.
+    /// the document itself still wins. `lucide` is the bundled default.
     pub fn set_project_iconset(&mut self, set: Option<String>) {
         self.project_iconset = set;
     }
@@ -3622,9 +3622,9 @@ impl ForgeView {
     /// A document-facing icon (`icon:` props, `Icon` elements) — follows
     /// `iconset()`. Chrome glyphs (chevrons, file rows, toolbar) stay on the
     /// bundled lucide set via `icon()`. The asset-source probe resolves every
-    /// local layer (embedded, fs roots, iconify cache); only when bytes are
-    /// missing *and* the set is iconify-hosted does it queue a lazy fetch and
-    /// show a placeholder — the image cache retains a failed load, so the
+    /// local layer (embedded, fs roots, iconify cache). Only when bytes are
+    /// missing *and* the set is iconify-hosted does it queue a lazy load and
+    /// display a placeholder. The image cache retains a failed load, so the
     /// real path must not render until the SVG exists.
     fn doc_icon(&self, name: &str, cx: &mut App) -> Icon {
         doc_icon_for(self.iconset(), name, cx)
@@ -3643,7 +3643,7 @@ impl ForgeView {
         path.to_path_buf()
     }
 
-    /// Drains accumulated errors — the host captures them to show or handle.
+    /// Drains accumulated errors — the host captures them to display or handle.
     pub fn take_errors(&mut self) -> Vec<String> {
         let mut errors = std::mem::take(&mut self.errors);
         errors.append(&mut PENDING_ERRORS.lock().unwrap_or_else(|e| e.into_inner()));
@@ -3756,7 +3756,7 @@ impl ForgeView {
         }
         // Data mode — binding `items`/`styles`/`header` switches the element
         // to a data provider: the doc lays out the fields itself with
-        // `for:` + `forge.InspectorField`; nothing renders here.
+        // `for:` + `forge.InspectorField`. Nothing renders here.
         let items_out = self.two_way(node, "items");
         let styles_out = self.two_way(node, "styles");
         let header_out = self.two_way(node, "header");
@@ -3886,7 +3886,7 @@ impl ForgeView {
             }]
         };
         // Style tab — one typed control per `KEYS` entry (set first, then
-        // unset), bound `document.edits.style.<name>`; keyword styles render
+        // unset), bound `document.edits.style.<name>`. Keyword styles render
         // Selects led by `[none]` (clears the entry but keeps the row).
         let style_children = vec![Node {
             element: ElementRef {
@@ -3960,7 +3960,7 @@ impl ForgeView {
     }
 
     /// Renders `forge.InspectorField` — the prop editor for one inspector item.
-    /// `item:` takes the `{$item}` descriptor from a `for:` over `items:`/`styles:`;
+    /// `item:` takes the `{$item}` descriptor from a `for:` over `items:`/`styles:`.
     /// `kind`/`name`/`type`/`options` props override or supply the same fields.
     /// The control binds `document.edits.*` and fires `*_changed` just like the
     /// built-in layout does — wrap it in `FormField` for a label.
@@ -4303,7 +4303,7 @@ impl ForgeView {
         let placeholder = self.prop_text(node, "placeholder").unwrap_or_default();
         let masked = self.prop_bool(node, "masked");
         let path = self.two_way(node, "value");
-        // The bound path rides the cache key — a reordered row (inspector
+        // The bound path rides the cache key. A reordered row (inspector
         // set-first ordering, `for:` shifts) reusing this slot must not
         // inherit an entity whose subscription still writes the old path.
         let state_key = format!(
@@ -4455,7 +4455,7 @@ impl ForgeView {
                     // `compat: true` (#145) — the pane renders the document
                     // through the gpui-kit analogue map even while a remote
                     // host is live: mapped widgets give structure, selection
-                    // and DnD; the host keeps running separately for fidelity.
+                    // and DnD. The host keeps running separately for fidelity.
                     let compat = self.prop_text(node, "compat").is_some_and(|v| v == "true");
                     // `remote:` non-empty — the document previews in an
                     // out-of-process host (#97). The element is a framed card
@@ -4483,7 +4483,7 @@ impl ForgeView {
                         // A frame-streaming host's ANSI bytes land in state as
                         // `preview.panes.<id>.frame` ({seq, cols, rows, data}).
                         // The card feeds new chunks through the pane's terminal
-                        // emulator and paints the styled grid — native-only;
+                        // emulator and paints the styled grid — native-only.
                         // alacritty can't build on wasm, where the web canvas
                         // renders ratatui through its own path.
                         #[cfg(not(target_arch = "wasm32"))]
@@ -4554,7 +4554,7 @@ impl ForgeView {
                                     // #120 — `mode: embedded` — the host window
                                     // floats over this slot via `frame_rect`. The
                                     // content area is transparent so the foreign
-                                    // pixels show through, chrome stays for context.
+                                    // pixels bleed through, chrome stays for context.
                                     div()
                                         .size_full()
                                         .border_1()
@@ -4753,7 +4753,7 @@ impl ForgeView {
         // #145 — compat canvas: a same-named foreign element (a `Badge` in a
         // guise doc) reaches the kit dispatch before the fallback lookup, so
         // the document base's `canvas:` map applies here — retargets and prop
-        // renames included. Identity self-maps are skipped; chained maps
+        // renames included. Identity self-maps are skipped. Chained maps
         // resolve for a few hops, and the mapped clone keeps path/id/children.
         let mut mapped: Option<Node> = None;
         if let Some(cat) = self
@@ -5043,7 +5043,7 @@ impl ForgeView {
                 }
                 // `diagnostics:` — squiggle markers, usually bound to state fed
                 // by `forge check` (#128). Rebuilt each render. The component
-                // underlines the ranges and shows a hover popover.
+                // underlines the ranges and displays a hover popover.
                 if let Some(value) = self.prop(node, "diagnostics") {
                     let markers = self.markers(value);
                     state.update(cx, |s, _| {
@@ -5189,7 +5189,7 @@ impl ForgeView {
             }
             "Tabs" => {
                 // `selected` only controls the bar when the node sets it —
-                // the catalog ships `default: 0`, and `prop()` resolves that
+                // the catalog ships `default: 0`. `Prop()` resolves that
                 // for unset nodes, which would pin every Tabs to index 0 and
                 // swallow clicks. Read the node's own props.
                 let bound = node
@@ -5352,7 +5352,7 @@ impl ForgeView {
                 let name = self.prop_text(node, "name").unwrap_or_default();
                 // `set:` (or a `set:name` prefix) picks the icon set — default
                 // is the doc's `meta.iconset`/project iconset. A name missing
-                // locally queues the iconify fetch where resolvable and shows
+                // locally queues the iconify load where resolvable and displays
                 // a placeholder until the SVG lands.
                 let (set, name) = match name.split_once(':') {
                     Some((set, name)) => (set.to_string(), name.to_string()),
@@ -5364,7 +5364,7 @@ impl ForgeView {
                 };
                 let element = svg().path(doc_icon_path(&set, &name, cx));
                 // `svg()` has no intrinsic size — `size:` takes a px length
-                // or the catalog enum (gpui-kit's steps: 12/14/16/24px);
+                // or the catalog enum (gpui-kit's steps: 12/14/16/24px).
                 // default 16px like a Medium icon.
                 let element = match self.prop(node, "size").and_then(length) {
                     Some(size) => element.w(size).h(size),
@@ -6271,7 +6271,7 @@ impl ForgeView {
                 .into_any_element()
             }
             "Grid" | "GridLayout" => {
-                // CSS-grid display; `columns:` sets the track count.
+                // CSS-grid display. `columns:` sets the track count.
                 let kids = children(self, window, cx);
                 styled = true;
                 let mut el = div().grid();
@@ -6390,7 +6390,7 @@ impl ForgeView {
             }
             "Popover" => {
                 // Deferred render: the content builder runs inside
-                // `Context<PopoverState>` at open time, so the body nodes go
+                // `Context<PopoverState>` at open time. The body nodes go
                 // through `try_update` to re-enter ForgeView and render live —
                 // bindings inside the popover stay reactive.
                 let trigger_kid = node.children.first().cloned();
@@ -7048,10 +7048,10 @@ impl ForgeView {
         };
         let path = key.replacen("root", "0", 1).replace('/', ".");
         let element = if self.pick {
-            // Element-picker — each node records its rect into `pick_zones`
-            // so the single top-level pick overlay can resolve the deepest
-            // node under the pointer (per-node click overlays can't: the
-            // root's shadows every descendant in dispatch order). The zone
+            // Element-picker. Each node records its rect into `pick_zones`.
+            // The single top-level pick overlay can then resolve the deepest
+            // node under the pointer. Per-node click overlays cannot — the
+            // root's shadows every descendant in dispatch order. The zone
             // canvas also paints the accent frame while it is `pick_hover`.
             let zones = self.pick_zones.clone();
             let hover = self.pick_hover.clone();
@@ -7245,7 +7245,7 @@ fn inspector_scroll_style() -> Entries {
     ]
 }
 
-/// Every style key the inspector lists — set entries first in `style:`
+/// Every style key the inspector lists. Set entries first in `style:`
 /// order, then the rest of `KEYS`, so clearing a value (`[none]`, an empty
 /// input) removes the entry without its row disappearing.
 /// Rows in stable registry order — set-first ordering made a row teleport
@@ -7307,7 +7307,7 @@ fn unset_style_seed(key: &str) -> Json {
 
 /// A style key's `type`/`options` for `forge.Inspector` items and the
 /// built-in layout — keyword styles become Selects led by `[none]` (the
-/// clear sentinel `style_edit_value` maps to removal); a current value
+/// clear sentinel `style_edit_value` maps to removal). A current value
 /// outside the keyword list is kept selectable as the second option.
 fn style_item_type(name: &str, value: &Json) -> (&'static str, Vec<String>) {
     use forge_spec::style::{StyleType, key_type};
@@ -7351,7 +7351,7 @@ fn inspector_control(kind: &str, name: &str, ty: &str, options: Vec<String>) -> 
         ),
     };
     let path = parse_path(&edit_path).ok()?;
-    // `kind` picks the edit namespace/event (above); `ty` alone picks the
+    // `kind` picks the edit namespace/event (above). `ty` alone picks the
     // widget so `style` rows get the same typed controls as props.
     let (element, bind_prop, extra) = match ty {
         "bool" => ("Switch", "checked", vec![]),
@@ -7590,9 +7590,9 @@ impl Render for ForgeView {
 /// callback — `on_mouse_event` asserts the Paint draw phase, and `canvas`
 /// paint is the only paint-phase hook an element tree gets. Window-level
 /// listeners are needed because the pointer leaves the 16px grip within a
-/// pixel or two of a drag (the same reason `resizable_panel` and scrollbars
-/// listen window-wide).
-/// `Popover::trigger` requires `Selectable` — this wrapper satisfies the bound
+/// pixel or two of a drag. `resizable_panel` and scrollbars listen
+/// window-wide for the same reason.
+/// `Popover::trigger` requires `Selectable`. This wrapper satisfies the bound
 /// for arbitrary rendered content. The flag is inert: the popover only uses it
 /// for open-state styling, which Forge triggers leave to the child.
 struct SelectableAny {
@@ -7630,7 +7630,7 @@ impl IntoElement for SelectableAny {
 
 /// A dialog-sized container with a bottom-right corner grip that drags the
 /// overlay wider/taller. `open_dialog` wraps `Dialog#id` declarations that opt
-/// in with `resizable: true`; the declared `width`/`height` become the initial
+/// in with `resizable: true`. The declared `width`/`height` become the initial
 /// size and the inner root style is rewritten to `full` so content tracks the
 /// drag.
 pub struct ResizableDialog {
@@ -7647,7 +7647,7 @@ struct ResizeDrag {
 }
 
 impl ResizableDialog {
-    /// `size` is the dialog's initial extent; `min` is the smallest the grip
+    /// `size` is the dialog's initial extent. `min` is the smallest the grip
     /// will shrink it to.
     pub fn new(
         child: Entity<ForgeView>,
@@ -7806,7 +7806,7 @@ fn wrap(
 ) -> AnyElement {
     // Always wrap leaves in a block `div` — gpui-kit roots are
     // `size_full()` (Select, DatePicker, …). Bare in a flex column that
-    // `height: 100%` steals the column's free space from siblings; inside a
+    // `height: 100%` steals the column's free space from siblings. Inside a
     // block wrapper it resolves against the leaf's own slot instead.
     if scrollable(entries) {
         let handle = handles.entry(format!("{id}-scroll")).or_default().clone();
@@ -7898,7 +7898,7 @@ fn anchor(name: &str) -> Anchor {
 }
 
 /// `icons/<set>/<name>.svg` — `lucide` (the bundled set) keeps the flat
-/// `icons/` prefix; any other set looks under its own directory, which the
+/// `icons/` prefix. Any other set looks under its own directory, which the
 /// host's `AssetSource` layers over the embedded catalog.
 fn icon_path(set: &str, name: &str) -> String {
     match set {
@@ -7908,14 +7908,14 @@ fn icon_path(set: &str, name: &str) -> String {
 }
 
 /// Sets canonical to the bundled catalog — iconify hosts its own versions
-/// under these names; fetching them would mix versions in the same `icons/`
+/// under these names. Loading them would mix versions in the same `icons/`
 /// namespace, so they never go through `iconify::ensure_set`.
 const BUNDLED_SETS: &[&str] = &["lucide", "heroicons"];
 
 /// Iconify names can merge into a set's listing only where `icon_path` maps
 /// them into the `icons/<set>/` namespace the synth layer serves — embedded
 /// files still win on collision. Flat-namespaced bundled sets (`lucide`:
-/// `icons/<name>.svg`) can't merge; those names would never resolve.
+/// `icons/<name>.svg`) can't merge. Those names would never resolve.
 fn iconify_mergeable(set: &str) -> bool {
     !matches!(set, "" | "lucide")
 }
@@ -7946,7 +7946,7 @@ fn picker(options: Vec<String>, bind: Path) -> Node {
 }
 
 /// Theme keys encode `"s:<key>"`/`"p:<key>"` in bound state so prefix and
-/// suffix entries never collide; `""` keys (default themes) survive as
+/// suffix entries never collide. `""` Keys (default themes) survive as
 /// bare `"s:"`/`"p:"`.
 fn theme_sel_encode(kind: crate::iconify::ThemeKind, key: &str) -> String {
     let k = if kind == crate::iconify::ThemeKind::Prefix {
@@ -7970,7 +7970,7 @@ fn theme_sel_decode(s: &str) -> Option<(crate::iconify::ThemeKind, String)> {
 /// `raw` is the bound `theme` value: a `["s:key"/"p:key"]` array, or a bare
 /// string for back-compat (`"[all]"`, or a theme title the old Select
 /// wrote). Empty/unset state defaults to the `""` no-suffix entries so
-/// variant sets open on their base icons — "show all" is reached by
+/// variant sets open on their base icons. "display all" is reached by
 /// checking every box, not by emptying the list.
 fn theme_selection(
     themes: &[(crate::iconify::ThemeKind, String, String)],
@@ -8016,15 +8016,15 @@ fn icon_set(set: &str, name: &str) -> Icon {
 }
 
 /// `doc_icon` for closures that captured `iconset` rather than `self`. The
-/// `AssetSource::load` probe covers every local layer — embedded lucide,
-/// bundled sets, fs roots, vendored files, the iconify cache — so only a
-/// genuinely-remote name queues a fetch and shows a placeholder (the image
-/// cache retains a failed load, so the real path can't render early).
-/// Probe-then-fetch icon path resolution — never hands `path()` bytes that
+/// `AssetSource::load` probe covers every local layer. Embedded lucide,
+/// bundled sets, fs roots, vendored files, the iconify cache. So only a
+/// genuinely-remote name queues a load and displays a placeholder. The image
+/// cache retains a failed load, so the real path cannot render early.
+/// Probe-then-load icon path resolution. Never hands `path()` bytes that
 /// don't exist (the image cache retains a failed load forever). Missing
-/// locally, the iconify fetch is queued only where the name resolves in the
-/// `icons/<set>/` namespace the synth layer serves (bundled lucide's flat
-/// paths can never synthesize); bundled files stay canonical on collision.
+/// locally, the iconify load is queued only where the name resolves in the
+/// `icons/<set>/` namespace the synth layer serves. Bundled lucide's flat
+/// paths can never synthesize. Bundled files stay canonical on collision.
 fn doc_icon_path(set: &str, name: &str, cx: &mut App) -> String {
     let path = icon_path(set, name);
     if cx.asset_source().load(&path).ok().flatten().is_some() {
@@ -8083,7 +8083,7 @@ impl ForgeView {
     /// (`"bold green"`, `"italic #ffcc00"`, `"underline $theme.success"`), a
     /// map (`{weight: bold, italic: true, underline: true, color: ...}`), or —
     /// for bindings — a JSON object/string in the same shapes. A bare string
-    /// prop also reads as `"glob = style; glob = style"` lines.
+    /// prop also reads as `"glob = style. Glob = style"` lines.
     fn highlights(&self, value: &Value, cx: &App) -> Vec<(String, FileHighlight)> {
         match value {
             Value::Map(entries) => entries
@@ -8106,7 +8106,7 @@ impl ForgeView {
         }
     }
 
-    /// `"glob = style; glob = style"` / newline-separated shorthand lines.
+    /// `"glob = style. Glob = style"` / newline-separated shorthand lines.
     fn highlight_lines(&self, text: &str, cx: &App) -> Vec<(String, FileHighlight)> {
         text.split([';', '\n'])
             .filter_map(|line| {
@@ -8246,7 +8246,7 @@ fn parse_hex(hex: &str) -> Option<Rgba> {
 
 /// Lucide icon for a `forge.Files` row: folders swap open/closed, files get a
 /// glyph by extension, unknowns fall back to a plain `file`. `icon_map`
-/// (`{ext-or-key: icon}`) overrides the built-in table; `dir`, `dir-open`
+/// (`{ext-or-key: icon}`) overrides the built-in table. `dir`, `dir-open`
 /// and `file` rename the structural glyphs.
 fn file_icon(name: &str, is_dir: bool, expanded: bool, icon_map: &[(String, String)]) -> String {
     let custom = |key: &str| {
@@ -8356,8 +8356,8 @@ pub fn scan_files(
         .collect()
 }
 
-/// `forge.Files` search — name-substring filter over the listing JSON. A file
-/// keeps itself on a hit, a dir keeps itself (and its whole subtree) on a hit
+/// `forge.Files` search. Name-substring filter over the listing JSON. A file
+/// keeps itself on a hit. A dir keeps itself and its whole subtree on a hit,
 /// or survives with filtered children so matches stay under their folders.
 pub fn filter_listing(entries: &[Json], query: &str) -> Vec<Json> {
     let q = query.to_lowercase();
@@ -8399,7 +8399,7 @@ pub fn glob_match(pattern: &str, name: &str) -> bool {
 }
 
 /// `forge.Showcase` sample props — a declared `default` wins. Otherwise a
-/// plausible value per type so every widget shows a themed state. It uses
+/// plausible value per type so every widget displays a themed state. It uses
 /// active for checked/pressed/selected/open, the first enum variant, and sample strings.
 fn sample_prop_value(prop: &forge_spec::catalog::PropDef) -> Option<Value> {
     if let Some(default) = &prop.default {
@@ -8823,7 +8823,7 @@ impl IntoElement for BoundsTracker {
 }
 
 /// Positional `key`s collide when generated rows reorder (`for:` shifts,
-/// conditional branches) — salting a state cache key with the node's bound
+/// conditional branches). Salting a state cache key with the node's bound
 /// paths stops a row inheriting an entity that still displays or writes
 /// another binding's value.
 pub(crate) fn bind_salt(node: &Node) -> String {

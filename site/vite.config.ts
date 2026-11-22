@@ -10,7 +10,7 @@ export default defineConfig({
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
 			adapter: adapter({ fallback: '404.html' }),
-			// GitHub Pages serves the site from /gpui-forge; set BASE_PATH='' for a custom domain.
+			// GitHub Pages serves the site from /gpui-forge. Set BASE_PATH='' for a custom domain.
 			paths: { base: (process.env.BASE_PATH ?? '') as '' | `/${string}` }
 		})
 	],

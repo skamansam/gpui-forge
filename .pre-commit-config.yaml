@@ -1,0 +1,28 @@
+# Git hooks, run by prek (https://prek.j178.dev) or pre-commit.
+#
+# These are the same commands CI runs, so a commit that passes here does not fail
+# for a reason the author could have seen locally. `cargo xtask check` remains
+# the single entry point for the Rust gate. This file is the commit-time
+# version of the prose gate.
+#
+# Install once per clone:
+#
+#     prek install
+#
+# Run everything without committing:
+#
+#     prek run --all-files
+
+repos:
+  - repo: local
+    hooks:
+      # The STE rule applies when a file is touched: each staged .md/.mdx file
+      # is linted in full. Vendored trees and deleted files are skipped inside
+      # the script.
+      - id: ste-lint
+        name: STE prose lint
+        entry: scripts/ste-check.sh --files
+        language: system
+        files: '\.mdx?$'
+        pass_filenames: true
+        require_serial: true

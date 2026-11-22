@@ -121,7 +121,7 @@ pub struct Base {
     views: RefCell<HashMap<String, AnyView>>,
 }
 
-/// Renders a doc node in a later pass — compound components hand these to
+/// Renders a doc node in a later pass. Compound components hand these to
 /// `AnyElement` child slots (panels, scroll content, field bodies) so the
 /// render doesn't re-enter `ForgeView` while it is already borrowed.
 struct BaseProxy {
@@ -2798,7 +2798,7 @@ fn preview_card_side(node: &Node) -> PreviewCardSide {
 
 // === Event wiring ===
 // `on <event>:` bindings reach these widgets through base-gpui callbacks that
-// run during the widget's own update, so they bounce through a WeakEntity and
+// run during the widget's own update. They bounce through a WeakEntity and
 // tolerate a held borrow (try_update) rather than re-entering ForgeView.
 
 /// The state path a `{{…}}`-bound prop points at.

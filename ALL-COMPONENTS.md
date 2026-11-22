@@ -1,6 +1,6 @@
 # All Components
 
-Every exported element/widget in each upstream library — `[x]` = implemented for Forge
+Every exported element/widget in each upstream library. `[x]` = implemented for Forge
 documents (a runtime render arm, a `ForgeLibrary` adapter, or a `canvas:` mapping),
 `[ ]` = upstream component with no Forge support yet. `→ X` marks the canvas analogue.
 Upstream support/variant/helper types (`*State`, `*Event`, `*Variant`, `*Size`…)
@@ -51,7 +51,7 @@ github: https://github.com/longbridge/gpui-kit
 - [x] Label (https://gpui.rs/components/label)
 - [x] List (https://gpui.rs/components/list)
 - [x] Marker (https://gpui.rs/components/marker)
-- [ ] Menu (https://gpui.rs/components/menu) — native app menus are host-level; in-doc menus: ContextMenu/DropdownMenu
+- [ ] Menu (https://gpui.rs/components/menu) — native app menus are host-level. In-doc menus: ContextMenu/DropdownMenu
 - [ ] MessageScroller (https://gpui.rs/components/messagescroller) — needs a per-row render callback
 - [x] Message (https://gpui.rs/components/message)
 - [x] Notification (https://gpui.rs/components/notification)
@@ -203,7 +203,7 @@ github: https://github.com/longbridge/gpui-kit
 docs: https://elygpui.com/  
 github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 
-> The ely site advertises 1279 items (widgets + ~900 icons). Below is every exported widget type in `ely-core` 0.2 plus the `ely-terminal` 0.1.1 crate — the `[x]` entries render natively via `forge-lib-ely` (`use: ely: ely-core`); the rest have no Forge adapter support yet. `ely-terminal.Terminal` is native-only (pty); on wasm the `Terminal` element is absent by `cfg`.
+> The ely site advertises 1279 items (widgets + ~900 icons). Below is every exported widget type in `ely-core` 0.2 plus the `ely-terminal` 0.1.1 crate — the `[x]` entries render natively via `forge-lib-ely` (`use: ely: ely-core`). The rest have no Forge adapter support yet. `ely-terminal.Terminal` is native-only (pty). On wasm the `Terminal` element is absent by `cfg`.
 
 - [x] Accordion
 - [x] AccordionItem
@@ -391,7 +391,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] PieMenu
 - [ ] Place — positioning enum (Center/Left/Right/Top/Bottom)
 - [ ] Presence — Avatar presence enum — set via `presence` prop
-- [ ] ProcessList — `ely-terminal` — `Process` rows; needs live process data
+- [ ] ProcessList — `ely-terminal` — `Process` rows. Needs live process data
 - [x] ProgressBar
 - [x] ProgressRing
 - [x] PromptDialog
@@ -466,9 +466,9 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 - [x] TableOfContents
 - [x] Tabs
 - [x] Tag
-- [x] Terminal — `ely-terminal` — pty `command`/`cwd` or `output` replay; native only
+- [x] Terminal — `ely-terminal` — pty `command`/`cwd` or `output` replay. Native only
 - [x] TerminalToolbar — `ely-terminal` — clear/stop/split/`shells` picker
-- [ ] TextInput — input state entity; Forge inputs manage it internally
+- [ ] TextInput — input state entity. Forge inputs manage it internally
 - [x] TimePicker
 - [x] Timeline
 - [x] TimelineItem
@@ -621,7 +621,7 @@ github: https://github.com/ELY-Open-Source/Ely-GPUI-Components
 docs: https://docs.rs/guise  
 github: https://github.com/wess/guise
 
-> Vanilla-gpui flavor base — `base: guise` on crates.io `gpui 0.2.2`. Below is every exported widget type in `guise-ui` 1.10 — `[x]` entries are mapped by `catalogs/guise.catalog.yaml` (`Stack`/`Group` surface as Forge `VStack`/`HStack`); each unchecked entry carries a one-line reason it stays unmapped.
+> Vanilla-gpui flavor base — `base: guise` on crates.io `gpui 0.2.2`. Below is every exported widget type in `guise-ui` 1.10 — `[x]` entries are mapped by `catalogs/guise.catalog.yaml` (`Stack`/`Group` surface as Forge `VStack`/`HStack`). Each unchecked entry carries a one-line reason it stays unmapped.
 
 - [x] About
 - [x] Accordion
@@ -681,7 +681,7 @@ github: https://github.com/wess/guise
 - [x] Divider
 - [ ] Draggable — drag-source primitive — `SortableList` covers reorderable lists
 - [x] Drawer
-- [ ] DropTarget — drop-target primitive — needs host drag state; `Dropzone` covers file drops
+- [ ] DropTarget — drop-target primitive — needs host drag state. `Dropzone` covers file drops
 - [x] Dropzone
 - [x] Editor
 - [x] Field
@@ -818,7 +818,7 @@ github: https://crates.io/crates/ferrum-flow
 docs: https://luketandjung.github.io/base-gpui/overview/quick-start.html  
 github: https://github.com/LukeTandjung/base-gpui
 
-> Headless Base UI port (vendored at `vendor/base-gpui`, pinned to a Zed gpui rev) — `use: base: base-gpui`, rendered by `forge-lib-base`. Components ship unstyled as compound parts (`XxxRoot` + named parts — per-part inventory under "base-gpui parts" below); the adapter composes them into the `[x]` Forge elements with default chrome via `style_with_state`. Support types (`*Props`, `*Runtime`, `*Context`, `*StyleState`, `*Child`, `*ChildWiring`, `*Metadata`, `*Details`, `*Outcome`, `*Handler`, action/key-context consts, option enums like `AutocompleteMode`/`MenubarOrientation`, and helper fns like `input`/`scrollbar`/`modal_backdrop`/`point_in_*`/`normalize_otp_value`) are omitted for readability, as are the `Autocomplete*`/`ContextMenu*` aliases re-exporting Combobox/Menu parts. Event wiring: `on change:`/`on open:`/`on submit:`/`on activate:`/`on input:`/`on complete:` fire Forge handlers and write `bind $path`/`$path`-bound props back to state — `base.Input`/`base.ToolbarInput`/`FieldControl` value callbacks take `Fn(SharedString)` with no `&mut App`, so text-input `change` is not wireable upstream.
+> Headless Base UI port (vendored at `vendor/base-gpui`, pinned to a Zed gpui rev) — `use: base: base-gpui`, rendered by `forge-lib-base`. Components ship unstyled as compound parts (`XxxRoot` + named parts — per-part inventory under "base-gpui parts" below). The adapter composes them into the `[x]` Forge elements with default chrome via `style_with_state`. Support types (`*Props`, `*Runtime`, `*Context`, `*StyleState`, `*Child`, `*ChildWiring`, `*Metadata`, `*Details`, `*Outcome`, `*Handler`, action/key-context consts, option enums like `AutocompleteMode`/`MenubarOrientation`, and helper fns like `input`/`scrollbar`/`modal_backdrop`/`point_in_*`/`normalize_otp_value`) are omitted for readability, as are the `Autocomplete*`/`ContextMenu*` aliases re-exporting Combobox/Menu parts. Event wiring: `on change:`/`on open:`/`on submit:`/`on activate:`/`on input:`/`on complete:` fire Forge handlers and write `bind $path`/`$path`-bound props back to state — `base.Input`/`base.ToolbarInput`/`FieldControl` value callbacks take `Fn(SharedString)` with no `&mut App`, so text-input `change` is not wireable upstream.
 
 - [x] Accordion — AccordionRoot + Item/Header/Trigger/Panel parts
 - [x] AlertDialog — AlertDialogRoot + Trigger/Popup parts (Action/Cancel unmapped)
@@ -863,7 +863,7 @@ github: https://github.com/LukeTandjung/base-gpui
 docs: https://luketandjung.github.io/base-gpui/overview/quick-start.html  
 github: https://github.com/LukeTandjung/base-gpui
 
-> Compound child parts — each renders inside its component's arm (`*Root` is the anchor the adapter builds; `*Portal`/`Positioner`/`Backdrop`/`Arrow`/`Viewport`/`Provider` are overlay plumbing it owns). `[x]` = already composed by a `base.*` element.
+> Compound child parts — each renders inside its component's arm (`*Root` is the anchor the adapter builds. `*Portal`/`Positioner`/`Backdrop`/`Arrow`/`Viewport`/`Provider` are overlay plumbing it owns). `[x]` = already composed by a `base.*` element.
 
 - [x] AccordionHeader — base.Accordion
 - [x] AccordionItem — base.Accordion
@@ -1220,7 +1220,7 @@ github: https://github.com/AprilNEA/gpui-symbols
 > `use: symbols: gpui-symbols` (guise feature-gated adapter).
 
 - [x] Icon
-- [ ] SfSymbol — rasterizer — `render()` yields RenderImage; `Icon` wraps it
+- [ ] SfSymbol — rasterizer — `render()` yields RenderImage. `Icon` wraps it
 - [ ] SymbolScale — enum — small/medium/large for SfSymbol
 - [ ] SymbolWeight — enum — stroke weight for SfSymbol
 
@@ -1230,14 +1230,14 @@ docs: https://ratatui.rs/
 github: https://github.com/ratatui/ratatui
 
 > ratatui-flavor base — `[x]` widgets render natively in the ratatui arm and
-> via `canvas:` mappings on the gpui compat canvas; the catalog also provides
+> via `canvas:` mappings on the gpui compat canvas. The catalog also provides
 > `VStack`/`HStack`/`Input` analogues ratatui lacks.
 
 - [x] BarChart — ratatui arm — `data`/`labels`/`bar_width`/`max`
 - [ ] Bar — bar value type consumed by BarChart
 - [ ] BarGroup — grouping descriptor for BarChart
 - [x] Block
-- [x] Calendar — ratatui arm — `Monthly` behind `widget-calendar`; `date` prop
+- [x] Calendar — ratatui arm — `Monthly` behind `widget-calendar`. `date` prop
 - [x] Canvas — ratatui arm — `map` draws the world map layer
 - [x] Chart — ratatui arm — `data`/`name`/axis bounds
 - [ ] Circle — canvas shape — needs a Canvas draw context
@@ -1309,7 +1309,7 @@ github: https://github.com/iced-rs/iced
 docs: https://crates.io/crates/bezel  
 github: https://crates.io/crates/bezel
 
-> The `bezel` base catalog renders via `canvas:` mappings; the `bezel-*` crates are scaffolds with no Forge adapter yet.
+> The `bezel` base catalog renders via `canvas:` mappings. The `bezel-*` crates are scaffolds with no Forge adapter yet.
 
 - [x] VStack — → VStack
 - [x] HStack — → HStack
@@ -1330,7 +1330,7 @@ github: https://crates.io/crates/bezel
 docs: https://augani.github.io/adabraka-ui/  
 github: https://crates.io/crates/adabraka-ui
 
-> adabraka-ui (shadcn flavor) on the adabraka-gpui fork — the catalog's `[x]` elements render via `canvas:`/shared arms; the remaining upstream exports have no Forge adapter yet.
+> adabraka-ui (shadcn flavor) on the adabraka-gpui fork — the catalog's `[x]` elements render via `canvas:`/shared arms. The remaining upstream exports have no Forge adapter yet.
 
 - [x] VStack — → VStack
 - [x] HStack — → HStack

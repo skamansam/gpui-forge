@@ -7,7 +7,7 @@ publish.workspace = true
 repository.workspace = true
 
 # One base per binary — `cargo build -p forge-preview` produces `forge-preview`
-# (gpui-kit); `--no-default-features --features base-guise` produces
+# (gpui-kit). `--no-default-features --features base-guise` produces
 # `forge-preview-guise`.
 [[bin]]
 name = "forge-preview"
@@ -77,7 +77,7 @@ bezel = { version = "0.2.24", optional = true, features = ["platform"] }
 ratatui = { version = "0.29", optional = true, default-features = false, features = ["crossterm"] }
 crossterm = { version = "0.28", optional = true }
 # Emulator for the ratatui_fidelity example — no gpui feature (native cell
-# grid only; TermView stays off this base's build).
+# grid only. TermView stays off this base's build).
 forge-term = { path = "../forge-term", optional = true, default-features = false }
 iced = { version = "0.13", optional = true }
 serde = { version = "1", features = ["derive"] }

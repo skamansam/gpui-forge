@@ -1,8 +1,8 @@
 # Do we need `forge.toml`?
 
-Now that a document's `meta:` block carries app identity (title, app id, icon —
-doc wins, manifest is the fallback), it's fair to ask what the project manifest
-is still *for*. This is the honest inventory and the trade-off.
+A document's `meta:` block now carries app identity — title, app id, icon
+(doc wins, manifest is the fallback). So what is the project manifest still
+*for*? This is the honest inventory and the trade-off.
 
 ## What `forge.toml` actually does today
 
@@ -13,14 +13,14 @@ is still *for*. This is the honest inventory and the trade-off.
 | `package.icon` | `.desktop` `Icon=` in `forge package` | yes — `meta.icon` wins |
 | `package.name` | binary / crate / AppDir name | partially — still manifest-or-file-stem |
 | `package.version` | macOS `CFBundleShortVersionString` only | `meta.version` exists but isn't wired here yet |
-| `package.binary` | `forge package` wraps an *existing workspace binary* (this is how Studio itself ships) | no — can't be; it's about the build target, not a UI doc |
-| `forge.document` | entry doc when pointing `forge` at a dir; skeleton entry | no — only meaningful for multi-doc projects |
+| `package.binary` | `forge package` wraps an *existing workspace binary* (this is how Studio itself ships) | no — can't be. It's about the build target, not a UI doc |
+| `forge.document` | entry doc when pointing `forge` at a dir. Skeleton entry | no — only meaningful for multi-doc projects |
 | `forge.documents` | explicit doc set for `forge skeleton` | no — the doc set is a project property |
 | `forge.base` | expected base — `skeleton` skips docs targeting other bases | no — it's a project-wide *policy*, docs only declare their own `base:` |
 | `libraries` | extra dependency pins → generated `Cargo.toml` | mostly — `use:` imports already carry versions (`ely: ely-core ^0.2`) |
 | `hooks.krate` | **declared, never consumed** | dead field today |
-| `assets.dir` | `forge package` copies it next to the binary; Studio's Assets tab browses it | no — a directory tree can't live in a doc |
-| `themes.dir` | project theme JSONs merge into the bundled catalog (project wins name collisions); Studio loads them into the live registry | no — theme files, not markup |
+| `assets.dir` | `forge package` copies it next to the binary. Studio's Assets tab browses it | no — a directory tree can't live in a doc |
+| `themes.dir` | project theme JSONs merge into the bundled catalog (project wins name collisions). Studio loads them into the live registry | no — theme files, not markup |
 
 ## Case for dropping it
 
@@ -40,8 +40,8 @@ the app, and builds identically from anywhere.
 places with a precedence rule users have to learn ("doc wins, manifest
 fallback"). Every duplicated key is a support question waiting to happen.
 
-**Redundancy is already real.** `forge.base` duplicates `base:`;
-`libraries` duplicates `use:` versions; `document` duplicates just passing the
+**Redundancy is already real.** `forge.base` duplicates `base:`.
+`libraries` duplicates `use:` versions. `document` duplicates just passing the
 path. Several fields are dead weight.
 
 ## Case for keeping it
@@ -59,7 +59,7 @@ base is expected. That could move to CLI flags, but a manifest is the
 conventional place for it (Cargo.toml, package.json).
 
 **Packaging metadata.** `forge package` builds AppImages, `.app` bundles, NSIS
-installers — `version`, icon, and binary naming are real inputs there, and a
+installers. `version`, icon. Binary naming are real inputs there, and a
 manifest is the natural place for OS-packaging data users wouldn't think to put
 in a UI doc.
 
@@ -70,7 +70,7 @@ Cargo.toml/package.json mental model — "here's my project file."
 
 The question isn't really *manifest vs no manifest* — it's **optional vs
 mandatory**, and that's already decided: the manifest is *always* optional.
-Every field has a doc-meta or file-stem fallback; `ForgeToml::default()` kicks
+Every field has a doc-meta or file-stem fallback. `ForgeToml::default()` kicks
 in whenever no `forge.toml` is found.
 
 So the practical breakdown is:
@@ -83,7 +83,7 @@ So the practical breakdown is:
   earns its place.
 
 **Recommendation: keep the file, shrink its role.** Stop scaffolding it in
-`forge new` — emit a doc with a `meta:` block instead, and let a project grow a
+`forge new`. Emit a doc with a `meta:` block instead. Let a project grow a
 `forge.toml` only when it needs a manifest-level knob (multi-doc skeleton,
 `forge package` on a binary, hook crates). The manifest becomes what it should
 have been all along: an opt-in for *project* configuration, never required for

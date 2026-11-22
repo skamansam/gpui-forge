@@ -217,7 +217,7 @@ elements:
     events:
       select: string
     # Scoped children — the cell template. Rendered per icon under `$item`
-    # = `{name, set, selected, downloaded}`; the runtime keeps the measured
+    # = `{name, set, selected, downloaded}`. The runtime keeps the measured
     # grid frame (pinned width, selected/downloaded rings, hover, click→
     # `selected`/`select`). Absent → the built-in glyph+name cell.
     children: any

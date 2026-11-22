@@ -51,7 +51,7 @@ export function getText(map: YAMLMap, key: string): string {
 	return String(v);
 }
 
-/** Sets a prop (or the content when `key` is the element key); empty removes a prop. */
+/** Sets a prop (or the content when `key` is the element key). Empty removes a prop. */
 export function setText(map: YAMLMap, key: string, value: string, isContent = false) {
 	if (value === '' && !isContent) return void map.delete(key);
 	const scalar = new Scalar(value === '' ? null : value);
@@ -97,7 +97,7 @@ export const stringify = (doc: Document) => doc.toString({ nullStr: '', lineWidt
 
 // ── JSON model <-> YAML document (#38 import/export) ──────────────────────
 // The JSON side is forge-spec's serde Document: props/style are [key, Value]
-// pairs, events are {event, handler:{name,args}} and values are externally
+// pairs. Events are {event, handler:{name,args}} and values are externally
 // tagged enum objects like {"String":"x"}.
 
 const pathFrom = (v: unknown[]): string =>

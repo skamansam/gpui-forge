@@ -82,7 +82,7 @@ pub trait ForgeLibrary {
     fn catalog(&self) -> Option<&Catalog> {
         None
     }
-    /// Renders `alias.<element>`; `None` falls through to the unknown-element
+    /// Renders `alias.<element>`. `None` falls through to the unknown-element
     /// placeholder.
     fn render(
         &self,
@@ -95,7 +95,7 @@ pub trait ForgeLibrary {
 }
 
 // A fixed dark palette — guise's Theme installs a global, but primitive divs
-// need literal colors; these match the zinc/blue scheme Studio uses.
+// need literal colors. These match the zinc/blue scheme Studio uses.
 const BG: u32 = 0x18181b;
 const BORDER: u32 = 0x3f3f46;
 const FG: u32 = 0xf4f4f5;
@@ -186,13 +186,13 @@ impl ForgeView {
         self.write(path, value, cx);
     }
 
-    /// Text shown while the view has no document (used by `forge.Preview`).
+    /// Text displayed while the view has no document (used by `forge.Preview`).
     pub fn set_empty_text(&mut self, text: Option<String>) {
         self.empty_text = text;
     }
 
     /// Registers `handler` for `on <event>: name(args)` bindings. Handlers may
-    /// edit this view freely; unregistered names report to the hook sink.
+    /// edit this view freely. Unregistered names report to the hook sink.
     pub fn set_hook(&mut self, name: impl Into<String>, handler: HookHandler) {
         self.hooks.insert(name.into(), handler);
     }
@@ -306,7 +306,7 @@ impl ForgeView {
         self.libraries.push(Rc::new(lib));
     }
 
-    /// Drains accumulated errors — the host captures them to show or handle.
+    /// Drains accumulated errors — the host captures them to display or handle.
     pub fn take_errors(&mut self) -> Vec<String> {
         let mut errors = std::mem::take(&mut self.errors);
         errors.append(&mut PENDING_ERRORS.lock().unwrap_or_else(|e| e.into_inner()));
@@ -566,7 +566,7 @@ impl ForgeView {
         if let Some(ns) = node.element.namespace.as_deref() {
             if ns == "forge" {
                 // `forge.Preview` hosts a nested document — `set_preview_document`
-                // fills `previews`; the other intrinsics stay stubs until the
+                // fills `previews`. The other intrinsics stay stubs until the
                 // Studio-parity port lands.
                 if node.element.name == "Preview" {
                     let id = self.prop_text(node, "id");
@@ -823,7 +823,7 @@ impl ForgeView {
             }
             "Dialog" => {
                 // Overlays need trigger+open-state management — a prop-driven
-                // dialog shows its title/body as a styled surface for now.
+                // dialog displays its title/body as a styled surface for now.
                 let title = self.prop_text(node, "title");
                 let mut d = div()
                     .flex()

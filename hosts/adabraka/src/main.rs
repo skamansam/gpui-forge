@@ -4,7 +4,7 @@
 //! its own Cargo.lock resolves a graph without gpui-kit.
 //!
 //! Same JSON wire protocol as `forge-preview` (protocol.rs is shared
-//! verbatim); Studio spawns this binary for `base: adabraka` documents.
+//! verbatim). Studio spawns this binary for `base: adabraka` documents.
 
 use forge_spec::catalog::Catalog;
 use gpui::prelude::*;

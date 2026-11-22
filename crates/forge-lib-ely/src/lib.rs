@@ -115,7 +115,7 @@ use std::sync::OnceLock;
 pub struct Ely {
     inited: Cell<bool>,
     /// `&Entity<TextInput>` fields keyed by element key — inputs carry their
-    /// state in the entity, so it must persist across renders; the view's own
+    /// state in the entity, so it must persist across renders. The view's own
     /// entity maps are private to the base.
     texts: RefCell<HashMap<String, Entity<ely_core::forms::TextInput>>>,
     tocs: RefCell<HashMap<String, Entity<TocSections>>>,
@@ -136,7 +136,7 @@ pub struct Ely {
     terminals: RefCell<HashMap<String, Entity<ely_terminal::Terminal>>>,
 }
 
-/// Renders one Forge child in its own entity update — the ely widgets'
+/// Renders one Forge child in its own entity update. The ely widgets'
 /// lazy-content slots (`content` closures, `over`, pane bodies) need a view
 /// they can clone and draw later.
 struct LibProxy {
@@ -202,7 +202,7 @@ impl Ely {
 
     /// The `ely_terminal::Terminal` entity behind a `Terminal` key — `output`
     /// replays a recorded stream, otherwise `command`/`cwd` spawn a pty
-    /// (default: the login shell); a failed spawn shows its error on the grid.
+    /// (default: the login shell). A failed spawn shows its error on the grid.
     #[cfg(not(target_family = "wasm"))]
     fn terminal(
         &self,
@@ -387,7 +387,7 @@ impl Ely {
 
 /// `on <event>:` calls on a library node, as `Fn(&mut Window, &mut App)` —
 /// most ely handlers take that exact shape. (Plain `on click:` is wrapped by
-/// the runtime itself; this covers `change`, `confirm`, `close`, ….)
+/// the runtime itself. This covers `change`, `confirm`, `close`, ….)
 fn handler(
     view: &ForgeView,
     node: &Node,
@@ -570,7 +570,7 @@ fn fire_index(
     })
 }
 
-/// `lines` prop → `LogLine`s — 'at|LEVEL|target|message' rows; `at` may be empty.
+/// `lines` prop → `LogLine`s — 'at|LEVEL|target|message' rows. `at` may be empty.
 fn log_lines_of(node: &Node) -> Vec<LogLine> {
     prop_str(node, "lines")
         .lines()
@@ -601,7 +601,7 @@ fn log_level_of(text: &str) -> LogLevel {
     }
 }
 
-/// A `LogViewer` over the node's `lines`; `least`/`query`/`follow` filter,
+/// A `LogViewer` over the node's `lines`. `least`/`query`/`follow` filter,
 /// `on change:` fires on the widget's own level/follow controls.
 fn log_viewer_of(
     node: &Node,
@@ -643,7 +643,7 @@ fn log_viewer_of(
     lv
 }
 
-/// `shells` prop → `ShellChoice`s — 'name=program' pairs split on ';'.
+/// `shells` prop → `ShellChoice`s — 'name=program' pairs split on '.'.
 fn shell_choices_of(node: &Node) -> Vec<ShellChoice> {
     prop_str(node, "shells")
         .split(';')
@@ -657,7 +657,7 @@ fn shell_choices_of(node: &Node) -> Vec<ShellChoice> {
         .collect()
 }
 
-/// A `ShellSelector` over the node's `shells`; `on pick:` fires the index.
+/// A `ShellSelector` over the node's `shells`. `on pick:` fires the index.
 fn shell_selector_of(
     node: &Node,
     key: &str,
@@ -671,7 +671,7 @@ fn shell_selector_of(
     sel
 }
 
-/// A `TerminalToolbar` with an optional shell picker; clear/stop/split/pick fire.
+/// A `TerminalToolbar` with an optional shell picker. Clear/stop/split/pick fire.
 fn terminal_toolbar_of(
     node: &Node,
     key: &str,
@@ -703,7 +703,7 @@ fn terminal_toolbar_of(
     bar
 }
 
-/// `command`/`cwd` props → a `Launch` — `command` splits on whitespace;
+/// `command`/`cwd` props → a `Launch` — `command` splits on whitespace.
 /// empty leaves the default (login shell).
 #[cfg(not(target_family = "wasm"))]
 fn launch_of(node: &Node) -> ely_terminal::Launch {

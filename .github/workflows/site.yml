@@ -1,6 +1,6 @@
 name: Site
 
-# Builds the docs site (site/) with the gpui-kit WASM canvas on every PR, and deploys it to
+# Builds the docs site (site/) with the gpui-kit WASM canvas on every PR. Deploys it to
 # GitHub Pages on every push to main, i.e. whenever a PR is merged.
 on:
   push:
@@ -17,8 +17,8 @@ concurrency:
 
 jobs:
   # One leg per wasm base, in parallel. The compiled bundle is cached by a hash
-  # of every input that can change it — Rust sources, vendored crates,
-  # catalogs and bases (both include_str!'d into the build), and the lockfile —
+  # of every input that can change it. Rust sources, vendored crates,
+  # catalogs and bases (both include_str!'d into the build). The lockfile —
   # so doc/site-only pushes skip the wasm build entirely and a Rust push pays
   # for four parallel legs instead of four sequential ones.
   canvas:

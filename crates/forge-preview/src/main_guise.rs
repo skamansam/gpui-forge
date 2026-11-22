@@ -95,7 +95,7 @@ fn main() {
                                         ),
                                         HostMsg::Theme { dark, colors, .. } => {
                                             // guise installs its Theme as a
-                                            // global — Forge theme names don't
+                                            // global. Forge theme names don't
                                             // resolve here, but the wire palette
                                             // does: map Studio's resolved colors
                                             // onto guise's semantic overrides.

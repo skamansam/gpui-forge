@@ -71,7 +71,7 @@ Value
   | Interpolated([Segment])        // "Hello, {$user.name}"
   | Number(f64, unit?)             // unit: "px" | "rem" | "%" | "fr"; None = unitless
   | Bool
-  | Enum(Ident)                    // bare word, e.g. Primary, center; the catalog may read it as text
+  | Enum(Ident)                    // bare word, e.g. primary, center; the catalog may read it as text
   | Color(rgba)                    // #rgb, #rrggbb, #rrggbbaa
   | Token(path)                    // theme token reference, written $theme.colors.primary
   | List([Value])

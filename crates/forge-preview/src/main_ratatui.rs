@@ -19,8 +19,8 @@ use std::sync::mpsc;
 mod protocol;
 use protocol::{HostMsg, emit, spawn_reader};
 
-/// Collects the bytes a `CrosstermBackend` writes — the same ANSI stream a
-/// real terminal would get — so it can ride the `frame` event to Studio,
+/// Collects the bytes a `CrosstermBackend` writes. The same ANSI stream a
+/// real terminal would get. So it can ride the `frame` event to Studio,
 /// where the card feeds it through `forge_term`'s emulator (#120).
 #[derive(Clone)]
 struct SinkWriter(Rc<RefCell<Vec<u8>>>);
@@ -41,7 +41,7 @@ fn main() {
     let (tx, rx) = mpsc::channel::<HostMsg>();
     spawn_reader(tx);
 
-    // Key channel — /dev/tty raw bytes → keys. stdin is the protocol, so the
+    // Key channel — /dev/tty raw bytes → keys. Stdin is the protocol, so the
     // terminal input side reads the controlling terminal directly (#112).
     let (ktx, krx) = mpsc::channel::<String>();
     std::thread::spawn(move || {

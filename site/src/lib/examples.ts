@@ -12,7 +12,7 @@ export type Example = {
 // One demo per widget set — the same `examples/{demos,showcases}/*.forge.yaml` files the
 // Welcome tab in Forge Studio opens (#129). gpui-kit docs render on the
 // web canvas (libraries the wasm build can't run degrade to a placeholder
-// element); `base: ratatui` docs draw a terminal frame via TuiCanvas, and
+// element). `base: ratatui` docs draw a terminal frame via TuiCanvas, and
 // `native` bases have no web renderer, so the source stands alone.
 import elyDemo from '../../../examples/demos/ely-demo.forge.yaml?raw';
 import gflowDemo from '../../../examples/demos/gflow-demo.forge.yaml?raw';
@@ -36,7 +36,7 @@ export type Showcase = {
 	slug: string;
 	/** The `use:` alias the document imports, if any. */
 	alias?: string;
-	/** The canvas the doc previews on: defaults to gpui-kit; `native` means no
+/** The canvas the doc previews on: defaults to gpui-kit. `native` means no
 	 *  web renderer exists, so the source stands alone. */
 	base?: 'ratatui' | 'iced' | 'bezel' | 'native';
 	title: string;

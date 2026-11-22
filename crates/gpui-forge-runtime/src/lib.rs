@@ -42,11 +42,11 @@ pub mod iconify;
 pub use forge_spec;
 
 /// Rendered documents lay the element tree out recursively on the main
-/// thread — debug frames are fat enough that a ~20-deep document needs
+/// thread. Debug frames are fat enough that a ~20-deep document needs
 /// ~10MB, past the default 8MB Linux stack. The main thread's stack is
-/// fixed at exec time, so binaries that render `ForgeView` should call
+/// fixed at exec time. Binaries that render `ForgeView` should call
 /// this as their first statement: on Linux it re-execs once under
-/// `ulimit -s 65536` — skipped when `/proc/self/limits` already reports a
+/// `ulimit -s 65536`. Skipped when `/proc/self/limits` already reports a
 /// soft limit that high, and `FORGE_STACKED` guards against a re-exec
 /// loop if the raise failed. No-op on other platforms.
 pub fn ensure_main_stack() {
@@ -56,7 +56,7 @@ pub fn ensure_main_stack() {
         if std::env::var_os("FORGE_STACKED").is_some() {
             return;
         }
-        // `Max stack size` soft column — `unlimited` counts as raised; an
+        // `Max stack size` soft column — `unlimited` counts as raised. An
         // unreadable /proc falls through to the re-exec (harmless fork).
         let soft = std::fs::read_to_string("/proc/self/limits")
             .ok()

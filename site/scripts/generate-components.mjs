@@ -3,7 +3,7 @@
 // reconciled against). Runs via `prebuild`/`predev` next to generate-llms.mjs
 // so the page always reflects the real support matrix. The output file is
 // committed like the schemas — regenerate it whenever ALL-COMPONENTS.md
-// changes; do not edit it by hand.
+// changes. Do not edit it by hand.
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -16,7 +16,7 @@ const OUT = join(REPO, 'docs/format/components.md');
 const src = readFileSync(SRC, 'utf8').split('\n');
 
 // How each set is enabled — `use:` for adapter libraries, `base:` for
-// rendering bases. Sections whose note already names a `use:` alias use it;
+// rendering bases. Sections whose note already names a `use:` alias use it.
 // the rest fall back to this map.
 const ENABLE = {
 	'GPUI-KIT Components': '`base: gpui-kit` (default)',

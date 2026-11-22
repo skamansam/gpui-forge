@@ -184,7 +184,7 @@ impl Host {
                     }
                     rows.push(line);
                 }
-                // The wire's stream shape — ratatui's `frame` contract — so a
+                // The wire's stream shape. Ratatui's `frame` contract — so a
                 // `mode: stream` pane or the canvas card can feed it straight
                 // to the terminal emulator (the grid is plain text, no ANSI).
                 emit(json!({

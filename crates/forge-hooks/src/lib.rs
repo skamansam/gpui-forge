@@ -2,7 +2,7 @@
 //! link time via `inventory`, so applications get hook dispatch without a
 //! hand-written match.
 //!
-//! The consumer declares its context once: `type HookCtx = MyState;` — the
+//! The consumer declares its context once: `type HookCtx = MyState.` — the
 //! generated submit wrappers downcast `&dyn Any` to it.
 
 use std::any::Any;
@@ -118,9 +118,9 @@ impl<'a> HookCtx<'a> {
     ///
     /// ```ignore
     /// ctx.spawn(|view, cx| async move {
-    ///     let data = fetch().await;
-    ///     view.update(cx, |this, cx| this.set_ready(data, cx)).ok();
-    /// });
+    ///     let data = fetch().await.
+    ///     view.update(cx, |this, cx| this.set_ready(data, cx)).ok().
+    /// }).
     /// ```
     pub fn spawn<F, Fut>(&mut self, f: F) -> gpui_forge_runtime::base::kit::Task<Fut>
     where

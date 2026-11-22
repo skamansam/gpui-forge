@@ -40,7 +40,7 @@ state:
   bases: list
   name: string
   preview.mode: enum(remote | embedded)
-  # ANSI stream chunk — {seq, cols, rows, data}; the card's emulator consumes it
+  # ANSI stream chunk — {seq, cols, rows, data}. The card's emulator consumes it
   preview.frame: object
   preview.frame_rgba: string
   preview.state: string
@@ -408,12 +408,12 @@ assetsTab: &assetsTab
 # ============================================================================
 # `forge.Icons` browses the app icon catalog — `lucide` (bundled) plus any
 # `icons/<set>/` the asset source layers in. `set`/`selected`/`query` bind
-# out so the doc can restyle the grid; click a cell to write `studio.icon`.
+# out so the doc can restyle the grid. Click a cell to write `studio.icon`.
 
 # The chrome is doc-owned: `forge.Icons` runs `bare` (grid only) and
 # publishes `categories`/`themes`/`meta`/`status`/`attribution` for the
 # pickers, license panel and download state below. Filters write the same
-# bound state the widget reads; `on select` still copies the icon.
+# bound state the widget reads. `on select` still copies the icon.
 iconsTab: &iconsTab
   children:
     - VStack:
@@ -508,7 +508,7 @@ iconsTab: &iconsTab
           attribution: bind $studio.icon_attribution
           on select: icon_copy
           # Scoped children — the cell template. The runtime keeps the
-          # measured grid frame (pinned width, rings, hover, click→`selected`);
+          # measured grid frame (pinned width, rings, hover, click→`selected`).
           # these children render inside each box with `$item` =
           # {name, set, selected, downloaded}.
           children:
@@ -574,10 +574,10 @@ previewSelector: &previewSelector
     # second ForgeView in the canvas, no host. Foreign bases spawn their
     # own `forge-preview-{base}` host: `mode: embedded` floats the host's
     # window over the card, `mode: stream` paints the host's frame grid
-    # inside the card (ratatui sizes it from `frame_rect`), and no `mode`
-    # is the `placeholder` card — a foreign window can't embed.
+    # inside the card (ratatui sizes it from `frame_rect`). No `mode`
+    # is the `placeholder` card. A foreign window can't embed.
     # The `if` keeps hosts from spawning before the Theme tab is shown
-    # (tab index 4 — the pane's window floats over a live slot only).
+    # (tab index 4. The pane's window floats over a live slot only).
     - if: $studio.tab
       is: 4
       children:
@@ -811,7 +811,7 @@ inspector: &inspector
         - VStack:
           style: {grow: true, min-height: 0, border: 1px, border-color: $theme.border, radius: 6px, padding: 12px, gap: 8px}
           children:
-            # Data mode — Inspector publishes items/styles/header; the field
+            # Data mode — Inspector publishes items/styles/header. The field
             # layout is ours (FormField label + forge.InspectorField control).
             - forge.Inspector#props:
               of: canvas
@@ -903,7 +903,7 @@ previewTab: &previewTab
                 grow: true
                 border: 1px
             # #120 Phase 3 — the TUI's ANSI stream lands in `preview.frame`
-            # ({seq, cols, rows, data}); the card's terminal emulator paints it.
+            # ({seq, cols, rows, data}). The card's terminal emulator paints it.
             - Text: "frame {$preview.frame.seq}"
               style:
                 size: xs
@@ -962,7 +962,7 @@ body: &body
                   folders: $studio.files_folders
                   highlights: $studio.files_highlights
                   selected: bind $studio.file_selected
-                  # Single click selects/highlights; double-click (`open`) loads.
+                  # Single click selects/highlights. Double-click (`open`) loads.
                   on open: open_path($studio.file_selected)
                   placeholder: no files here
                   style: {grow: true, min-height: 0, min-width: 0}
@@ -999,7 +999,7 @@ body: &body
                     - Tab: Icons
                       <<: *iconsTab
                     # Only when a forge.toml project is open — edits the
-                    # manifest itself; Apply writes it and re-loads the
+                    # manifest itself. Apply writes it and re-loads the
                     # project (document/icons/assets/themes re-derive).
                     - Tab: Project
                       if: $studio.project
@@ -1107,7 +1107,7 @@ Dialog#preferences:
 # ============================================================================
 # THE NEW PROJECT DIALOG
 # ============================================================================
-# File → New Project… — opens a fresh document in the editor; a folder is
+# File → New Project… — opens a fresh document in the editor. A folder is
 # only asked for on save (#133).
 Dialog#new-project:
   style:
@@ -1238,7 +1238,7 @@ ifChain: &ifChain
 # ============================================================================
 # FOR LOOP EXAMPLE
 # ============================================================================
-# `for:` repeats `children:` per item; `each:` names the scoped var (bound as
+# `for:` repeats `children:` per item. `each:` names the scoped var (bound as
 # `$item`), `index:` optionally names the index, `else:` renders when the
 # list is empty.
 forLoop: &forLoop
@@ -1260,7 +1260,7 @@ forLoop: &forLoop
 # ============================================================================
 # TEMPLATE EXAMPLES
 # ============================================================================
-# `for:` over object lists exposes fields via `$tab.name`; a single (non-list)
+# `for:` over object lists exposes fields via `$tab.name`. A single (non-list)
 # value iterates once. `with:`/`as:` scopes one value explicitly, and
 # `if:`/`for:`/`with:` double as modifiers on any element.
 template: &template

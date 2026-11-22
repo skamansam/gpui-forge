@@ -510,7 +510,7 @@ impl ForgeView {
             .collect()
     }
 
-    /// "label:value,label:value" → chart entries; plain numbers get
+    /// "label:value,label:value" → chart entries. Plain numbers get
     /// positional labels.
     fn entries_of(&self, node: &Node, name: &str) -> Vec<(SharedString, f32)> {
         self.prop_text(node, name)
@@ -3325,7 +3325,7 @@ impl ForgeView {
             }
             "MenuBar" => {
                 if !self.views.contains_key(key) {
-                    // "File:New,Open;Edit:Copy,Paste"
+                    // "File:New,Open.Edit:Copy,Paste"
                     let menus: Vec<(String, Vec<String>)> = self
                         .prop_text(node, "menus")
                         .split(';')

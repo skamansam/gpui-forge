@@ -5,22 +5,22 @@
 # Fields per `[crates.<lib-name>]`:
 #   package   crates.io package (default: the lib name with `_` → `-`)
 #   vendored  source tree under the repo (for crates not on crates.io)
-#   local     workspace crate — component paths check against its own src
+#   local     workspace crate. Component paths check against its own src
 #   skip      don't check this crate at all (the reason, for the report)
-#   pin       intentional non-latest version — reported, not a failure
-#   surface   restrict the "not cataloged" report to a module subtree
-#             (e.g. "iced::widget" — default: every reachable public item)
-#   ignore    export names to never list as "not cataloged" (non-widget types)
+#   pin       intentional non-latest version. Reported, not a failure
+#   surface   restrict the "not cataloged" report to a module subtree.
+#             Example: `iced::widget`. Default: every reachable public item.
+#   ignore    export names to never list as "not cataloged" (non-widget types).
 #   exclude   dep packages whose re-exported surface is hidden from the
-#             "not cataloged" report (engine facades like `pub use gpui::*`)
+#             "not cataloged" report (engine facades like `pub use gpui::*`).
 
-# The published package is `guise-ui`; the library name is `guise`.
+# The published package is `guise-ui`. The library name is `guise`.
 [crates.guise]
 package = "guise-ui"
 exclude = ["gpui"]
 
 # Facades that re-export their gpui engine — hide the engine surface from
-# the "not cataloged" report; their own widget exports still report.
+# the "not cataloged" report. Their own widget exports still report.
 [crates.adabraka_ui]
 exclude = ["adabraka-gpui"]
 
@@ -66,7 +66,7 @@ skip = "forge intrinsics — schema elements, not a Rust crate"
 skip = "template catalog — synthetic example"
 
 # iced and ratatui surface their widgets from a module, not the crate root —
-# the root union still works, but scoping keeps the "not cataloged" list clean.
+# the root union still works. Scoping keeps the "not cataloged" list clean.
 [crates.iced]
 surface = "iced::widget"
 

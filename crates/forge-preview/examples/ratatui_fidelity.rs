@@ -49,7 +49,7 @@ fn ansi(cols: u16, rows: u16, draw: impl FnOnce(&mut Frame)) -> Vec<u8> {
         },
     )
     .expect("terminal");
-    // `Terminal::draw` renders + diffs + emits; `Terminal::flush` would diff
+    // `Terminal::draw` renders + diffs + emits. `Terminal::flush` would diff
     // the *next* (empty) buffer and erase the frame — don't call it.
     term.draw(|f| draw(f)).expect("draw");
     let bytes = sink.0.borrow().clone();
@@ -57,7 +57,7 @@ fn ansi(cols: u16, rows: u16, draw: impl FnOnce(&mut Frame)) -> Vec<u8> {
 }
 
 /// Feed the ANSI stream through the alacritty-backed emulator and print the
-/// resulting grid — glyph text plus a styled-cell count so color fidelity
+/// resulting grid. Glyph text plus a styled-cell count so color fidelity
 /// shows even in a text dump.
 fn show(cols: u16, rows: u16, label: &str, bytes: &[u8]) {
     let mut emu = forge_term::Emulator::new(cols, rows);

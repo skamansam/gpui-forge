@@ -217,7 +217,7 @@
 		const name = e.dataTransfer?.getData('forge-element');
 		if (!name) return;
 		e.preventDefault();
-		// Drop on a container inserts inside; on a leaf it lands next to it.
+		// Drop on a container inserts inside. On a leaf it lands next to it.
 		const m = F.nodeAt(doc!, path);
 		const el = m && catalog[F.elementName(F.elementKey(m) ?? '') ?? ''];
 		const target = el?.children ? path : path.slice(0, -1);

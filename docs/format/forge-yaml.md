@@ -48,7 +48,7 @@ root:
 | `forge` | yes | Spec version, as a string (`"0.1"`) — see Versioning below |
 | `base` | no | Base component system (`gpui-kit`, `bezel`, `adabraka`, `gpui-0.2`, and planned non-GPUI bases `ratatui`, `iced`). Defaults to the project's `forge.toml` |
 | `use` | no | Map of import alias → `"<library-id> [<version-req>]"` |
-| `meta` | no | Map of string → string (title, description, …). `meta: {watch: "true"}` opts the document into Studio hot reload — edits on disk re-check and re-render it, and a parse failure keeps the last-good copy (diagnostics land in the status bar + markers). |
+| `meta` | no | Map of string → string (title, description, …). `meta: {watch: "true"}` opts the document into Studio hot reload. Edits on disk re-validate and re-render it, and a parse failure keeps the last-good copy (diagnostics land in the status bar + markers). |
 | `root` | yes | The root node |
 
 ### Base and library prerequisites
@@ -236,9 +236,9 @@ root:
 - Only one control key per node — nest blocks for combined conditions (`for` + `if` inside).
 - `match` uses `case`/`else` instead of `children`, and cannot be an element modifier.
 - A `List`/`VirtualList` whose *single* child is a `for:` block renders one
-  virtualized row per item instead of one row holding the whole expansion —
-  `each:`/`index:`/`key:` scope the row template exactly as they do inline,
-  and `else:` is the row shown for an empty list:
+  virtualized row per item instead of one row holding the whole expansion.
+  `each:`/`index:`/`key:` scope the row template exactly as they do inline.
+  `else:` is the row shown for an empty list:
 
   ```yaml
   forge: "0.1"
@@ -299,7 +299,7 @@ comments yet.
 
 YAML gotchas the validator reports with a fix hint:
 
-- `color: #fff` parses as an empty value plus a comment → *"expected a color; quote it: `\"#fff\"`"*.
+- `color: #fff` parses as an empty value plus a comment → *"expected a color. Quote it: `\"#fff\"`"*.
 - A value starting with `{` is a YAML flow mapping → quote interpolated strings that start with `{`.
 - Values cannot start with `@` or `` ` `` in YAML. Forge does not use them.
 

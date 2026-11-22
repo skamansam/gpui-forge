@@ -65,7 +65,7 @@ impl ElementDef {
 }
 
 /// A compat-canvas analogue declaration (#145). `canvas: Button` is the
-/// shorthand; the map form also renames props so foreign prop names reach the
+/// shorthand. The map form also renames props so foreign prop names reach the
 /// gpui-kit widget's own names (`canvas: {element: Alert, props: {text:
 /// message}}` — this element's `text` prop renders as the kit `message` prop).
 #[derive(Clone, Debug, PartialEq)]

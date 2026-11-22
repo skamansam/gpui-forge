@@ -9,7 +9,7 @@ repository.workspace = true
 [dependencies]
 ely-core = "0.2"
 # Ely's terminal chapter (published 0.1.1 pins gpui =0.3.10 — same as gpui-kit
-# 0.8.1). `Terminal`/`Launch`/`bind_keys` are wasm-absent; `AnsiText`/
+# 0.8.1). `Terminal`/`Launch`/`bind_keys` are wasm-absent. `AnsiText`/
 # `LogViewer`/shell pickers build everywhere (vte only).
 ely-terminal = "0.1.1"
 gpui-forge-runtime = { path = "../gpui-forge-runtime" }

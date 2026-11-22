@@ -5,7 +5,7 @@ Iconify's lucide.json ships no `categories`, but the lucide-icons/lucide
 repo carries them as per-icon metadata (`icons/<name>.json` ->
 `categories: [slugs]`) plus display titles in `categories/<slug>.json`.
 Deprecated/renamed icons reference `$extends:<target>` in place of a
-real category; we follow those refs so aliases inherit their target's
+real category. We follow those refs so aliases inherit their target's
 categories.
 
 Usage: python3 scripts/gen-lucide-categories.py

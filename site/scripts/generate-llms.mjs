@@ -1,7 +1,7 @@
 // Generates static/llms.txt and static/llms-full.txt from the real doc sources
 // in ../docs. Runs via `prebuild`/`predev` so the files stay in sync with the
 // docs tree — edit the docs, rebuild, and both files update. Both outputs are
-// gitignored; llms.txt is a generated artifact, not a hand-maintained file.
+// gitignored. Llms.txt is a generated artifact, not a hand-maintained file.
 //
 // Section layout and the short descriptions of the app routes (editor,
 // examples, releases) are curated here. Doc-page descriptions are pulled from

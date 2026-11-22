@@ -21,7 +21,7 @@ to pick the right editor widget. `forge check`/`forge build` handle them like
 `meta:`/`use:`.
 
 When a document loads into a `ForgeView` (`set_document`), every declared
-path seeds to its type's zero value — `string`→`""`, `bool`→`false`,
+path seeds to its type's zero value. `string`→`""`, `bool`→`false`,
 `number`/`slider`→`0`, `list`→`[]`, `object`/`map`→`{}`, `color`→`"#000000"`,
 `enum(a | b)`→first variant — *only* where the path is absent or null, so
 live values survive a reload. This is the same initialization

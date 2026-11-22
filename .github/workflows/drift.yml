@@ -35,7 +35,7 @@ jobs:
         run: cargo xtask components --check --report drift-report.md
 
       # The report lands even when the check failed — annotations are already
-      # emitted by xtask; this publishes the markdown version.
+      # emitted by xtask. This publishes the markdown version.
       - name: Publish step summary
         if: always()
         run: cat drift-report.md >> "$GITHUB_STEP_SUMMARY"

@@ -134,7 +134,7 @@ impl AssetSource for StudioAssets {
             return Ok(Some(bytes));
         }
         // Iconify — `icons/<set>/<name>.svg` synthesizes from the cached
-        // `IconifyJSON` (`ensure_set` fills it); renders gated on
+        // `IconifyJSON` (`ensure_set` fills it). Renders gated on
         // `icon_cached` reach here only for resolvable names.
         if let Some(rest) = path.strip_prefix("icons/")
             && let Some((set, name)) = rest.split_once('/')

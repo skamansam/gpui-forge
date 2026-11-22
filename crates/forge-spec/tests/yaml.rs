@@ -237,7 +237,7 @@ fn text(value: Option<&Value>) -> Option<&str> {
 
 #[test]
 fn anchors_aliases_and_merge_keys() {
-    // Fragments at the top level hold `&anchor` slots; `<<` splices them in.
+    // Fragments at the top level hold `&anchor` slots. `<<` splices them in.
     let doc = read(
         r#"
 forge: "0.1"
@@ -600,7 +600,7 @@ fn control_flow_errors() {
     // `match` with `children`.
     let e = errors("forge: \"0.1\"\nroot:\n  match: $x\n  children:\n    - Text: a\n");
     assert!(e.contains("`match` uses `case` arms"), "{e}");
-    // `match` modifying an element.
+    // `match` applied to an element.
     let e = errors("forge: \"0.1\"\nroot:\n  Button: x\n  match: $m\n  case a:\n    - Text: a\n");
     assert!(e.contains("`match` cannot modify an element"), "{e}");
     // Props on a bare control block.

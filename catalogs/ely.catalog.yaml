@@ -650,7 +650,7 @@ elements:
       version: string
       date: string
       summary: "string"
-      changes: string  # "kind:text;kind:text" — kinds: added, changed, deprecated, removed, fixed, security
+      changes: string  # "kind:text.Kind:text" — kinds: added, changed, deprecated, removed, fixed, security
 
   Comparison:
     icon: columns-3
@@ -660,7 +660,7 @@ elements:
     children: none
     props:
       columns: list<string>
-      rows: list<string>   # "name|cell|cell…"; cells "yes"/"no"/"true"/"false" → marks
+      rows: list<string>   # "name|cell|cell…". Cells "yes"/"no"/"true"/"false" → marks
 
   ActivityFeed:
     icon: activity
@@ -841,7 +841,7 @@ elements:
     children: none
     props:
       items: list<string>   # "value|label|icon" (label, icon optional)
-      value: string         # selected value(s); list for multiple
+      value: string         # selected value(s). List for multiple
       multiple: {type: bool, default: false}
     events:
       change:

@@ -22,7 +22,7 @@ x11rb = "0.14.0"
 raw-window-handle = "0.6.2"
 
 # Same fix as the root workspace — xattr 0.2.3 reads libc::ENOATTR which glibc
-# lacks; the vendored 0.2.4 maps it to ENODATA on Linux. This workspace has its
+# lacks. The vendored 0.2.4 maps it to ENODATA on Linux. This workspace has its
 # own lockfile, so the patch must live here too.
 [patch.crates-io]
 xattr = { path = "../../vendor/xattr" }

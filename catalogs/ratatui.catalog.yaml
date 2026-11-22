@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../schema/catalog-0.1.json
 # Catalog manifest for the ratatui TUI base. Scaffold for #112 — elements are
-# terminal widgets/layouts; `style:` adapts to ratatui constraints.
+# terminal widgets/layouts. `style:` adapts to ratatui constraints.
 # Format: docs/spec/catalog-manifest.md
 catalog: "0.1"
 library: ratatui

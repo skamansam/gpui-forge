@@ -42,7 +42,7 @@ document = "app.forge.yaml"
 |---|---|
 | `base` | The [base component system](forge-yaml.md#base-and-library-prerequisites) the document renders on. Checked against the shipped registry. |
 | `document` | Entry document, relative to the manifest — what bare `forge build`/`check`/`preview` resolve. |
-| `watch` | `true` opts the project into hot reload in Studio — documents opened under it re-render on save (even without their own `meta.watch`), and the manifest itself is polled: edits to `document`/`icons`/`assets`/`themes` re-apply live. |
+| `watch` | `true` opts the project into hot reload in Studio. Documents opened under it re-render on save (even without their own `meta.watch`), and the manifest itself is polled: edits to `document`/`icons`/`assets`/`themes` re-apply live. |
 
 ## `[assets]` — static files
 

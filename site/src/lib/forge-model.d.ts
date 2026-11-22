@@ -67,8 +67,8 @@ export type BindingMode = "OneWay" | "TwoWay";
 /**
  * Control-flow modifier — `if`, `for`, `with` or `match` (`docs/format/forge-yaml.md`).
  *
- * `children` always holds the primary branch (the then-body, loop body or
- * scoped body); `match` uses `cases` instead and carries no `children`.
+ * `children` always holds the primary branch: the then-body, loop body,
+* or scoped body. `match` uses `cases` instead and carries no `children`.
  */
 export type Control =
   | {
@@ -126,7 +126,7 @@ export interface Document {
   schema?: string | null;
   version: string;
   /**
-   * Base component system; inherited from `forge.toml` when absent.
+   * Base component system. Inherited from `forge.toml` when absent.
    */
   base?: string | null;
   imports: Import[];
@@ -134,7 +134,7 @@ export interface Document {
   /**
    * Top-level `state:` — declared state vars: `path -> type` (e.g.
    * `studio.theme: string`). `forge.Vars` uses the type to pick the
-   * editor widget; `forge check` validates bindings to undeclared paths.
+* editor widget. `forge check` validates bindings to undeclared paths.
    */
   state: [unknown, unknown][];
   /**
@@ -160,7 +160,7 @@ export interface Node {
   element: ElementRef;
   id?: string | null;
   /**
-   * Positional value; the catalog maps it to the element's primary prop.
+   * Positional value. The catalog maps it to the element's primary prop.
    */
   content?: Value | null;
   props: [unknown, unknown][];
@@ -170,7 +170,7 @@ export interface Node {
   /**
    * Control flow — `if`, `for`, `with` or `match`. On a bare block
    * (`- if: $cond`) it is the node's whole meaning and `element` is a
-   * `forge.X` sentinel; on an element it modifies that element.
+   * `forge.X` sentinel. On an element it modifies that element.
    */
   control?: Control | null;
   /**
@@ -183,7 +183,7 @@ export interface Node {
 }
 export interface ElementRef {
   /**
-   * Import alias; `None` is the base library.
+   * Import alias. `None` is the base library.
    */
   namespace?: string | null;
   name: string;

@@ -103,7 +103,7 @@ const PREVIEW_BASES: &[&str] = &[
 
 /// Widget sets the Start tab offers in its showcase picker (#129): the
 /// gpui-kit base, the `forge` intrinsics, every registered `forge-lib-*`.
-/// Then the foreign-base showcases (they launch their preview host).
+/// Then the foreign-base showcases (they start their preview host).
 const WIDGET_SETS: &[&str] = &[
     "gpui-kit", "forge", "ely", "gflow", "base", "video", "hig", "pdf", "wb", "math", "guise",
     "bezel", "ratatui", "iced", "adabraka",
@@ -117,11 +117,11 @@ struct Shared {
     dir: Option<PathBuf>,
     catalogs: Vec<Catalog>,
     /// The open project's `[icons] set` — forwarded to the canvas preview as
-    /// its `project_iconset` for docs under `project_dir`; a document's own
+    /// its `project_iconset` for docs under `project_dir`. A document's own
     /// `meta.iconset` overrides it.
     project_iconset: Option<String>,
     /// The open project's root — `project_iconset` only applies to docs
-    /// under it; files opened elsewhere fall back to lucide.
+    /// under it. Files opened elsewhere fall back to lucide.
     project_dir: Option<PathBuf>,
     /// The project's `[forge] watch` — when true, opened docs hot-reload
     /// even without their own `meta.watch`, and `watch_manifest` tracks the
@@ -130,7 +130,7 @@ struct Shared {
     /// The `forge.toml` currently being watched — `watch_manifest` exits
     /// when this no longer matches its path (project switched).
     manifest_watching: Option<PathBuf>,
-    /// The open project's `forge.toml` — the Project tab edits this file;
+    /// The open project's `forge.toml` — the Project tab edits this file.
     /// `save_project` writes `studio.toml_source` back here.
     project_toml: Option<PathBuf>,
     /// Undo/redo — snapshots of `(document, editor source)` taken before each
@@ -140,8 +140,8 @@ struct Shared {
 }
 
 /// #150 — a persisted window placement. `maximized` restores as
-/// `WindowBounds::Maximized`; fullscreen saves as windowed (restoring
-/// fullscreen on launch is hostile).
+/// `WindowBounds::Maximized`. Fullscreen saves as windowed (restoring
+/// fullscreen at startup is hostile).
 #[derive(Clone, Copy, PartialEq)]
 struct SavedWindow {
     x: f64,
@@ -190,7 +190,7 @@ enum HostEvent {
     Call(String),
     /// The host's whole view state after a write — the `on_state` sink.
     State(Json),
-    /// #120 Phase 3 — a TUI frame as the host's real ANSI byte stream;
+    /// #120 Phase 3 — a TUI frame as the host's real ANSI byte stream.
     /// the card feeds it through `forge_term`'s emulator into styled cells.
     Frame {
         seq: u64,
@@ -230,7 +230,7 @@ fn main() {
         cx.bind_keys([
             gpui::KeyBinding::new("escape", gpui_forge_runtime::render::CancelPick, None),
             gpui::KeyBinding::new("ctrl-s", gpui_forge_runtime::render::SaveDocument, None),
-            // Never fires on Linux/Windows; keeps the binding for macOS.
+            // Never fires on Linux/Windows. Keeps the binding for macOS.
             gpui::KeyBinding::new("cmd-s", gpui_forge_runtime::render::SaveDocument, None),
         ]);
         // Reap the preview hosts on any quit path — the `quit` hook is
@@ -257,7 +257,7 @@ fn main() {
         .detach();
         // #150 — restore persisted geometry. The saved rect counts as
         // visible when its title-bar strip still overlaps a live
-        // display (a display may have been unplugged); size floors sit
+        // monitor (a monitor may have been unplugged). Size floors sit
         // at #149's eventual minimum. Anything else → centered.
         let prefs = load_prefs();
         let key = |k: &str| prefs.get(k).and_then(Json::as_f64);
@@ -410,7 +410,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     all_themes.push("--- Dark Themes ---".to_string());
     all_themes.extend(dark_themes.iter().cloned());
     let prefs = load_prefs();
-    // Global pref — a custom iconify cache root, applied before any fetch.
+    // Global pref — a custom iconify cache root, applied before any load.
     if let Some(dir) = prefs.get("icon_cache").and_then(|j| j.as_str())
         && !dir.is_empty()
     {
@@ -438,69 +438,69 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     }
     view.set_state(
         json!({
-            "studio": {
-                "dark": dark,
-                "light_themes": light_themes,
-                "dark_themes": dark_themes,
-                "all_themes": all_themes,
-                "theme": theme_name,
-                "theme_json": theme_json,
-                // #144 — the base selector's options live in state so the
-                // cycle button walks the same list; `theme_preview` persists
-                // across launches via the prefs file.
-                "preview_bases": PREVIEW_BASES,
-                "theme_preview": prefs
-                    .get("theme_preview")
-                    .and_then(|j| j.as_str())
-                    .unwrap_or(BASE_ID),
-                // `forge.Files` options — Preferences → Files writes these;
-                // persisted across launches via the prefs file.
-                "files_search": prefs
-                    .get("files_search")
-                    .and_then(|j| j.as_bool())
-                    .unwrap_or(true),
-                "files_icons": prefs
-                    .get("files_icons")
-                    .and_then(|j| j.as_bool())
-                    .unwrap_or(true),
-                "files_hidden": prefs
-                    .get("files_hidden")
-                    .and_then(|j| j.as_bool())
-                    .unwrap_or(false),
-                "files_folders": prefs
-                    .get("files_folders")
-                    .and_then(|j| j.as_str())
-                    .unwrap_or("tree"),
-                "files_highlights": prefs
-                    .get("files_highlights")
-                    .and_then(|j| j.as_str())
-                    .unwrap_or("*.forge.yaml = bold; *.json = green"),
-                // Iconify cache root — Preferences → Icons; empty means the
-                // platform default (`~/.cache/gpui-forge/iconify`).
-                "icon_cache": prefs
-                    .get("icon_cache")
-                    .and_then(|j| j.as_str())
-                    .unwrap_or(""),
-                "file": "welcome.forge.yaml",
-                // Assets tab — `refresh_assets` rewrites dir + listing when a
-                // document/project loads.
-                "assets_dir": "",
-                "asset_files": [],
-                "assets_zoom": 0,
-                // Files sidebar "project" toggle — the document's folder.
-                "doc_dir": "",
-                "diagnostics": "",
-                "widget_sets": WIDGET_SETS,
-                "spec": gpui_forge_runtime::forge_spec::SPEC_VERSION,
-                "base": BASE_ID,
-            },
-            "editor": { "source": file_src("welcome.forge.yaml", WELCOME) },
-            "preview": { "state": "" },
-            "status": { "message": "ready — every panel you see is a Forge document" },
-        }),
+                    "studio": {
+                        "dark": dark,
+                        "light_themes": light_themes,
+                        "dark_themes": dark_themes,
+                        "all_themes": all_themes,
+                        "theme": theme_name,
+                        "theme_json": theme_json,
+                        // #144 — the base selector's options live in state so the
+        // cycle button walks the same list. `theme_preview` persists
+                        // across sessions via the prefs file.
+                        "preview_bases": PREVIEW_BASES,
+                        "theme_preview": prefs
+                            .get("theme_preview")
+                            .and_then(|j| j.as_str())
+                            .unwrap_or(BASE_ID),
+                        // `forge.Files` options — Preferences → Files writes these.
+                        // persisted across sessions via the prefs file.
+                        "files_search": prefs
+                            .get("files_search")
+                            .and_then(|j| j.as_bool())
+                            .unwrap_or(true),
+                        "files_icons": prefs
+                            .get("files_icons")
+                            .and_then(|j| j.as_bool())
+                            .unwrap_or(true),
+                        "files_hidden": prefs
+                            .get("files_hidden")
+                            .and_then(|j| j.as_bool())
+                            .unwrap_or(false),
+                        "files_folders": prefs
+                            .get("files_folders")
+                            .and_then(|j| j.as_str())
+                            .unwrap_or("tree"),
+                        "files_highlights": prefs
+                            .get("files_highlights")
+                            .and_then(|j| j.as_str())
+                            .unwrap_or("*.forge.yaml = bold; *.json = green"),
+                        // Iconify cache root — Preferences → Icons. Empty means the
+                        // platform default (`~/.cache/gpui-forge/iconify`).
+                        "icon_cache": prefs
+                            .get("icon_cache")
+                            .and_then(|j| j.as_str())
+                            .unwrap_or(""),
+                        "file": "welcome.forge.yaml",
+                        // Assets tab — `refresh_assets` rewrites dir + listing when a
+                        // document/project loads.
+                        "assets_dir": "",
+                        "asset_files": [],
+                        "assets_zoom": 0,
+                        // Files sidebar "project" toggle — the document's folder.
+                        "doc_dir": "",
+                        "diagnostics": "",
+                        "widget_sets": WIDGET_SETS,
+                        "spec": gpui_forge_runtime::forge_spec::SPEC_VERSION,
+                        "base": BASE_ID,
+                    },
+                    "editor": { "source": file_src("welcome.forge.yaml", WELCOME) },
+                    "preview": { "state": "" },
+                    "status": { "message": "ready — every panel you see is a Forge document" },
+                }),
         cx,
     );
-    // #148 — the project sidebar roots at the launch cwd; opening a document
+    // #148 — the project sidebar roots at the startup cwd. Opening a document
     // re-roots it at the file's directory via `load_source`.
     if let Ok(cwd) = std::env::current_dir() {
         refresh_files(&mut view, &cwd, cx);
@@ -626,7 +626,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
     // spawn hosts from startup — no need to wait for a foreign-base open.
     pane_sync(shared.clone(), cx);
     // #150 — poll the window bounds and persist on change. Covers
-    // move/resize and crash-quits without platform resize-event plumbing;
+    // move/resize and crash-quits without platform resize-event plumbing.
     // writes only on an actual geometry change.
     cx.spawn(async move |view, cx| {
         let mut last: Option<SavedWindow> = None;
@@ -682,7 +682,7 @@ fn open_dialog(
         view.report(format!("dialog `{name}` not found"));
         return;
     };
-    // `resizable: true` wraps the dialog in a `ResizableDialog` — the declared
+    // `resizable: true` wraps the dialog in a `ResizableDialog`. The declared
     // width/height become its *initial* size and the root fills it (`full`) so
     // the corner grip can move the card's edges.
     let resizable = node
@@ -690,7 +690,7 @@ fn open_dialog(
         .iter()
         .any(|(k, v)| k == "resizable" && matches!(v, Value::Bool(true)));
     // `sheet: true` opens the declaration as an edge sheet instead of a
-    // centered dialog; `placement:` picks the edge (default `right`).
+    // centered dialog. `placement:` picks the edge (default `right`).
     let sheet = node
         .props
         .iter()
@@ -801,7 +801,7 @@ fn open_dialog(
     // finishes, when the window is live again.
     //
     // `ResizableDialog` is created here, not in the builder — `open_dialog`'s
-    // builder is `Fn` and can re-run; a fresh entity each call would lose the
+    // builder is `Fn` and can re-run. A fresh entity each call would lose the
     // in-progress drag size.
     let resizable = initial.map(|initial| {
         cx.new(|_| ResizableDialog::new(child.clone(), initial, size(px(480.), px(320.))))
@@ -1019,7 +1019,7 @@ fn dispatch(
             }
         }
         // Icons-tab: the yaml-side theme checkboxes toggle one encoded
-        // `s:`/`p:` entry in `studio.icon_theme`; `forge.Icons` re-derives
+        // `s:`/`p:` entry in `studio.icon_theme`. `forge.Icons` re-derives
         // the filter + re-publishes `checked` flags from there.
         "toggle_icon_theme" => {
             if let Some(k) = args.first() {
@@ -1054,7 +1054,7 @@ fn dispatch(
         // #148 — project tree clicks open into the Document tab (index 1),
         // unlike recent/menu opens which land on the Canvas (index 2). A
         // `.json` that parses as a `ThemeSet` opens in the Theme editor
-        // (index 4) instead — loaded, not applied; Apply stays explicit.
+        // (index 4) instead — loaded, not applied. Apply stays explicit.
         "open_path" => {
             if let Some(path) = args.first().map(PathBuf::from) {
                 let src = std::fs::read_to_string(&path).ok();
@@ -1397,7 +1397,7 @@ fn create_project(view: &mut ForgeView, shared: SharedState, cx: &mut Context<Fo
     );
 }
 
-/// #148 context menu — the row's path may be a dir or a file; `dir_of` picks
+/// #148 context menu — the row's path may be a dir or a file. `dir_of` picks
 /// the folder the action applies to (files act on their parent).
 fn context_dir(arg: Option<&String>, shared: &SharedState) -> Option<PathBuf> {
     let mut dir = arg
@@ -1446,7 +1446,7 @@ fn files_new(
         return;
     }
     status(view, &format!("created {}", candidate.display()), cx);
-    // `load_file` refreshes the tree via `load_source`; it lands on Canvas,
+    // `load_file` refreshes the tree via `load_source`. It lands on Canvas,
     // so re-point at the Document tab like `open_path` does.
     load_file(candidate, view, shared, cx);
     view.update_state(&parse_path("studio.tab").unwrap(), Json::from(1), cx);
@@ -1504,7 +1504,7 @@ fn files_rename(
     open_dialog(view, &["rename".to_owned(), name], shared, cx);
 }
 
-/// `rename_file()` — the rename dialog's confirm. Reads `studio.rename_target`
+/// `rename_file()` — the rename dialog's accept action. Reads `studio.rename_target`
 /// and the dialog's `name` field, then `fs::rename`s and refreshes the tree.
 /// Renaming the open document re-points `shared.file` so a later save doesn't
 /// resurrect the old name.
@@ -1846,7 +1846,7 @@ fn host_event(
             rows,
             data,
         } => {
-            // #120 Phase 3 — the ANSI stream chunk lands in `preview.frame`;
+            // #120 Phase 3 — the ANSI stream chunk lands in `preview.frame`.
             // the card's emulator consumes it by `seq`.
             view.update_state(
                 &parse_path("preview.frame").unwrap(),
@@ -1937,7 +1937,7 @@ fn theme_cmd(view: &ForgeView, theme: &Theme) -> Json {
 
 /// A pane's theme mode — `preview.panes.<id>.mode`: `follow` (default —
 /// Studio's theme), `dark`, or `light`. Dark/light-only bases pin their own
-/// appearance here instead of silently degrading (#144); a pinned pane gets
+/// appearance here instead of silently degrading (#144). A pinned pane gets
 /// a bare dark/light command — a named theme or palette would paint the
 /// *wrong* mode's colors.
 fn pane_theme_cmd(theme: &Json, view: &ForgeView, id: &str) -> Json {
@@ -2130,8 +2130,8 @@ fn find_preview_binary(base: &str) -> Option<PathBuf> {
 }
 
 // ── Declared remote preview panes ────────────────────────────────────
-// A `forge.Preview` with `remote:` + `id:` declares its own preview host —
-// `base:` picks the host binary (empty → the document's base) and `doc:`
+// A `forge.Preview` with `remote:` + `id:` declares its own preview host.
+// `base:` picks the host binary (empty → the document's base). `doc:`
 // picks the document (a doc-relative path, a named ref's head-less body, or
 // the parent document when absent). `pane_sync` diffs declared panes against
 // running hosts, spawns/kills deltas, streams each pane's document, and
@@ -2144,7 +2144,7 @@ struct PaneSpec {
     base: String,
     /// `doc:` — doc-relative path, ref name, or none (the parent document).
     doc: Option<String>,
-    /// `mode:` — `embedded` floats the host window over the slot; `stream`
+    /// `mode:` — `embedded` floats the host window over the slot. `stream`
     /// routes the host's `frame` events into `preview.panes.<id>.frame`.
     mode: String,
 }
@@ -2175,7 +2175,7 @@ fn pane_send(id: &str, value: &Json) {
 }
 
 /// Does any top-level X11 window carry `_NET_WM_PID == pid`? `None` when the
-/// check can't run (no X connection — e.g. Wayland-only) — the caller treats
+/// check can't run (no X connection — e.g. wayland-only) — the caller treats
 /// that as "can't tell", not "no window".
 #[cfg(target_os = "linux")]
 fn x11_pid_has_window(pid: u32) -> Option<bool> {
@@ -2189,7 +2189,7 @@ fn x11_pid_has_window(pid: u32) -> Option<bool> {
         .reply()
         .ok()?
         .atom;
-    // `_NET_WM_PID` sits on the client window — under XWayland/XWM (WSLg) a
+    // `_NET_WM_PID` sits on the client window. Under XWayland/XWM (WSLg) a
     // toplevel needn't be a direct child of root, so walk the whole tree
     // rather than `query_tree(root)`'s first level alone.
     let tree = conn.query_tree(root).ok()?.reply().ok()?;
@@ -2424,7 +2424,7 @@ fn spawn_pane(base: &str, id: &str) -> Option<(Host, StderrTail)> {
 }
 
 /// The `source` command for a pane — a named ref becomes a document clone
-/// with the ref body as root; no `doc:` previews the parent buffer.
+/// with the ref body as root. No `doc:` previews the parent buffer.
 fn pane_doc_source(view: &ForgeView, pane: &PaneSpec, dir: &str) -> Json {
     match pane.doc.as_deref() {
         Some(name) => {
@@ -2453,7 +2453,7 @@ fn pane_doc_source(view: &ForgeView, pane: &PaneSpec, dir: &str) -> Json {
     }
 }
 
-/// Starts the pane-sync task once — diffs declared `remote:` panes against
+/// Starts the pane-sync task once. Diffs declared `remote:` panes against
 /// running hosts every 200ms, spawns/kills deltas, streams each pane's doc
 /// on change, and floats each host window over its `preview_bounds(id)` slot.
 fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
@@ -2637,10 +2637,10 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                 }
             }
 
-            // A host that stays alive but never maps a window (old-gpui keeps
-            // running even when its window creation fails) still claims the
-            // card's "separate window" is open. Probe X11 once, three seconds
-            // after spawn; a live child with no `_NET_WM_PID` window is killed
+            // A host that stays alive but never maps a window still claims the
+            // card's "separate window" is open. Old-gpui keeps running even
+            // when its window creation fails. Probe X11 once, three seconds
+            // after spawn. A live child with no `_NET_WM_PID` window is killed
             // and reported instead of sitting as a zombie.
             let unmapped: Vec<String> = pending
                 .iter()
@@ -2674,7 +2674,7 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                     });
                 }
             }
-            // Expired entries were probed (or couldn't be — Wayland) once;
+            // Expired entries were probed (or couldn't be — Wayland) once.
             // drop them either way.
             pending.retain(|_, (t0, _)| t0.elapsed() <= std::time::Duration::from_secs(6));
 
@@ -2804,12 +2804,12 @@ fn load_project(
         return;
     };
     // `[icons] set` — a non-lucide iconset served from the project's
-    // `<assets>/icons/<set>/` directory; `meta.iconset` on a doc wins. It
+    // `<assets>/icons/<set>/` directory. `meta.iconset` on a doc wins. It
     // scopes to docs under `project_dir` — a file opened elsewhere falls
     // back to lucide.
     shared.borrow_mut().project_iconset = manifest_section(&src, "icons", "set");
     // `[forge] watch = true` — opened docs hot-reload and the manifest
-    // itself is polled (one watcher per forge.toml; `watch_manifest`
+    // itself is polled (one watcher per forge.toml. `watch_manifest`
     // re-enters here on change without re-spawning).
     let watching = manifest_section(&src, "forge", "watch").is_some_and(|v| manifest::truthy(&v));
     shared.borrow_mut().project_watch = watching;
@@ -2843,7 +2843,7 @@ fn load_project(
     load_file(doc_path, view, shared, cx);
 }
 
-/// Reads `path` into the editor, updates recents + the menu, launches the
+/// Reads `path` into the editor, updates recents + the menu, starts the
 /// external-change watcher.
 fn load_file(
     path: PathBuf,
@@ -3136,7 +3136,7 @@ fn watch_file(path: PathBuf, shared: SharedState, cx: &mut Context<ForgeView>) {
 }
 
 /// `meta.watch` on `studio.forge.yaml` — the shell hot-reloads itself.
-/// Valid reloads swap in via `set_document` (view state survives); a parse
+/// Valid reloads swap in via `set_document` (view state survives). A parse
 /// failure keeps the last-good document and reports the first diagnostic
 /// in the status bar instead of blanking the window. Removing `watch` from
 /// a valid reload ends the watch.
@@ -3337,8 +3337,8 @@ fn load_source(
             Json::String(dir.display().to_string()),
             cx,
         );
-        // No project open — the document's own folder is the workspace:
-        // root the Files tree, Assets tab and theme list at it so a
+        // No project open. The document's own folder is the workspace.
+        // Root the Files tree, Assets tab and theme list at it. A
         // single-file session still browses its directory.
         if view.state()["studio"]["project"]
             .as_str()
@@ -3398,7 +3398,7 @@ fn load_source(
 /// Icons-tab copy — writes the clicked icon's SVG into the open document's
 /// `assets/icons[<set>]/` so the built app ships it, plus the set's
 /// `LICENSE.txt` on first copy. Iconify sets synthesize bytes locally from
-/// the cached `IconifyJSON`; bundled/vendored icons load straight from the
+/// the cached `IconifyJSON`. Bundled/vendored icons load straight from the
 /// asset source. Lands under a registered icon root, so the browser's
 /// "on disk" ring shows on the next render.
 fn icon_copy(view: &mut ForgeView, name: &str, shared: &SharedState, cx: &mut Context<ForgeView>) {
@@ -3458,7 +3458,7 @@ fn icon_copy(view: &mut ForgeView, name: &str, shared: &SharedState, cx: &mut Co
 /// Vendor-on-use — walks a freshly-loaded doc for `icon:` props and `Icon`
 /// element names under a non-lucide iconset, then downloads just those SVGs
 /// into `<assets>/icons/<set>/`. The files land under the registered icon
-/// root, so the next render resolves them through the normal asset path —
+/// root. The next render resolves them through the normal asset path —
 /// a project accumulates exactly the icons it uses.
 fn vendor_doc_icons(
     dir: Option<&std::path::Path>,
@@ -3492,7 +3492,7 @@ fn vendor_doc_icons(
     let dest = assets_root(dir).join("icons").join(&iconset);
     let set_name = iconset.clone();
     cx.spawn(async move |_, cx| {
-        // Blocking ureq fetches go on the background executor — a
+        // Blocking ureq calls go on the background executor. A
         // non-iconify set (e.g. a custom local one) errors out rather than
         // 404ing per icon, since `vendor_blocking` gates on the catalog.
         let result = cx
@@ -3600,8 +3600,8 @@ fn files_scope(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
     refresh_themes(view, &next_path, cx);
 }
 
-/// #148 — point the sidebar's `forge.Files` at `dir` and bust its scan cache:
-/// the component reads the filesystem itself, so the host only names the
+/// #148. Point the sidebar's `forge.Files` at `dir` and bust its scan cache:
+/// the component reads the filesystem itself. The host only names the
 /// folder and bumps `studio.files_nonce` when the contents changed.
 fn refresh_files(view: &mut ForgeView, dir: &std::path::Path, cx: &mut Context<ForgeView>) {
     view.update_state(
@@ -4406,7 +4406,7 @@ fn select_node(view: &mut ForgeView, _args: &[String], cx: &mut Context<ForgeVie
 }
 
 /// Shell-side `document.selected` writes must reach the preview's own state —
-/// the canvas paints its accent frame off the preview's copy, so a structure
+/// the canvas paints its accent frame off the preview's copy. A structure
 /// click otherwise selects in the panel but never highlights on canvas.
 fn echo_selected(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
     let path = parse_path("document.selected").unwrap();

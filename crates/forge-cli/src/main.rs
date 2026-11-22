@@ -53,7 +53,7 @@ struct ForgeSection {
     /// Entry document, relative to the manifest.
     document: String,
     /// Explicit document set for `forge skeleton` — relative to the
-    /// manifest. Absent or empty builds the entry document alone; the app
+    /// manifest. Absent or empty builds the entry document alone. The app
     /// never gets documents that weren't listed.
     documents: Vec<String>,
 }
@@ -71,7 +71,7 @@ struct Hooks {
 #[serde(default)]
 struct Assets {
     /// Directory of files the app ships — `[assets]` bundles them into the
-    /// package; `[themes]` (same shape) names the project's gpui-kit theme
+    /// package. `[themes]` (same shape) names the project's gpui-kit theme
     /// JSONs.
     dir: String,
 }
@@ -1210,7 +1210,7 @@ exec "./{name}" "$@"
         let mut desktop = format!(
             "[Desktop Entry]\nType=Application\nName={title}\nExec={name}\nCategories=Development;\nTerminal=false\n"
         );
-        // `meta.icon` resolves relative to the document; the manifest's
+        // `meta.icon` resolves relative to the document. The manifest's
         // `package.icon` relative to `forge.toml`.
         let icon = meta("icon")
             .map(|i| entry_doc.parent().unwrap_or(m_dir).join(&i))
@@ -1758,7 +1758,7 @@ fn project(rest: &[String]) -> Option<(PathBuf, ForgeToml, PathBuf, String)> {
 
 /// `use:` library → (Cargo dep line, `use` line, `register_library` line)
 /// for the generated crate. Shared by `forge build`'s single-doc scaffold
-/// and `forge skeleton`'s multi-doc crate; `None` = no adapter crate known.
+/// and `forge skeleton`'s multi-doc crate. `None` = no adapter crate known.
 fn lib_wiring(library: &str, root: &Path, base_id: &str) -> Option<(String, String, String)> {
     let r = |p: &str| root.join(p).display().to_string();
     Some(match library {
@@ -2145,7 +2145,7 @@ fn skeleton_cmd(rest: &[String]) -> i32 {
         }
     }
     let catalogs = gpui_forge_runtime::check::catalogs();
-    // Parse the primary first — its `base:` is the app's base; docs on a
+    // Parse the primary first — its `base:` is the app's base. Docs on a
     // different base can't share one binary and are skipped with a note.
     // The expected base is the manifest's when set, so a project on a
     // non-default base doesn't flag its own documents as mismatched.
@@ -2362,7 +2362,7 @@ fn skeleton_cmd(rest: &[String]) -> i32 {
             &format!("[toolchain]\nchannel = \"{}\"\n", base.toolchain),
         );
     }
-    // gpui-kit gets the full multi-doc main; other bases get their normal
+    // gpui-kit gets the full multi-doc main. Other bases get their normal
     // app_main with the docs/store modules appended for manual wiring.
     let main = if base.id == "gpui-kit" {
         SKELETON_MAIN.to_string()
@@ -2401,7 +2401,7 @@ fn skeleton_cmd(rest: &[String]) -> i32 {
     0
 }
 
-/// A `state:` entry's seed value — recognized type names get type defaults;
+/// A `state:` entry's seed value — recognized type names get type defaults.
 /// anything else is a literal (`sel: gpui-kit` seeds `"gpui-kit"`,
 /// `count: 0` seeds `0`).
 fn decl_seed(ty: &str) -> Json {
@@ -2461,7 +2461,7 @@ fn copy_dir(src: &Path, dst: &Path) -> std::io::Result<()> {
 
 /// Bundles theme JSONs into a gpui-kit app crate: the workspace `themes/`
 /// catalog first, then the project's `[themes] dir` (or `<manifest>/themes`
-/// by convention) — project files overwrite same-named shipped ones, so a
+/// by convention). Project files overwrite same-named shipped ones, so a
 /// project can restyle a stock theme by name. Emits the `themes/` copies
 /// and `src/themes.rs` with an `include_str!` row per file.
 fn emit_themes(root: &Path, m_dir: &Path, manifest: &ForgeToml, out_dir: &Path, src_dir: &Path) {

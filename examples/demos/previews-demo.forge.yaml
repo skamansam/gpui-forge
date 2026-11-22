@@ -2,7 +2,7 @@
 # its own out-of-process preview host. `base:` picks the host binary,
 # `doc:` the document it renders (doc-relative path, named ref, or the
 # parent document when absent). Show/hide is ordinary control flow — the
-# Select below drives `match:`/`case:`; pane hosts spawn on declaration and
+# Select below drives `match:`/`case:`. Pane hosts spawn on declaration and
 # die when the pane leaves the document.
 $schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
 forge: "0.1"

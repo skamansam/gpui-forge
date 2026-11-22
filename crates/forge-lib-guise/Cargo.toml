@@ -9,7 +9,7 @@ repository.workspace = true
 # Every adapter targets the guise base only — their crates pin crates.io
 # `gpui 0.2.x`, which cannot coexist with the gpui-kit base's gpui-pre build.
 # Features stay OFF by default so `cargo check --workspace` never pulls the
-# base-guise runtime arm into the default graph; a guise app enables them.
+# base-guise runtime arm into the default graph. A guise app enables them.
 [features]
 ferrum = ["dep:ferrum-flow", "gpui-forge-runtime/base-guise"]
 rhythm = ["dep:rhythm-gpui", "rhythm-gpui/gpui", "gpui-forge-runtime/base-guise"]

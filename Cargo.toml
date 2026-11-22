@@ -5,7 +5,7 @@ members = [
 resolver = "3"
 
 [workspace.package]
-# Tags carry the release counter (v0.9.001, v0.9.002, …); Cargo tracks the
+# Tags carry the release counter (v0.9.001, v0.9.002, …). Cargo tracks the
 # nearest semver so `--version` roughly matches.
 version = "0.9.1"
 edition = "2024"
@@ -31,16 +31,16 @@ inherits = "release"
 opt-level = "s"
 strip = true
 
-# xattr 0.2.3 reads libc::ENOATTR on Linux, where glibc has no such errno — the
+# xattr 0.2.3 reads libc::ENOATTR on Linux, where glibc has no such errno. The
 # vendored 0.2.4 maps it to ENODATA (the Linux equivalent) and keeps ENOATTR on
 # macOS/BSD. Pulled by zed-async-tar → gpui_http_client → gpui 0.2.2 (guise).
 [patch.crates-io]
 bezel-gpui-web = { path = "vendor/bezel-gpui-web" }
-# gpui-video-player pins gpui_pre =0.3.9; the gpui-kit base pins =0.3.10 and a
+# gpui-video-player pins gpui_pre =0.3.9. The gpui-kit base pins =0.3.10 and a
 # graph can only hold one — the vendored crate relaxes the pin (#77).
 gpui-video-player = { path = "vendor/gpui-video-player" }
 # gpui-pdf calls `Modifiers::secondary()` with no args — gpui-pre 0.3.10 made it
-# take `&App`; the vendored crate passes `cx` (#78).
+# take `&App`. The vendored crate passes `cx` (#78).
 gpui-pdf = { path = "vendor/gpui-pdf" }
 # gpui-symbols' non-macOS stub predates the weight/scale/mode args its call
 # site passes — the vendored stub takes the macOS signature (#88).

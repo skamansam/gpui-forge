@@ -4,9 +4,9 @@
 #
 # Usage: build-canvas.sh [base]
 #   no args  — build every base and stage icons (local dev)
-#   <base>   — build only that base (CI matrix legs); icons stage with gpui-kit
+#   <base>   — build only that base (CI matrix legs). Icons stage with gpui-kit
 #
-# gpui-kit/bezel need nightly Rust (wasm_thread's stdarch_wasm_atomic_wait);
+# gpui-kit/bezel need nightly Rust (wasm_thread's stdarch_wasm_atomic_wait).
 # iced's graph is stable-clean. wasm-bindgen-cli must match the locked
 # wasm-bindgen version.
 set -euo pipefail

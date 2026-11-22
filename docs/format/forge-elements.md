@@ -1,8 +1,8 @@
 # `forge.*` elements — runtime tooling widgets
 
 `forge.*` elements are rendered by the Forge runtime itself, not by a
-component set. They always resolve — no `use:` import, no `base:`
-requirement — and they exist so tooling UIs (icon browsers, inspectors,
+component set. They always resolve. No `use:` import, no `base:`
+requirement. And they exist so tooling UIs (icon browsers, inspectors,
 file trees, palettes) can be built **in Forge** instead of embedding
 native chrome into the runtime.
 
@@ -18,7 +18,7 @@ Three usage styles:
 - **Scoped children** — an element that takes `children:` renders the
   template itself, once per item it owns, with the item pushed as `$item`
   (the same scope mechanism `for:` uses). The runtime keeps the parts the
-  document can't express — measured layout, virtualization, fetch
+  document can't express — measured layout, virtualization, load
   machinery — and the document owns what goes inside each frame. No
   `children:` → the element's built-in default renders, so a template is
   always an override, never a requirement.
@@ -28,23 +28,23 @@ Three usage styles:
 Those last two styles are how a `forge.*` element becomes a *custom
 widget*: **in-props parameterize, out-props publish data, `children:`
 templates render inside the element's scope.** A custom widget is a
-runtime piece that knows something the doc language can't say (how to
-virtualize 1800 rows, probe an asset source, walk a file tree) and
-declares the rest — its data and its template points — as bound props
-and scoped children. Studio's inspector is `forge.Inspector` + `for:`;
+runtime piece. It knows what the doc language can't say — virtualizing
+1800 rows, probing an asset source, walking a file tree. It declares the
+rest. Its data and its template points. As bound props
+and scoped children. Studio's inspector is `forge.Inspector` + `for:`.
 its icon browser is `forge.Icons` + bound outputs + a `children:` cell
-template; `List`'s `for:` child is the same idea for any element.
+template. `List`'s `for:` child is the same idea for any element.
 
 ---
 
 ## `forge.Icons` — icon browser
 
 A searchable, virtualized grid over the app's icon catalog.
-`icons/<name>.svg` is `lucide` (bundled); `icons/<set>/<name>.svg` is any
-set the host's asset source layers in — a project ships a set by dropping
+`icons/<name>.svg` is `lucide` (bundled). `icons/<set>/<name>.svg` is any
+set the host's asset source layers in. A project ships a set by dropping
 SVGs under `<assets>/icons/<set>/` and naming it in `forge.toml`'s
-`[icons] set`, or an IconifyJSON set can be browsed over the network and
-materialized locally on click.
+`[icons] set`. An IconifyJSON set can instead be browsed over the
+network and materialized locally on click.
 
 ### Inputs (bound or static)
 
@@ -53,10 +53,10 @@ materialized locally on click.
 | `set` | string | Iconset to browse. Bound: two-way picker state. Default: the view's iconset (`meta.iconset` → `[icons] set` → `lucide`). |
 | `sets` | string (path) | Publishes the discovered set list — e.g. `["heroicons","lucide"]`. |
 | `query` | string | Search text. Bound: two-way — an external `Input` can own it. |
-| `category` | string | Category filter; a bound value is reset to `"[all]"` when it isn't a category of the set. |
-| `theme` | list\<string\> | Theme/suffix filter — `["s:filled","p:baseline-"]` encodings; empty/all = no filter. |
+| `category` | string | Category filter. A bound value is reset to `"[all]"` when it isn't a category of the set. |
+| `theme` | list\<string\> | Theme/suffix filter — `["s:filled","p:baseline-"]` encodings. Empty/all = no filter. |
 | `size` | string | `XSmall` / `Small` / `Medium` / `Large` — glyph size, cell stride and row height. Default `Medium`. |
-| `selected` | string | The clicked icon's name; the matching cell highlights. |
+| `selected` | string | The clicked icon's name. The matching cell highlights. |
 | `search` | bool | Show the built-in filter box (standalone mode). |
 | `bare` | bool | Grid only — the doc builds its own chrome from the outputs below. |
 
@@ -68,7 +68,7 @@ built-in chrome renders. With `bare: true` the chrome isn't built at all.
 | Prop | Publishes |
 | --- | --- |
 | `categories` | `["[all]", …]` — category names for the set (incl. a computed `Uncategorized`). |
-| `themes` | `[{key, title, checked}]` — one entry per theme option; `key` is the `s:`/`p:` encoding `theme:` consumes, `checked` reflects the current filter. |
+| `themes` | `[{key, title, checked}]` — one entry per theme option. `key` is the `s:`/`p:` encoding `theme:` consumes, `checked` reflects the current filter. |
 | `meta` | `{set, title, license, spdx, line1, line2}` — name, license/SPDX, plus two preformatted info lines. |
 | `status` | `{downloading, label, percent, error}` — live set-download state for progress + retry UI. |
 | `attribution` | bool — the set's SPDX requires shipping its notice with the built app. |
@@ -89,7 +89,7 @@ The template renders once per icon with `$item` pushed as
 - `downloaded` — already materialized under `assets/icons/` (always
   false for bundled sets)
 
-The runtime keeps the cell frame — the pinned column width that aligns
+The runtime keeps the cell frame. The pinned column width that aligns
 the grid, the selected accent fill, the downloaded ring, hover, tooltip
 and the click that writes `selected`/`select`. Everything visual inside
 the box is the doc's. Scope vars resolve in props (`name: $item.name`),
@@ -122,8 +122,8 @@ yaml.
 ### `Icon` — lazy icon element
 
 `Icon` resolves names through the same probe the grid uses: `set:` (or a
-`set:name` prefix on `name:`) picks the set, missing iconify names queue
-the set's fetch and show a placeholder until bytes land, and bundled
+`set:name` prefix on `name:`) picks the set. Missing iconify names queue
+the set's load and show a placeholder until bytes land. Bundled
 files stay canonical on collision. `size:` takes a px length or
 `XSmall`/`Small`/`Medium`/`Large` (12/14/16/24px).
 
@@ -171,7 +171,7 @@ cell — is.
 ## `forge.Inspector` — property table (data mode by design)
 
 The other half of the pattern. Standalone it renders a catalog-driven
-`Form`; binding `items`/`styles`/`header` turns it into a pure data
+`Form`. Binding `items`/`styles`/`header` turns it into a pure data
 provider that renders nothing:
 
 ```yaml
@@ -204,27 +204,27 @@ document edits.
 - forge.Outline: {of: canvas, selected: bind $document.selected, on select: select_node}
 ```
 
-Renders the hosted preview's node tree (index paths `0.2.1`); writes the
+Renders the hosted preview's node tree (index paths `0.2.1`). Writes the
 bound `selected` on click and highlights the externally-selected row.
 
 ## `forge.Files` — file tree
 
-`of:` renders a JSON listing `[{name, path, dir, children}]` from state;
+`of:` renders a JSON listing `[{name, path, dir, children}]` from state.
 `root:` scans a directory itself (`filter:`/`depth:`/`hidden:` bound the
-scan, `nonce:` busts the cache). `search:` adds a filter box;
-`folders: navigate` makes dir rows enter instead of expand;
+scan, `nonce:` busts the cache). `search:` adds a filter box.
+`folders: navigate` makes dir rows enter instead of expand.
 `highlights:` styles rows by glob. File clicks write `selected` and fire
 `select` with the path. Virtualized — give it a bounded slot
 (`grow` + `min-height: 0`).
 
 ## `forge.Palette`, `forge.Showcase`, `forge.Vars`
 
-- `Palette` — the widget-catalog drag source; `all:` widens its search
+- `Palette` — the widget-catalog drag source. `all:` widens its search
   scope across sets.
 - `Showcase` — the widget gallery used by `start: gallery`.
 - `Vars` — the state/variables table for a `forge.Preview`'s document
   (`of:`). Rows edit in place with typed widgets (`bool`→Checkbox,
-  `number`→NumberInput, `enum`→Select, objects→JSON Textarea); `count:`
+  `number`→NumberInput, `enum`→Select, objects→JSON Textarea). `count:`
   binds out the row total. See
   [state-inspector.md](state-inspector.md).
 
@@ -240,6 +240,6 @@ See [adapters.md](adapters.md) for the contract and
 
 When a custom widget wants Studio-style chrome, follow the same rule the
 built-ins do: **bind, don't build**. Take bound props for state the doc
-should own, publish derived lists/objects through out-props, and keep
+should own, publish derived lists/objects through out-props. Keep
 only the parts the document language can't express (virtualization,
 native pickers, network probing) inside the widget.

@@ -1,6 +1,6 @@
 name: Release
 
-# Tag push publishes a GitHub release; a manual run just uploads build
+# Tag push publishes a GitHub release. A manual run just uploads build
 # artifacts — handy for testing a platform build without cutting a tag.
 on:
   push:
@@ -56,14 +56,14 @@ jobs:
         uses: blinemedical/setup-gstreamer@v1
         with:
           # 1.28.x ships .exe installers — the action's .msi URL scheme only
-          # works through 1.26.x; pin the newest 1.26 release.
+          # works through 1.26.x. Pin the newest 1.26 release.
           version: "1.26.11"
       - name: Install NASM (Windows)
         if: runner.os == 'Windows'
         uses: ilammy/setup-nasm@v1
 
       # Core trio — the binaries Studio itself spawns. `forge-preview` is the
-      # gpui-kit host; the foreign-base hosts build per-target below.
+      # gpui-kit host. The foreign-base hosts build per-target below.
       - name: Build forge + forge-studio + forge-preview
         run: cargo build --release --locked -p forge-cli -p forge-studio -p forge-preview --target ${{ matrix.target }}
 

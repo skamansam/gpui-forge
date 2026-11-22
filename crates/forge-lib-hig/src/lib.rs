@@ -1,5 +1,5 @@
 //! Adapter for `gpui-apple-hig` (`use: hig: gpui-apple-hig` → `hig.*` elements)
-//! — #90. macOS-HIG components on the gpui-kit base. Render-only arms like the
+//! — #90. MacOS-HIG components on the gpui-kit base. Render-only arms like the
 //! Ely adapter (hook wiring is follow-up work).
 
 use gpui_apple_hig::activity_rings::MacActivityRings;

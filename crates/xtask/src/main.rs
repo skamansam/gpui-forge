@@ -74,12 +74,87 @@ fn run(args: &[&str]) -> bool {
     status.success()
 }
 
+/// Prose files the STE gate never lints: vendored upstream trees and build
+/// output. The AGENTS.md rule applies when a file is touched, so each changed
+/// file is linted in full — docs whole, sources through their comments.
+fn prose_excluded(path: &str) -> bool {
+    let name = path.rsplit('/').next().unwrap_or(path);
+    name.starts_with("LICENSE")
+        || name.starts_with("OFL")
+        || name.starts_with("COPYING")
+        || name.starts_with("NOTICE")
+        || path == "scripts/ste-lint.py"
+        || path.starts_with("vendor/")
+        || path.starts_with("target/")
+        || path.contains("/vendor/")
+        || path.contains("node_modules")
+}
+
+/// `git <args>` as a list of changed paths — empty when the ref is absent, so a
+/// clone with no `origin/main` still lints untracked files.
+fn git_prose_files(args: &[&str]) -> Vec<String> {
+    Command::new("git")
+        .args(args)
+        .current_dir(root())
+        .output()
+        .ok()
+        .filter(|out| out.status.success())
+        .map(|out| {
+            String::from_utf8_lossy(&out.stdout)
+                .lines()
+                .map(str::to_owned)
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// `xtask ste [base]` — `git diff <base>...HEAD` plus untracked files, then
+/// `ste-comments.py` on the set: docs lint whole, sources lint through their
+/// comments. A missing base ref degrades to untracked files only, so a fresh
+/// clone with no origin/main still lints new docs.
+fn ste(base: &str) -> bool {
+    let mut files = git_prose_files(&[
+        "diff",
+        "--name-only",
+        "--diff-filter=ACM",
+        &format!("{base}...HEAD"),
+    ]);
+    files.extend(git_prose_files(&[
+        "ls-files",
+        "--others",
+        "--exclude-standard",
+    ]));
+    files.retain(|f| !prose_excluded(f));
+    files.sort();
+    files.dedup();
+    if files.is_empty() {
+        println!("ste: no prose files changed");
+        return true;
+    }
+    println!("ste: linting {} file(s): {}", files.len(), files.join(" "));
+    for python in ["python3", "python"] {
+        let status = Command::new(python)
+            .arg("scripts/ste-comments.py")
+            .args(&files)
+            .current_dir(root())
+            .status();
+        match status {
+            Ok(s) => return s.success(),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,
+            Err(e) => panic!("spawn {python}: {e}"),
+        }
+    }
+    eprintln!("ste: no python3/python on PATH — the prose gate cannot run");
+    false
+}
+
 fn usage() -> ! {
     eprintln!("cargo xtask — project tasks");
     eprintln!("  xtask build              workspace build (gpui-kit)");
     eprintln!("  xtask test               workspace tests");
-    eprintln!("  xtask check              fmt + clippy -D warnings (CI parity)");
+    eprintln!("  xtask check              fmt + clippy -D warnings + ste (CI parity)");
     eprintln!("  xtask ci                 check + test");
+    eprintln!("  xtask ste [base]         lint prose changed vs base (default origin/main)");
     eprintln!("  xtask studio             run Forge Studio");
     eprintln!("  xtask cli <args..>       run the `forge` binary");
     eprintln!("  xtask bases              list registered bases");
@@ -167,7 +242,8 @@ fn main() {
                     "--",
                     "-D",
                     "warnings",
-                ]);
+                ])
+                && ste("origin/main");
             std::process::exit(!ok as i32);
         }
         Some("ci") => {
@@ -180,8 +256,13 @@ fn main() {
                     "-D",
                     "warnings",
                 ])
+                && ste("origin/main")
                 && run(&["test", "--workspace"]);
             std::process::exit(!ok as i32);
+        }
+        Some("ste") => {
+            let base = args.get(1).map(String::as_str).unwrap_or("origin/main");
+            std::process::exit(!ste(base) as i32);
         }
         Some("studio") => {
             std::process::exit(!run(&["run", "-p", "forge-studio"]) as i32);

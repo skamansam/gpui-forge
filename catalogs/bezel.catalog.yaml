@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=../schema/catalog-0.1.json
-# Catalog manifest for the bezel base — minimal scaffold for #94; the real
+# Catalog manifest for the bezel base — minimal scaffold for #94. The real
 # component set lands with the adapter port (bezel ecosystem: chart, editor,
 # canvas, markdown, terminal, icons, motion).
 # Format: docs/spec/catalog-manifest.md

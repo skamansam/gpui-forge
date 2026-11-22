@@ -7,7 +7,7 @@ publish.workspace = true
 repository.workspace = true
 
 # Two variants (#77): `base-gpui-kit` links the crate's `gpui-pre` feature
-# (gpui_pre =0.3.9 — the gpui-kit base's pin); `base-guise` links its `gpui`
+# (gpui_pre =0.3.9 — the gpui-kit base's pin). `base-guise` links its `gpui`
 # (crates.io 0.2) feature for the Vanilla GPUI 0.2 base. Requires GStreamer
 # 1.14+ and its plugins at build and run time.
 [features]

@@ -3,7 +3,7 @@
 //!
 //! Icon data comes as whole-set `IconifyJSON` files from the upstream
 //! `iconify/icon-sets` GitHub repo (`json/<set>.json`, via the jsDelivr gh
-//! mirror) — one GET per set gets every name, body, alias and dimension plus
+//! mirror) — one request per set fetches every name, body, alias and dimension plus
 //! `lastModified`, `info`, `categories`, `prefixes`/`suffixes`, `hidden` and
 //! `chars`, cached at `~/.cache/gpui-forge/iconify/<set>.json`. `svg()`
 //! synthesizes `<svg>` bytes locally from that JSON (resolving aliases and
@@ -13,7 +13,7 @@
 //! `sets.json` (the `/collections` index) still provides the catalog listing
 //! and license metadata for attribution.
 //!
-//! All fetches are blocking `ureq` on the background executor; `ensure_*`
+//! All fetches are blocking `ureq` on the background executor. `ensure_*`
 //! calls `refresh_windows` when data lands so callers just re-render.
 
 use gpui_kit::App;
@@ -28,7 +28,7 @@ const API: &str = "https://api.iconify.design";
 /// — CDN-cached, no API rate limits.
 const SETS: &str = "https://cdn.jsdelivr.net/gh/iconify/icon-sets@master/json";
 /// Mirror of `SETS` — the same `iconify/icon-sets` repo over GitHub's raw
-/// host; a flaky TLS/CDN stream on one isn't fatal.
+/// host. A flaky TLS/CDN stream on one isn't fatal.
 const SETS_FALLBACK: &str = "https://raw.githubusercontent.com/iconify/icon-sets/master/json";
 
 /// A host-provided cache-dir override (the `icon_cache` pref). `None` falls
@@ -110,7 +110,7 @@ pub fn set_info(set: &str) -> Option<(String, String, String)> {
     Some((v["name"].as_str().unwrap_or(set).to_owned(), title, spdx))
 }
 
-/// SPDX ids that carry no notice-retention requirement — everything else
+/// SPDX ids that carry no notice-retention requirement. Everything else
 /// (MIT, BSD, Apache, CC-BY, OFL, GPL…) legally needs the license text and
 /// copyright notices shipped with the app.
 const NO_ATTRIBUTION: &[&str] = &[
@@ -125,7 +125,7 @@ const NO_ATTRIBUTION: &[&str] = &[
 ];
 
 /// Whether an SPDX license id requires attribution/notice retention in a
-/// built app. An unknown id errs on the side of warning; an empty id means
+/// built app. An unknown id errs on the side of warning. An empty id means
 /// "no catalog data", which does not.
 pub fn spdx_needs_attribution(spdx: &str) -> bool {
     !spdx.is_empty() && !NO_ATTRIBUTION.contains(&spdx)
@@ -181,7 +181,7 @@ pub fn epoch_ymd(secs: i64) -> String {
 // ----------------------------------------------------- collection metadata
 
 /// Lucide categories vendored from `lucide-icons/lucide` repo metadata —
-/// iconify's `lucide.json` ships none. Same `categories` shape; regenerate
+/// iconify's `lucide.json` ships none. Same `categories` shape. Regenerate
 /// with `scripts/gen-lucide-categories.py`.
 const LUCIDE_CATEGORIES: &str = include_str!("lucide-categories.json");
 
@@ -210,7 +210,7 @@ fn parse_categories_map(v: &Json) -> Vec<(String, Vec<String>)> {
 
 /// `(category, names)` pairs from the set's `metadata.json`, sorted by name —
 /// icons appear under every category they belong to. Names in no category
-/// get an `Uncategorized` bucket (computed locally — the npm `metadata.json`
+/// derive an `Uncategorized` bucket (computed locally — the npm `metadata.json`
 /// doesn't always carry the field the API's `collection` response does).
 pub fn categories(set: &str) -> Vec<(String, Vec<String>)> {
     let j = set_json(set);
@@ -264,7 +264,7 @@ pub enum ThemeKind {
 
 /// `(kind, key, title)` theme entries from `prefixes` + `suffixes`, sorted
 /// default-first then by title. An empty `key` marks the default theme —
-/// icons matching no other key of that kind belong to it; when the map
+/// icons matching no other key of that kind belong to it. When the map
 /// omits `""` one is synthesized so a "no suffix" choice always exists.
 pub fn themes(set: &str) -> Vec<(ThemeKind, String, String)> {
     let Some(j) = set_json(set) else {
@@ -322,7 +322,7 @@ pub fn theme_matches(
 }
 
 /// Icon names the set marks `hidden` — deprecated/unlisted entries that
-/// still render. Exposed for completeness; the browser doesn't filter them.
+/// still render. Exposed for completeness. The browser doesn't filter them.
 pub fn hidden(set: &str) -> Vec<String> {
     set_json(set)
         .and_then(|j| j["hidden"].as_array().cloned())
@@ -437,7 +437,7 @@ pub fn names(set: &str) -> Vec<String> {
 }
 
 /// Whether `name` resolves to an icon in the cached set — the "can this cell
-/// render" test; `svg()` synthesizes bytes from the same data.
+/// render" test. `svg()` synthesizes bytes from the same data.
 pub fn icon_cached(set: &str, name: &str) -> bool {
     set_json(set)
         .is_some_and(|j| j["icons"].get(name).is_some() || j["aliases"].get(name).is_some())
@@ -473,7 +473,7 @@ fn merge_icon(base: &mut serde_json::Map<String, Json>, over: &serde_json::Map<S
 }
 
 /// Resolves `name` to merged icon data — walks the alias chain (outermost
-/// alias applies last, matching `getIconData`; the counter stops pathological
+/// alias applies last, matching `getIconData`. The counter stops pathological
 /// cycles).
 fn resolve_icon(set: &Json, name: &str) -> Option<Json> {
     let mut chain = Vec::new();
@@ -498,7 +498,7 @@ fn resolve_icon(set: &Json, name: &str) -> Option<Json> {
 /// Builds `<svg>` bytes for an icon — `body` inside a `viewBox` from
 /// `left`/`top`/`width`/`height` (icon overrides set defaults, then 16/0).
 /// `rotate`/`hFlip`/`vFlip` become a `<g transform>` — the same math
-/// `@iconify/utils`' `iconToSVG` applies (double-flip folds into rotate-180;
+/// `@iconify/utils`' `iconToSVG` applies (double-flip folds into rotate-180.
 /// odd rotations swap the output viewBox axes).
 fn icon_to_svg(set: &Json, icon: &Json) -> Option<String> {
     let body = icon["body"].as_str()?;
@@ -558,7 +558,7 @@ fn icon_to_svg(set: &Json, icon: &Json) -> Option<String> {
     ))
 }
 
-/// SVG bytes for one icon — synthesized from the cached `IconifyJSON`; `None`
+/// SVG bytes for one icon — synthesized from the cached `IconifyJSON`. `None`
 /// when the set isn't cached or the name doesn't resolve.
 pub fn svg(set: &str, name: &str) -> Option<Vec<u8>> {
     let json = set_json(set)?;
@@ -580,7 +580,7 @@ fn request_once(key: String) -> bool {
 
 // ---------------------------------------------------------- progress + errors
 
-/// In-flight download progress: `set -> (bytes_done, bytes_total)`; `total`
+/// In-flight download progress: `set -> (bytes_done, bytes_total)`. `total`
 /// 0 when the response carried no Content-Length.
 fn progress() -> &'static Mutex<std::collections::HashMap<String, (u64, u64)>> {
     static PROGRESS: OnceLock<Mutex<std::collections::HashMap<String, (u64, u64)>>> =
@@ -593,7 +593,7 @@ pub fn download_progress(set: &str) -> Option<(u64, u64)> {
     progress().lock().unwrap().get(set).copied()
 }
 
-/// Last fetch error per key (`set` names; `"catalog"` for the index) —
+/// Last fetch error per key (`set` names. `"catalog"` for the index) —
 /// cleared on success or `retry`.
 fn errors() -> &'static Mutex<std::collections::HashMap<String, String>> {
     static ERRORS: OnceLock<Mutex<std::collections::HashMap<String, String>>> = OnceLock::new();
@@ -621,7 +621,7 @@ pub fn retry(set: &str, cx: &mut App) {
     ensure_set(set, cx);
 }
 
-/// One blocking GET → response bytes; errors on non-2xx.
+/// One blocking request → response bytes. Errors on non-2xx.
 #[cfg(not(target_arch = "wasm32"))]
 fn get_body(uri: &str) -> io::Result<Vec<u8>> {
     let mut response = ureq::get(uri).call().map_err(io::Error::other)?;
@@ -679,8 +679,8 @@ fn get_body_tracked(uri: &str, set: &str) -> io::Result<Vec<u8>> {
     Ok(body)
 }
 
-/// Blocking GETs don't exist on wasm — the canvas only renders icons already
-/// in the asset layer (bundled sets), so a fetch request errors cleanly.
+/// Blocking requests don't exist on wasm — the canvas only renders icons already
+/// in the asset layer (bundled sets), so an iconify fetch errors cleanly.
 #[cfg(target_arch = "wasm32")]
 fn get_body(uri: &str) -> io::Result<Vec<u8>> {
     Err(io::Error::other(format!(
@@ -716,10 +716,10 @@ fn fetch_last_modified(set: &str) -> io::Result<Option<i64>> {
 
 /// Fetch one set's full `IconifyJSON` from the `iconify/icon-sets` repo →
 /// `<set>.json`. The repo files carry `info`, `categories`,
-/// `prefixes`/`suffixes`, `hidden` and `chars` inline — one fetch gets
+/// `prefixes`/`suffixes`, `hidden` and `chars` inline — one fetch covers
 /// everything.
 fn fetch_set_blocking(set: &str) -> io::Result<()> {
-    // Try the jsDelivr mirror, then the repo's raw host — mid-stream TLS
+    // Try the jsDelivr mirror, then the repo's raw host. Mid-stream TLS
     // failures on one mirror (they happen on the multi-MB files) shouldn't
     // be the end of the request.
     let mut last_err = None;
@@ -735,7 +735,7 @@ fn fetch_set_blocking(set: &str) -> io::Result<()> {
     }
     let body =
         body.ok_or_else(|| last_err.unwrap_or_else(|| io::Error::other("no mirror attempted")))?;
-    // Validate before caching — a CDN error page would poison the memo.
+    // Check before caching — a CDN error page would poison the memo.
     let _: Json = serde_json::from_slice(&body).map_err(io::Error::other)?;
     std::fs::create_dir_all(cache_dir())?;
     std::fs::write(set_file(set), body)?;
@@ -744,7 +744,7 @@ fn fetch_set_blocking(set: &str) -> io::Result<()> {
     Ok(())
 }
 
-/// Queue the catalog fetch once; `refresh_windows` re-renders when it lands.
+/// Queue the catalog fetch once. `refresh_windows` re-renders when it lands.
 pub fn ensure_sets(cx: &mut App) {
     if !request_once("sets".to_string()) {
         return;
@@ -799,7 +799,7 @@ fn queue_fetch(set: &str, cx: &mut App) {
     .detach();
 }
 
-/// Queue one set's `IconifyJSON` fetch once — a browser/doc shows
+/// Queue one set's `IconifyJSON` fetch once — a browser/doc displays
 /// placeholders until it lands, then every icon renders locally. A cached
 /// set still queues a `lastModified` check (once per session) and only
 /// re-downloads when upstream published a newer version.
@@ -854,7 +854,7 @@ fn check_stale(set: &str) -> io::Result<bool> {
 
 // ------------------------------------------------------------------ vendoring
 
-/// Vendors `names` of `set` into `dest` — blocking; call from a background
+/// Vendors `names` of `set` into `dest` — blocking. Call from a background
 /// thread. Fetches the set's `IconifyJSON` if uncached, synthesizes each
 /// icon's SVG locally, skips files already on disk, and writes `LICENSE.txt`.
 /// Returns `(vendored count, not-found names)`.
@@ -1052,7 +1052,7 @@ mod tests {
 
     #[test]
     fn lucide_vendored_categories() {
-        // iconify's lucide.json ships no `categories`; the vendored file
+        // iconify's lucide.json ships no `categories`. The vendored file
         // (scripts/gen-lucide-categories.py) supplies them regardless of
         // whether a set file is cached.
         let cats = categories("lucide");

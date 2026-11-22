@@ -10,7 +10,7 @@
 //!   removed  — does every catalog `component:` path still exist upstream?
 //!   added    — which exported widget types no catalog references yet?
 //!
-//! `removed` and outdated versions fail `--check`; `added` is advisory.
+//! `removed` and outdated versions fail `--check`. `added` is advisory.
 //! Vendored (`vendor/<dir>`) and workspace (`local`) sources skip crates.io.
 //! Policy lives in `drift.toml`.
 
@@ -38,7 +38,7 @@ struct CratePolicy {
     vendored: Option<String>,
     /// Workspace crate — component paths check against its own `src/`.
     local: Option<String>,
-    /// Don't check this crate; the string is the reason shown in the report.
+    /// Don't check this crate. The string is the reason shown in the report.
     skip: Option<String>,
     /// Intentional non-latest version — reported as pinned, not a failure.
     pin: Option<String>,
@@ -286,7 +286,7 @@ struct CrateIndex {
     dep_reqs: BTreeMap<String, String>,
     /// Item names declared in this crate's own files (before facade grafts).
     own_items: BTreeSet<String>,
-    /// Leaf names each extern dep graft contributed (package → names) — so a
+    /// Leaf names each extern dep graft contributed (package → names). So a
     /// facade that re-exports an engine (`pub use gpui::*`) can hide that
     /// dep's surface from the "not cataloged" report without hiding its own
     /// widget names.
@@ -371,7 +371,7 @@ fn crate_manifest(
     (name, lib_path, deps, reqs)
 }
 
-/// `src/` relative file path → module path (`a/mod.rs` → `a`; the `[lib] path`
+/// `src/` relative file path → module path (`a/mod.rs` → `a`. The `[lib] path`
 /// entry point — usually `src/lib.rs` — is the crate root).
 fn file_mod_path(crate_dir: &Path, lib_path: &Path, file: &Path) -> Option<String> {
     if file == crate_dir.join(lib_path) {
@@ -485,7 +485,7 @@ fn walk_use(
         }
         syn::UseTree::Name(n) => {
             let leaf = n.ident.to_string();
-            // Full path = prefix segs + leaf; `pub use ext` has empty segs and
+            // Full path = prefix segs + leaf. `pub use ext` has empty segs and
             // the leaf IS the first segment.
             let mut full = segs.clone();
             full.push(leaf.clone());
@@ -539,7 +539,7 @@ fn walk_use(
     }
 }
 
-/// `self`/`super`/`crate` anchor relative `use` paths; anything else is
+/// `self`/`super`/`crate` anchor relative `use` paths. Anything else is
 /// crate-absolute (root item or extern crate name).
 fn normalize_use_path(segs: &[String], module: &str) -> String {
     let mut parts: Vec<&str> = module.split("::").filter(|s| !s.is_empty()).collect();
@@ -618,7 +618,7 @@ fn graft(mods: &mut BTreeMap<String, Module>, alias: &str, src_index: &CrateInde
 }
 
 /// Full index for one crate source dir: files → dep facades (recursively) →
-/// glob expansion. `lib_names` maps package → its `[lib] name` once fetched.
+/// glob expansion. `lib_names` maps package → its `[lib] name` once loaded.
 fn index_crate(
     crate_dir: &Path,
     locks: &BTreeMap<String, String>,

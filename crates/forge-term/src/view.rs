@@ -45,7 +45,7 @@ impl Default for TermStyle {
 }
 
 /// An element that paints an [`Emulator`]'s cell grid. Feed bytes into the
-/// emulator wherever the byte stream lands; this re-reads the grid each paint.
+/// emulator wherever the byte stream lands. This re-reads the grid each paint.
 pub struct TermView {
     emulator: Rc<RefCell<Emulator>>,
     style: TermStyle,
@@ -207,7 +207,7 @@ impl IntoElement for TermView {
 }
 
 /// One grid row → background quads + a shaped line. `cells` is already
-/// viewport-clipped; the row top is `row_y`.
+/// viewport-clipped. The row top is `row_y`.
 #[allow(clippy::too_many_arguments)]
 fn shape_row(
     cells: &[CellSnapshot],
@@ -258,7 +258,7 @@ fn shape_row(
         ));
     }
 
-    // Pass 2 — text: skip spacers and spaces-only rows; group runs by
+    // Pass 2 — text: skip spacers and spaces-only rows. Group runs by
     // (fg, weight, style, underline) since TextRun carries one Font.
     let mut text = String::with_capacity(cells.len());
     let mut runs: Vec<TextRun> = Vec::new();

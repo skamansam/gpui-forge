@@ -48,9 +48,10 @@
 	<h2 class="sets">Widget sets</h2>
 	<p class="lead">
 		Every add-on library Forge Studio ships, as the
-		<code>examples/*.forge.yaml</code> demo its Welcome tab opens. Each renders live — gpui-kit
-		docs on the WASM canvas above, the ratatui doc as a terminal frame (<code>video.*</code>
-		needs GStreamer, so those elements show as placeholders on the web). Open them in Studio
+		<code>examples/*.forge.yaml</code> demo its Welcome tab opens. Each renders live: <code>gpui-kit</code>
+		docs on the WASM canvas above, and the ratatui doc as a terminal frame.
+		<code>video.*</code> elements need GStreamer, so they show as placeholders
+		on the web. Open them in Studio
 		(<code>cargo xtask studio</code> → Gallery) to run them natively.
 	</p>
 	{#each showcases as s (s.slug)}
@@ -67,7 +68,7 @@
 					{#if s.base === 'ratatui'}
 						<TuiCanvas yaml={s.yaml} height="360px" />
 					{:else if s.base === 'native'}
-						<div class="native">no web canvas for this base — open in Studio (<code>cargo xtask studio</code>) to run it</div>
+						<div class="native">no web canvas for this base. Open in Studio (<code>cargo xtask studio</code>) to run it</div>
 					{:else}
 						<Canvas yaml={s.yaml} base={s.base ?? 'gpui-kit'} height="360px" />
 					{/if}

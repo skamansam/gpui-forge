@@ -1,5 +1,5 @@
 # Iconset demo — `meta.iconset` switches the document's icons off the bundled
-# lucide set. `heroicons` is bundled with Forge Studio; a project can supply
+# lucide set. `heroicons` is bundled with Forge Studio. A project can supply
 # its own set at `<assets>/icons/<set>/` + `[icons] set` in forge.toml.
 $schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
 forge: "0.1"
