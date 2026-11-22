@@ -3,6 +3,7 @@
 //! target is a terminal, not a GPUI window: the view draws into a
 //! `ratatui::Frame` over `/dev/tty` while stdout stays the protocol channel.
 
+use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
 use crossterm::{execute, terminal};
 use gpui_forge_runtime::check;
 use gpui_forge_runtime::render::ForgeView;
@@ -41,54 +42,35 @@ fn main() {
     let (tx, rx) = mpsc::channel::<HostMsg>();
     spawn_reader(tx);
 
-    // Key channel — /dev/tty raw bytes → keys. Stdin is the protocol, so the
-    // terminal input side reads the controlling terminal directly (#112).
-    let (ktx, krx) = mpsc::channel::<String>();
+    // Input channel — /dev/tty raw bytes → keys + SGR mouse events. Stdin is
+    // the protocol, so the terminal input side reads the controlling
+    // terminal directly (#112).
+    let (etx, erx) = mpsc::channel::<TtyEvent>();
     std::thread::spawn(move || {
         use std::io::Read;
         let Ok(mut tty) = std::fs::File::open("/dev/tty") else {
             return;
         };
-        let mut buf = [0u8; 8];
+        // Mouse reports span reads, so bytes accumulate in `pending` and the
+        // parser consumes whole sequences.
+        let mut pending: Vec<u8> = Vec::new();
+        let mut buf = [0u8; 64];
         while let Ok(n) = tty.read(&mut buf) {
             if n == 0 {
                 break;
             }
-            let mut i = 0;
-            while i < n {
-                let b = buf[i];
-                let key = match b {
-                    b'\t' => "Tab".to_owned(),
-                    127 | 8 => "Backspace".to_owned(),
-                    b'\r' | b'\n' => "Enter".to_owned(),
-                    27 => {
-                        // CSI sequences — arrows (ESC [ A..D) + shift-tab (ESC [ Z).
-                        if i + 2 < n && buf[i + 1] == b'[' {
-                            i += 2;
-                            match buf[i] {
-                                b'A' => "Up",
-                                b'B' => "Down",
-                                b'C' => "Right",
-                                b'D' => "Left",
-                                b'Z' => "BackTab",
-                                _ => continue,
-                            }
-                            .to_owned()
-                        } else {
-                            i += 1;
-                            continue;
-                        }
-                    }
-                    32..=126 => (b as char).to_string(),
-                    _ => {
-                        i += 1;
-                        continue;
-                    }
-                };
-                i += 1;
-                if ktx.send(key).is_err() {
+            pending.extend_from_slice(&buf[..n]);
+            while let Some((event, used)) = parse_tty(&pending) {
+                pending.drain(..used);
+                if let Some(event) = event
+                    && etx.send(event).is_err()
+                {
                     return;
                 }
+            }
+            // A tail that can't complete (a stray ESC) must not grow forever.
+            if pending.len() > 64 {
+                pending.clear();
             }
         }
     });
@@ -103,7 +85,7 @@ fn main() {
         .ok();
     let mut term = tty.as_mut().and_then(|out| {
         let _ = terminal::enable_raw_mode();
-        let _ = execute!(out, terminal::EnterAlternateScreen);
+        let _ = execute!(out, terminal::EnterAlternateScreen, EnableMouseCapture);
         out.try_clone()
             .ok()
             .and_then(|dup| Terminal::new(CrosstermBackend::new(dup)).ok())
@@ -161,12 +143,7 @@ fn main() {
                         .unwrap(),
                     serde_json::Value::String(path),
                 ),
-                HostMsg::Theme { .. } => {
-                    // ratatui widgets style themselves per-widget in the Forge
-                    // base renderer — there's no palette hook to map onto. The
-                    // streamed ANSI frame shows the TUI's own colors as a real
-                    // terminal would, which is the honest render.
-                }
+                HostMsg::Theme { dark, colors, .. } => view.set_theme(dark, &colors),
                 HostMsg::Raise => {
                     // The host's terminal is already focused — nothing to raise.
                 }
@@ -178,13 +155,18 @@ fn main() {
                         (h / 18.0).clamp(5.0, 200.0) as u16,
                     );
                 }
+                // Wire input — Studio forwards these when the host has no
+                // /dev/tty of its own.
+                HostMsg::Key(key) => view.on_key(&key),
+                HostMsg::Mouse { kind, col, row } => view.on_mouse(&kind, col, row),
                 HostMsg::Quit => quit = true,
             }
         }
-        while let Ok(key) = krx.try_recv() {
-            // Shift-Tab arrives as CSI Z (27 91 90) — handled as escape for now.
-            // Plain Tab already cycles forward.
-            view.on_key(&key);
+        while let Ok(event) = erx.try_recv() {
+            match event {
+                TtyEvent::Key(key) => view.on_key(&key),
+                TtyEvent::Mouse { kind, col, row } => view.on_mouse(kind, col, row),
+            }
         }
         let (cols, rows) = if let Some(term) = &mut term {
             let _ = term.draw(|f| view.render(f));
@@ -216,7 +198,83 @@ fn main() {
     }
 
     if let Some(mut out) = tty {
-        let _ = execute!(out, terminal::LeaveAlternateScreen);
+        let _ = execute!(out, DisableMouseCapture, terminal::LeaveAlternateScreen);
         let _ = terminal::disable_raw_mode();
     }
+}
+
+/// One decoded input from the terminal — a logical key name or a mouse
+/// event. Mouse `kind` is `down`, `up`, `scroll-up` or `scroll-down`, with
+/// `col`/`row` in zero-based cells.
+enum TtyEvent {
+    Key(String),
+    Mouse {
+        kind: &'static str,
+        col: u16,
+        row: u16,
+    },
+}
+
+/// The next complete input in `buf`, as `(event, bytes consumed)`. `None`
+/// outer means the buffer ends mid-sequence — wait for more bytes. A `None`
+/// event with a count is junk to drop. SGR mouse reports arrive as
+/// `ESC [ < b ; x ; y` closed by `M` (press) or `m` (release).
+fn parse_tty(buf: &[u8]) -> Option<(Option<TtyEvent>, usize)> {
+    let b = *buf.first()?;
+    Some(match b {
+        b'\t' => (Some(TtyEvent::Key("Tab".to_owned())), 1),
+        127 | 8 => (Some(TtyEvent::Key("Backspace".to_owned())), 1),
+        b'\r' | b'\n' => (Some(TtyEvent::Key("Enter".to_owned())), 1),
+        27 => {
+            if buf.len() < 2 {
+                return None;
+            }
+            if buf[1] != b'[' {
+                return Some((None, 1)); // a lone ESC
+            }
+            if buf.len() < 3 {
+                return None;
+            }
+            if buf[2] == b'<' {
+                let Some(rel) = buf.iter().skip(3).position(|&c| c == b'M' || c == b'm') else {
+                    return None;
+                };
+                let i = 3 + rel;
+                let mut parts = std::str::from_utf8(&buf[3..i])
+                    .unwrap_or("")
+                    .split(';')
+                    .map(|s| s.parse::<u16>().unwrap_or(0));
+                let cb = parts.next().unwrap_or(0);
+                let col = parts.next().unwrap_or(1).saturating_sub(1);
+                let row = parts.next().unwrap_or(1).saturating_sub(1);
+                if buf[i] != b'm' && cb & 32 != 0 {
+                    return Some((None, i + 1)); // motion tracking — drop
+                }
+                let kind = if buf[i] == b'm' {
+                    "up"
+                } else if cb & 64 != 0 {
+                    if cb & 1 == 0 {
+                        "scroll-up"
+                    } else {
+                        "scroll-down"
+                    }
+                } else {
+                    "down"
+                };
+                (Some(TtyEvent::Mouse { kind, col, row }), i + 1)
+            } else {
+                match buf[2] {
+                    // CSI sequences — arrows (ESC [ A..D) + shift-tab (ESC [ Z).
+                    b'A' => (Some(TtyEvent::Key("Up".to_owned())), 3),
+                    b'B' => (Some(TtyEvent::Key("Down".to_owned())), 3),
+                    b'C' => (Some(TtyEvent::Key("Right".to_owned())), 3),
+                    b'D' => (Some(TtyEvent::Key("Left".to_owned())), 3),
+                    b'Z' => (Some(TtyEvent::Key("BackTab".to_owned())), 3),
+                    _ => (None, 2),
+                }
+            }
+        }
+        32..=126 => (Some(TtyEvent::Key((b as char).to_string())), 1),
+        _ => (None, 1),
+    })
 }

@@ -6,7 +6,7 @@
 //! where their API is stable and gpui primitives elsewhere — `forge.*`
 //! intrinsics and two-way input widgets are stubs until the adapter port.
 
-use crate::render::{doc_meta, get_path, lookup_path, set_path, style_edit_value};
+use crate::render::{doc_meta, lookup_path, set_path, style_edit_value};
 use ::bezel::gpui;
 use ::bezel::gpui::prelude::*;
 use ::bezel::gpui::*;

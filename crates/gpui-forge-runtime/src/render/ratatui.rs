@@ -6,11 +6,11 @@
 //! directly and `render` draws into a `ratatui::Frame`. The host
 //! (`forge-preview-ratatui`) owns the terminal.
 
-use crate::render::{doc_meta, get_path, lookup_path, set_path, style_edit_value};
+use crate::render::{doc_meta, lookup_path, set_path, style_edit_value};
 use forge_spec::catalog::Catalog;
-use forge_spec::{Document, Node, Path, Segment, Unit, Value};
+use forge_spec::{Compare, Control, Document, Node, Path, PathSegment, Segment, Unit, Value};
 use ratatui::Frame;
-use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::layout::{Constraint, Direction, Layout, Position, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::symbols;
 use ratatui::text::{Line, Span};
@@ -42,6 +42,13 @@ pub trait ForgeLibrary {
     fn catalog(&self) -> Option<&Catalog> {
         None
     }
+    /// Draws an `alias.Name` node — the custom-widget hook. `view` gives the
+    /// library resolved props, state writes and `fire_call`. Return true when
+    /// the node was handled so the caller skips the placeholder.
+    fn render(&self, node: &Node, area: Rect, view: &mut ForgeView, frame: &mut Frame) -> bool {
+        let _ = (node, area, view, frame);
+        false
+    }
 }
 
 pub struct ForgeView {
@@ -62,11 +69,22 @@ pub struct ForgeView {
     /// the node's area (the TUI's flat model has no `Entity`, so the map
     /// holds views directly).
     previews: HashMap<String, ForgeView>,
-    /// Focusable inputs — `(binding path, kind, resolved `on:` calls)`
-    /// rebuilt each render. `Tab`/`Shift-Tab` cycles, typed keys write the
-    /// focused binding, `Enter`/`Space` fire the node's event calls.
-    focusables: Vec<(Path, FocusKind, Calls)>,
+    /// Focusable inputs — `(binding path, kind, resolved `on:` calls,
+    /// drawn rect)` rebuilt each render. `Tab`/`Shift-Tab` cycles, typed keys
+    /// write the focused binding, `Enter`/`Space` fire the node's event
+    /// calls. The rect is the widget's drawn area, so `on_mouse` hit-tests.
+    focusables: Vec<(Path, FocusKind, Calls, Rect)>,
     focused: usize,
+    /// `for`/`with` scope vars — `(name, value)` frames pushed while control
+    /// children expand (same contract as the GPUI twins).
+    scopes: Vec<(String, Json)>,
+    /// The resolved theme palette — semantic name → `Color`, set by
+    /// `HostMsg::Theme`'s `colors` map. `{$theme.*}` style values resolve
+    /// here. An empty map keeps the renderer's default colors.
+    theme: HashMap<String, Color>,
+    /// The wire's dark flag, kept for libraries that paint both modes.
+    #[allow(dead_code)]
+    dark: bool,
     /// Flags staged for protocol parity — a TUI has no element picker, but the
     /// commands are acknowledged so hosts don't special-case the base.
     #[allow(dead_code)]
@@ -95,6 +113,9 @@ impl ForgeView {
             previews: HashMap::new(),
             focusables: Vec::new(),
             focused: 0,
+            scopes: Vec::new(),
+            theme: HashMap::new(),
+            dark: false,
             pick: false,
             placing: false,
             dnd: false,
@@ -167,6 +188,21 @@ impl ForgeView {
         self.base_dir = Some(dir.into());
     }
 
+    /// `HostMsg::Theme` — the sender's resolved palette lands as the
+    /// `{$theme.*}` lookup table. Colors arrive as `#rrggbb`/`#rrggbbaa`
+    /// strings. Unparseable entries drop out.
+    pub fn set_theme(&mut self, dark: bool, colors: &serde_json::Map<String, Json>) {
+        self.dark = dark;
+        self.theme = colors
+            .iter()
+            .filter_map(|(k, v)| {
+                v.as_str()
+                    .and_then(forge_spec::Color::parse_hex)
+                    .map(|c| (k.clone(), Color::Rgb(c.r, c.g, c.b)))
+            })
+            .collect();
+    }
+
     /// Protocol-parity no-ops — a TUI has no pick/place/dnd overlays.
     pub fn set_pick(&mut self, pick: bool) {
         self.pick = pick;
@@ -226,11 +262,11 @@ impl ForgeView {
     /// `Tab`/`Shift-Tab` cycles focusable inputs. Printable keys write into
     /// the focused input's binding. `Enter`/`Space` fires toggle/select.
     pub fn on_key(&mut self, key: &str) {
-        let kind = self.focusables.get(self.focused).map(|(_, k, _)| *k);
+        let kind = self.focusables.get(self.focused).map(|(_, k, _, _)| *k);
         match (kind, key) {
             (_, "Tab") | (_, "BackTab") => {}
             (Some(FocusKind::Bool), "Enter") | (Some(FocusKind::Bool), " ") => {
-                if let Some((path, _, _)) = self.focusables.get(self.focused).cloned() {
+                if let Some((path, _, _, _)) = self.focusables.get(self.focused).cloned() {
                     let cur = self.lookup(&path).and_then(Json::as_bool).unwrap_or(false);
                     self.write(&path, Json::Bool(!cur));
                 }
@@ -238,7 +274,7 @@ impl ForgeView {
                 return;
             }
             (Some(FocusKind::Select), "Up") | (Some(FocusKind::Select), "k") => {
-                if let Some((path, _, _)) = self.focusables.get(self.focused).cloned() {
+                if let Some((path, _, _, _)) = self.focusables.get(self.focused).cloned() {
                     let cur = self.lookup(&path).and_then(Json::as_u64).unwrap_or(0);
                     self.write(&path, Json::from(cur.saturating_sub(1)));
                 }
@@ -246,7 +282,7 @@ impl ForgeView {
                 return;
             }
             (Some(FocusKind::Select), "Down") | (Some(FocusKind::Select), "j") => {
-                if let Some((path, _, _)) = self.focusables.get(self.focused).cloned() {
+                if let Some((path, _, _, _)) = self.focusables.get(self.focused).cloned() {
                     let cur = self.lookup(&path).and_then(Json::as_u64).unwrap_or(0);
                     self.write(&path, Json::from(cur + 1));
                 }
@@ -275,7 +311,7 @@ impl ForgeView {
                 self.fire_focused("submit");
             }
             "Backspace" => {
-                if let Some((path, _, _)) = self.focusables.get(self.focused).cloned() {
+                if let Some((path, _, _, _)) = self.focusables.get(self.focused).cloned() {
                     let mut cur = self.json_text(&path);
                     cur.pop();
                     self.write(&path, Json::String(cur));
@@ -283,7 +319,7 @@ impl ForgeView {
                 self.fire_focused("change");
             }
             c if c.chars().count() == 1 => {
-                if let Some((path, _, _)) = self.focusables.get(self.focused).cloned() {
+                if let Some((path, _, _, _)) = self.focusables.get(self.focused).cloned() {
                     let mut cur = self.json_text(&path);
                     cur.push_str(c);
                     self.write(&path, Json::String(cur));
@@ -311,7 +347,7 @@ impl ForgeView {
 
     /// Fires the focused node's `on <event>:` calls through `fire_call`.
     fn fire_focused(&mut self, event: &str) {
-        if let Some((_, _, calls)) = self.focusables.get(self.focused).cloned() {
+        if let Some((_, _, calls, _)) = self.focusables.get(self.focused).cloned() {
             for (e, name, args) in calls {
                 if e == event {
                     self.fire_call(&name, args);
@@ -324,7 +360,7 @@ impl ForgeView {
     fn is_focused(&self, path: &Path) -> bool {
         self.focusables
             .get(self.focused)
-            .map(|(p, _, _)| p == path)
+            .map(|(p, _, _, _)| p == path)
             .unwrap_or(false)
     }
 
@@ -350,6 +386,17 @@ impl ForgeView {
     }
 
     fn lookup(&self, path: &Path) -> Option<&Json> {
+        // `for`/`with` scope vars shadow state — innermost frame wins.
+        if let Some(PathSegment::Field(name)) = path.0.first()
+            && let Some((_, value)) = self.scopes.iter().rev().find(|(n, _)| n == name)
+        {
+            return path.0[1..]
+                .iter()
+                .try_fold(value, |json, segment| match segment {
+                    PathSegment::Field(name) => json.get(name),
+                    PathSegment::Index(i) => json.get(i),
+                });
+        }
         lookup_path(&self.meta, &self.state, path)
     }
 
@@ -375,6 +422,7 @@ impl ForgeView {
             },
             Value::Bool(b) => b.to_string(),
             Value::Binding { path, .. } => self.json_text(path),
+            Value::Enum(s) => s.clone(),
             Value::Interpolated(segments) => segments
                 .iter()
                 .map(|seg| match seg {
@@ -449,6 +497,367 @@ impl ForgeView {
         self.prop_text(node, "text")
     }
 
+    // ── control flow + theme (same semantics as the GPUI twins) ────────────
+
+    /// A `Value` as state `Json` — bindings look up, literals convert.
+    fn resolve(&self, value: &Value) -> Json {
+        match value {
+            Value::Binding { path, .. } => self.lookup(path).cloned().unwrap_or(Json::Null),
+            Value::Bool(b) => Json::Bool(*b),
+            Value::Number { value, unit: None } => Json::from(*value),
+            Value::List(items) => Json::Array(items.iter().map(|i| self.resolve(i)).collect()),
+            Value::Map(entries) => Json::Object(
+                entries
+                    .iter()
+                    .map(|(k, v)| (k.clone(), self.resolve(v)))
+                    .collect(),
+            ),
+            other => Json::String(self.text_of(other)),
+        }
+    }
+
+    /// `is:`/`not:`/`case` equality — numbers compare by value so a `u64`
+    /// index write and a `4` literal agree.
+    fn value_eq(&self, a: &Json, b: &Json) -> bool {
+        match (a, b) {
+            (Json::Number(x), Json::Number(y)) => x.as_f64() == y.as_f64(),
+            _ => a == b,
+        }
+    }
+
+    /// An `if:` condition — truthiness alone, or equality against `is:`/`not:`.
+    fn condition(&self, when: &Value, test: &Option<Compare>) -> bool {
+        let value = self.resolve(when);
+        match test {
+            None => json_truthy(&value),
+            Some(Compare::Is(operand)) => self.value_eq(&value, &self.resolve(operand)),
+            Some(Compare::Not(operand)) => !self.value_eq(&value, &self.resolve(operand)),
+        }
+    }
+
+    /// `for:`'s source as items — a single (non-list) value iterates once.
+    fn for_items(&self, source: &Value) -> Vec<Json> {
+        match self.resolve(source) {
+            Json::Array(items) => items,
+            Json::Null => Vec::new(),
+            value => vec![value],
+        }
+    }
+
+    /// One node's expansion — `if` gates, `for` repeats, `with` scopes and
+    /// `match` picks an arm. Scope bindings bake into the returned clones,
+    /// so they render after the scope unwinds.
+    fn expand(&mut self, node: &Node) -> Vec<Node> {
+        let Some(control) = &node.control else {
+            // No control — bake scope bindings into the clone. This is the
+            // path bare `for:`/`with:` block children take.
+            let mut node = node.clone();
+            self.bake_scope(&mut node);
+            return vec![node];
+        };
+        match control {
+            Control::If {
+                when,
+                test,
+                otherwise,
+            } => {
+                if self.condition(when, test) {
+                    self.expand_target(node)
+                } else {
+                    self.expand_kids(otherwise)
+                }
+            }
+            Control::For {
+                source,
+                each,
+                index,
+                otherwise,
+                ..
+            } => {
+                let items = self.for_items(source);
+                if items.is_empty() {
+                    return self.expand_kids(otherwise);
+                }
+                let mut out = Vec::new();
+                for (i, item) in items.into_iter().enumerate() {
+                    self.scopes.push((each.clone(), item));
+                    if let Some(index) = index {
+                        self.scopes.push((index.clone(), Json::from(i)));
+                    }
+                    out.extend(self.expand_target(node));
+                    let pop = 1 + usize::from(index.is_some());
+                    self.scopes.truncate(self.scopes.len() - pop);
+                }
+                out
+            }
+            Control::With { source, name } => {
+                let value = self.resolve(source);
+                self.scopes.push((name.clone(), value));
+                let out = self.expand_target(node);
+                self.scopes.pop();
+                out
+            }
+            Control::Match {
+                source,
+                cases,
+                otherwise,
+            } => {
+                let value = self.resolve(source);
+                match cases
+                    .iter()
+                    .find(|case| self.value_eq(&self.resolve(&case.value), &value))
+                {
+                    Some(case) => self.expand_kids(&case.children),
+                    None => self.expand_kids(otherwise),
+                }
+            }
+        }
+    }
+
+    fn expand_kids(&mut self, nodes: &[Node]) -> Vec<Node> {
+        let mut out = Vec::new();
+        for node in nodes {
+            out.extend(self.expand(node));
+        }
+        out
+    }
+
+    /// The control node's payload. A bare block expands its `children`. A
+    /// modified element becomes one baked clone.
+    fn expand_target(&mut self, node: &Node) -> Vec<Node> {
+        if node.is_block() {
+            self.expand_kids(&node.children)
+        } else {
+            let mut node = node.clone();
+            node.control = None;
+            self.bake_scope(&mut node);
+            vec![node]
+        }
+    }
+
+    /// Whether `path` is rooted in a live scope var.
+    fn scoped(&self, path: &Path) -> bool {
+        matches!(path.0.first(), Some(PathSegment::Field(name))
+            if self.scopes.iter().rev().any(|(n, _)| n == name))
+    }
+
+    /// Rewrites scope-rooted bindings to their resolved literals across the
+    /// node's whole subtree. Props, style, content, events and nested control
+    /// sources all bake, so expanded clones render with no live scope.
+    fn bake_scope(&self, node: &mut Node) {
+        if self.scopes.is_empty() {
+            return;
+        }
+        for (_, v) in &mut node.props {
+            self.bake_value(v);
+        }
+        for (_, v) in &mut node.style {
+            self.bake_value(v);
+        }
+        if let Some(content) = &mut node.content {
+            self.bake_value(content);
+        }
+        for event in &mut node.events {
+            for arg in &mut event.handler.args {
+                self.bake_value(arg);
+            }
+        }
+        for child in &mut node.children {
+            self.bake_scope(child);
+        }
+        match &mut node.control {
+            Some(Control::If {
+                when,
+                test,
+                otherwise,
+            }) => {
+                self.bake_value(when);
+                if let Some(Compare::Is(v) | Compare::Not(v)) = test {
+                    self.bake_value(v);
+                }
+                for child in otherwise {
+                    self.bake_scope(child);
+                }
+            }
+            Some(Control::For {
+                source, otherwise, ..
+            }) => {
+                self.bake_value(source);
+                for child in otherwise {
+                    self.bake_scope(child);
+                }
+            }
+            Some(Control::With { source, .. }) => self.bake_value(source),
+            Some(Control::Match {
+                source,
+                cases,
+                otherwise,
+            }) => {
+                self.bake_value(source);
+                for case in cases {
+                    self.bake_value(&mut case.value);
+                    for child in &mut case.children {
+                        self.bake_scope(child);
+                    }
+                }
+                for child in otherwise {
+                    self.bake_scope(child);
+                }
+            }
+            None => {}
+        }
+    }
+
+    fn bake_value(&self, value: &mut Value) {
+        match value {
+            Value::Binding { path, .. } if self.scoped(path) => {
+                *value = literal(self.lookup(path).cloned().unwrap_or(Json::Null));
+            }
+            Value::Interpolated(segments)
+                if segments
+                    .iter()
+                    .any(|s| matches!(s, Segment::Binding(p) if self.scoped(p))) =>
+            {
+                let text = self.text_of(value);
+                *value = Value::String(text);
+            }
+            Value::List(items) => {
+                for item in items {
+                    self.bake_value(item);
+                }
+            }
+            Value::Map(entries) => {
+                for (_, v) in entries {
+                    self.bake_value(v);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    /// A `style:` color value → ratatui `Color`. `{$theme.*}` tokens hit
+    /// the palette. `Value::Color` and `#hex` parse directly, ANSI names map
+    /// to the 16 named colors. Bindings resolve then parse the same way.
+    fn style_color(&self, value: &Value) -> Option<Color> {
+        let named = |s: &str| {
+            ansi_color(s)
+                .or_else(|| forge_spec::Color::parse_hex(s).map(|c| Color::Rgb(c.r, c.g, c.b)))
+                .or_else(|| self.theme.get(s).copied())
+        };
+        match value {
+            Value::Color(c) => Some(Color::Rgb(c.r, c.g, c.b)),
+            Value::Token(path) => self.theme_color(path),
+            Value::String(s) | Value::Enum(s) => named(s),
+            Value::Binding { path, .. } => self.lookup(path).and_then(Json::as_str).and_then(named),
+            _ => None,
+        }
+    }
+
+    /// `{$theme.<name>}` → palette `Color` — the last path segment names the
+    /// semantic slot (`accent`, `muted_foreground`, …).
+    fn theme_color(&self, path: &Path) -> Option<Color> {
+        let name = match path.0.last() {
+            Some(PathSegment::Field(n)) => n.as_str(),
+            _ => return None,
+        };
+        self.theme
+            .get(name)
+            .or_else(|| match name {
+                "muted_foreground" => self.theme.get("muted-foreground"),
+                "muted-foreground" => self.theme.get("muted_foreground"),
+                _ => None,
+            })
+            .copied()
+    }
+
+    /// A `style:` entry's truth — `true`/`yes`/`1` strings count.
+    fn truthy(&self, value: &Value) -> bool {
+        match value {
+            Value::Bool(b) => *b,
+            Value::String(s) | Value::Enum(s) => matches!(s.as_str(), "true" | "yes" | "1"),
+            Value::Binding { path, .. } => self.lookup(path).map(json_truthy).unwrap_or(false),
+            _ => false,
+        }
+    }
+
+    /// `style:` entries → a `Style` patch. `color`/`background` resolve
+    /// through `style_color`, `weight`/`italic`/`underline`/`dim` set
+    /// modifiers. Patch it over a widget's default style.
+    fn node_style(&self, node: &Node) -> Style {
+        let mut style = Style::default();
+        for (key, value) in &node.style {
+            match key.as_str() {
+                "color" => {
+                    if let Some(c) = self.style_color(value) {
+                        style = style.fg(c);
+                    }
+                }
+                "background" => {
+                    if let Some(c) = self.style_color(value) {
+                        style = style.bg(c);
+                    }
+                }
+                "weight" if self.text_of(value) == "bold" => {
+                    style = style.add_modifier(Modifier::BOLD)
+                }
+                "italic" if self.truthy(value) => style = style.add_modifier(Modifier::ITALIC),
+                "underline" if self.truthy(value) => {
+                    style = style.add_modifier(Modifier::UNDERLINED)
+                }
+                "dim" if self.truthy(value) => style = style.add_modifier(Modifier::DIM),
+                _ => {}
+            }
+        }
+        style
+    }
+
+    /// `border-color` from `style:` — blocks apply it to `border_style`.
+    fn border_color(&self, node: &Node) -> Option<Color> {
+        node.style
+            .iter()
+            .find(|(k, _)| k == "border-color")
+            .and_then(|(_, v)| self.style_color(v))
+    }
+
+    /// Mouse hit-test — `kind` is `down`, `up`, `scroll-up` or `scroll-down`.
+    /// A click focuses the zone's widget. Bool zones toggle, select zones
+    /// pick the clicked row and scroll moves the selection.
+    pub fn on_mouse(&mut self, kind: &str, col: u16, row: u16) {
+        let pos = Position::new(col, row);
+        let Some(i) = self
+            .focusables
+            .iter()
+            .position(|(_, _, _, r)| r.contains(pos))
+        else {
+            return;
+        };
+        self.focused = i;
+        let (path, focus_kind, _, rect) = self.focusables[i].clone();
+        match (focus_kind, kind) {
+            (FocusKind::Bool, "down") => {
+                let cur = self.lookup(&path).and_then(Json::as_bool).unwrap_or(false);
+                self.write(&path, Json::Bool(!cur));
+                self.fire_focused("change");
+            }
+            (FocusKind::Select, "down") => {
+                let idx = row.saturating_sub(rect.y + 1);
+                self.write(&path, Json::from(idx));
+                self.fire_focused("select");
+            }
+            (FocusKind::Select, "scroll-up") | (FocusKind::Select, "scroll-down") => {
+                let cur = self.lookup(&path).and_then(Json::as_u64).unwrap_or(0);
+                let next = if kind == "scroll-up" {
+                    cur.saturating_sub(1)
+                } else {
+                    cur + 1
+                };
+                self.write(&path, Json::from(next));
+                self.fire_focused("select");
+            }
+            _ => {}
+        }
+    }
+
     // ── rendering ────────────────────────────────────────────────────────────
 
     /// Draws the document into `frame` — called by the host's event loop.
@@ -456,7 +865,9 @@ impl ForgeView {
         self.focusables.clear();
         let area = frame.area();
         if let Some(doc) = self.doc.clone() {
-            self.render_node(&doc.root, area, frame);
+            for node in self.expand(&doc.root) {
+                self.render_node(&node, area, frame);
+            }
         } else if let Some(text) = self.empty_text.clone() {
             frame.render_widget(
                 Paragraph::new(text)
@@ -479,23 +890,26 @@ impl ForgeView {
                 if let Some(view) = self.previews.get_mut(&id) {
                     let doc = view.doc.clone();
                     if let Some(doc) = doc {
-                        view.render_node(&doc.root, area, frame);
+                        for node in view.expand(&doc.root) {
+                            view.render_node(&node, area, frame);
+                        }
                     }
                 }
             }
             return;
         }
-        if node.element.namespace.is_some() {
-            // `use:`/`forge` non-Preview elements — ForgeLibrary is GPUI-typed
-            // and can't dispatch on a TUI. Render an honest placeholder.
+        if let Some(ns) = node.element.namespace.as_deref() {
+            if let Some(lib) = self.libraries.iter().find(|l| l.alias() == ns).cloned()
+                && lib.render(node, area, self, frame)
+            {
+                return;
+            }
+            // No library claimed `ns.Name` — the placeholder keeps the gap
+            // visible instead of dropping it.
             frame.render_widget(
-                Paragraph::new(format!(
-                    "{}.{} — namespaced elements need a GPUI host",
-                    node.element.namespace.as_deref().unwrap_or("?"),
-                    node.element.name
-                ))
-                .style(Style::default().fg(Color::DarkGray))
-                .block(Block::default().borders(Borders::ALL)),
+                Paragraph::new(format!("{ns}.{} — no ratatui library", node.element.name))
+                    .style(Style::default().fg(Color::DarkGray))
+                    .block(Block::default().borders(Borders::ALL)),
                 area,
             );
             return;
@@ -508,6 +922,9 @@ impl ForgeView {
                 let mut block = Block::default()
                     .borders(Borders::ALL)
                     .border_type(BorderType::Rounded);
+                if let Some(c) = self.border_color(node) {
+                    block = block.border_style(c);
+                }
                 if !title.is_empty() {
                     block = block.title(title);
                 }
@@ -516,21 +933,25 @@ impl ForgeView {
                 if node.children.is_empty() {
                     let text = self.node_text(node);
                     if !text.is_empty() {
-                        frame.render_widget(Paragraph::new(text), inner);
+                        frame.render_widget(
+                            Paragraph::new(text).style(self.node_style(node)),
+                            inner,
+                        );
                     }
                 } else {
                     self.render_children(node, inner, frame, Direction::Vertical);
                 }
             }
             "Text" | "Title" => {
-                let mut line = Line::from(Span::raw(self.node_text(node)));
+                let mut style = Style::default().patch(self.node_style(node));
                 if node.element.name == "Title" {
-                    line = Line::from(
-                        Span::raw(line.to_string())
-                            .style(Style::default().add_modifier(Modifier::BOLD)),
-                    );
+                    style = style.add_modifier(Modifier::BOLD);
                 }
-                frame.render_widget(Paragraph::new(line).wrap(Wrap { trim: true }), area);
+                frame.render_widget(
+                    Paragraph::new(Line::from(Span::styled(self.node_text(node), style)))
+                        .wrap(Wrap { trim: true }),
+                    area,
+                );
             }
             "Divider" => {
                 frame.render_widget(
@@ -547,7 +968,8 @@ impl ForgeView {
                     Paragraph::new(label).style(
                         Style::default()
                             .fg(Color::Cyan)
-                            .add_modifier(Modifier::BOLD),
+                            .add_modifier(Modifier::BOLD)
+                            .patch(self.node_style(node)),
                     ),
                     area,
                 );
@@ -557,7 +979,7 @@ impl ForgeView {
                 if let Some(path) = &binding {
                     let calls = self.calls_for(node);
                     self.focusables
-                        .push((path.clone(), FocusKind::Select, calls));
+                        .push((path.clone(), FocusKind::Select, calls, area));
                 }
                 let focused = binding
                     .as_ref()
@@ -570,7 +992,7 @@ impl ForgeView {
                             .map(|l| Line::from(l.to_string()))
                             .collect()
                     } else {
-                        node.children
+                        self.expand_kids(&node.children)
                             .iter()
                             .map(|c| Line::from(self.node_text(c)))
                             .collect()
@@ -594,7 +1016,7 @@ impl ForgeView {
                             .map(|l| ListItem::new(l.to_string()))
                             .collect()
                     } else {
-                        node.children
+                        self.expand_kids(&node.children)
                             .iter()
                             .map(|c| ListItem::new(self.node_text(c)))
                             .collect()
@@ -612,6 +1034,7 @@ impl ForgeView {
                                 .add_modifier(Modifier::BOLD),
                         );
                     }
+                    list = list.style(self.node_style(node));
                     frame.render_widget(list, area);
                 }
             }
@@ -620,8 +1043,18 @@ impl ForgeView {
                 let label = self.prop_text(node, "label");
                 frame.render_widget(
                     Gauge::default()
-                        .block(Block::default().borders(Borders::ALL))
-                        .gauge_style(Style::default().fg(Color::Green))
+                        .block({
+                            let mut b = Block::default().borders(Borders::ALL);
+                            if let Some(c) = self.border_color(node) {
+                                b = b.border_style(c);
+                            }
+                            b
+                        })
+                        .gauge_style(
+                            Style::default()
+                                .fg(Color::Green)
+                                .patch(self.node_style(node)),
+                        )
                         .label(if label.is_empty() {
                             format!("{value:.0}%")
                         } else {
@@ -641,10 +1074,14 @@ impl ForgeView {
                 let binding = Self::binding_of(node, "value");
                 let empty = value.is_empty();
                 let text = if empty { placeholder } else { value };
+                let drawn = Rect {
+                    height: 3.min(area.height),
+                    ..area
+                };
                 if let Some(path) = &binding {
                     let calls = self.calls_for(node);
                     self.focusables
-                        .push((path.clone(), FocusKind::Input, calls));
+                        .push((path.clone(), FocusKind::Input, calls, drawn));
                 }
                 let focused = binding
                     .as_ref()
@@ -654,6 +1091,9 @@ impl ForgeView {
                 if !label.is_empty() {
                     block = block.title(label);
                 }
+                if let Some(c) = self.border_color(node) {
+                    block = block.border_style(c);
+                }
                 if focused {
                     block = block
                         .border_style(Style::default().fg(Color::Cyan))
@@ -662,22 +1102,23 @@ impl ForgeView {
                 frame.render_widget(
                     Paragraph::new(if text.is_empty() { " " } else { text.as_str() })
                         .block(block)
-                        .style(if empty {
-                            Style::default().fg(Color::DarkGray)
-                        } else {
-                            Style::default()
-                        }),
-                    Rect {
-                        height: 3.min(area.height),
-                        ..area
-                    },
+                        .style(
+                            if empty {
+                                Style::default().fg(Color::DarkGray)
+                            } else {
+                                Style::default()
+                            }
+                            .patch(self.node_style(node)),
+                        ),
+                    drawn,
                 );
             }
             "Checkbox" | "Switch" => {
                 let binding = Self::binding_of(node, "checked");
                 if let Some(path) = &binding {
                     let calls = self.calls_for(node);
-                    self.focusables.push((path.clone(), FocusKind::Bool, calls));
+                    self.focusables
+                        .push((path.clone(), FocusKind::Bool, calls, area));
                 }
                 let focused = binding
                     .as_ref()
@@ -692,7 +1133,8 @@ impl ForgeView {
                 };
                 let label = self.node_text(node);
                 let mut p =
-                    Paragraph::new(format!("{} {label}", if checked { "[x]" } else { "[ ]" }));
+                    Paragraph::new(format!("{} {label}", if checked { "[x]" } else { "[ ]" }))
+                        .style(self.node_style(node));
                 if focused {
                     p = p.style(
                         Style::default()
@@ -734,9 +1176,11 @@ impl ForgeView {
                     .iter()
                     .map(|v| v.max(0.0) as u64)
                     .collect();
-                let mut spark = Sparkline::default()
-                    .data(&values)
-                    .style(Style::default().fg(Color::Yellow));
+                let mut spark = Sparkline::default().data(&values).style(
+                    Style::default()
+                        .fg(Color::Yellow)
+                        .patch(self.node_style(node)),
+                );
                 let max = self.num(node, "max", 0.0);
                 if max > 0.0 {
                     spark = spark.max(max as u64);
@@ -761,9 +1205,11 @@ impl ForgeView {
                         )
                     })
                     .collect();
-                let mut chart = BarChart::default()
-                    .data(&entries)
-                    .bar_style(Style::default().fg(Color::Green));
+                let mut chart = BarChart::default().data(&entries).bar_style(
+                    Style::default()
+                        .fg(Color::Green)
+                        .patch(self.node_style(node)),
+                );
                 let width = self.num(node, "bar_width", 0.0);
                 if width > 0.0 {
                     chart = chart.bar_width(width as u16);
@@ -794,7 +1240,11 @@ impl ForgeView {
                 let mut ds = Dataset::default()
                     .marker(symbols::Marker::Braille)
                     .graph_type(GraphType::Line)
-                    .style(Style::default().fg(Color::Cyan))
+                    .style(
+                        Style::default()
+                            .fg(Color::Cyan)
+                            .patch(self.node_style(node)),
+                    )
                     .data(&points);
                 if !name.is_empty() {
                     ds = ds.name(name);
@@ -931,8 +1381,8 @@ impl ForgeView {
     /// each child, honoring `width`/`height`/`flex`/`min-*`/`max-*` style
     /// entries — children without one take an equal `Fill` share.
     fn render_children(&mut self, node: &Node, area: Rect, frame: &mut Frame, dir: Direction) {
-        let constraints: Vec<Constraint> = node
-            .children
+        let expanded = self.expand_kids(&node.children);
+        let constraints: Vec<Constraint> = expanded
             .iter()
             .map(|c| Self::child_constraint(c, dir))
             .collect();
@@ -940,10 +1390,58 @@ impl ForgeView {
             .direction(dir)
             .constraints(constraints)
             .split(area);
-        for (child, chunk) in node.children.iter().zip(chunks.iter()) {
+        for (child, chunk) in expanded.iter().zip(chunks.iter()) {
             self.render_node(child, *chunk, frame);
         }
     }
+}
+
+/// `if:`'s truthiness — numbers, strings, arrays and nulls all have a
+/// sense in the doc language (the same contract as the GPUI twin).
+fn json_truthy(v: &Json) -> bool {
+    match v {
+        Json::Bool(b) => *b,
+        Json::Null => false,
+        Json::Number(n) => n.as_f64() != Some(0.0),
+        Json::String(s) => !s.is_empty(),
+        Json::Array(a) => !a.is_empty(),
+        Json::Object(o) => !o.is_empty(),
+    }
+}
+
+/// A resolved `Json` back to a `Value` literal — the shape `bake_scope`
+/// writes when a scope binding becomes concrete.
+fn literal(v: Json) -> Value {
+    match v {
+        Json::Bool(b) => Value::Bool(b),
+        Json::Number(n) => Value::Number {
+            value: n.as_f64().unwrap_or_default(),
+            unit: None,
+        },
+        Json::Array(items) => Value::List(items.into_iter().map(literal).collect()),
+        Json::Object(map) => Value::Map(map.into_iter().map(|(k, v)| (k, literal(v))).collect()),
+        _ => Value::String(v.as_str().unwrap_or_default().to_owned()),
+    }
+}
+
+/// ANSI color names → ratatui `Color`. Keeps the GPUI base's named-hue set
+/// where a terminal color exists.
+fn ansi_color(word: &str) -> Option<Color> {
+    Some(match word {
+        "black" => Color::Black,
+        "white" => Color::White,
+        "red" => Color::Red,
+        "orange" => Color::LightRed,
+        "yellow" => Color::Yellow,
+        "green" => Color::Green,
+        "teal" | "cyan" => Color::Cyan,
+        "blue" | "indigo" => Color::Blue,
+        "magenta" | "purple" | "violet" => Color::Magenta,
+        "pink" => Color::LightMagenta,
+        "gray" | "grey" => Color::Gray,
+        "darkgray" | "dark_gray" | "dark-grey" => Color::DarkGray,
+        _ => return None,
+    })
 }
 
 /// `date` prop — `"YYYY-MM"` or `"YYYY-MM-DD"`. Day defaults to the 1st.

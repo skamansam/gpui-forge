@@ -39,6 +39,19 @@ pub enum HostMsg {
         w: f64,
         h: f64,
     },
+    /// A logical key the sender forwards. Terminal hosts spawned by Studio
+    /// have no `/dev/tty` to read, so keystrokes ride the wire as names
+    /// (`"Tab"`, `"Enter"`, `"a"`, …).
+    #[allow(dead_code)] // read only by hosts with no window-system input
+    Key(String),
+    /// A mouse event the sender forwards — `kind` is `down`, `up`,
+    /// `scroll-up` or `scroll-down`, `col`/`row` zero-based cells.
+    #[allow(dead_code)] // read only by hosts with no window-system input
+    Mouse {
+        kind: String,
+        col: u16,
+        row: u16,
+    },
     Quit,
 }
 
@@ -126,6 +139,20 @@ pub fn spawn_reader(tx: mpsc::Sender<HostMsg>) {
                 }
                 Some("raise") => {
                     let _ = tx.send(HostMsg::Raise);
+                }
+                Some("key") => {
+                    if let Some(key) = v["key"].as_str() {
+                        let _ = tx.send(HostMsg::Key(key.to_string()));
+                    }
+                }
+                Some("mouse") => {
+                    if let Some(kind) = v["kind"].as_str() {
+                        let _ = tx.send(HostMsg::Mouse {
+                            kind: kind.to_string(),
+                            col: v["col"].as_u64().unwrap_or(0) as u16,
+                            row: v["row"].as_u64().unwrap_or(0) as u16,
+                        });
+                    }
                 }
                 Some("quit") => {
                     let _ = tx.send(HostMsg::Quit);

@@ -137,6 +137,11 @@ impl Host {
                                 .unwrap_or(Task::none())
                             });
                         }
+                        // `key`/`mouse` commands are for terminal hosts —
+
+                        // windowed hosts get input from the window system.
+                        HostMsg::Key(_) | HostMsg::Mouse { .. } => {}
+
                         HostMsg::Quit => return Task::done(Message::Quit),
                     }
                 }
