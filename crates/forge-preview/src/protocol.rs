@@ -38,6 +38,10 @@ pub enum HostMsg {
         y: f64,
         w: f64,
         h: f64,
+        /// #156 — the sender's measured grid, when it knows its cell
+        /// metrics. Present beats the host's own px-per-cell guess.
+        cols: Option<u16>,
+        rows: Option<u16>,
     },
     /// A logical key the sender forwards. Terminal hosts spawned by Studio
     /// have no `/dev/tty` to read, so keystrokes ride the wire as names
@@ -163,6 +167,8 @@ pub fn spawn_reader(tx: mpsc::Sender<HostMsg>) {
                         y: v["y"].as_f64().unwrap_or(0.0),
                         w: v["w"].as_f64().unwrap_or(0.0),
                         h: v["h"].as_f64().unwrap_or(0.0),
+                        cols: v["cols"].as_u64().map(|n| n as u16),
+                        rows: v["rows"].as_u64().map(|n| n as u16),
                     });
                 }
                 _ => {}

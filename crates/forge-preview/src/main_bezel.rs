@@ -114,7 +114,7 @@ fn main() {
                                                 }
                                             });
                                         }
-                                        HostMsg::FrameRect { x, y, w, h } => {
+                                        HostMsg::FrameRect { x, y, w, h, .. } => {
                                             // #120 Phase 1 — PlatformWindow only
                                             // exposes `resize`. Size the host
                                             // window to the canvas slot.

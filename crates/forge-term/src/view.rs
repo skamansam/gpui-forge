@@ -45,16 +45,34 @@ impl Default for TermStyle {
     }
 }
 
+/// Shared slot a [`TermView`] publishes its measured (`cell_w`, `cell_h`)
+/// into each prepaint.
+pub type CellMetrics = Rc<RefCell<Option<(Pixels, Pixels)>>>;
+
 /// An element that paints an [`Emulator`]'s cell grid. Feed bytes into the
 /// emulator wherever the byte stream lands. This re-reads the grid each paint.
 pub struct TermView {
     emulator: Rc<RefCell<Emulator>>,
     style: TermStyle,
+    metrics: Option<CellMetrics>,
 }
 
 impl TermView {
     pub fn new(emulator: Rc<RefCell<Emulator>>, style: TermStyle) -> Self {
-        Self { emulator, style }
+        Self {
+            emulator,
+            style,
+            metrics: None,
+        }
+    }
+
+    /// Publishes the measured cell size (`cell_w`, `cell_h`) each prepaint.
+    /// A caller streaming to a fixed terminal grid needs these to turn a px
+    /// slot into matching cols/rows — the cell pitch lives here, not in a
+    /// protocol constant.
+    pub fn metrics_sink(mut self, sink: CellMetrics) -> Self {
+        self.metrics = Some(sink);
+        self
     }
 }
 
@@ -126,6 +144,7 @@ impl IntoElement for TermView {
     fn into_element(self) -> Self::Element {
         let emulator = self.emulator;
         let style = self.style;
+        let metrics = self.metrics;
         let font_base = move |weight, fstyle| Font {
             family: style.font_family.clone(),
             features: FontFeatures::default(),
@@ -139,12 +158,21 @@ impl IntoElement for TermView {
                 let emu = emulator.borrow();
                 let ts = cx.text_system();
                 let font_id = ts.resolve_font(&font_base(FontWeight::NORMAL, FontStyle::Normal));
+                // '0' is the cell-width probe (alacritty's convention) —
+                // ' ' has a narrow advance in many fonts and would pack
+                // every glyph at a fraction of the grid pitch.
                 let cell_w = ts
-                    .advance(font_id, style.font_size, ' ')
+                    .advance(font_id, style.font_size, '0')
                     .map(|s| s.width)
                     .unwrap_or(style.font_size * 0.6);
-                let cell_h =
-                    ts.ascent(font_id, style.font_size) + ts.descent(font_id, style.font_size);
+                // ascent+descent can resolve below the em square on some
+                // fonts; 1.2em is the floor or rows cram and glyphs touch.
+                let cell_h = (ts.ascent(font_id, style.font_size)
+                    + ts.descent(font_id, style.font_size))
+                .max(style.font_size * 1.2);
+                if let Some(sink) = &metrics {
+                    *sink.borrow_mut() = Some((cell_w, cell_h));
+                }
                 let (def_fg, def_bg) = (rgb8(style.default_fg), rgb8(style.default_bg));
                 let mut rows = Vec::with_capacity(emu.rows());
                 for r in 0..emu.rows() {

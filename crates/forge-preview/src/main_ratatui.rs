@@ -147,13 +147,29 @@ fn main() {
                 HostMsg::Raise => {
                     // The host's terminal is already focused — nothing to raise.
                 }
-                HostMsg::FrameRect { w, h, .. } => {
+                HostMsg::FrameRect {
+                    w, h, cols, rows, ..
+                } => {
                     // Headless mode has no window to float — but the canvas
                     // slot's px size is a sane cols/rows hint for the grid.
-                    frame_size = (
-                        (w / 8.0).clamp(20.0, 400.0) as u16,
-                        (h / 18.0).clamp(5.0, 200.0) as u16,
-                    );
+                    // A measured cols/rows beats the 8x18px guess: the
+                    // sender's cell metrics decide the terminal pitch.
+                    let next = match (cols, rows) {
+                        (Some(c), Some(r)) => (c.clamp(2, 400), r.clamp(2, 200)),
+                        _ => (
+                            (w / 8.0).clamp(20.0, 400.0) as u16,
+                            (h / 18.0).clamp(5.0, 200.0) as u16,
+                        ),
+                    };
+                    // The resize must happen here — the loop's
+                    // `(cols, rows) != frame_size` check can never trip
+                    // headless (`cols` derives from `frame_size`), so the
+                    // stream viewport would stay at its initial size while
+                    // frames claim the new one.
+                    if next != frame_size {
+                        frame_size = next;
+                        let _ = stream_term.resize(Rect::new(0, 0, next.0, next.1));
+                    }
                 }
                 // Wire input — Studio forwards these when the host has no
                 // /dev/tty of its own.

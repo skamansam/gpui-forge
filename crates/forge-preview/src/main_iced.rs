@@ -112,7 +112,7 @@ impl Host {
                                     .unwrap_or(Task::none())
                             });
                         }
-                        HostMsg::FrameRect { x, y, w, h } => {
+                        HostMsg::FrameRect { x, y, w, h, .. } => {
                             // #120 Phase 1 — iced can do the full frame_rect:
                             // `winit` position + size.
                             return iced::window::get_latest().then(move |id| {

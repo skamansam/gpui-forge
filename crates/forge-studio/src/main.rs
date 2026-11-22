@@ -2582,8 +2582,16 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                 let slots: std::collections::HashMap<String, Option<Bounds<Pixels>>> = panes
                     .iter()
                     .filter_map(|p| {
-                        view.preview_bounds(&p.id)
-                            .map(|cell| (p.id.clone(), *cell.borrow()))
+                        // Stream panes size their grid to the `TermView`'s
+                        // own painted rect — the card's `preview_bounds`
+                        // includes padding the grid never sees.
+                        let cell = if p.mode == "stream" {
+                            view.term_bounds(&p.id)
+                                .or_else(|| view.preview_bounds(&p.id))
+                        } else {
+                            view.preview_bounds(&p.id)
+                        };
+                        cell.map(|cell| (p.id.clone(), *cell.borrow()))
                     })
                     .collect();
                 let doc_base = get_path(view.state(), &parse_path("studio.doc_base").unwrap())
@@ -2813,13 +2821,26 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                     .then(|| slots.get(&pane.id).copied().flatten())
                     .flatten();
                 if let (Some(wb), Some(b)) = (wb, slot) {
-                    let rect = json!({
+                    let mut rect = json!({
                         "cmd": "frame_rect",
                         "x": f64::from(wb.origin.x) + f64::from(b.origin.x),
                         "y": f64::from(wb.origin.y) + f64::from(b.origin.y),
                         "w": f64::from(b.size.width),
                         "h": f64::from(b.size.height),
                     });
+                    // Stream panes ride the `TermView`'s measured cell
+                    // metrics — without them the host guesses an 8x18px
+                    // cell and the grids drift on resize (#156).
+                    if pane.mode == "stream"
+                        && let Ok(Some((cw, ch))) = view.update(cx, |view, _| {
+                            view.term_metrics(&pane.id).and_then(|c| *c.borrow())
+                        })
+                    {
+                        rect["cols"] =
+                            json!((f64::from(b.size.width) / f64::from(cw)).floor().max(2.));
+                        rect["rows"] =
+                            json!((f64::from(b.size.height) / f64::from(ch)).floor().max(2.));
+                    }
                     let key = rect.to_string();
                     if rects.get(&pane.id) != Some(&key) {
                         pane_send(&pane.id, &rect);

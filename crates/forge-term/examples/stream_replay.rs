@@ -102,7 +102,11 @@ fn main() {
         let rows: u16 = field(&line, "rows").and_then(|s| s.parse().ok()).unwrap();
         let data = unescape(field(&line, "data").unwrap_or(""));
         let emu = emu.get_or_insert_with(|| forge_term::Emulator::new(cols, rows));
-        emu.resize(cols, rows);
+        if emu.cols() != cols as usize || emu.rows() != rows as usize {
+            // Grid change → fresh emulator: sparse diffs only land right on
+            // a blank grid (see feed_term_frame in gpui_kit.rs).
+            *emu = forge_term::Emulator::new(cols, rows);
+        }
         emu.feed(data.as_bytes());
         let nonzero: usize = (0..emu.rows())
             .map(|r| emu.line(r).iter().filter(|c| c.ch != ' ').count())

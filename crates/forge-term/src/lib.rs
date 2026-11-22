@@ -14,4 +14,4 @@ pub mod view;
 
 pub use emulator::{CellColor, CellSnapshot, CursorShape, CursorSnapshot, Emulator, GridSize};
 #[cfg(feature = "gpui")]
-pub use view::{TermStyle, TermView};
+pub use view::{CellMetrics, TermStyle, TermView};

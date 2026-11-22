@@ -221,16 +221,24 @@ fn send_pane_mouse(
     else {
         return;
     };
-    let ts = window.text_system();
-    let font_id = ts.resolve_font(&Font {
-        family,
-        ..Default::default()
-    });
-    let cell_w = ts
-        .advance(font_id, px(12.), ' ')
-        .map(|s| s.width)
-        .unwrap_or(px(12.) * 0.6);
-    let cell_h = ts.ascent(font_id, px(12.)) + ts.descent(font_id, px(12.));
+    // The published metrics decide the cell pitch — recomputing here would
+    // drift from the painted grid (TermView floors cell_h at 1.2em).
+    let (cell_w, cell_h) = match view.term_metrics.get(id).and_then(|cell| *cell.borrow()) {
+        Some(m) => m,
+        None => {
+            let ts = window.text_system();
+            let font_id = ts.resolve_font(&Font {
+                family,
+                ..Default::default()
+            });
+            let w = ts
+                .advance(font_id, px(12.), '0')
+                .map(|s| s.width)
+                .unwrap_or(px(12.) * 0.6);
+            let h = (ts.ascent(font_id, px(12.)) + ts.descent(font_id, px(12.))).max(px(12.) * 1.2);
+            (w, h)
+        }
+    };
     let dx = pos.x - origin.x;
     let dy = pos.y - origin.y;
     if dx < px(0.) || dy < px(0.) {
@@ -254,6 +262,10 @@ pub type StateSink = Rc<dyn Fn(&Json, &mut ForgeView, &mut Context<ForgeView>)>;
 pub type HookHandler = Rc<dyn Fn(&[String], &mut ForgeView, &mut Context<ForgeView>)>;
 
 type Options = Vec<SharedString>;
+
+/// Shared cell-metrics slot — structurally `forge_term::CellMetrics`, kept
+/// local so this file's wasm build never names `forge_term`.
+type CellMetrics = std::rc::Rc<std::cell::RefCell<Option<(Pixels, Pixels)>>>;
 
 /// An external element library plugged into the runtime — the adapter contract
 /// from the multi-base RFC: alias + catalog + a render shim for `alias.Name`
@@ -344,6 +356,11 @@ pub struct ForgeView {
     /// One stable `FocusHandle` per stream card. A fresh handle each render
     /// drops focus between frames, and `on_key_down` never fires.
     term_focus: HashMap<String, FocusHandle>,
+    /// `forge.Preview` stream cards — the `TermView`'s measured
+    /// (`cell_w`, `cell_h`), published each prepaint so the sender sizes
+    /// the host grid by real metrics, not a px-per-cell guess.
+    /// Native-only populated — `forge_term` doesn't build on wasm.
+    term_metrics: HashMap<String, CellMetrics>,
     /// Persistent `ScrollHandle`s keyed by scrollable element id — element-state
     /// GC drops scroll offsets on every `cx.notify` re-render. An explicit
     /// `track_scroll` handle keeps them alive.
@@ -542,6 +559,7 @@ impl ForgeView {
             term_panes: HashMap::new(),
             term_bounds: HashMap::new(),
             term_focus: HashMap::new(),
+            term_metrics: HashMap::new(),
             preview_srcs: HashMap::new(),
             scroll_handles: HashMap::new(),
             previews: HashMap::new(),
@@ -652,6 +670,22 @@ impl ForgeView {
         self.preview_bounds.get(id).cloned()
     }
 
+    /// The stream card's painted `TermView` rect — `None` before the first
+    /// paint. Tighter than `preview_bounds`: it excludes the card padding.
+    pub fn term_bounds(
+        &self,
+        id: &str,
+    ) -> Option<std::rc::Rc<std::cell::RefCell<Option<Bounds<Pixels>>>>> {
+        self.term_bounds.get(id).cloned()
+    }
+
+    /// The stream card's measured terminal cell size — `None` before the
+    /// first paint. The sender turns a px slot into `frame_rect` cols/rows
+    /// with it so the host grid matches the painted grid exactly.
+    pub fn term_metrics(&self, id: &str) -> Option<CellMetrics> {
+        self.term_metrics.get(id).cloned()
+    }
+
     /// Feed one streaming `frame` event into the pane's terminal emulator —
     /// resize to the frame grid, then append the bytes, once per seq. This
     /// must run in the event path: the state's `preview.panes.<id>.frame`
@@ -682,7 +716,14 @@ impl ForgeView {
         if seq != entry.0 {
             {
                 let mut emu = entry.1.borrow_mut();
-                emu.resize(cols, rows);
+                if emu.cols() != cols as usize || emu.rows() != rows as usize {
+                    // Grid change: start a fresh emulator rather than
+                    // resize-preserving. Ratatui emits a sparse diff (only
+                    // cells that differ from EMPTY), so preserved reflow
+                    // content survives under new-empty cells and ghosts the
+                    // old layout over the new one.
+                    *emu = forge_term::Emulator::new(cols, rows);
+                }
                 emu.feed(data);
             }
             entry.0 = seq;
@@ -4639,9 +4680,16 @@ impl ForgeView {
                                         std::rc::Rc::new(std::cell::RefCell::new(None))
                                     })
                                     .clone();
-                                (entry.1.clone(), tcell)
+                                let mcell = self
+                                    .term_metrics
+                                    .entry(id.clone())
+                                    .or_insert_with(|| {
+                                        std::rc::Rc::new(std::cell::RefCell::new(None))
+                                    })
+                                    .clone();
+                                (entry.1.clone(), tcell, mcell)
                             })
-                            .map(|(term, tcell)| {
+                            .map(|(term, tcell, mcell)| {
                                 div()
                                     .size_full()
                                     .p_2()
@@ -4658,6 +4706,7 @@ impl ForgeView {
                                                 cursor: theme.foreground,
                                             },
                                         )
+                                        .metrics_sink(mcell)
                                         .into_any_element(),
                                         tcell,
                                     ))

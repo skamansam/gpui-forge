@@ -62,6 +62,14 @@ name = "render_guise"
 path = "examples/render_guise.rs"
 required-features = ["base-guise"]
 
+# `cargo run -p gpui-forge-runtime --example term_demo [-- <doc.forge.yaml>]`
+# Resizable window hosting `TermView` on a live ratatui stream — the stream
+# card's pipeline without Studio, for render/resize debugging (#156).
+[[example]]
+name = "term_demo"
+path = "examples/term_demo.rs"
+required-features = ["base-gpui-kit"]
+
 # The integration test exercises `ForgeView` inside a live App — only
 # meaningful under the kit base.
 [[test]]

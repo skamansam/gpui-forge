@@ -191,7 +191,7 @@ fn main() {
                                                     }
                                                 });
                                             }
-                                            HostMsg::FrameRect { x, y, w, h } => {
+                                            HostMsg::FrameRect { x, y, w, h, .. } => {
                                                 // #120 — the X11 escape for
                                                 // position: `HasWindowHandle`
                                                 // gives the XID, `x11rb` moves it.
