@@ -1,17 +1,18 @@
 //! The gpui half of the terminal: `TermView` paints an [`Emulator`]'s grid.
 //!
 //! The model is Zed's `terminal_view`: per row, background quads for the
-//! cells' backgrounds, then one shaped line for the glyphs — `TextRun`s carry
-//! per-cell fg/underline, the quad carries the cell-box-sized background
-//! (a `TextRun::background_color` only covers the glyph's advance, not the
-//! whole cell). The cursor is a quad in whatever shape the program asked for.
+//! cells' backgrounds, then one mark per cell — a shaped glyph anchored at
+//! the cell origin, or a quad for box-drawing and block cells. The quad
+//! carries the cell-box-sized background (a `TextRun::background_color`
+//! only covers the glyph's advance, not the whole cell). The cursor is a
+//! quad in whatever shape the program asked for.
 
 use std::{cell::RefCell, rc::Rc};
 
 use gpui::{
-    Bounds, Font, FontFeatures, FontStyle, FontWeight, Hsla, IntoElement, Pixels, Point,
-    ShapedLine, SharedString, Styled, TextAlign, TextRun, UnderlineStyle, Window, canvas, fill,
-    point, px, rgb, size,
+    Bounds, Font, FontFeatures, FontStyle, FontWeight, Hsla, IntoElement, Pixels, ShapedLine,
+    SharedString, Styled, TextAlign, TextRun, UnderlineStyle, Window, canvas, fill, point, px, rgb,
+    size,
 };
 
 use crate::{
@@ -71,15 +72,51 @@ fn dim(c: (u8, u8, u8), toward: (u8, u8, u8)) -> (u8, u8, u8) {
     (m(c.0, toward.0), m(c.1, toward.1), m(c.2, toward.2))
 }
 
+/// Centerline half-segments for a box-drawing cell: left, right, up, down
+/// from the cell's midpoint to the matching edge.
+const SEG_L: u8 = 1;
+const SEG_R: u8 = 2;
+const SEG_U: u8 = 4;
+const SEG_D: u8 = 8;
+
+#[derive(Clone, Copy)]
+enum LineWt {
+    Light,
+    Heavy,
+    Double,
+}
+
+enum CellInk {
+    /// Shaped text painted at the cell's top-left.
+    Glyph(Box<ShapedLine>),
+    /// `SEG_*` half-segments drawn as quads. Box-drawing glyphs rarely
+    /// fill the cell advance, so adjacent line cells leave seams when
+    /// painted as text. Segments sized to the cell edge cannot gap.
+    Bars(u8, LineWt),
+    /// Fractional rects ((x0,y0,x1,y1) in cell units) for block elements
+    /// like `█` and `▁`. Same seam argument as `Bars`.
+    Fracs([(f32, f32, f32, f32); 2]),
+}
+
+struct CellPaint {
+    bounds: Bounds<Pixels>,
+    fg: Hsla,
+    ink: CellInk,
+}
+
 pub struct RowPaint {
-    line: Option<ShapedLine>,
+    /// One entry per non-space cell. Row-wide shaping misaligns whenever a
+    /// glyph's advance differs from `cell_w` (font fallback on box-drawing
+    /// chars or a proportional resolved font): each substitution
+    /// cascade-shifts the row's tail. Per-cell origins keep every glyph on
+    /// its column regardless of font.
+    spans: Vec<CellPaint>,
     bgs: Vec<(Bounds<Pixels>, Hsla)>,
 }
 
 pub struct TermPrepaint {
     rows: Vec<RowPaint>,
     cursor: Option<(Bounds<Pixels>, bool)>, // bounds, hollow?
-    origin: Point<Pixels>,
     cell_h: Pixels,
 }
 
@@ -165,7 +202,6 @@ impl IntoElement for TermView {
                 TermPrepaint {
                     rows,
                     cursor,
-                    origin: bounds.origin,
                     cell_h,
                 }
             },
@@ -176,16 +212,39 @@ impl IntoElement for TermView {
                         window.paint_quad(fill(*b, *color));
                     }
                 }
-                for (r, row) in pre.rows.iter().enumerate() {
-                    if let Some(line) = &row.line {
-                        let _ = line.paint(
-                            pre.origin + point(px(0.), pre.cell_h * r as f32),
-                            pre.cell_h,
-                            TextAlign::Left,
-                            None,
-                            window,
-                            cx,
-                        );
+                for row in &pre.rows {
+                    for span in &row.spans {
+                        match &span.ink {
+                            CellInk::Glyph(line) => {
+                                let _ = line.paint(
+                                    span.bounds.origin,
+                                    pre.cell_h,
+                                    TextAlign::Left,
+                                    None,
+                                    window,
+                                    cx,
+                                );
+                            }
+                            CellInk::Bars(mask, wt) => {
+                                paint_bars(span.bounds, *mask, *wt, span.fg, window);
+                            }
+                            CellInk::Fracs(fracs) => {
+                                let (b, w, h) =
+                                    (span.bounds, span.bounds.size.width, span.bounds.size.height);
+                                for &(x0, y0, x1, y1) in fracs {
+                                    if x1 <= x0 || y1 <= y0 {
+                                        continue;
+                                    }
+                                    window.paint_quad(fill(
+                                        Bounds {
+                                            origin: point(b.origin.x + w * x0, b.origin.y + h * y0),
+                                            size: size(w * (x1 - x0), h * (y1 - y0)),
+                                        },
+                                        span.fg,
+                                    ));
+                                }
+                            }
+                        }
                     }
                 }
                 if let Some((b, hollow)) = pre.cursor {
@@ -211,7 +270,7 @@ impl IntoElement for TermView {
 #[allow(clippy::too_many_arguments)]
 fn shape_row(
     cells: &[CellSnapshot],
-    _row_y: Pixels,
+    row_y: Pixels,
     row_x: Pixels,
     cell_w: Pixels,
     cell_h: Pixels,
@@ -238,7 +297,7 @@ fn shape_row(
             if bg_color != def_bg {
                 bgs.push((
                     Bounds {
-                        origin: point(row_x + cell_w * bg_start as f32, _row_y),
+                        origin: point(row_x + cell_w * bg_start as f32, row_y),
                         size: size(cell_w * (i - bg_start) as f32, cell_h),
                     },
                     hsl(bg_color),
@@ -251,69 +310,208 @@ fn shape_row(
     if bg_color != def_bg {
         bgs.push((
             Bounds {
-                origin: point(row_x + cell_w * bg_start as f32, _row_y),
+                origin: point(row_x + cell_w * bg_start as f32, row_y),
                 size: size(cell_w * (cells.len() - bg_start) as f32, cell_h),
             },
             hsl(bg_color),
         ));
     }
 
-    // Pass 2 — text: skip spacers and spaces-only rows. Group runs by
-    // (fg, weight, style, underline) since TextRun carries one Font.
-    let mut text = String::with_capacity(cells.len());
-    let mut runs: Vec<TextRun> = Vec::new();
-    let mut cur: Option<(Hsla, FontWeight, FontStyle, bool, usize)> = None;
-    for cell in cells {
-        if cell.wide_spacer {
-            continue; // covered by the wide glyph's own advance
+    // Pass 2 — one entry per non-space cell, anchored at the cell's grid
+    // origin (see `RowPaint::spans`).
+    let mut spans: Vec<CellPaint> = Vec::new();
+    for (col, cell) in cells.iter().enumerate() {
+        if cell.wide_spacer || cell.hidden || cell.ch == ' ' {
+            continue;
         }
         let (fg, bg) = cell.display_colors();
         let mut fg_rgb = palette::resolve(fg, def_fg, def_bg);
         if cell.dim {
             fg_rgb = dim(fg_rgb, palette::resolve(bg, def_fg, def_bg));
         }
-        let fg_h = hsl(fg_rgb);
-        let weight = if cell.bold {
-            FontWeight::BOLD
+        let ch = cell.ch;
+        let ink = if let Some((mask, wt)) = box_bars(ch) {
+            CellInk::Bars(mask, wt)
+        } else if let Some(fracs) = block_fracs(ch) {
+            CellInk::Fracs(fracs)
         } else {
-            FontWeight::NORMAL
+            let weight = if cell.bold {
+                FontWeight::BOLD
+            } else {
+                FontWeight::NORMAL
+            };
+            let style = if cell.italic {
+                FontStyle::Italic
+            } else {
+                FontStyle::Normal
+            };
+            let runs = [run(
+                ch.len_utf8(),
+                font_base(weight, style),
+                hsl(fg_rgb),
+                cell.underline,
+                font_size,
+            )];
+            CellInk::Glyph(Box::new(window.text_system().shape_line(
+                ch.to_string().into(),
+                font_size,
+                &runs,
+                None,
+            )))
         };
-        let style = if cell.italic {
-            FontStyle::Italic
-        } else {
-            FontStyle::Normal
-        };
-        let ch = if cell.hidden { ' ' } else { cell.ch };
-        let wlen = ch.len_utf8();
-        match &mut cur {
-            Some((cf, cw, cs, cu, len))
-                if *cf == fg_h && *cw == weight && *cs == style && *cu == cell.underline =>
-            {
-                *len += wlen;
-            }
-            prev => {
-                if let Some((cf, cw, cs, cu, len)) = prev.take() {
-                    runs.push(run(len, font_base(cw, cs), cf, cu, font_size));
-                }
-                cur = Some((fg_h, weight, style, cell.underline, wlen));
-            }
-        }
-        text.push(ch);
-    }
-    if let Some((cf, cw, cs, cu, len)) = cur.take() {
-        runs.push(run(len, font_base(cw, cs), cf, cu, font_size));
+        spans.push(CellPaint {
+            bounds: Bounds {
+                origin: point(row_x + cell_w * col as f32, row_y),
+                size: size(cell_w, cell_h),
+            },
+            fg: hsl(fg_rgb),
+            ink,
+        });
     }
 
-    let line = if text.trim().is_empty() {
-        None
-    } else {
-        Some(
-            window
-                .text_system()
-                .shape_line(text.into(), font_size, &runs, None),
-        )
+    RowPaint { spans, bgs }
+}
+
+/// Box-drawing characters mapped to centerline half-segments. Mixed-weight
+/// or dashed variants return `None` and fall back to glyph paint.
+fn box_bars(ch: char) -> Option<(u8, LineWt)> {
+    const ALL: u8 = SEG_L | SEG_R | SEG_U | SEG_D;
+    Some(match ch {
+        '─' | '╌' => (SEG_L | SEG_R, LineWt::Light),
+        '━' => (SEG_L | SEG_R, LineWt::Heavy),
+        '═' => (SEG_L | SEG_R, LineWt::Double),
+        '│' | '╎' => (SEG_U | SEG_D, LineWt::Light),
+        '┃' => (SEG_U | SEG_D, LineWt::Heavy),
+        '║' => (SEG_U | SEG_D, LineWt::Double),
+        '┌' | '╭' => (SEG_R | SEG_D, LineWt::Light),
+        '┐' | '╮' => (SEG_L | SEG_D, LineWt::Light),
+        '└' | '╰' => (SEG_R | SEG_U, LineWt::Light),
+        '┘' | '╯' => (SEG_L | SEG_U, LineWt::Light),
+        '├' => (SEG_R | SEG_U | SEG_D, LineWt::Light),
+        '┤' => (SEG_L | SEG_U | SEG_D, LineWt::Light),
+        '┬' => (SEG_L | SEG_R | SEG_D, LineWt::Light),
+        '┴' => (SEG_L | SEG_R | SEG_U, LineWt::Light),
+        '┼' => (ALL, LineWt::Light),
+        '╶' => (SEG_R, LineWt::Light),
+        '╴' => (SEG_L, LineWt::Light),
+        '╵' => (SEG_U, LineWt::Light),
+        '╷' => (SEG_D, LineWt::Light),
+        '┏' => (SEG_R | SEG_D, LineWt::Heavy),
+        '┓' => (SEG_L | SEG_D, LineWt::Heavy),
+        '┗' => (SEG_R | SEG_U, LineWt::Heavy),
+        '┛' => (SEG_L | SEG_U, LineWt::Heavy),
+        '┣' => (SEG_R | SEG_U | SEG_D, LineWt::Heavy),
+        '┫' => (SEG_L | SEG_U | SEG_D, LineWt::Heavy),
+        '┳' => (SEG_L | SEG_R | SEG_D, LineWt::Heavy),
+        '┻' => (SEG_L | SEG_R | SEG_U, LineWt::Heavy),
+        '╋' => (ALL, LineWt::Heavy),
+        '╺' => (SEG_R, LineWt::Heavy),
+        '╸' => (SEG_L, LineWt::Heavy),
+        '╹' => (SEG_U, LineWt::Heavy),
+        '╻' => (SEG_D, LineWt::Heavy),
+        '╔' => (SEG_R | SEG_D, LineWt::Double),
+        '╗' => (SEG_L | SEG_D, LineWt::Double),
+        '╚' => (SEG_R | SEG_U, LineWt::Double),
+        '╝' => (SEG_L | SEG_U, LineWt::Double),
+        '╠' => (SEG_R | SEG_U | SEG_D, LineWt::Double),
+        '╣' => (SEG_L | SEG_U | SEG_D, LineWt::Double),
+        '╦' => (SEG_L | SEG_R | SEG_D, LineWt::Double),
+        '╩' => (SEG_L | SEG_R | SEG_U, LineWt::Double),
+        '╬' => (ALL, LineWt::Double),
+        _ => return None,
+    })
+}
+
+/// Block elements (U+2580–U+259F) mapped to fractional cell rects. Shades
+/// (`░▒▓`) return `None` — they need a dither, not a fill.
+fn block_fracs(ch: char) -> Option<[(f32, f32, f32, f32); 2]> {
+    let one = |r| [r, (0., 0., 0., 0.)];
+    Some(match ch {
+        '▀' => one((0., 0., 1., 0.5)),
+        '▁' => one((0., 0.875, 1., 1.)),
+        '▂' => one((0., 0.75, 1., 1.)),
+        '▃' => one((0., 0.625, 1., 1.)),
+        '▄' => one((0., 0.5, 1., 1.)),
+        '▅' => one((0., 0.375, 1., 1.)),
+        '▆' => one((0., 0.25, 1., 1.)),
+        '▇' => one((0., 0.125, 1., 1.)),
+        '█' => one((0., 0., 1., 1.)),
+        '▉' => one((0., 0., 0.875, 1.)),
+        '▊' => one((0., 0., 0.75, 1.)),
+        '▋' => one((0., 0., 0.625, 1.)),
+        '▌' => one((0., 0., 0.5, 1.)),
+        '▍' => one((0., 0., 0.375, 1.)),
+        '▎' => one((0., 0., 0.25, 1.)),
+        '▏' => one((0., 0., 0.125, 1.)),
+        '▐' => one((0.5, 0., 1., 1.)),
+        '▔' => one((0., 0., 1., 0.125)),
+        '▕' => one((0.875, 0., 1., 1.)),
+        '▖' => one((0., 0.5, 0.5, 1.)),
+        '▗' => one((0.5, 0.5, 1., 1.)),
+        '▘' => one((0., 0., 0.5, 0.5)),
+        '▙' => [(0., 0., 0.5, 1.), (0.5, 0.5, 1., 1.)],
+        '▚' => [(0., 0., 0.5, 0.5), (0.5, 0.5, 1., 1.)],
+        '▛' => [(0., 0., 1., 0.5), (0., 0.5, 0.5, 1.)],
+        '▜' => [(0., 0., 1., 0.5), (0.5, 0.5, 1., 1.)],
+        '▝' => one((0.5, 0., 1., 0.5)),
+        '▞' => [(0.5, 0., 1., 0.5), (0., 0.5, 0.5, 1.)],
+        '▟' => [(0.5, 0., 1., 0.5), (0., 0.5, 1., 1.)],
+        _ => return None,
+    })
+}
+
+/// Paints a `SEG_*` mask as edge-touching quads. Double lanes offset along
+/// the axis perpendicular to their direction.
+fn paint_bars(b: Bounds<Pixels>, mask: u8, wt: LineWt, fg: Hsla, window: &mut Window) {
+    let (w, h) = (b.size.width, b.size.height);
+    let (cx, cy) = (b.origin.x + w * 0.5, b.origin.y + h * 0.5);
+    let t = match wt {
+        LineWt::Heavy => h * 0.16,
+        _ => px(1.).max(h * 0.06),
     };
-    RowPaint { line, bgs }
+    let (dx, dy) = match wt {
+        LineWt::Double => (w * 0.22, h * 0.22),
+        _ => (px(0.), px(0.)),
+    };
+    let offs = |d: Pixels| -> Vec<Pixels> {
+        if d > px(0.) {
+            vec![-d, d]
+        } else {
+            vec![px(0.)]
+        }
+    };
+    let bar = |x0, y0, x1, y1| Bounds {
+        origin: point(x0, y0),
+        size: size(x1 - x0, y1 - y0),
+    };
+    for off in offs(dy) {
+        if mask & SEG_L != 0 {
+            window.paint_quad(fill(
+                bar(b.origin.x, cy - t * 0.5 + off, cx, cy + t * 0.5 + off),
+                fg,
+            ));
+        }
+        if mask & SEG_R != 0 {
+            window.paint_quad(fill(
+                bar(cx, cy - t * 0.5 + off, b.origin.x + w, cy + t * 0.5 + off),
+                fg,
+            ));
+        }
+    }
+    for off in offs(dx) {
+        if mask & SEG_U != 0 {
+            window.paint_quad(fill(
+                bar(cx - t * 0.5 + off, b.origin.y, cx + t * 0.5 + off, cy),
+                fg,
+            ));
+        }
+        if mask & SEG_D != 0 {
+            window.paint_quad(fill(
+                bar(cx - t * 0.5 + off, cy, cx + t * 0.5 + off, b.origin.y + h),
+                fg,
+            ));
+        }
+    }
 }
 
 fn run(len: usize, font: Font, color: Hsla, underline: bool, _font_size: Pixels) -> TextRun {
