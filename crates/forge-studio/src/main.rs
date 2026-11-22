@@ -520,6 +520,8 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "create_project",
         "preview_in_host",
         "raise_host",
+        "pane_key",
+        "pane_mouse",
         "save_document",
         "save_project",
         "format_document",
@@ -1046,6 +1048,27 @@ fn dispatch(
         "create_project" => create_project(view, shared.clone(), cx),
         "preview_in_host" => preview_in_host(view, shared.clone(), cx),
         "raise_host" => host_send(&json!({"cmd":"raise"})),
+        // Stream cards (ratatui `mode: stream`) — the card fires `pane_key` /
+        // `pane_mouse` for input over its tracked TermView. Forward to that
+        // pane's host, never the primary host.
+        "pane_key" => {
+            if let [id, key] = args {
+                pane_send(id, &json!({"cmd":"key","key":key}));
+            }
+        }
+        "pane_mouse" => {
+            if let [id, kind, col, row] = args {
+                pane_send(
+                    id,
+                    &json!({
+                        "cmd": "mouse",
+                        "kind": kind,
+                        "col": col.parse::<u16>().unwrap_or(0),
+                        "row": row.parse::<u16>().unwrap_or(0),
+                    }),
+                );
+            }
+        }
         "open_recent" => {
             if let Some(path) = args.first().map(PathBuf::from) {
                 load_file(path, view, shared.clone(), cx);

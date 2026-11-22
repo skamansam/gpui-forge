@@ -172,6 +172,82 @@ where
         }
     }
 }
+/// GPUI keystroke → the logical name a ratatui preview host's `on_key`
+/// expects. `key_char` carries Shift for characters. Ctrl/cmd chords have no
+/// wire name yet — dropped rather than sent as a bare letter.
+fn pane_key_name(ks: &Keystroke) -> Option<String> {
+    if ks.modifiers.control || ks.modifiers.platform {
+        return None;
+    }
+    if ks.key.chars().count() == 1 {
+        return Some(ks.key_char.clone().unwrap_or_else(|| ks.key.clone()));
+    }
+    let name = match ks.key.as_str() {
+        "tab" => {
+            if ks.modifiers.shift {
+                "BackTab"
+            } else {
+                "Tab"
+            }
+        }
+        "enter" => "Enter",
+        "backspace" => "Backspace",
+        "space" => " ",
+        "up" => "Up",
+        "down" => "Down",
+        "left" => "Left",
+        "right" => "Right",
+        _ => return None,
+    };
+    Some(name.to_string())
+}
+
+/// A pointer event on a stream card → `pane_mouse(id, kind, col, row)`. The
+/// cell comes from the `TermView`'s tracked rect and the same monospace
+/// metrics it paints with, so clicks land on the drawn cell.
+fn send_pane_mouse(
+    view: &mut ForgeView,
+    id: &str,
+    kind: &str,
+    pos: Point<Pixels>,
+    window: &Window,
+    cx: &mut Context<ForgeView>,
+) {
+    let family = cx.theme().mono_font_family.clone();
+    let Some(origin) = view
+        .term_bounds
+        .get(id)
+        .and_then(|cell| cell.borrow().map(|b| b.origin))
+    else {
+        return;
+    };
+    let ts = window.text_system();
+    let font_id = ts.resolve_font(&Font {
+        family,
+        ..Default::default()
+    });
+    let cell_w = ts
+        .advance(font_id, px(12.), ' ')
+        .map(|s| s.width)
+        .unwrap_or(px(12.) * 0.6);
+    let cell_h = ts.ascent(font_id, px(12.)) + ts.descent(font_id, px(12.));
+    let dx = pos.x - origin.x;
+    let dy = pos.y - origin.y;
+    if dx < px(0.) || dy < px(0.) {
+        return;
+    }
+    view.fire_call(
+        "pane_mouse",
+        vec![
+            id.to_string(),
+            kind.to_string(),
+            ((dx / cell_w) as u16).to_string(),
+            ((dy / cell_h) as u16).to_string(),
+        ],
+        cx,
+    );
+}
+
 /// Called with the whole view state after a two-way binding writes to it.
 pub type StateSink = Rc<dyn Fn(&Json, &mut ForgeView, &mut Context<ForgeView>)>;
 /// Rust logic behind `on <event>: name(args)` — the hook registry (#52).
@@ -262,6 +338,12 @@ pub struct ForgeView {
     /// Native-only: `forge_term`/`alacritty_terminal` don't build on wasm.
     #[cfg(not(target_arch = "wasm32"))]
     term_panes: HashMap<String, (u64, std::rc::Rc<std::cell::RefCell<forge_term::Emulator>>)>,
+    /// `forge.Preview` stream cards — the `TermView`'s painted rect, tracked
+    /// each paint so pointer events map to (col, row) cells.
+    term_bounds: HashMap<String, std::rc::Rc<std::cell::RefCell<Option<Bounds<Pixels>>>>>,
+    /// One stable `FocusHandle` per stream card. A fresh handle each render
+    /// drops focus between frames, and `on_key_down` never fires.
+    term_focus: HashMap<String, FocusHandle>,
     /// Persistent `ScrollHandle`s keyed by scrollable element id — element-state
     /// GC drops scroll offsets on every `cx.notify` re-render. An explicit
     /// `track_scroll` handle keeps them alive.
@@ -458,6 +540,8 @@ impl ForgeView {
             preview_bounds: HashMap::new(),
             #[cfg(not(target_arch = "wasm32"))]
             term_panes: HashMap::new(),
+            term_bounds: HashMap::new(),
+            term_focus: HashMap::new(),
             preview_srcs: HashMap::new(),
             scroll_handles: HashMap::new(),
             previews: HashMap::new(),
@@ -4514,28 +4598,56 @@ impl ForgeView {
                                     }
                                     entry.0 = seq;
                                 }
-                                entry.1.clone()
+                                // Track the grid's painted rect so pointer
+                                // events map to (col, row) cells.
+                                let tcell = self
+                                    .term_bounds
+                                    .entry(id.clone())
+                                    .or_insert_with(|| {
+                                        std::rc::Rc::new(std::cell::RefCell::new(None))
+                                    })
+                                    .clone();
+                                (entry.1.clone(), tcell)
                             })
-                            .map(|term| {
+                            .map(|(term, tcell)| {
                                 div()
                                     .size_full()
                                     .p_2()
                                     .overflow_hidden()
                                     .bg(theme.background)
-                                    .child(forge_term::TermView::new(
-                                        term,
-                                        forge_term::TermStyle {
-                                            font_family: theme.mono_font_family.clone(),
-                                            font_size: px(12.),
-                                            default_fg: theme.foreground,
-                                            default_bg: theme.background,
-                                            cursor: theme.foreground,
-                                        },
+                                    .child(BoundsTracker::new(
+                                        forge_term::TermView::new(
+                                            term,
+                                            forge_term::TermStyle {
+                                                font_family: theme.mono_font_family.clone(),
+                                                font_size: px(12.),
+                                                default_fg: theme.foreground,
+                                                default_bg: theme.background,
+                                                cursor: theme.foreground,
+                                            },
+                                        )
+                                        .into_any_element(),
+                                        tcell,
                                     ))
                                     .into_any_element()
                             });
                         #[cfg(target_arch = "wasm32")]
                         let term_card: Option<AnyElement> = None;
+                        let streaming = term_card.is_some();
+                        let focus = self
+                            .term_focus
+                            .entry(id.clone())
+                            .or_insert_with(|| cx.focus_handle())
+                            .clone();
+                        let weak_k = weak.clone();
+                        let weak_d = weak.clone();
+                        let weak_u = weak.clone();
+                        let weak_s = weak.clone();
+                        let focus_d = focus.clone();
+                        let id_k = id.clone();
+                        let id_d = id.clone();
+                        let id_u = id.clone();
+                        let id_s = id.clone();
                         BoundsTracker::new(
                             div()
                                 .id(format!("preview-remote-{key}"))
@@ -4544,6 +4656,65 @@ impl ForgeView {
                                 .items_center()
                                 .justify_center()
                                 .cursor_pointer()
+                                .track_focus(&focus)
+                                // Stream cards forward input to their ratatui
+                                // host: `pane_key`/`pane_mouse` hooks carry it
+                                // over `pane_send`. The doc's `on click:` still
+                                // fires (Studio raises the host window).
+                                .on_key_down(move |ev: &KeyDownEvent, _window, cx| {
+                                    if !streaming {
+                                        return;
+                                    }
+                                    let Some(key) = pane_key_name(&ev.keystroke) else {
+                                        return;
+                                    };
+                                    try_update(&weak_k, cx, "event", |this, cx| {
+                                        this.fire_call("pane_key", vec![id_k.clone(), key], cx)
+                                    })
+                                    .ok();
+                                })
+                                .on_mouse_down(MouseButton::Left, move |ev, window, cx| {
+                                    // Focus first so the card's keys reach
+                                    // `on_key_down` from this click on.
+                                    focus_d.focus(window, cx);
+                                    if !streaming {
+                                        return;
+                                    }
+                                    try_update(&weak_d, cx, "event", |this, cx| {
+                                        send_pane_mouse(
+                                            this,
+                                            &id_d,
+                                            "down",
+                                            ev.position,
+                                            window,
+                                            cx,
+                                        )
+                                    })
+                                    .ok();
+                                })
+                                .on_mouse_up(MouseButton::Left, move |ev, window, cx| {
+                                    if !streaming {
+                                        return;
+                                    }
+                                    try_update(&weak_u, cx, "event", |this, cx| {
+                                        send_pane_mouse(this, &id_u, "up", ev.position, window, cx)
+                                    })
+                                    .ok();
+                                })
+                                .on_scroll(move |ev: &ScrollEvent, window, cx| {
+                                    if !streaming {
+                                        return;
+                                    }
+                                    let kind = if f32::from(ev.delta.pixel_delta(px(20.)).y) < 0. {
+                                        "scroll-down"
+                                    } else {
+                                        "scroll-up"
+                                    };
+                                    try_update(&weak_s, cx, "event", |this, cx| {
+                                        send_pane_mouse(this, &id_s, kind, ev.position, window, cx)
+                                    })
+                                    .ok();
+                                })
                                 .on_click(move |_, _, cx| {
                                     try_update(&weak, cx, "event", |this, cx| {
                                         this.fire(&node, "click", cx)
@@ -8840,4 +9011,87 @@ pub(crate) fn bind_salt(node: &Node) -> String {
     }
     bound.sort();
     bound.join("&")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::pane_key_name;
+    use gpui_kit::{Keystroke, Modifiers};
+
+    fn ks(key: &str, key_char: Option<&str>, modifiers: Modifiers) -> Keystroke {
+        Keystroke {
+            modifiers,
+            key: key.to_string(),
+            key_char: key_char.map(str::to_string),
+        }
+    }
+
+    #[test]
+    fn pane_key_maps_named_keys() {
+        let plain = Modifiers::default();
+        assert_eq!(
+            pane_key_name(&ks("tab", None, plain)).as_deref(),
+            Some("Tab")
+        );
+        assert_eq!(
+            pane_key_name(&ks(
+                "tab",
+                None,
+                Modifiers {
+                    shift: true,
+                    ..Default::default()
+                }
+            ))
+            .as_deref(),
+            Some("BackTab")
+        );
+        assert_eq!(
+            pane_key_name(&ks("enter", None, plain)).as_deref(),
+            Some("Enter")
+        );
+        assert_eq!(
+            pane_key_name(&ks("backspace", None, plain)).as_deref(),
+            Some("Backspace")
+        );
+        assert_eq!(
+            pane_key_name(&ks("space", Some(" "), plain)).as_deref(),
+            Some(" ")
+        );
+        assert_eq!(pane_key_name(&ks("up", None, plain)).as_deref(), Some("Up"));
+        assert_eq!(pane_key_name(&ks("f5", None, plain)), None);
+    }
+
+    #[test]
+    fn pane_key_uses_key_char_and_drops_ctrl() {
+        let plain = Modifiers::default();
+        assert_eq!(
+            pane_key_name(&ks("a", Some("a"), plain)).as_deref(),
+            Some("a")
+        );
+        // Shift+a — `key_char` carries the typed character.
+        assert_eq!(
+            pane_key_name(&ks(
+                "a",
+                Some("A"),
+                Modifiers {
+                    shift: true,
+                    ..Default::default()
+                }
+            ))
+            .as_deref(),
+            Some("A")
+        );
+        // Ctrl/cmd chords have no wire name — a bare letter would insert it.
+        assert_eq!(
+            pane_key_name(&ks(
+                "c",
+                None,
+                Modifiers {
+                    control: true,
+                    ..Default::default()
+                }
+            )),
+            None
+        );
+    }
 }
