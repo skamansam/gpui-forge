@@ -161,11 +161,9 @@ fn main() {
                             (h / 18.0).clamp(5.0, 200.0) as u16,
                         ),
                     };
-                    // The resize must happen here — the loop's
+                    // Resize here, not in the draw loop. Its
                     // `(cols, rows) != frame_size` check can never trip
-                    // headless (`cols` derives from `frame_size`), so the
-                    // stream viewport would stay at its initial size while
-                    // frames claim the new one.
+                    // headless — `cols` derives from `frame_size` itself.
                     if next != frame_size {
                         frame_size = next;
                         let _ = stream_term.resize(Rect::new(0, 0, next.0, next.1));
@@ -175,7 +173,7 @@ fn main() {
                 // /dev/tty of its own.
                 HostMsg::Key(key) => view.on_key(&key),
                 HostMsg::Mouse { kind, col, row } => match kind.as_str() {
-                    // Designer DnD — the sender drags over the card; the
+                    // Designer DnD — the sender drags over the card. The
                     // view resolves the cell to a doc path. `zone` tells
                     // the sender what a drag started on (#156).
                     "zone" => emit(json!({

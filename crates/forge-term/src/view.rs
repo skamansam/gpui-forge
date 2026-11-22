@@ -68,7 +68,7 @@ impl TermView {
 
     /// Publishes the measured cell size (`cell_w`, `cell_h`) each prepaint.
     /// A caller streaming to a fixed terminal grid needs these to turn a px
-    /// slot into matching cols/rows — the cell pitch lives here, not in a
+    /// slot into matching cols/rows. The cell pitch lives here, not in a
     /// protocol constant.
     pub fn metrics_sink(mut self, sink: CellMetrics) -> Self {
         self.metrics = Some(sink);
@@ -158,7 +158,7 @@ impl IntoElement for TermView {
                 let emu = emulator.borrow();
                 let ts = cx.text_system();
                 let font_id = ts.resolve_font(&font_base(FontWeight::NORMAL, FontStyle::Normal));
-                // '0' is the cell-width probe (alacritty's convention) —
+                // '0' is the cell-width probe (alacritty's convention).
                 // ' ' has a narrow advance in many fonts and would pack
                 // every glyph at a fraction of the grid pitch.
                 let cell_w = ts
@@ -166,7 +166,7 @@ impl IntoElement for TermView {
                     .map(|s| s.width)
                     .unwrap_or(style.font_size * 0.6);
                 // ascent+descent can resolve below the em square on some
-                // fonts; 1.2em is the floor or rows cram and glyphs touch.
+                // fonts. 1.2em is the floor or rows cram and glyphs touch.
                 let cell_h = (ts.ascent(font_id, style.font_size)
                     + ts.descent(font_id, style.font_size))
                 .max(style.font_size * 1.2);

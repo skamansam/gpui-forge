@@ -698,12 +698,12 @@ impl ForgeView {
         self.term_metrics.get(id).cloned()
     }
 
-    /// Feed one streaming `frame` event into the pane's terminal emulator —
-    /// resize to the frame grid, then append the bytes, once per seq. This
-    /// must run in the event path: the state's `preview.panes.<id>.frame`
-    /// slot only ever holds the LAST event of a poll batch, so feeding at
-    /// render time drops every burst frame except the final diff — the
-    /// full first frame is always lost and the grid stays blank.
+    /// Feed one streaming `frame` event into the pane's terminal
+    /// emulator — resize to the frame grid, then append the bytes, once
+    /// per seq. This must run in the event path. The state slot
+    /// `preview.panes.<id>.frame` keeps only the LAST event of each drain
+    /// batch. Render-time feeding drops every burst frame but the final
+    /// diff, so the full first frame is always lost.
     #[cfg(not(target_arch = "wasm32"))]
     pub fn feed_term_frame(&mut self, id: &str, seq: u64, cols: u16, rows: u16, data: &[u8]) {
         let entry = self.term_panes.entry(id.to_owned()).or_insert_with(|| {
@@ -714,8 +714,8 @@ impl ForgeView {
                 ))),
             )
         });
-        // A respawned host restarts seq at 1 — its stream is a fresh
-        // terminal, so replace the emulator rather than layering the new
+        // A respawned host restarts seq at 1. Its stream is a fresh
+        // terminal — replace the emulator instead of layering the new
         // stream onto the dead host's scrollback.
         if seq < entry.0 {
             *entry = (
@@ -730,10 +730,10 @@ impl ForgeView {
                 let mut emu = entry.1.borrow_mut();
                 if emu.cols() != cols as usize || emu.rows() != rows as usize {
                     // Grid change: start a fresh emulator rather than
-                    // resize-preserving. Ratatui emits a sparse diff (only
-                    // cells that differ from EMPTY), so preserved reflow
-                    // content survives under new-empty cells and ghosts the
-                    // old layout over the new one.
+                    // resize-preserving. Ratatui emits a sparse diff —
+                    // only cells that differ from EMPTY get written.
+                    // Preserved reflow content survives under new-empty
+                    // cells and ghosts the old layout over the new.
                     *emu = forge_term::Emulator::new(cols, rows);
                 }
                 emu.feed(data);
@@ -4857,7 +4857,7 @@ impl ForgeView {
                                 // Palette/doc drags over the card — the host
                                 // resolves cells to doc paths (`zone`,
                                 // `drop_target`, `drop` events). The payload
-                                // stays here; `pane_drop` pairs it with the
+                                // stays here. `pane_drop` pairs it with the
                                 // resolved path at commit time (#156).
                                 .on_drag_move::<ForgeDrag>(move |ev, window, cx| {
                                     if !streaming || !editable {

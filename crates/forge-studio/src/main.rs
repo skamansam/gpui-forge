@@ -1113,7 +1113,7 @@ fn dispatch(
             }
         }
         // A node dragged inside the card. The source path is the `zone`
-        // the host reported on `down`; the release cell is the target.
+        // the host reported on `down`. The release cell is the target.
         "pane_move" => {
             if let [id, col, row] = args {
                 let src = get_path(view.state(), &pane_state_path(id, "zone"))
@@ -1960,7 +1960,7 @@ fn host_event(
                 status(view, "preview host exited", cx);
             }
         }
-        // Stream-pane DnD events — only pane hosts emit them; the pane
+        // Stream-pane DnD events — only pane hosts emit them. The pane
         // reader maps each onto `preview.panes.<id>.*` in `pane_sync`.
         HostEvent::Zone(_) | HostEvent::DropTarget(_) | HostEvent::Drop(_) => {}
     }
@@ -2416,7 +2416,7 @@ static PANE_EVENTS: std::sync::LazyLock<(
 
 /// #156 — a drop's Studio-side payload awaiting the host's resolved path:
 /// `pane id → (kind, payload)` where `kind` is `component` or `node`.
-/// `pane_drop`/`pane_move` stash it; the pane's `drop` event commits it.
+/// `pane_drop`/`pane_move` stash it. The pane's `drop` event commits it.
 static PANE_DND: std::sync::LazyLock<
     std::sync::Mutex<std::collections::HashMap<String, (String, String)>>,
 > = std::sync::LazyLock::new(|| std::sync::Mutex::new(std::collections::HashMap::new()));
@@ -2615,12 +2615,11 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
                             data,
                         } if streams.contains(pid.as_str()) =>
                         {
-                            // Feed the emulator per event, in seq order —
-                            // the state slot below holds only the last
-                            // frame of a drain batch, so render-time
-                            // feeding would drop every burst except the
-                            // final diff (the full first frame was always
-                            // lost → blank grid).
+                            // Feed the emulator per event, in seq order.
+                            // The state slot below holds only the last
+                            // frame of a drain batch. Render-time feeding
+                            // drops every burst except the final diff —
+                            // the full first frame was always lost.
                             view.feed_term_frame(
                                 &pid, seq, cols, rows, data.as_bytes(),
                             );
