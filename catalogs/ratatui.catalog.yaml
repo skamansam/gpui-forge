@@ -280,6 +280,19 @@ elements:
     events:
       select:
 
+  Menu:
+    icon: list
+    group: Input
+    summary: Menu list with `> ` marker — a `Select` alias for command lists.
+    component: ratatui::widgets::List
+    canvas: Select
+    props:
+      items: string
+      selected: number
+      title: string
+    events:
+      select:
+
   Checkbox:
     icon: check-square
     group: Input
@@ -402,6 +415,26 @@ elements:
         type: enum
         values: [tiny, small]
         default: small
+
+  Mascot:
+    icon: circle-dot
+    group: Components
+    summary: The ratatui mascot — a 32x16 half-block illustration.
+    component: ratatui::widgets::RatatuiMascot
+    canvas: Image
+    children: none
+
+  Fill:
+    icon: square
+    group: Display
+    summary: Paints its area with one repeated glyph — backgrounds and runs.
+    component: ratatui::widgets::Fill
+    canvas: Box
+    children: none
+    props:
+      symbol:
+        type: string
+        summary: Glyph to repeat; defaults to a space fill.
 
 
   Clear:

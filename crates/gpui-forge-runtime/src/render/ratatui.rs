@@ -17,9 +17,9 @@ use ratatui::text::{Line, Span};
 use ratatui::widgets::calendar::{CalendarEventStore, Monthly};
 use ratatui::widgets::canvas::{Canvas, Map, MapResolution};
 use ratatui::widgets::{
-    Axis, BarChart, Block, BorderType, Borders, Chart, Clear, Dataset, Gauge, GraphType, LineGauge,
-    List, ListItem, Paragraph, RatatuiLogo, Scrollbar, ScrollbarOrientation, ScrollbarState,
-    Sparkline, Tabs, Wrap,
+    Axis, BarChart, Block, BorderType, Borders, Chart, Clear, Dataset, Fill, Gauge, GraphType,
+    LineGauge, List, ListItem, Paragraph, RatatuiLogo, RatatuiMascot, Scrollbar,
+    ScrollbarOrientation, ScrollbarState, Sparkline, Tabs, Wrap,
 };
 use serde_json::Value as Json;
 use std::collections::HashMap;
@@ -1139,7 +1139,7 @@ impl ForgeView {
                 }
                 frame.render_widget(Paragraph::new(label).style(style), area);
             }
-            "List" | "Select" | "Tabs" => {
+            "List" | "Select" | "Tabs" | "Menu" => {
                 let binding = Self::binding_of(node, "selected");
                 if let Some(path) = &binding {
                     let calls = self.calls_for(node);
@@ -1189,7 +1189,7 @@ impl ForgeView {
                     let title = self.prop_text(node, "title");
                     let mut list =
                         List::new(items).block(Block::default().borders(Borders::ALL).title(title));
-                    if node.element.name == "Select" {
+                    if matches!(node.element.name.as_str(), "Select" | "Menu") {
                         list = list.highlight_symbol("> ");
                     }
                     if focused {
@@ -1560,6 +1560,23 @@ impl ForgeView {
             "Spacer" => {
                 // Empty area — the `size` prop feeds `child_constraint`,
                 // nothing paints.
+            }
+            "Fill" => {
+                // One glyph across the whole rect — backgrounds and
+                // separator runs without a hand-rolled loop.
+                let symbol = self.prop_text(node, "symbol");
+                frame.render_widget(
+                    Fill::new(if symbol.is_empty() {
+                        " "
+                    } else {
+                        symbol.as_str()
+                    })
+                    .style(self.node_style(node)),
+                    area,
+                );
+            }
+            "Mascot" => {
+                frame.render_widget(RatatuiMascot::new(), area);
             }
             "Logo" => {
                 let logo = if self.prop_text(node, "size") == "tiny" {

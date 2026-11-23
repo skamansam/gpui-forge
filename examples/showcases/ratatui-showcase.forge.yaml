@@ -5,6 +5,7 @@ state:
   tab: number
   log_off: number
   sb_pos: number
+  menu_sel: number
 
 base: ratatui
 meta:
@@ -163,3 +164,21 @@ root:
                   - Logo:
                     size: tiny
                   - Clear:
+      - HStack:
+        style: {gap: 1, height: 18}
+        children:
+          - Block:
+            title: "a Menu — arrows pick"
+            children:
+              - VStack:
+                children:
+                  - Menu:
+                    items: "open\nsave\nquit"
+                    selected: $menu_sel
+                  - Text: "picked: {$menu_sel}"
+          - Block:
+            title: "Fill"
+            children:
+              - Fill:
+                symbol: "*"
+          - Mascot:
