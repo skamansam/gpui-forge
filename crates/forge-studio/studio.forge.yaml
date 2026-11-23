@@ -1102,6 +1102,17 @@ Dialog#preferences:
                         value: bind $studio.files_highlights
                         placeholder: "*.forge.yaml = bold; *.json = green"
                         on change: persist_prefs()
+          - SettingPage: Window
+            children:
+              - SettingsGroup: Decorations
+                children:
+                  - SettingItem: OS window decorations
+                    children:
+                      - Switch:
+                        checked: bind $studio.native_decorations
+                        on change: persist_prefs()
+                  - Text: On, the window manager draws the frame and title bar. Off, Forge draws them. Applies at once on Linux. macOS applies it on restart.
+                    style: {size: xs, color: $theme.muted_foreground}
           - SettingPage: Icons
             children:
               - SettingsGroup: Iconify cache

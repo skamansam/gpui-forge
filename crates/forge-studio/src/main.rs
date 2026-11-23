@@ -306,6 +306,7 @@ fn main() {
             .get("window_maximized")
             .and_then(Json::as_bool)
             .unwrap_or(false);
+        let native_deco = native_decorations(&prefs);
         let options = WindowOptions {
             app_id: Some("gpui-forge".into()),
             window_bounds: Some(if maximized {
@@ -315,10 +316,15 @@ fn main() {
             }),
             titlebar: Some(TitlebarOptions {
                 title: Some("Forge Studio".into()),
-                appears_transparent: true,
+                appears_transparent: !native_deco,
                 traffic_light_position: None,
             }),
-            app_owns_titlebar_drag: true,
+            app_owns_titlebar_drag: !native_deco,
+            window_decorations: Some(if native_deco {
+                WindowDecorations::Server
+            } else {
+                WindowDecorations::Client
+            }),
             ..Default::default()
         };
         gpui_kit::open_window(options, cx, |_, cx| {
@@ -489,6 +495,9 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
                             .get("icon_cache")
                             .and_then(|j| j.as_str())
                             .unwrap_or(""),
+                        // Window chrome — Preferences → Window. An `if:` on this
+                        // path hides in-app title rows when the WM draws them.
+                        "native_decorations": native_decorations(&prefs),
                         "file": "welcome.forge.yaml",
                         // Assets tab — `refresh_assets` rewrites dir + listing when a
                         // document/project loads.
@@ -1221,7 +1230,10 @@ fn dispatch(
         "persist_preview_base" => save_prefs(view),
         // Preferences → Files — bound `studio.files_*` changes flush to
         // `~/.gpui-forge/settings.toml` on every control change.
-        "persist_prefs" => save_prefs(view),
+        "persist_prefs" => {
+            save_prefs(view);
+            apply_decorations(view, cx);
+        }
         // Preferences → Icons — the iconify cache root takes effect
         // immediately (memos cleared), then persists like the other prefs.
         "apply_icon_cache" => {
@@ -3107,6 +3119,18 @@ fn prefs_file() -> Option<PathBuf> {
         .map(|h| PathBuf::from(h).join(".gpui-forge/settings.toml"))
 }
 
+/// The `native_decorations` preference — true means the WM draws the
+/// window frame and title bar. Defaults preserve the platform's existing
+/// look: server frames on Linux and Windows, the transparent unified
+/// titlebar on macOS. Docs read it as `studio.native_decorations`, so an
+/// `if:` can hide an in-app title row or move the menus.
+fn native_decorations(prefs: &Json) -> bool {
+    prefs
+        .get("native_decorations")
+        .and_then(Json::as_bool)
+        .unwrap_or(!cfg!(target_os = "macos"))
+}
+
 fn load_prefs() -> Json {
     let s = prefs_file()
         .and_then(|f| std::fs::read_to_string(f).ok())
@@ -3185,6 +3209,10 @@ fn save_prefs(view: &ForgeView) {
         let icon_cache = files("icon_cache");
         let icon_cache = icon_cache.as_str().unwrap_or_default();
         body += &format!("icon_cache = \"{icon_cache}\"\n");
+        body += &format!(
+            "native_decorations = {}\n",
+            bool_pref(&files("native_decorations"))
+        );
         // #150 — last observed geometry, when the poll task has seen any.
         if let Some(w) = *LAST_WINDOW.lock().unwrap() {
             body += &format!(
@@ -3193,6 +3221,27 @@ fn save_prefs(view: &ForgeView) {
             );
         }
         let _ = std::fs::write(f, body);
+    }
+}
+
+/// Live window-chrome switch — `request_decorations` applies on Linux.
+/// macOS ignores it, so the transparent-titlebar half of the preference
+/// there needs a restart.
+fn apply_decorations(view: &ForgeView, cx: &mut Context<ForgeView>) {
+    let native = get_path(
+        view.state(),
+        &parse_path("studio.native_decorations").unwrap(),
+    )
+    .and_then(|j| j.as_bool())
+    .unwrap_or(false);
+    if let Some(h) = cx.windows().first() {
+        let _ = h.update(cx, |_, w, _| {
+            w.request_decorations(if native {
+                WindowDecorations::Server
+            } else {
+                WindowDecorations::Client
+            });
+        });
     }
 }
 

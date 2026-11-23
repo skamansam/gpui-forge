@@ -44,7 +44,7 @@
 
 - [x] icon grid cells stretched unevenly. `flex_1` blew a partial row's icons up to fill the width. Columns misaligned and labels wrapped to uneven heights. Cells now cap at the size stride. Full rows still share width evenly and short rows left-pack column-aligned. Labels are single-line centered and ellipsized at a fixed height. Icon+label center vertically in the row.
 
-- [ ] there should be a preference to use OS window decorations
+- [x] there should be a preference to use OS window decorations — DONE: Preferences → Window → Decorations switch, persisted as `native_decorations`. On: `WindowDecorations::Server` + opaque titlebar. Off: client decorations + the transparent drag titlebar. Defaults keep each platform's existing look (native on Linux/Windows, custom on macOS). `request_decorations` applies it live on Linux; macOS needs a restart. State exposes it as `studio.native_decorations` for `if:` conditionals
 
 - [x] the icon images are not showing up in the icons tab — FIXED: `Icon:` only set `text_color` when a `color:` prop existed, so colorless icons kept `style.text.color = None` and GPUI skipped `paint_svg` entirely (menu/palette icons painted because they pass `color:`). Now defaults to `cx.theme().foreground`. Verified under Xvfb: lucide + heroicons glyphs render in the grid
 
@@ -56,4 +56,4 @@
 
 - [ ] There are many extensions for ratatui and we should supopport as many as we can. There is a great list at https://github.com/ratatui/awesome-ratatui of libs we can use, including a code editor that would be perfect for use in acpilot. Can you look at the acpilot source (../acpilot) and make sure we have the same widgets, or at least the widgets we would need if they weren't custom widgets?
 
-- [ ] there should be a universal var for whether the user is using native window decorations, to allow for conditionals on such. For example, to remove the title bar when using native decorations and move the menu to another place. There should also be a way to send information to the WM easily, like window name, etc on startup, maybe via the meta info in the doc, if not alreaady. We need to make sure we document these in all the docs.
+- [ ] there should be a universal var for whether the user is using native window decorations, to allow for conditionals on such. For example, to remove the title bar when using native decorations and move the menu to another place. There should also be a way to send information to the WM easily, like window name, etc on startup, maybe via the meta info in the doc, if not alreaady. We need to make sure we document these in all the docs. — PARTIAL: the conditional var exists as `studio.native_decorations` (bool, persisted pref). Still open: doc `meta:` → WM window title at startup, and doc updates describing both.
