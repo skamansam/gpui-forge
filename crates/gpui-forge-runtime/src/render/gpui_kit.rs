@@ -76,7 +76,9 @@ use gpui_kit::component::questionnaire::{
 };
 use gpui_kit::component::radio::{Radio, RadioGroup};
 use gpui_kit::component::rating::Rating;
-use gpui_kit::component::resizable::{ResizablePanel, h_resizable, resizable_panel, v_resizable};
+use gpui_kit::component::resizable::{
+    ResizablePanel, ResizableState, h_resizable, resizable_panel, v_resizable,
+};
 use gpui_kit::component::scroll::ScrollableElement as _;
 use gpui_kit::component::select::{Select, SelectEvent, SelectState};
 use gpui_kit::component::separator::Separator;
@@ -330,6 +332,11 @@ pub struct ForgeView {
     /// `meta.iconset` overrides it, and `lucide` is the bundled default.
     project_iconset: Option<String>,
     selects: HashMap<String, Entity<SelectState<Options>>>,
+    /// Persistent `ResizableState`s keyed by element key — `use_keyed_state`
+    /// orphans panel state when the element-id stack shifts (a stateful
+    /// sibling or ancestor id toggling), and a fresh state lays panels out
+    /// at their minimums. Owning the entity keeps user-dragged sizes alive.
+    resizables: HashMap<String, Entity<ResizableState>>,
     /// The shared `ThemeSwitcher` select — one Light/Dark state per view.
     theme_select: Option<Entity<SelectState<Options>>>,
     comboboxes: HashMap<String, Entity<ComboboxState<Vec<SharedString>>>>,
@@ -557,6 +564,7 @@ impl ForgeView {
             icons_scrolls: HashMap::new(),
             project_iconset: None,
             selects: HashMap::new(),
+            resizables: HashMap::new(),
             theme_select: None,
             comboboxes: HashMap::new(),
             carousels: HashMap::new(),
@@ -5006,7 +5014,28 @@ impl ForgeView {
                                 self.preview_srcs.insert(id.clone(), spec);
                             }
                         }
-                        let element = preview.into_any_element();
+                        // A view element sizes to content in a flex column —
+                        // the `size_full` wrapper gives the nested view a
+                        // definite slot to fill, so the doc root's `grow`
+                        // has space to claim.
+                        let element = BoundsLogger::new(
+                            div()
+                                .id("preview-fill")
+                                .size_full()
+                                .child(
+                                    preview
+                                        .cached(
+                                            gpui::StyleRefinement::default()
+                                                .flex_1()
+                                                .min_h_0()
+                                                .w_full(),
+                                        )
+                                        .into_any_element(),
+                                )
+                                .into_any_element(),
+                            "preview-fill",
+                        )
+                        .into_any_element();
                         if remote.is_some() {
                             // Compat canvas — pane bounds stay tracked so an
                             // `embedded` host still anchors over the slot.
@@ -6473,6 +6502,14 @@ impl ForgeView {
                             ))
                     })
                     .collect();
+                let skey = format!("{key}|{}", bind_salt(node));
+                if !self.resizables.contains_key(&skey) {
+                    let state = cx.new(|_| ResizableState::default());
+                    self.subscriptions
+                        .push(cx.observe(&state, |_, _, cx| cx.notify()));
+                    self.resizables.insert(skey.clone(), state);
+                }
+                let state = self.resizables[&skey].clone();
                 let group = if self
                     .prop_text(node, "layout")
                     .is_some_and(|l| l.eq_ignore_ascii_case("vertical"))
@@ -6481,7 +6518,7 @@ impl ForgeView {
                 } else {
                     h_resizable(id)
                 };
-                group.children(panels).into_any_element()
+                group.with_state(&state).children(panels).into_any_element()
             }
             "Sidebar" => {
                 let mut sidebar =
@@ -7436,10 +7473,10 @@ impl ForgeView {
             let accent = cx.theme().accent;
             let zone_path = path.clone();
             let frame_path = path.clone();
-            div()
-                .relative()
-                .child(element)
-                .child(
+            // The pick wrapper takes the node's slot in the flex parent, so
+            // it needs the node's flex geometry or `grow` nodes collapse.
+            flex_item(
+                div().relative().child(element).child(
                     canvas(
                         move |bounds, _window, _cx| {
                             let mut zones = zones.borrow_mut();
@@ -7457,19 +7494,27 @@ impl ForgeView {
                     )
                     .absolute()
                     .inset_0(),
-                )
-                .into_any_element()
+                ),
+                &node.style,
+                cx,
+            )
+            .into_any_element()
         } else {
             // Selection highlight — the outline/inspector selection and the
-            // DnD drop target get a non-interactive accent frame.
-            let selected = get_path(self.state(), &parse_path("document.selected").unwrap())
-                .and_then(|j| j.as_str())
-                .map(str::to_owned)
-                == Some(path.clone());
-            let drop_target = get_path(self.state(), &parse_path("studio.drop_target").unwrap())
-                .and_then(|j| j.as_str())
-                .map(str::to_owned)
-                == Some(path.clone());
+            // DnD drop target get a non-interactive accent frame. Only the
+            // canvas view decorates nodes: in the Studio shell the nested
+            // document's paths collide with outer nodes — `0.1.0` is the
+            // outer Resizable — and a frame there resizes the chrome.
+            let selected = self.dnd
+                && get_path(self.state(), &parse_path("document.selected").unwrap())
+                    .and_then(|j| j.as_str())
+                    .map(str::to_owned)
+                    == Some(path.clone());
+            let drop_target = self.dnd
+                && get_path(self.state(), &parse_path("studio.drop_target").unwrap())
+                    .and_then(|j| j.as_str())
+                    .map(str::to_owned)
+                    == Some(path.clone());
             if selected || drop_target {
                 let accent = cx.theme().accent;
                 // A leaf's drop lands as the next sibling — a bottom bar.
@@ -7493,11 +7538,12 @@ impl ForgeView {
                         .border_color(accent)
                         .into_any_element()
                 };
-                div()
-                    .relative()
-                    .child(element)
-                    .child(overlay)
-                    .into_any_element()
+                flex_item(
+                    div().relative().child(element).child(overlay),
+                    &node.style,
+                    cx,
+                )
+                .into_any_element()
             } else {
                 element
             }
@@ -7843,7 +7889,23 @@ impl Render for ForgeView {
                         .children(self.expand(&doc.root, "root", window, cx))
                         .into_any_element()
                 } else {
-                    self.render_node(&doc.root, "root", window, cx)
+                    // A doc rendered at root fills its surface like an app
+                    // window. `height: full` resolves against the element's
+                    // own slot, so a root with no size key still collapses to
+                    // content height inside `forge.Preview` cards — the
+                    // "detached" shrink users saw. `grow` claims the column's
+                    // free space instead. `#forge-canvas` is `flex_col` so the
+                    // claim has space to take.
+                    let mut root = doc.root.clone();
+                    if !root.style.iter().any(|(k, _)| {
+                        matches!(
+                            k.as_str(),
+                            "grow" | "basis" | "height" | "min-height" | "max-height" | "size"
+                        )
+                    }) {
+                        root.style.push(("grow".into(), Value::Bool(true)));
+                    }
+                    self.render_node(&root, "root", window, cx)
                 }
             })
             .or_else(|| self.empty_text.clone().map(|text| empty(text, cx)));
@@ -7856,6 +7918,8 @@ impl Render for ForgeView {
         let root = div()
             .id("forge-canvas")
             .size_full()
+            .flex()
+            .flex_col()
             .bg(background)
             .text_color(foreground)
             .on_action::<CancelPick>(move |_, _, cx| {
@@ -9046,6 +9110,32 @@ fn style<E: Styled>(element: E, entries: &Entries, cx: &App) -> E {
             _ => e,
         }
     })
+}
+
+/// Apply the flex geometry of `entries` to an overlay wrapper. Selection,
+/// pick and drop-target frames wrap a node in `div().relative()`. A plain
+/// wrapper drops the node's `grow`/`basis`, so the wrapper collapses to
+/// content size inside a flex parent and the layout shrinks.
+fn flex_item<E: Styled>(element: E, entries: &Entries, cx: &App) -> E {
+    let flex: Entries = entries
+        .iter()
+        .filter(|(key, _)| {
+            matches!(
+                key.as_str(),
+                "grow"
+                    | "shrink"
+                    | "basis"
+                    | "width"
+                    | "height"
+                    | "min-width"
+                    | "min-height"
+                    | "max-width"
+                    | "max-height"
+            )
+        })
+        .cloned()
+        .collect();
+    style(element, &flex, cx)
 }
 
 /// `padding`/`margin` as `[top, right, bottom, left]`.

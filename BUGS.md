@@ -48,7 +48,7 @@
 
 - [x] the icon images are not showing up in the icons tab — FIXED: `Icon:` only set `text_color` when a `color:` prop existed, so colorless icons kept `style.text.color = None` and GPUI skipped `paint_svg` entirely (menu/palette icons painted because they pass `color:`). Now defaults to `cx.theme().foreground`. Verified under Xvfb: lucide + heroicons glyphs render in the grid
 
-- [ ] when selecting the Block element in the structure panel, the tab shrinks and follwos through other tabs as well. This may be due to an HBox resizing when it shoudln't.
+- [x] when selecting the Block element in the structure panel, the tab shrinks and follwos through other tabs as well. FIXED: the selection frame ran in every ForgeView, so the nested doc's `document.selected` path collided with outer nodes — `0.1.0` is the Studio shell's own Resizable. Its `div().relative()` wrapper also dropped `grow`, so the Resizable collapsed to content size (724x810) and the panel layout "detached". Frames now render only in the canvas view (`dnd` flag), and a new `flex_item` helper copies `grow`/`shrink`/`basis`/size entries onto pick/selection/drop wrappers so decorated nodes keep their flex geometry.
 
 - [ ] can you explain the canvas tab for ratatui widgets? It looks like there are gpui components, then the ratatui underneath. Since we can do drag n drop into the ratatui panel, i don't see why we need the gpui view. We should also have the inspector give the right style and properties for the widget instead of proxying through the gpui elements.
 
