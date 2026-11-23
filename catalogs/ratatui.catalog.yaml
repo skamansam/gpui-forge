@@ -87,11 +87,13 @@ elements:
       text: string
       offset:
         type: number
-        summary: First drawn row — scroll the view by writing state.
+        summary: First drawn row — bind it and the wheel or arrows scroll.
       wrap:
         type: bool
         default: true
         summary: Reflow lines instead of clipping them.
+    events:
+      change:
 
   Block:
     icon: square
@@ -209,7 +211,9 @@ elements:
         summary: Total rows the thumb represents.
       position:
         type: number
-        summary: Current scroll row — bind it to move the thumb.
+        summary: Thumb row — bind it and the wheel or a track click moves it.
+    events:
+      change:
 
   Tabs:
     icon: layout-list

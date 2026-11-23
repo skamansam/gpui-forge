@@ -75,6 +75,10 @@ pub struct ForgeView {
     /// write the focused binding, `Enter`/`Space` fire the node's event
     /// calls. The rect is the widget's drawn area, so `on_mouse` hit-tests.
     focusables: Vec<(Path, FocusKind, Calls, Rect)>,
+    /// `binding path → scroll limits` for Scroll focusables — rebuilt each
+    /// render alongside `focusables` so stale maxima cannot linger. A Vec
+    /// because `Path` has no `Hash` — scroll regions are few.
+    scroll_meta: Vec<(Path, ScrollMeta)>,
     /// Every rendered node's `(doc path, drawn rect)`, rebuilt each render.
     /// The sender resolves pointer cells to doc paths through it for the
     /// designer's drop-hover and drop (#156).
@@ -120,6 +124,7 @@ impl ForgeView {
             base_dir: None,
             previews: HashMap::new(),
             focusables: Vec::new(),
+            scroll_meta: Vec::new(),
             zones: Vec::new(),
             drop_target: None,
             focused: 0,
@@ -301,6 +306,38 @@ impl ForgeView {
                     self.write(&path, Json::from(cur + 1));
                 }
                 self.fire_focused("select");
+                return;
+            }
+            (Some(FocusKind::Scroll), "Up") | (Some(FocusKind::Scroll), "k") => {
+                self.scroll_by(-1);
+                return;
+            }
+            (Some(FocusKind::Scroll), "Down") | (Some(FocusKind::Scroll), "j") => {
+                self.scroll_by(1);
+                return;
+            }
+            (Some(FocusKind::Scroll), "PageUp") => {
+                self.scroll_by(-10);
+                return;
+            }
+            (Some(FocusKind::Scroll), "PageDown") => {
+                self.scroll_by(10);
+                return;
+            }
+            (Some(FocusKind::Scroll), "Home") => {
+                self.scroll_to(0);
+                return;
+            }
+            (Some(FocusKind::Scroll), "End") => {
+                if let Some((path, _, _, _)) = self.focusables.get(self.focused).cloned() {
+                    let max = self
+                        .scroll_meta
+                        .iter()
+                        .find(|(p, _)| p == &path)
+                        .map(|(_, m)| m.max)
+                        .unwrap_or(0);
+                    self.scroll_to(max);
+                }
                 return;
             }
             (Some(FocusKind::Input), "Backspace")
@@ -871,7 +908,60 @@ impl ForgeView {
                 self.write(&path, Json::from(next));
                 self.fire_focused("select");
             }
+            (FocusKind::Scroll, "scroll-up") | (FocusKind::Scroll, "scroll-down") => {
+                self.scroll_by(if kind == "scroll-up" { -1 } else { 1 });
+            }
+            (FocusKind::Scroll, "down") => {
+                // On a track (Scrollbar) a click jumps the thumb to the
+                // clicked fraction. On a Log `down` only takes focus.
+                if let Some(meta) = self
+                    .scroll_meta
+                    .iter()
+                    .find(|(p, _)| p == &path)
+                    .map(|(_, m)| *m)
+                    && meta.track
+                {
+                    let frac = if meta.horizontal {
+                        col.saturating_sub(rect.x) as f64
+                            / rect.width.saturating_sub(1).max(1) as f64
+                    } else {
+                        row.saturating_sub(rect.y) as f64
+                            / rect.height.saturating_sub(1).max(1) as f64
+                    };
+                    let pos = (frac.clamp(0.0, 1.0) * meta.max as f64).round() as u64;
+                    self.write(&path, Json::from(pos));
+                    self.fire_focused("change");
+                }
+            }
             _ => {}
+        }
+    }
+
+    /// Moves the focused scroll binding by `delta`, clamped to its `max`.
+    fn scroll_by(&mut self, delta: i64) {
+        if let Some((path, FocusKind::Scroll, _, _)) = self.focusables.get(self.focused).cloned() {
+            let cur = self.lookup(&path).and_then(Json::as_u64).unwrap_or(0);
+            let max = self
+                .scroll_meta
+                .iter()
+                .find(|(p, _)| p == &path)
+                .map(|(_, m)| m.max)
+                .unwrap_or(u64::MAX);
+            let next = if delta < 0 {
+                cur.saturating_sub(delta.unsigned_abs())
+            } else {
+                cur.saturating_add(delta as u64).min(max)
+            };
+            self.write(&path, Json::from(next));
+            self.fire_focused("change");
+        }
+    }
+
+    /// Sets the focused scroll binding to an absolute offset.
+    fn scroll_to(&mut self, pos: u64) {
+        if let Some((path, FocusKind::Scroll, _, _)) = self.focusables.get(self.focused).cloned() {
+            self.write(&path, Json::from(pos));
+            self.fire_focused("change");
         }
     }
 
@@ -913,6 +1003,7 @@ impl ForgeView {
     /// Draws the document into `frame` — called by the host's event loop.
     pub fn render(&mut self, frame: &mut Frame) {
         self.focusables.clear();
+        self.scroll_meta.clear();
         self.zones.clear();
         let area = frame.area();
         if let Some(doc) = self.doc.clone() {
@@ -1419,15 +1510,45 @@ impl ForgeView {
                 };
                 let content = self.num(node, "content_length", 10.0).max(1.0) as usize;
                 let pos = self.num(node, "position", 0.0).max(0.0) as usize;
+                // A bound `position` makes the track interactive — the wheel
+                // steps it, a track click jumps to the clicked fraction.
+                if let Some(path) = Self::binding_of(node, "position") {
+                    let calls = self.calls_for(node);
+                    self.focusables
+                        .push((path.clone(), FocusKind::Scroll, calls, area));
+                    self.scroll_meta.push((
+                        path,
+                        ScrollMeta {
+                            max: content.saturating_sub(1) as u64,
+                            horizontal: matches!(orient, ScrollbarOrientation::HorizontalBottom),
+                            track: true,
+                        },
+                    ));
+                }
                 let mut state = ScrollbarState::new(content).position(pos);
                 frame.render_stateful_widget(Scrollbar::new(orient), area, &mut state);
             }
             "Log" => {
                 // A scrollable text view — `offset` is the first drawn row,
                 // `wrap` reflows instead of clipping. For log tails and
-                // console panes where `Text` would clip.
+                // console panes where `Text` would clip. A bound `offset`
+                // scrolls on the wheel and arrow keys.
                 let text = self.node_text(node);
                 let off = self.num(node, "offset", 0.0).max(0.0) as u16;
+                if let Some(path) = Self::binding_of(node, "offset") {
+                    let calls = self.calls_for(node);
+                    self.focusables
+                        .push((path.clone(), FocusKind::Scroll, calls, area));
+                    let last = text.lines().count().saturating_sub(area.height as usize);
+                    self.scroll_meta.push((
+                        path,
+                        ScrollMeta {
+                            max: last as u64,
+                            horizontal: false,
+                            track: false,
+                        },
+                    ));
+                }
                 let mut p = Paragraph::new(text)
                     .scroll((off, 0))
                     .style(self.node_style(node));
@@ -1603,15 +1724,27 @@ fn parse_date(text: &str) -> Option<time::Date> {
     time::Date::from_calendar_date(year, time::Month::try_from(month).ok()?, day).ok()
 }
 
-/// The interactivity a focused element accepts — Input = text editing,
-/// Bool = toggle (Checkbox/Switch), Select = arrow navigation (List/Tabs),
+/// The interactivity a focused element accepts. Input = text editing.
+/// Bool = toggle (Checkbox/Switch). Select = arrow navigation (List/Tabs).
 /// Action = fire `click` on Enter/Space/down (Button).
+/// Scroll = wheel/keys/track-click move a bound offset (Scrollbar/Log).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FocusKind {
     Input,
     Bool,
     Select,
     Action,
+    Scroll,
+}
+
+/// Per-path scroll behavior for a `FocusKind::Scroll` zone — `max` clamps
+/// writes, `horizontal` picks the click axis, `track` turns `down` into a
+/// jump-to-fraction (a scrollbar's track, not a Log's text).
+#[derive(Clone, Copy)]
+struct ScrollMeta {
+    max: u64,
+    horizontal: bool,
+    track: bool,
 }
 
 /// A resolved `on <event>:` call — `(event name, handler name, args)`.
