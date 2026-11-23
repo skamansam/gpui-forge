@@ -5751,8 +5751,13 @@ impl ForgeView {
                         element.w(px(s)).h(px(s))
                     }
                 };
+                // `svg()` skips `paint_svg` when `style.text.color` is None —
+                // the ambient text style carries no color inside containers
+                // like `uniform_list` cells, so a colorless `Icon` paints
+                // nothing. Default to the theme foreground like the `Icon`
+                // component does.
                 element
-                    .when_some(color, |e, c| e.text_color(c))
+                    .text_color(color.unwrap_or_else(|| cx.theme().foreground))
                     .into_any_element()
             }
             "Image" => {

@@ -40,7 +40,7 @@ elements:
         summary: Fixed extent in cells.
 
   Text:
-    icon: pilcrow
+    icon: type
     group: Display
     summary: Paragraph of styled terminal text.
     component: ratatui::widgets::Paragraph
@@ -159,7 +159,7 @@ elements:
       title: string
 
   Gauge:
-    icon: rectangle-horizontal
+    icon: gauge
     group: Feedback
     summary: Filled gauge, 0–100.
     component: ratatui::widgets::Gauge
@@ -169,7 +169,7 @@ elements:
       label: string
 
   Progress:
-    icon: rectangle-horizontal
+    icon: loader-pinwheel
     group: Feedback
     summary: Filled gauge, 0–100 — a `Gauge` alias for progress bars.
     component: ratatui::widgets::Gauge
@@ -216,7 +216,7 @@ elements:
       change:
 
   Tabs:
-    icon: layout-list
+    icon: layout-panel-top
     group: Input
     summary: Tab strip selecting a pane index.
     component: ratatui::widgets::Tabs
@@ -268,7 +268,7 @@ elements:
       click:
 
   Select:
-    icon: list
+    icon: square-chevron-down
     group: Input
     summary: Arrow-key pick from `items` — `selected` binds the choice.
     component: ratatui::widgets::List
@@ -281,7 +281,7 @@ elements:
       select:
 
   Menu:
-    icon: list
+    icon: menu
     group: Input
     summary: Menu list with `> ` marker — a `Select` alias for command lists.
     component: ratatui::widgets::List
@@ -294,7 +294,7 @@ elements:
       select:
 
   Checkbox:
-    icon: check-square
+    icon: square-check
     group: Input
     summary: "`[x]`/`[ ]` toggle — `checked` binds the state."
     component: ratatui::widgets::Paragraph
@@ -306,7 +306,7 @@ elements:
       change:
 
   Switch:
-    icon: toggle-right
+    icon: toggle-left
     group: Input
     summary: "`[x]`/`[ ]` toggle — a `Checkbox` alias for switch semantics."
     component: ratatui::widgets::Paragraph
@@ -317,7 +317,7 @@ elements:
     events:
       change:
   BarChart:
-    icon: circle-dot
+    icon: chart-bar
     group: Components
     summary: Bar chart over a `data:` `[number]` series; `labels` names bars.
     component: ratatui::widgets::BarChart
@@ -339,7 +339,7 @@ elements:
         summary: Scale ceiling; defaults to the largest value.
 
   Calendar:
-    icon: circle-dot
+    icon: calendar-days
     group: Components
     summary: Month calendar — `date` picks the month; today is highlighted.
     component: ratatui::widgets::calendar::Monthly
@@ -351,7 +351,7 @@ elements:
         summary: "`YYYY-MM` or `YYYY-MM-DD`; defaults to today (UTC)."
 
   Chart:
-    icon: circle-dot
+    icon: chart-line
     group: Components
     summary: Line chart over a `data:` `[number]` series (index on x).
     component: ratatui::widgets::Chart
@@ -371,7 +371,7 @@ elements:
       y_max: number
 
   Sparkline:
-    icon: circle-dot
+    icon: trending-up
     group: Components
     summary: Inline sparkline over a `data:` `[number]` series.
     component: ratatui::widgets::Sparkline
@@ -387,7 +387,7 @@ elements:
         summary: Scale ceiling; defaults to the largest value.
 
   Canvas:
-    icon: circle-dot
+    icon: paintbrush
     group: Components
     summary: Drawing surface — `map` renders the world map layer.
     component: ratatui::widgets::canvas::Canvas
@@ -404,7 +404,7 @@ elements:
       y_max: number
 
   Logo:
-    icon: circle-dot
+    icon: image
     group: Components
     summary: The ratatui logo — `size` `tiny`|`small`.
     component: ratatui::widgets::RatatuiLogo
@@ -417,7 +417,7 @@ elements:
         default: small
 
   Mascot:
-    icon: circle-dot
+    icon: rat
     group: Components
     summary: The ratatui mascot — a 32x16 half-block illustration.
     component: ratatui::widgets::RatatuiMascot
@@ -425,7 +425,7 @@ elements:
     children: none
 
   Fill:
-    icon: square
+    icon: paint-bucket
     group: Display
     summary: Paints its area with one repeated glyph — backgrounds and runs.
     component: ratatui::widgets::Fill
