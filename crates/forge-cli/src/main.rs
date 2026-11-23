@@ -261,14 +261,41 @@ fn main() {
 /// The `main.rs` template for the document's base — one bootstrap per base
 /// family (#100): each links its own GPUI/toolkit stack.
 /// The ratatui app's bootstrap: no window — a crossterm event loop draws the
-/// document into `ratatui::Frame`s on the alternate screen (#112).
+/// document into `ratatui::Frame`s on the alternate screen (#112). Keys and
+/// mouse/wheel events reach `view.on_key`/`view.on_mouse` so focus, input and
+/// scroll regions work in the generated app.
 const APP_MAIN_RATATUI: &str = r#"use ratatui::crossterm::{execute, terminal};
+use ratatui::crossterm::event::{
+    self, Event, KeyCode, KeyEventKind, KeyModifiers, MouseButton, MouseEventKind,
+};
 use gpui_forge_runtime::render::ForgeView;
 use ratatui::Terminal;
 use ratatui::backend::CrosstermBackend;
 use std::io::stdout;
+use std::time::Duration;
 
 const SRC: &str = include_str!("../app.forge.yaml");
+
+/// A crossterm `KeyCode` as the name `ForgeView::on_key` expects. `None`
+/// means "no Forge meaning" — release repeats and dead keys drop here.
+fn key_name(k: &event::KeyEvent) -> Option<String> {
+    let name = match k.code {
+        KeyCode::Tab => "Tab".into(),
+        KeyCode::BackTab => "BackTab".into(),
+        KeyCode::Enter => "Enter".into(),
+        KeyCode::Up => "Up".into(),
+        KeyCode::Down => "Down".into(),
+        KeyCode::PageUp => "PageUp".into(),
+        KeyCode::PageDown => "PageDown".into(),
+        KeyCode::Home => "Home".into(),
+        KeyCode::End => "End".into(),
+        KeyCode::Backspace => "Backspace".into(),
+        KeyCode::Char(' ') => " ".into(),
+        KeyCode::Char(c) => c.to_string(),
+        _ => return None,
+    };
+    Some(name)
+}
 
 fn main() {
     gpui_forge_runtime::ensure_main_stack();
@@ -284,12 +311,42 @@ fn main() {
     }
     let _ = terminal::enable_raw_mode();
     let mut out = stdout();
-    let _ = execute!(out, terminal::EnterAlternateScreen);
+    // Mouse capture is what turns the wheel and clicks into events — a
+    // plain alternate screen never reports them.
+    let _ = execute!(out, terminal::EnterAlternateScreen, event::EnableMouseCapture);
     let mut term = Terminal::new(CrosstermBackend::new(out)).expect("terminal");
     loop {
         let _ = term.draw(|f| view.render(f));
-        std::thread::sleep(std::time::Duration::from_millis(50));
+        if !event::poll(Duration::from_millis(50)).unwrap_or(false) {
+            continue;
+        }
+        match event::read() {
+            Ok(Event::Key(k)) if k.kind != KeyEventKind::Release => {
+                if k.code == KeyCode::Esc
+                    || (k.code == KeyCode::Char('c')
+                        && k.modifiers.contains(KeyModifiers::CONTROL))
+                {
+                    break;
+                }
+                if let Some(name) = key_name(&k) {
+                    view.on_key(&name);
+                }
+            }
+            Ok(Event::Mouse(m)) => {
+                let kind = match m.kind {
+                    MouseEventKind::Down(MouseButton::Left) => "down",
+                    MouseEventKind::Up(MouseButton::Left) => "up",
+                    MouseEventKind::ScrollUp => "scroll-up",
+                    MouseEventKind::ScrollDown => "scroll-down",
+                    _ => continue,
+                };
+                view.on_mouse(kind, m.column, m.row);
+            }
+            _ => {}
+        }
     }
+    let _ = execute!(stdout(), event::DisableMouseCapture, terminal::LeaveAlternateScreen);
+    let _ = terminal::disable_raw_mode();
 }
 "#;
 
