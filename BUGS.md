@@ -43,3 +43,17 @@
 - [x] Vars editor bool/enum/slider rows couldn't be changed — they rendered `checked`/`selected` read-only widgets with no write-back. Checkbox now writes the click through, enum Selects write `SelectEvent::Confirm`, and sliders write `SliderEvent::Change` into the preview's state.
 
 - [x] icon grid cells stretched unevenly. `flex_1` blew a partial row's icons up to fill the width. Columns misaligned and labels wrapped to uneven heights. Cells now cap at the size stride. Full rows still share width evenly and short rows left-pack column-aligned. Labels are single-line centered and ellipsized at a fixed height. Icon+label center vertically in the row.
+
+- [ ] there should be a preference to use OS window decorations
+
+- [x] the icon images are not showing up in the icons tab — FIXED: `Icon:` only set `text_color` when a `color:` prop existed, so colorless icons kept `style.text.color = None` and GPUI skipped `paint_svg` entirely (menu/palette icons painted because they pass `color:`). Now defaults to `cx.theme().foreground`. Verified under Xvfb: lucide + heroicons glyphs render in the grid
+
+- [ ] when selecting the Block element in the structure panel, the tab shrinks and follwos through other tabs as well. This may be due to an HBox resizing when it shoudln't.
+
+- [ ] can you explain the canvas tab for ratatui widgets? It looks like there are gpui components, then the ratatui underneath. Since we can do drag n drop into the ratatui panel, i don't see why we need the gpui view. We should also have the inspector give the right style and properties for the widget instead of proxying through the gpui elements.
+
+- [x] we need to make sure there is consistency betweeen the icons in the palette. The same widget or widget idea should be represented across all widget sets. (the ratatui set doesn't have the same icon for barchart as the other widget sets.) — FIXED: ratatui catalog icons aligned to the canonical names (chart-bar, calendar-days, chart-line, trending-up, paintbrush, image, rat, paint-bucket, type, square-check, toggle-left, square-chevron-down, menu, layout-panel-top, loader-pinwheel, gauge)
+
+- [ ] There are many extensions for ratatui and we should supopport as many as we can. There is a great list at https://github.com/ratatui/awesome-ratatui of libs we can use, including a code editor that would be perfect for use in acpilot. Can you look at the acpilot source (../acpilot) and make sure we have the same widgets, or at least the widgets we would need if they weren't custom widgets?
+
+- [ ] there should be a universal var for whether the user is using native window decorations, to allow for conditionals on such. For example, to remove the title bar when using native decorations and move the menu to another place. There should also be a way to send information to the WM easily, like window name, etc on startup, maybe via the meta info in the doc, if not alreaady. We need to make sure we document these in all the docs.
