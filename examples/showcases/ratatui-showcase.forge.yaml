@@ -14,12 +14,15 @@ root:
   VStack:
   style: {gap: 1}
   children:
-      - Text: "ratatui showcase — every ratatui widget"
+      - Text:
+        text: "ratatui showcase — every ratatui widget"
+        style: {height: 1}
       - Tabs:
         titles: "Widgets\nData\nForm"
         selected: $tab
+        style: {height: 5}
       - HStack:
-        style: {gap: 1}
+        style: {gap: 1, height: 7}
         children:
           - Block:
             title: "cpu"
@@ -40,7 +43,7 @@ root:
                 text: "a Text run inside a bordered Block"
                 wrap: true
       - HStack:
-        style: {gap: 1}
+        style: {gap: 1, height: 9}
         children:
           - Block:
             title: "a List"
@@ -59,11 +62,12 @@ root:
                     value: $q
                   - Text: "echo: {$q}"
       - Table:
+        style: {height: 7}
         title: "a Table"
         header: "name | status | load"
         rows: "web-1 | up | 0.62\nweb-2 | up | 0.41\ndb-1 | degraded | 0.91"
       - HStack:
-        style: {gap: 1}
+        style: {gap: 1, height: 9}
         children:
           - Block:
             title: "controls"
@@ -97,7 +101,7 @@ root:
                     value: 40
                     label: "40%"
       - HStack:
-        style: {gap: 1}
+        style: {gap: 1, height: 8}
         children:
           - Card:
             title: "a Card — wheel scrolls"
@@ -121,3 +125,41 @@ root:
                   - Scrollbar:
                     content_length: 50
                     position: $sb_pos
+      - HStack:
+        style: {gap: 1, height: 10}
+        children:
+          - Block:
+            title: "Sparkline"
+            children:
+              - Sparkline:
+                data: [3, 7, 2, 9, 5, 8, 1, 6, 4]
+          - Block:
+            title: "BarChart"
+            children:
+              - BarChart:
+                data: [4, 8, 3, 7, 5]
+                labels: "a\nb\nc\nd\ne"
+          - Block:
+            title: "Chart"
+            children:
+              - Chart:
+                data: [2, 5, 3, 8, 6, 9, 4]
+                name: "load"
+      - HStack:
+        style: {gap: 1, height: 12}
+        children:
+          - Calendar:
+            date: "2025-06"
+          - Block:
+            title: "Canvas map"
+            children:
+              - Canvas:
+                map: true
+          - Block:
+            title: "Logo + Clear"
+            children:
+              - VStack:
+                children:
+                  - Logo:
+                    size: tiny
+                  - Clear:
