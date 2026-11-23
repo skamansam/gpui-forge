@@ -127,6 +127,22 @@ fn main() {
                                                 emit(json!({"event":"diagnostics","items":
                                                 check::diagnostics_json(&diags)}));
                                                 if let Some(doc) = doc {
+                                                    // `meta.title` names the
+                                                    // window — the identity the
+                                                    // skeleton bakes into its
+                                                    // app template.
+                                                    if let Some(title) = doc
+                                                        .meta
+                                                        .iter()
+                                                        .find(|(k, _)| k == "title")
+                                                        .map(|(_, v)| v.clone())
+                                                        && !title.is_empty()
+                                                        && let Some(h) = cx.windows().first()
+                                                    {
+                                                        let _ = h.update(cx, |_, w, _| {
+                                                            w.set_window_title(&title)
+                                                        });
+                                                    }
                                                     view.set_document(doc, cx);
                                                 }
                                             }

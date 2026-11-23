@@ -44,8 +44,29 @@ foreign card instead of silently degrading:
 ## Persisted preferences
 
 `~/.gpui-forge/settings.toml` holds per-user settings — the theme `name`, the
-`dark` flag, and `theme_preview` (the last previewed base). Studio loads
-them at startup and applies the saved theme over the OS light/dark default.
+`dark` flag, `theme_preview` (the last previewed base), the Files page
+options, and `native_decorations`. Studio loads them at startup and applies
+the saved theme over the OS light/dark default.
+
+### Window decorations
+
+**Preferences → Window → Decorations** switches between the OS window frame
+and Forge's own titlebar. On, the window manager draws the frame
+(`WindowDecorations::Server` and an opaque titlebar). Off, Forge draws the
+transparent titlebar its menu row drags. The default matches each
+platform's existing look — native frames on Linux and Windows, the custom
+titlebar on macOS. The switch applies at once on Linux. macOS applies it on
+restart.
+
+The preference lands in document state as `studio.native_decorations`
+(bool). A document can hide an in-app title row or move its menus with an
+`if:` on that path when the OS draws the frame itself.
+
+### Window title
+
+A document's `meta.title` names its window. The skeleton app bakes it into
+the titlebar, and a remote preview host applies it with
+`set_window_title` when the document loads.
 
 ## Where themes come from
 
