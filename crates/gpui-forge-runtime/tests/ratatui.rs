@@ -255,6 +255,127 @@ root:
     assert!(text.contains("fn"), "code editor paints text: {text:?}");
 }
 
+/// Tier-2/3 extension widgets — the crate-backed arms all paint through
+/// the same TestBackend path. `Image` decodes a real PNG written to a
+/// temp dir so `src`/`base_dir` resolution runs end to end.
+#[test]
+fn tier2_widgets_render() {
+    // A 2x2 opaque PNG (red top row, blue bottom row).
+    let png: &[u8] = &[
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
+        0x52, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x08, 0x06, 0x00, 0x00, 0x00, 0x72,
+        0xb6, 0x0d, 0x24, 0x00, 0x00, 0x00, 0x12, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0xf8,
+        0xcf, 0xc0, 0xf0, 0x1f, 0x84, 0x19, 0xa0, 0xf4, 0x7f, 0x00, 0x43, 0xce, 0x07, 0xf9, 0xfa,
+        0x81, 0x4a, 0xfd, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
+    ];
+    let dir = std::env::temp_dir().join(format!("forge-img-{}", std::process::id()));
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("pixel.png"), png).unwrap();
+    let src = r##"forge: "0.1"
+base: ratatui
+root:
+  VStack:
+  children:
+    - Toast:
+      text: saved file
+      type: success
+      style:
+        height: 3
+    - Popup:
+      title: help
+      width: 20
+      height: 5
+      style:
+        height: 7
+      children:
+        - Text: inside-pop
+    - Slider:
+      value: 40
+      label: vol
+      style:
+        height: 1
+    - WidgetList:
+      style:
+        height: 4
+      children:
+        - Text: row-alpha
+        - Text: row-beta
+    - PieChart:
+      data: [30, 40, 30]
+      labels: "cpu\nmem\ndisk"
+      style:
+        height: 8
+    - BigText:
+      text: OK
+      size: quadrant
+      style:
+        height: 4
+    - Nodes:
+      edges: "0.0>1.0"
+      style:
+        height: 6
+      children:
+        - GraphNode: agent
+        - GraphNode: tool
+    - Shimmer:
+      text: shimmering
+      phase: 0.5
+      style:
+        height: 1
+    - Dialog:
+      open: true
+      title: sure
+      text: proceed now
+      style:
+        height: 9
+    - Fx:
+      kind: coalesce
+      progress: 1.0
+      style:
+        height: 1
+      children:
+        - Text: fx-under
+    - QrCode:
+      data: hello-forge
+      style:
+        height: 4
+    - Globe:
+      zoom: 1.4
+      style:
+        height: 6
+    - Image:
+      src: pixel.png
+      style:
+        height: 1
+"##;
+    let mut view = view_of(src);
+    view.set_base_dir(&dir);
+    let buf = buffer_of(&mut view, 60, 80);
+    let text = text_of(&buf);
+    for needle in [
+        "saved file",
+        "inside-pop",
+        "vol",
+        "row-alpha",
+        "agent",
+        "shimmering",
+        "sure",
+        "proceed now",
+        "fx-under",
+    ] {
+        assert!(text.contains(needle), "paints {needle}: {text:?}");
+    }
+    // Graphical widgets paint non-blank cells — QR blocks, big glyphs,
+    // the globe mesh and the decoded PNG all leave marks.
+    let filled = buf.content().iter().filter(|c| c.symbol() != " ").count();
+    assert!(filled > 400, "graphical widgets paint cells: {filled}");
+    let decoded = buf.content().iter().any(|c| {
+        c.symbol() == "\u{2580}" && c.fg == Color::Rgb(255, 0, 0) && c.bg == Color::Rgb(0, 0, 255)
+    });
+    assert!(decoded, "png decoded to halfblocks");
+    std::fs::remove_dir_all(&dir).ok();
+}
+
 #[test]
 fn ansi_escapes_become_styles() {
     let src = "forge: \"0.1\"\nbase: ratatui\nroot:\n  VStack:\n  children:\n    - AnsiText: \"\u{1b}[31mRED\u{1b}[0m\"\n";
@@ -264,6 +385,62 @@ fn ansi_escapes_become_styles() {
     assert!(text.contains("RED"), "ansi text paints: {text:?}");
     let cell = buf.cell((0, 0)).expect("cell exists");
     assert_eq!(cell.fg, Color::Red, "escape parsed to fg red");
+}
+
+/// A bound Slider takes arrows and a track click; a bound Dialog commits
+/// its highlighted button to `choice` on Enter.
+#[test]
+fn slider_and_dialog_interact() {
+    let mut view = view_of(
+        r#"forge: "0.1"
+base: ratatui
+root:
+  VStack:
+  children:
+    - Slider:
+      value: bind $vol
+      min: 0
+      max: 10
+      step: 2
+      style:
+        height: 1
+    - Dialog:
+      open: true
+      title: confirm
+      text: ok
+      choice: bind $pick
+      style:
+        height: 8
+"#,
+    );
+    view.update_state(&parse_path("vol").unwrap(), json!(4));
+    view.update_state(&parse_path("pick").unwrap(), json!(""));
+    buffer_of(&mut view, 40, 12);
+    // The slider is focused first — step right by `step` → 6.
+    view.on_key("Right");
+    buffer_of(&mut view, 40, 12);
+    assert_eq!(
+        view.state().get("vol"),
+        Some(&json!(6.0)),
+        "arrow steps the bound value"
+    );
+    // Click the right half of the track → writes near `max`.
+    view.on_mouse("down", 39, 0);
+    let vol = view
+        .state()
+        .get("vol")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(0.0);
+    assert!(vol >= 8.0, "track click maps column to value: {vol}");
+    // Focus the dialog, pick No, commit.
+    view.on_key("Tab");
+    view.on_key("Right");
+    view.on_key("Enter");
+    assert_eq!(
+        view.state().get("pick"),
+        Some(&json!("no")),
+        "dialog commits the picked button"
+    );
 }
 
 /// The shipped showcase must keep parsing and painting — it exercises every

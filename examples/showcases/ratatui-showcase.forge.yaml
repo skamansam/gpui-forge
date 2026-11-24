@@ -8,6 +8,8 @@ state:
   menu_sel: number
   tree_sel: string
   sv_off: number
+  vol: number
+  dlg_pick: string
 
 base: ratatui
 meta:
@@ -238,3 +240,86 @@ root:
               - CodeEditor:
                 language: rust
                 text: "fn main() {{\n    println!(\"hi\");\n}"
+      - HStack:
+        style: {gap: 1, height: 10}
+        children:
+          - Block:
+            title: "Toast + Shimmer"
+            children:
+              - VStack:
+                children:
+                  - Toast:
+                    text: "Build finished"
+                    type: success
+                    style: {height: 3}
+                  - Shimmer:
+                    text: "loading the dashboard…"
+                    phase: 0.6
+          - Block:
+            title: "Slider + Dialog"
+            children:
+              - VStack:
+                children:
+                  - Slider:
+                    value: $vol
+                    label: "volume"
+                    style: {height: 2}
+                  - Dialog:
+                    open: true
+                    title: "Quit?"
+                    text: "Unsaved work"
+                    choice: $dlg_pick
+                    yes-label: "(Q)uit"
+                    no-label: "Stay"
+                    style: {height: 8}
+          - Block:
+            title: "Nodes"
+            children:
+              - Nodes:
+                edges: "0.0>1.0,1.0>2.0"
+                children:
+                  - GraphNode: input
+                  - GraphNode: agent
+                  - GraphNode: output
+      - HStack:
+        style: {gap: 1, height: 9}
+        children:
+          - Block:
+            title: "Popup + WidgetList"
+            children:
+              - Popup:
+                title: menu
+                width: 24
+                height: 6
+                children:
+                  - Text: "one option"
+                  - Text: "two option"
+          - Block:
+            title: "PieChart + BigText"
+            children:
+              - VStack:
+                children:
+                  - PieChart:
+                    data: [40, 35, 25]
+                    labels: "api\ncli\nweb"
+                    style: {height: 5}
+                  - BigText:
+                    text: "OK"
+                    size: quadrant
+          - Block:
+            title: "Fx + QrCode + Globe"
+            children:
+              - VStack:
+                children:
+                  - Fx:
+                    kind: coalesce
+                    progress: 1
+                    style: {height: 1}
+                    children:
+                      - Text: "materialized"
+                  - QrCode:
+                    data: "forge"
+                    style: {height: 4}
+                  - Globe:
+                    zoom: 1.2
+                    style: {height: 3}

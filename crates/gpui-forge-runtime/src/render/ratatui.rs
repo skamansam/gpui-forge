@@ -28,18 +28,27 @@ use ratatui::widgets::{
 // Native-only deps (Cargo.toml target block): tree-sitter grammars and
 // ratatui's crossterm backend have no wasm32 build. On the web canvas the
 // arms below fall through to the placeholder.
+use ratatui::buffer::Buffer as TuiBuffer;
+use ratatui::widgets::WidgetRef;
 #[cfg(not(target_arch = "wasm32"))]
 use ratatui_code_editor::editor::Editor as CodeEditorWidget;
 #[cfg(not(target_arch = "wasm32"))]
 use ratatui_markdown::ThemeConfig;
 #[cfg(not(target_arch = "wasm32"))]
 use ratatui_markdown::markdown::MarkdownRenderer;
+use ratatui_toaster::{Toast, ToastType};
 use serde_json::Value as Json;
 use std::collections::HashMap;
 use std::rc::Rc;
 use throbber_widgets_tui::symbols::throbber::{self, WhichUse};
 use throbber_widgets_tui::{Throbber, ThrobberState};
+#[cfg(not(target_arch = "wasm32"))]
+use tui_big_text::{BigText, PixelSize};
+#[cfg(not(target_arch = "wasm32"))]
+use tui_piechart::{PieChart, PieSlice};
 use tui_scrollview::{ScrollView, ScrollViewState, ScrollbarVisibility};
+#[cfg(not(target_arch = "wasm32"))]
+use tui_slider::Slider;
 use tui_tree_widget::{Tree as TuiTree, TreeItem, TreeState};
 
 /// Called with `hook(args)` when an event fires and no hook is registered for
@@ -96,6 +105,12 @@ pub struct ForgeView {
     /// render alongside `focusables` so stale maxima cannot linger. A Vec
     /// because `Path` has no `Hash` — scroll regions are few.
     scroll_meta: Vec<(Path, ScrollMeta)>,
+    /// `binding path → range` for Slider focusables — rebuilt each render
+    /// with `focusables`. Keys and pointer cells resolve against it.
+    sliders: Vec<(Path, SliderMeta)>,
+    /// `bound path string → yes_selected` — the dialog's highlighted button
+    /// persists between renders. Keyed by string like `trees`.
+    dialog_sel: HashMap<String, bool>,
     /// Every rendered node's `(doc path, drawn rect)`, rebuilt each render.
     /// The sender resolves pointer cells to doc paths through it for the
     /// designer's drop-hover and drop (#156).
@@ -146,6 +161,8 @@ impl ForgeView {
             previews: HashMap::new(),
             focusables: Vec::new(),
             scroll_meta: Vec::new(),
+            sliders: Vec::new(),
+            dialog_sel: HashMap::new(),
             zones: Vec::new(),
             drop_target: None,
             focused: 0,
@@ -417,6 +434,50 @@ impl ForgeView {
                         .unwrap_or(0);
                     self.scroll_to(max);
                 }
+                return;
+            }
+            (Some(FocusKind::Slider), "Left")
+            | (Some(FocusKind::Slider), "h")
+            | (Some(FocusKind::Slider), "Down")
+            | (Some(FocusKind::Slider), "j") => {
+                self.slider_step(-1.0);
+                self.fire_focused("change");
+                return;
+            }
+            (Some(FocusKind::Slider), "Right")
+            | (Some(FocusKind::Slider), "l")
+            | (Some(FocusKind::Slider), "Up")
+            | (Some(FocusKind::Slider), "k") => {
+                self.slider_step(1.0);
+                self.fire_focused("change");
+                return;
+            }
+            (Some(FocusKind::Dialog), "Left")
+            | (Some(FocusKind::Dialog), "Right")
+            | (Some(FocusKind::Dialog), "h")
+            | (Some(FocusKind::Dialog), "l") => {
+                if let Some((path, _, _, _)) = self.focusables.get(self.focused).cloned() {
+                    let sel = self.dialog_sel.entry(path.to_string()).or_insert(true);
+                    *sel = !*sel;
+                }
+                return;
+            }
+            (Some(FocusKind::Dialog), "Enter") | (Some(FocusKind::Dialog), " ") => {
+                self.dialog_choose();
+                return;
+            }
+            (Some(FocusKind::Dialog), "y") | (Some(FocusKind::Dialog), "Y") => {
+                if let Some((path, _, _, _)) = self.focusables.get(self.focused).cloned() {
+                    self.dialog_sel.insert(path.to_string(), true);
+                }
+                self.dialog_choose();
+                return;
+            }
+            (Some(FocusKind::Dialog), "n") | (Some(FocusKind::Dialog), "N") => {
+                if let Some((path, _, _, _)) = self.focusables.get(self.focused).cloned() {
+                    self.dialog_sel.insert(path.to_string(), false);
+                }
+                self.dialog_choose();
                 return;
             }
             (Some(FocusKind::Input), "Backspace")
@@ -1006,6 +1067,29 @@ impl ForgeView {
             (FocusKind::Scroll, "scroll-up") | (FocusKind::Scroll, "scroll-down") => {
                 self.scroll_by(if kind == "scroll-up" { -1 } else { 1 });
             }
+            (FocusKind::Slider, "down") => {
+                // A click maps its column to a value, snapped to `step`.
+                if let Some(meta) = self
+                    .sliders
+                    .iter()
+                    .find(|(p, _)| p == &path)
+                    .map(|(_, m)| *m)
+                {
+                    let frac = col.saturating_sub(meta.x) as f64 / meta.width.max(1) as f64;
+                    let raw = meta.min + frac.clamp(0.0, 1.0) * (meta.max - meta.min);
+                    let snapped = (raw / meta.step).round() * meta.step;
+                    self.write(&path, Json::from(snapped.clamp(meta.min, meta.max)));
+                    self.fire_focused("change");
+                }
+            }
+            (FocusKind::Slider, "scroll-up") => {
+                self.slider_step(1.0);
+                self.fire_focused("change");
+            }
+            (FocusKind::Slider, "scroll-down") => {
+                self.slider_step(-1.0);
+                self.fire_focused("change");
+            }
             (FocusKind::Scroll, "down") => {
                 // On a track (Scrollbar) a click jumps the thumb to the
                 // clicked fraction. On a Log `down` only takes focus.
@@ -1060,6 +1144,49 @@ impl ForgeView {
         }
     }
 
+    /// Moves the focused slider by `dir` × `step`, clamped to its range.
+    fn slider_step(&mut self, dir: f64) {
+        if let Some((path, FocusKind::Slider, _, _)) = self.focusables.get(self.focused).cloned() {
+            let meta = self
+                .sliders
+                .iter()
+                .find(|(p, _)| p == &path)
+                .map(|(_, m)| *m)
+                .unwrap_or(SliderMeta {
+                    min: 0.0,
+                    max: 100.0,
+                    step: 1.0,
+                    x: 0,
+                    width: 1,
+                });
+            let cur = self
+                .lookup(&path)
+                .and_then(Json::as_f64)
+                .unwrap_or(meta.min);
+            self.write(
+                &path,
+                Json::from((cur + dir * meta.step).clamp(meta.min, meta.max)),
+            );
+        }
+    }
+
+    /// Writes the dialog's highlighted button (`"yes"`/`"no"`) to the
+    /// `choice` binding, then fires `choose`.
+    fn dialog_choose(&mut self) {
+        if let Some((path, _, _, _)) = self.focusables.get(self.focused).cloned() {
+            let yes = self
+                .dialog_sel
+                .get(&path.to_string())
+                .copied()
+                .unwrap_or(true);
+            self.write(
+                &path,
+                Json::String(if yes { "yes" } else { "no" }.to_owned()),
+            );
+        }
+        self.fire_focused("choose");
+    }
+
     /// The deepest node under a cell — the smallest containing zone wins,
     /// so a drop targets the inner widget, not its frame.
     fn zone_at(&self, col: u16, row: u16) -> Option<(String, Rect)> {
@@ -1099,6 +1226,7 @@ impl ForgeView {
     pub fn render(&mut self, frame: &mut Frame) {
         self.focusables.clear();
         self.scroll_meta.clear();
+        self.sliders.clear();
         self.zones.clear();
         let area = frame.area();
         if let Some(doc) = self.doc.clone() {
@@ -2008,6 +2136,472 @@ impl ForgeView {
                     }
                 }
             }
+            "Toast" => {
+                // ratatui-toaster's card — a bordered message tinted by
+                // `type` (info/success/warning/error).
+                let ty = match self.prop_text(node, "type").as_str() {
+                    "success" => ToastType::Success,
+                    "warning" | "warn" => ToastType::Warning,
+                    "error" => ToastType::Error,
+                    _ => ToastType::Info,
+                };
+                Toast::new(&self.node_text(node), ty).render_ref(area, frame.buffer_mut());
+            }
+            "Popup" => {
+                // tui-popup — children draw offscreen, then the popup
+                // floats them centered over `area` in a bordered surface.
+                // `width`/`height` size the body (default: area minus 4).
+                let w = self
+                    .num(node, "width", f64::from(area.width.saturating_sub(4)))
+                    .max(1.0) as u16;
+                let h = self
+                    .num(node, "height", f64::from(area.height.saturating_sub(4)))
+                    .max(1.0) as u16;
+                let zstart = self.zones.len();
+                let fstart = self.focusables.len();
+                let buf = self.children_buffer(node, path, w, h);
+                let mut popup = tui_popup::Popup::new(BufWidget::new(buf));
+                let title = self.prop_text(node, "title");
+                if !title.is_empty() {
+                    popup.title = Line::from(title);
+                }
+                popup.style = popup.style.patch(self.node_style(node));
+                if let Some(c) = self.border_color(node) {
+                    popup.border_style = Style::default().fg(c);
+                }
+                // `popup_area` centers the bordered surface — precompute it
+                // so offscreen child zones land on the real cells.
+                let surface = area.centered(
+                    Constraint::Length(w.saturating_add(2)),
+                    Constraint::Length(h.saturating_add(2)),
+                );
+                let mut state = tui_popup::PopupState::default();
+                frame.render_stateful_widget(popup, area, &mut state);
+                self.translate_zones(zstart, fstart, surface.x + 1, surface.y + 1);
+            }
+            "WidgetList" => {
+                // tui-widget-list — children are items of mixed height.
+                // Each draws offscreen at its `height` style (default 3)
+                // and the list scrolls through them. A bound `selected`
+                // gets arrow/wheel/click navigation.
+                let kids = self.expand_kids(&node.children);
+                let mut items: Vec<TuiBuffer> = Vec::new();
+                let mut heights: Vec<u16> = Vec::new();
+                let mut y = area.y;
+                for (i, kid) in kids.iter().enumerate() {
+                    let h = Self::style_num(&kid.style, "height")
+                        .map(|(v, _)| v.max(1.0) as u16)
+                        .unwrap_or(3);
+                    let zstart = self.zones.len();
+                    let fstart = self.focusables.len();
+                    let buf = self.child_buffer(kid, &format!("{path}.{i}"), area.width, h);
+                    self.translate_zones(zstart, fstart, area.x, y);
+                    y = y.saturating_add(h);
+                    items.push(buf);
+                    heights.push(h);
+                }
+                let count = items.len();
+                let builder = tui_widget_list::ListBuilder::new(move |ctx| {
+                    let i = ctx.index.min(count.saturating_sub(1));
+                    let buf = items
+                        .get(i)
+                        .cloned()
+                        .unwrap_or_else(|| TuiBuffer::empty(Rect::new(0, 0, 1, 1)));
+                    (BufWidget::new(buf), heights.get(i).copied().unwrap_or(1))
+                });
+                let mut view = tui_widget_list::ListView::new(builder, count);
+                if self.prop_text(node, "direction") == "horizontal" {
+                    view = view.scroll_axis(tui_widget_list::ScrollAxis::Horizontal);
+                }
+                let mut state = tui_widget_list::ListState::default();
+                let binding = Self::binding_of(node, "selected");
+                if let Some(path) = &binding {
+                    let calls = self.calls_for(node);
+                    self.focusables
+                        .push((path.clone(), FocusKind::Select, calls, area));
+                    state.select(Some(
+                        self.lookup(path)
+                            .and_then(Json::as_u64)
+                            .unwrap_or(0)
+                            .min(count.saturating_sub(1) as u64) as usize,
+                    ));
+                }
+                frame.render_stateful_widget(view, area, &mut state);
+            }
+            "Nodes" => {
+                // tui-nodes — `GraphNode` children are the boxes; the
+                // `edges` prop wires ports "from.port>to.port" (child
+                // indices, comma-separated). Placement is automatic.
+                let kids = self.expand_kids(&node.children);
+                let titles: Vec<String> = kids.iter().map(|k| self.node_text(k)).collect();
+                let mut layouts = Vec::new();
+                for (i, kid) in kids.iter().enumerate() {
+                    let w = self.num(kid, "width", 12.0).max(4.0) as u16;
+                    let h = self.num(kid, "height", 3.0).max(3.0) as u16;
+                    layouts.push(
+                        tui_nodes::NodeLayout::new((w, h))
+                            .with_title(titles[i].as_str())
+                            .with_border_type(BorderType::Rounded),
+                    );
+                }
+                let line_type = match self.prop_text(node, "lines").as_str() {
+                    "rounded" => tui_nodes::LineType::Rounded,
+                    "double" => tui_nodes::LineType::Double,
+                    "thick" => tui_nodes::LineType::Thick,
+                    _ => tui_nodes::LineType::Plain,
+                };
+                let edges: Vec<tui_nodes::Connection> = self
+                    .prop_text(node, "edges")
+                    .split(',')
+                    .filter_map(|e| {
+                        let (from, to) = e.trim().split_once('>')?;
+                        let (fn_, fp) = from.trim().split_once('.')?;
+                        let (tn, tp) = to.trim().split_once('.')?;
+                        Some(
+                            tui_nodes::Connection::new(
+                                fn_.trim().parse().ok()?,
+                                fp.trim().parse().ok()?,
+                                tn.trim().parse().ok()?,
+                                tp.trim().parse().ok()?,
+                            )
+                            .with_line_type(line_type),
+                        )
+                    })
+                    .collect();
+                let mut graph = tui_nodes::NodeGraph::new(
+                    layouts,
+                    edges,
+                    area.width as usize,
+                    area.height as usize,
+                );
+                graph.calculate();
+                let mut st = ();
+                frame.render_stateful_widget(graph, area, &mut st);
+            }
+            "Shimmer" => {
+                // tui-shimmer — a highlight sweeps the text over a 4s
+                // cycle. `phase` (0..1) pins a frame; bind it to animate.
+                let phase = self.num(node, "phase", 0.0) as f32;
+                let spans = tui_shimmer::shimmer_spans_with_style_at_phase(
+                    &self.node_text(node),
+                    self.node_style(node),
+                    phase,
+                );
+                frame.render_widget(Paragraph::new(Line::from(spans)), area);
+            }
+            "Dialog" => {
+                // tui_confirm_dialog — `open` shows the centered box.
+                // `choice` binds the answer; Left/Right picks a button and
+                // Enter/y/n commits. `yes-label`/`no-label` use "(Y)es"
+                // markup — the parenthesized char is the hotkey.
+                if self.boolean(node, "open", false) {
+                    let title = self.prop_text(node, "title");
+                    let text = self.node_text(node);
+                    let mut st = tui_confirm_dialog::ConfirmDialogState::new(0, title, text);
+                    st.modal(true).open();
+                    if let Some(path) = Self::binding_of(node, "choice") {
+                        let calls = self.calls_for(node);
+                        self.focusables
+                            .push((path.clone(), FocusKind::Dialog, calls, area));
+                        let sel = self
+                            .dialog_sel
+                            .get(&path.to_string())
+                            .copied()
+                            .unwrap_or(true);
+                        st.with_yes_button_selected(sel);
+                    }
+                    let yes = self.prop_text(node, "yes-label");
+                    if let Ok(l) = tui_confirm_dialog::ButtonLabel::try_from(yes.as_str()) {
+                        st.with_yes_button(l);
+                    }
+                    let no = self.prop_text(node, "no-label");
+                    if no == "none" {
+                        st.without_no_button();
+                    } else if let Ok(l) = tui_confirm_dialog::ButtonLabel::try_from(no.as_str()) {
+                        st.with_no_button(l);
+                    }
+                    let mut w = tui_confirm_dialog::ConfirmDialog::new()
+                        .borders(Borders::ALL)
+                        .border_type(BorderType::Rounded);
+                    if let Some(c) = self.border_color(node) {
+                        w = w.border_style(Style::default().fg(c));
+                    }
+                    frame.render_stateful_widget(w, area, &mut st);
+                }
+            }
+            "Fx" => {
+                // tachyonfx — children paint first, then the effect
+                // post-processes their cells. `progress` (0..1) scrubs
+                // through `duration` (ms); a fresh Effect each render
+                // makes the frame deterministic.
+                self.render_children(node, path, area, frame, Direction::Vertical);
+                let ms = self.num(node, "duration", 800.0).max(1.0) as u32;
+                let elapsed = tachyonfx::Duration::from_millis(
+                    (self.num(node, "progress", 1.0).clamp(0.0, 1.0) * f64::from(ms)) as u32,
+                );
+                let timer = (ms, tachyonfx::Interpolation::Linear);
+                use tachyonfx::fx::ExpandDirection;
+                use tachyonfx::{Motion, fx};
+                let mut effect = match self.prop_text(node, "kind").as_str() {
+                    "coalesce" => fx::coalesce(timer),
+                    "dissolve-to" => {
+                        fx::dissolve_to(Style::default().fg(Color::Black).bg(Color::Black), timer)
+                    }
+                    "coalesce-from" => {
+                        fx::coalesce_from(Style::default().fg(Color::Black).bg(Color::Black), timer)
+                    }
+                    "sweep-in" => fx::sweep_in(Motion::LeftToRight, 10, 0, Color::Black, timer),
+                    "sweep-out" => fx::sweep_out(Motion::LeftToRight, 10, 0, Color::Black, timer),
+                    "slide-in" => fx::slide_in(Motion::UpToDown, 5, 0, Color::Black, timer),
+                    "slide-out" => fx::slide_out(Motion::UpToDown, 5, 0, Color::Black, timer),
+                    "explode" => fx::explode(2.0, 0.5, timer),
+                    "expand" => fx::expand(ExpandDirection::Horizontal, Style::default(), timer),
+                    "expand-v" => fx::expand(ExpandDirection::Vertical, Style::default(), timer),
+                    "stretch" => fx::stretch(Motion::RightToLeft, Style::default(), timer),
+                    "paint" => fx::paint_fg(Color::White, timer),
+                    "fade-to" => fx::fade_to_fg(Color::Black, timer),
+                    "hsl-shift" => fx::hsl_shift_fg([30.0, 0.0, 0.0], timer),
+                    _ => fx::dissolve(timer),
+                };
+                effect.process(elapsed, frame.buffer_mut(), area);
+            }
+            "QrCode" => {
+                // `qrcode` — unicode half-block rendering of `data`.
+                let data = {
+                    let d = self.prop_text(node, "data");
+                    if d.is_empty() {
+                        self.node_text(node)
+                    } else {
+                        d
+                    }
+                };
+                match qrcode::QrCode::new(data.as_bytes()) {
+                    Ok(code) => {
+                        let img = code
+                            .render::<qrcode::render::unicode::Dense1x2>()
+                            .quiet_zone(false)
+                            .module_dimensions(2, 1)
+                            .build();
+                        frame.render_widget(Paragraph::new(img), area);
+                    }
+                    Err(_) => {
+                        frame.render_widget(
+                            Paragraph::new("invalid QR data")
+                                .style(Style::default().fg(Color::DarkGray)),
+                            area,
+                        );
+                    }
+                }
+            }
+            "Image" => {
+                // `image` decode → halfblock raster: each cell is ▀ with
+                // fg = upper pixel, bg = lower. `src` resolves on
+                // `base_dir` like every other asset reference.
+                let src = {
+                    let s = self.prop_text(node, "src");
+                    if s.is_empty() {
+                        self.prop_text(node, "path")
+                    } else {
+                        s
+                    }
+                };
+                let path = self
+                    .base_dir
+                    .as_ref()
+                    .map(|d| d.join(&src))
+                    .unwrap_or_else(|| std::path::PathBuf::from(&src));
+                match image::open(&path) {
+                    Ok(img) => {
+                        let w = u32::from(area.width.max(1));
+                        let h = u32::from(area.height.max(1)) * 2;
+                        let rgba = image::imageops::resize(
+                            &img,
+                            w,
+                            h,
+                            image::imageops::FilterType::Triangle,
+                        );
+                        let mut lines = Vec::new();
+                        for y in (0..h).step_by(2) {
+                            let mut spans = Vec::new();
+                            for x in 0..w {
+                                let t = rgba.get_pixel(x, y).0;
+                                let b = if y + 1 < h {
+                                    rgba.get_pixel(x, y + 1).0
+                                } else {
+                                    [0, 0, 0, 0]
+                                };
+                                spans.push(Span::styled(
+                                    "\u{2580}",
+                                    Style::default()
+                                        .fg(Color::Rgb(t[0], t[1], t[2]))
+                                        .bg(Color::Rgb(b[0], b[1], b[2])),
+                                ));
+                            }
+                            lines.push(Line::from(spans));
+                        }
+                        frame.render_widget(Paragraph::new(lines), area);
+                    }
+                    Err(_) => {
+                        frame.render_widget(
+                            Paragraph::new(format!("image: {src}"))
+                                .style(Style::default().fg(Color::DarkGray)),
+                            area,
+                        );
+                    }
+                }
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            "Slider" => {
+                // tui-slider — a bound `value` takes Left/Right `step`
+                // writes, wheel ticks, and click-to-position.
+                let min = self.num(node, "min", 0.0);
+                let max = self.num(node, "max", 100.0).max(min);
+                let step = self.num(node, "step", 1.0).max(f64::EPSILON);
+                let value = self.num(node, "value", min).clamp(min, max);
+                let binding = Self::binding_of(node, "value");
+                if let Some(path) = &binding {
+                    let calls = self.calls_for(node);
+                    self.focusables
+                        .push((path.clone(), FocusKind::Slider, calls, area));
+                    self.sliders.push((
+                        path.clone(),
+                        SliderMeta {
+                            min,
+                            max,
+                            step,
+                            x: area.x,
+                            width: area.width,
+                        },
+                    ));
+                }
+                let focused = binding
+                    .as_ref()
+                    .map(|p| self.is_focused(p))
+                    .unwrap_or(false);
+                let mut slider = Slider::new(value, min, max)
+                    .focused(focused)
+                    .show_value(self.boolean(node, "show-value", true));
+                let label = self.prop_text(node, "label");
+                if !label.is_empty() {
+                    slider = slider.label(label);
+                }
+                if self.prop_text(node, "orientation") == "vertical" {
+                    slider = slider.orientation(tui_slider::SliderOrientation::Vertical);
+                }
+                frame.render_widget(slider, area);
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            "PieChart" => {
+                // tui-piechart — `data` numbers, newline `labels`, and a
+                // fixed slice palette. `hole` (0..1) makes it a donut.
+                let data = self.floats(node, "data");
+                let labels: Vec<String> = self
+                    .prop_text(node, "labels")
+                    .lines()
+                    .map(|l| l.trim().to_owned())
+                    .collect();
+                const PALETTE: [Color; 8] = [
+                    Color::Red,
+                    Color::Green,
+                    Color::Yellow,
+                    Color::Blue,
+                    Color::Magenta,
+                    Color::Cyan,
+                    Color::LightRed,
+                    Color::LightBlue,
+                ];
+                let slices: Vec<PieSlice> = data
+                    .iter()
+                    .enumerate()
+                    .map(|(i, v)| {
+                        PieSlice::new(
+                            labels.get(i).map(String::as_str).unwrap_or(""),
+                            *v,
+                            PALETTE[i % PALETTE.len()],
+                        )
+                    })
+                    .collect();
+                let mut chart = PieChart::new(slices);
+                let title = self.prop_text(node, "title");
+                if !title.is_empty() {
+                    chart = chart.block(
+                        Block::default()
+                            .borders(Borders::ALL)
+                            .border_type(BorderType::Rounded)
+                            .title(title),
+                    );
+                }
+                chart = chart
+                    .hole(self.num(node, "hole", 0.0).clamp(0.0, 0.9))
+                    .show_legend(self.boolean(node, "legend", true))
+                    .legend_position(match self.prop_text(node, "legend-position").as_str() {
+                        "left" => tui_piechart::LegendPosition::Left,
+                        "top" => tui_piechart::LegendPosition::Top,
+                        "bottom" => tui_piechart::LegendPosition::Bottom,
+                        _ => tui_piechart::LegendPosition::Right,
+                    });
+                frame.render_widget(chart, area);
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            "BigText" => {
+                // tui-big-text — an 8x8 font drawn as block pixels.
+                // `size` is pixels-per-cell: full, half, quadrant…
+                let size = match self.prop_text(node, "size").as_str() {
+                    "half" | "half-height" => PixelSize::HalfHeight,
+                    "half-width" => PixelSize::HalfWidth,
+                    "quadrant" => PixelSize::Quadrant,
+                    "sextant" => PixelSize::Sextant,
+                    "third" => PixelSize::ThirdHeight,
+                    "quarter" => PixelSize::QuarterHeight,
+                    "octant" => PixelSize::Octant,
+                    _ => PixelSize::Full,
+                };
+                let mut builder = BigText::builder();
+                builder
+                    .lines(vec![Line::from(self.node_text(node))])
+                    .pixel_size(size)
+                    .style(self.node_style(node));
+                match self.prop_text(node, "align").as_str() {
+                    "right" => {
+                        builder.right_aligned();
+                    }
+                    "center" => {
+                        builder.centered();
+                    }
+                    _ => {
+                        builder.left_aligned();
+                    }
+                }
+                frame.render_widget(builder.build(), area);
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            "Globe" => {
+                // tui-globe — an embedded coastline mesh under a camera.
+                // A bound `yaw` rotates it like a slider (-180..180).
+                static DATA: std::sync::OnceLock<tui_globe::MapData> = std::sync::OnceLock::new();
+                let data = DATA.get_or_init(tui_globe::MapData::embedded);
+                if let Some(path) = Self::binding_of(node, "yaw") {
+                    let calls = self.calls_for(node);
+                    self.focusables
+                        .push((path.clone(), FocusKind::Slider, calls, area));
+                    self.sliders.push((
+                        path,
+                        SliderMeta {
+                            min: -180.0,
+                            max: 180.0,
+                            step: 10.0,
+                            x: 0,
+                            width: 0,
+                        },
+                    ));
+                }
+                let camera = tui_globe::Camera {
+                    yaw: self.num(node, "yaw", 0.0) as f32,
+                    pitch: self.num(node, "pitch", 0.0) as f32,
+                    zoom: self.num(node, "zoom", 1.0).max(0.1) as f32,
+                };
+                frame.render_widget(tui_globe::Globe::new(data, camera), area);
+            }
             _ => {
                 frame.render_widget(
                     Paragraph::new(format!("{} — no ratatui renderer", node.element.name))
@@ -2015,6 +2609,35 @@ impl ForgeView {
                     area,
                 );
             }
+        }
+    }
+
+    /// Renders a node's children into an offscreen buffer through a
+    /// scratch TestBackend terminal — the same path as the live frame.
+    /// Popup bodies and WidgetList items draw this way.
+    fn children_buffer(&mut self, node: &Node, path: &str, w: u16, h: u16) -> TuiBuffer {
+        let mut term = Terminal::new(TestBackend::new(w.max(1), h.max(1))).expect("test backend");
+        let _ = term.draw(|f| self.render_children(node, path, f.area(), f, Direction::Vertical));
+        term.backend().buffer().clone()
+    }
+
+    /// One child into an offscreen buffer — the WidgetList item path.
+    fn child_buffer(&mut self, node: &Node, path: &str, w: u16, h: u16) -> TuiBuffer {
+        let mut term = Terminal::new(TestBackend::new(w.max(1), h.max(1))).expect("test backend");
+        let _ = term.draw(|f| self.render_node(node, path, f.area(), f));
+        term.backend().buffer().clone()
+    }
+
+    /// Re-anchors zones and focusable rects captured during an offscreen
+    /// child render — `zfrom`/`ffrom` are the vec lengths at capture time.
+    fn translate_zones(&mut self, zfrom: usize, ffrom: usize, dx: u16, dy: u16) {
+        for (_, r) in self.zones.iter_mut().skip(zfrom) {
+            r.x = r.x.saturating_add(dx);
+            r.y = r.y.saturating_add(dy);
+        }
+        for (_, _, _, r) in self.focusables.iter_mut().skip(ffrom) {
+            r.x = r.x.saturating_add(dx);
+            r.y = r.y.saturating_add(dy);
         }
     }
 
@@ -2203,6 +2826,42 @@ impl ForgeView {
     }
 }
 
+/// An offscreen-rendered child buffer as a `Widget` — Popup bodies and
+/// WidgetList items draw through `render_node` first, then blit.
+struct BufWidget {
+    buf: TuiBuffer,
+}
+
+impl BufWidget {
+    fn new(buf: TuiBuffer) -> Self {
+        Self { buf }
+    }
+}
+
+impl tui_popup::KnownSize for BufWidget {
+    fn width(&self) -> usize {
+        self.buf.area.width as usize
+    }
+    fn height(&self) -> usize {
+        self.buf.area.height as usize
+    }
+}
+
+impl ratatui::widgets::Widget for BufWidget {
+    fn render(self, area: Rect, buf: &mut TuiBuffer) {
+        for y in 0..self.buf.area.height.min(area.height) {
+            for x in 0..self.buf.area.width.min(area.width) {
+                if let (Some(s), Some(d)) = (
+                    self.buf.cell((x, y)),
+                    buf.cell_mut((area.x + x, area.y + y)),
+                ) {
+                    *d = s.clone();
+                }
+            }
+        }
+    }
+}
+
 /// `if:`'s truthiness — numbers, strings, arrays and nulls all have a
 /// sense in the doc language (the same contract as the GPUI twin).
 fn json_truthy(v: &Json) -> bool {
@@ -2273,6 +2932,19 @@ pub enum FocusKind {
     Action,
     Scroll,
     Tree,
+    Slider,
+    Dialog,
+}
+
+/// Per-path range for a `FocusKind::Slider` zone — `min`/`max`/`step`
+/// drive arrow writes, `x`/`width` map a clicked cell to a value.
+#[derive(Clone, Copy)]
+struct SliderMeta {
+    min: f64,
+    max: f64,
+    step: f64,
+    x: u16,
+    width: u16,
 }
 
 /// Per-path scroll behavior for a `FocusKind::Scroll` zone — `max` clamps

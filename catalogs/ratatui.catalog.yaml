@@ -601,3 +601,268 @@ elements:
       title: string
     events:
       change:
+
+  Toast:
+    icon: bell
+    group: Feedback
+    summary: Bordered toast card — `type` tints the border and icon.
+    component: ratatui_toaster::Toast
+    canvas: Notification
+    content: text
+    children: none
+    props:
+      text: string
+      type:
+        type: enum
+        values: [info, success, warning, error]
+        default: info
+
+  Popup:
+    icon: square-stack
+    group: Layout
+    summary: Children floated in a centered, bordered surface over the area.
+    component: tui_popup::Popup
+    canvas: Popover
+    children: any
+    props:
+      width:
+        type: number
+        summary: Body width in cells — defaults to area minus 4.
+      height:
+        type: number
+        summary: Body height in cells — defaults to area minus 4.
+      title: string
+
+  WidgetList:
+    icon: list
+    group: Data
+    summary: Scrolling list whose children are items of mixed height.
+    component: tui_widget_list::ListView
+    canvas: List
+    children: any
+    props:
+      selected:
+        type: number
+        summary: Selected item index — bind it for keys, wheel and clicks.
+      direction:
+        type: enum
+        values: [vertical, horizontal]
+        default: vertical
+      title: string
+    events:
+      select:
+
+  Nodes:
+    icon: workflow
+    group: Data
+    summary: Node graph — `GraphNode` children auto-place, `edges` links ports.
+    component: tui_nodes::NodeGraph
+    canvas: Box
+    children: any
+    props:
+      edges:
+        type: string
+        summary: 'Port links as "from.port>to.port" pairs, comma-separated.'
+      lines:
+        type: enum
+        values: [plain, rounded, double, thick]
+        default: plain
+        summary: Edge line style.
+      title: string
+
+  GraphNode:
+    icon: square
+    group: Data
+    summary: One box inside a `Nodes` graph — `width`/`height` in cells.
+    component: tui_nodes::NodeLayout
+    canvas: Box
+    content: text
+    children: none
+    props:
+      text: string
+      width:
+        type: number
+        default: 12
+      height:
+        type: number
+        default: 3
+
+  Shimmer:
+    icon: sparkles
+    group: Feedback
+    summary: A highlight sweeps the text — `phase` (0..1) pins a frame.
+    component: tui_shimmer::shimmer_spans_with_style_at_phase
+    canvas: Shimmer
+    content: text
+    children: none
+    props:
+      text: string
+      phase:
+        type: number
+        summary: Cycle position 0..1 — bind it and tick to animate.
+
+  Dialog:
+    icon: message-square-warning
+    group: Feedback
+    summary: Centered confirm box — `open` shows it, `choice` binds the answer.
+    component: tui_confirm_dialog::ConfirmDialog
+    canvas: AlertDialog
+    content: text
+    children: none
+    props:
+      title: string
+      text: string
+      open:
+        type: bool
+        summary: Draws the dialog when true — bind it to show or dismiss.
+      choice:
+        type: string
+        summary: '"yes"/"no" — bound, written when a button commits.'
+      yes-label:
+        type: string
+        summary: '"(Y)es" markup — the parenthesized char is the hotkey.'
+      no-label:
+        type: string
+        summary: Same markup; the literal `none` drops the button.
+    events:
+      choose:
+
+  Fx:
+    icon: wand
+    group: Effects
+    summary: Post-processes children cells — `progress` scrubs the effect.
+    component: tachyonfx::Effect
+    canvas: Box
+    children: any
+    props:
+      kind:
+        type: enum
+        values: [dissolve, coalesce, dissolve-to, coalesce-from, sweep-in, sweep-out, slide-in, slide-out, explode, expand, expand-v, stretch, paint, fade-to, hsl-shift]
+        default: dissolve
+      duration:
+        type: number
+        default: 800
+        summary: Effect length in milliseconds.
+      progress:
+        type: number
+        summary: 0..1 through the effect — bind it and tick to animate.
+
+  QrCode:
+    icon: qr-code
+    group: Display
+    summary: QR code drawn as unicode half-blocks from `data`.
+    component: qrcode::QrCode
+    canvas: Box
+    children: none
+    props:
+      data:
+        type: string
+        summary: Encoded content — falls back to the text content.
+
+  Image:
+    icon: image
+    group: Display
+    summary: Picture decoded to a halfblock raster — `src` on `base_dir`.
+    component: image::open
+    canvas: Image
+    children: none
+    props:
+      src:
+        type: string
+        summary: Image file path — PNG, JPEG and the `image` crate set.
+      path: string
+
+  Slider:
+    icon: sliders-horizontal
+    group: Input
+    summary: Value track — a bound `value` takes keys, wheel and clicks.
+    component: tui_slider::Slider
+    canvas: Slider
+    children: none
+    props:
+      value:
+        type: number
+        summary: Current value — bind it for keys and pointer writes.
+      min:
+        type: number
+        default: 0
+      max:
+        type: number
+        default: 100
+      step:
+        type: number
+        default: 1
+      label: string
+      show-value:
+        type: bool
+        default: true
+      orientation:
+        type: enum
+        values: [horizontal, vertical]
+        default: horizontal
+    events:
+      change:
+
+  PieChart:
+    icon: chart-pie
+    group: Data
+    summary: Pie or donut over a `data` series — `labels` names slices.
+    component: tui_piechart::PieChart
+    canvas: PieChart
+    children: none
+    props:
+      data:
+        type: list<number>
+        summary: Slice values.
+      labels:
+        type: string
+        summary: Newline-separated slice labels.
+      hole:
+        type: number
+        summary: Donut hole 0..0.9 — 0 is a full pie.
+      legend:
+        type: bool
+        default: true
+      legend-position:
+        type: enum
+        values: [right, left, top, bottom]
+        default: right
+      title: string
+
+  BigText:
+    icon: case-upper
+    group: Display
+    summary: 8x8 pixel-font text — `size` trades resolution for room.
+    component: tui_big_text::BigText
+    canvas: Title
+    content: text
+    children: none
+    props:
+      text: string
+      size:
+        type: enum
+        values: [full, half, half-width, quadrant, sextant, third, quarter, octant]
+        default: full
+      align:
+        type: enum
+        values: [left, center, right]
+        default: left
+
+  Globe:
+    icon: globe
+    group: Display
+    summary: Rotating wireframe earth — camera props aim it.
+    component: tui_globe::Globe
+    canvas: Box
+    children: none
+    props:
+      yaw:
+        type: number
+        summary: Camera yaw degrees — bind it and arrows rotate the globe.
+      pitch:
+        type: number
+      zoom:
+        type: number
+        default: 1
+    events:
+      change:
