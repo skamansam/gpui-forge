@@ -13,7 +13,9 @@ set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 # ste-lint.py is vendored — upstream prose, not ours to rewrite.
-EXCLUDE='^(vendor/|hosts/.*/vendor/|target/|node_modules/|site/node_modules/|scripts/ste-lint\.py$|.*(LICENSE|OFL|COPYING|NOTICE)[^/]*$)'
+# docs/format/components.md is generated from ALL-COMPONENTS.md, which the
+# lint already covers. Its <details> inventories are markup, not prose.
+EXCLUDE='^(vendor/|hosts/.*/vendor/|target/|node_modules/|site/node_modules/|scripts/ste-lint\.py$|docs/format/components\.md$|.*(LICENSE|OFL|COPYING|NOTICE)[^/]*$)'
 
 if [ "${1:-}" = "--files" ]; then
     shift
