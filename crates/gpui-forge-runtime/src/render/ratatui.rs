@@ -7,9 +7,13 @@
 //! (`forge-preview-ratatui`) owns the terminal.
 
 use crate::render::{doc_meta, lookup_path, set_path, style_edit_value};
+use ansi_to_tui::IntoText;
 use forge_spec::catalog::Catalog;
 use forge_spec::{Compare, Control, Document, Node, Path, PathSegment, Segment, Unit, Value};
 use ratatui::Frame;
+use ratatui::Terminal;
+use ratatui::backend::TestBackend;
+use ratatui::layout::Size;
 use ratatui::layout::{Constraint, Direction, Layout, Position, Rect};
 use ratatui::style::{Color, Modifier, Style};
 use ratatui::symbols;
@@ -21,9 +25,22 @@ use ratatui::widgets::{
     LineGauge, List, ListItem, Paragraph, RatatuiLogo, RatatuiMascot, Scrollbar,
     ScrollbarOrientation, ScrollbarState, Sparkline, Tabs, Wrap,
 };
+// Native-only deps (Cargo.toml target block): tree-sitter grammars and
+// ratatui's crossterm backend have no wasm32 build. On the web canvas the
+// arms below fall through to the placeholder.
+#[cfg(not(target_arch = "wasm32"))]
+use ratatui_code_editor::editor::Editor as CodeEditorWidget;
+#[cfg(not(target_arch = "wasm32"))]
+use ratatui_markdown::ThemeConfig;
+#[cfg(not(target_arch = "wasm32"))]
+use ratatui_markdown::markdown::MarkdownRenderer;
 use serde_json::Value as Json;
 use std::collections::HashMap;
 use std::rc::Rc;
+use throbber_widgets_tui::symbols::throbber::{self, WhichUse};
+use throbber_widgets_tui::{Throbber, ThrobberState};
+use tui_scrollview::{ScrollView, ScrollViewState, ScrollbarVisibility};
+use tui_tree_widget::{Tree as TuiTree, TreeItem, TreeState};
 
 /// Called with `hook(args)` when an event fires and no hook is registered for
 /// its name — no `Context` exists in a TUI loop.
@@ -87,6 +104,9 @@ pub struct ForgeView {
     /// accent frame over the zone while a drag hovers it.
     drop_target: Option<(String, Rect)>,
     focused: usize,
+    /// `bound path string → TreeState` — expansion and selection persist
+    /// between renders. Keyed by string because `Path` has no `Hash`.
+    trees: HashMap<String, TreeState<String>>,
     /// `for`/`with` scope vars — `(name, value)` frames pushed while control
     /// children expand (same contract as the GPUI twins).
     scopes: Vec<(String, Json)>,
@@ -128,6 +148,7 @@ impl ForgeView {
             zones: Vec::new(),
             drop_target: None,
             focused: 0,
+            trees: HashMap::new(),
             scopes: Vec::new(),
             theme: HashMap::new(),
             dark: false,
@@ -273,6 +294,38 @@ impl ForgeView {
         std::mem::take(&mut self.errors)
     }
 
+    /// Arrow handling for a focused `Tree` — the `TreeState` methods move
+    /// the selection or fold/unfold a node, then the bound `selected` path
+    /// gets the slash-joined identifier list for `if:`/`Text:` reads.
+    fn tree_step(&mut self, key: &str) {
+        let Some((path, ..)) = self.focusables.get(self.focused).cloned() else {
+            return;
+        };
+        let selected = self.trees.get_mut(&path.to_string()).map(|state| {
+            match key {
+                "up" => {
+                    state.key_up();
+                }
+                "down" => {
+                    state.key_down();
+                }
+                "left" => {
+                    state.key_left();
+                }
+                "right" => {
+                    state.key_right();
+                }
+                _ => {
+                    state.toggle_selected();
+                }
+            }
+            state.selected().join("/")
+        });
+        if let Some(selected) = selected {
+            self.write(&path, Json::String(selected));
+        }
+    }
+
     /// Terminal keys — the host reads the tty and forwards them (#112).
     /// `Tab`/`Shift-Tab` cycles focusable inputs. Printable keys write into
     /// the focused input's binding. `Enter`/`Space` fires toggle/select.
@@ -305,6 +358,31 @@ impl ForgeView {
                     let cur = self.lookup(&path).and_then(Json::as_u64).unwrap_or(0);
                     self.write(&path, Json::from(cur + 1));
                 }
+                self.fire_focused("select");
+                return;
+            }
+            (Some(FocusKind::Tree), "Up") | (Some(FocusKind::Tree), "k") => {
+                self.tree_step("up");
+                self.fire_focused("select");
+                return;
+            }
+            (Some(FocusKind::Tree), "Down") | (Some(FocusKind::Tree), "j") => {
+                self.tree_step("down");
+                self.fire_focused("select");
+                return;
+            }
+            (Some(FocusKind::Tree), "Left") | (Some(FocusKind::Tree), "h") => {
+                self.tree_step("left");
+                self.fire_focused("select");
+                return;
+            }
+            (Some(FocusKind::Tree), "Right") | (Some(FocusKind::Tree), "l") => {
+                self.tree_step("right");
+                self.fire_focused("select");
+                return;
+            }
+            (Some(FocusKind::Tree), "Enter") | (Some(FocusKind::Tree), " ") => {
+                self.tree_step("toggle");
                 self.fire_focused("select");
                 return;
             }
@@ -907,6 +985,22 @@ impl ForgeView {
                 };
                 self.write(&path, Json::from(next));
                 self.fire_focused("select");
+            }
+            (FocusKind::Tree, "down") => {
+                let selected = self.trees.get_mut(&path.to_string()).map(|state| {
+                    state.click_at(pos);
+                    state.selected().join("/")
+                });
+                if let Some(selected) = selected {
+                    self.write(&path, Json::String(selected));
+                }
+                self.fire_focused("select");
+            }
+            (FocusKind::Tree, "scroll-up") => {
+                self.tree_step("up");
+            }
+            (FocusKind::Tree, "scroll-down") => {
+                self.tree_step("down");
             }
             (FocusKind::Scroll, "scroll-up") | (FocusKind::Scroll, "scroll-down") => {
                 self.scroll_by(if kind == "scroll-up" { -1 } else { 1 });
@@ -1586,6 +1680,319 @@ impl ForgeView {
                 };
                 frame.render_widget(logo, area);
             }
+            "Tree" => {
+                // `items` indents text (two spaces or a tab per depth).
+                // `TreeItem` children build the same structure in the doc.
+                // A bound `selected` — the slash-joined identifier list —
+                // makes arrows, wheel and clicks interactive.
+                let title = self.prop_text(node, "title");
+                let (items, opens) = self.tree_items(node);
+                let binding = Self::binding_of(node, "selected");
+                if let Some(path) = &binding {
+                    let calls = self.calls_for(node);
+                    self.focusables
+                        .push((path.clone(), FocusKind::Tree, calls, area));
+                }
+                let focused = binding
+                    .as_ref()
+                    .map(|p| self.is_focused(p))
+                    .unwrap_or(false);
+                let expanded = self.prop_text(node, "expanded") != "false";
+                let selected: Vec<String> = binding
+                    .as_ref()
+                    .and_then(|p| self.lookup(p))
+                    .and_then(Json::as_str)
+                    .map(|s| s.split('/').map(str::to_owned).collect())
+                    .unwrap_or_default();
+                match TuiTree::new(&items) {
+                    Ok(tree) => {
+                        let mut state = match binding.as_ref().map(|p| p.to_string()) {
+                            Some(k) => match self.trees.entry(k) {
+                                std::collections::hash_map::Entry::Occupied(e) => e.into_mut(),
+                                std::collections::hash_map::Entry::Vacant(e) => {
+                                    let s = e.insert(TreeState::default());
+                                    if expanded {
+                                        for p in &opens {
+                                            s.open(p.clone());
+                                        }
+                                    }
+                                    s
+                                }
+                            },
+                            None => {
+                                // Unbound trees hold no state — render a
+                                // throwaway all-open one.
+                                let mut s = TreeState::default();
+                                if expanded {
+                                    for p in &opens {
+                                        s.open(p.clone());
+                                    }
+                                }
+                                if !selected.is_empty() {
+                                    s.select(selected);
+                                }
+                                let t = tree
+                                    .block(Block::default().borders(Borders::ALL).title(title))
+                                    .highlight_symbol("> ");
+                                frame.render_stateful_widget(t, area, &mut s);
+                                return;
+                            }
+                        };
+                        if !selected.is_empty() {
+                            state.select(selected);
+                        }
+                        let mut t = tree
+                            .block(Block::default().borders(Borders::ALL).title(title))
+                            .highlight_symbol("> ");
+                        if focused {
+                            t = t.highlight_style(
+                                Style::default()
+                                    .fg(Color::Cyan)
+                                    .add_modifier(Modifier::BOLD),
+                            );
+                        }
+                        frame.render_stateful_widget(t, area, &mut state);
+                    }
+                    Err(e) => {
+                        frame.render_widget(
+                            Paragraph::new(format!("Tree: {e}"))
+                                .style(Style::default().fg(Color::DarkGray)),
+                            area,
+                        );
+                    }
+                }
+            }
+            "TreeItem" => {
+                // Alone it is just its label line — the `Tree` arm consumes
+                // the structured form.
+                frame.render_widget(Paragraph::new(self.node_text(node)), area);
+            }
+            "Spinner" => {
+                // throbber-widgets-tui — `kind` picks the symbol set,
+                // `step` is the frame step (bind it and tick to animate —
+                // 0 or absent picks a random frame each draw).
+                let set = match self.prop_text(node, "kind").as_str() {
+                    "ascii" => throbber::ASCII,
+                    "box-drawing" => throbber::BOX_DRAWING,
+                    "arrow" => throbber::ARROW,
+                    "double-arrow" => throbber::DOUBLE_ARROW,
+                    "vertical-block" => throbber::VERTICAL_BLOCK,
+                    "horizontal-block" => throbber::HORIZONTAL_BLOCK,
+                    "quadrant-block" => throbber::QUADRANT_BLOCK,
+                    "quadrant-block-crack" => throbber::QUADRANT_BLOCK_CRACK,
+                    "white-square" => throbber::WHITE_SQUARE,
+                    "white-circle" => throbber::WHITE_CIRCLE,
+                    "black-circle" => throbber::BLACK_CIRCLE,
+                    "clock" => throbber::CLOCK,
+                    "braille-one" => throbber::BRAILLE_ONE,
+                    "braille-double" => throbber::BRAILLE_DOUBLE,
+                    "braille-six-double" => throbber::BRAILLE_SIX_DOUBLE,
+                    "braille-eight" => throbber::BRAILLE_EIGHT,
+                    "braille-eight-double" => throbber::BRAILLE_EIGHT_DOUBLE,
+                    "ogham-a" => throbber::OGHAM_A,
+                    "ogham-b" => throbber::OGHAM_B,
+                    "ogham-c" => throbber::OGHAM_C,
+                    "parenthesis" => throbber::PARENTHESIS,
+                    "canadian" => throbber::CANADIAN,
+                    _ => throbber::BRAILLE_SIX,
+                };
+                let mut state = ThrobberState::default();
+                state.calc_step(self.num(node, "step", 0.0) as i8);
+                let label = self.prop_text(node, "label");
+                let label = if label.is_empty() {
+                    self.node_text(node)
+                } else {
+                    label
+                };
+                let use_type = match self.prop_text(node, "symbol").as_str() {
+                    "full" => WhichUse::Full,
+                    "empty" => WhichUse::Empty,
+                    _ => WhichUse::Spin,
+                };
+                frame.render_stateful_widget(
+                    Throbber::default()
+                        .label(label)
+                        .throbber_set(set)
+                        .use_type(use_type)
+                        .style(self.node_style(node)),
+                    area,
+                    &mut state,
+                );
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            "Markdown" => {
+                // ratatui-markdown — parse blocks, render lines at `width`
+                // (default the rect's), then a Paragraph clips them. A
+                // bound `offset` scrolls like `Log`.
+                let text = self.node_text(node);
+                let width = self.num(node, "width", area.width as f64).max(1.0) as usize;
+                let off = self.num(node, "offset", 0.0).max(0.0) as u16;
+                let renderer = MarkdownRenderer::new(width);
+                let blocks = renderer.parse(&text);
+                let lines = renderer.render(&blocks, &ThemeConfig::default());
+                if let Some(path) = Self::binding_of(node, "offset") {
+                    let calls = self.calls_for(node);
+                    self.focusables
+                        .push((path.clone(), FocusKind::Scroll, calls, area));
+                    let last = lines.len().saturating_sub(area.height as usize);
+                    self.scroll_meta.push((
+                        path,
+                        ScrollMeta {
+                            max: last as u64,
+                            horizontal: false,
+                            track: false,
+                        },
+                    ));
+                }
+                let title = self.prop_text(node, "title");
+                let mut p = Paragraph::new(lines)
+                    .scroll((off, 0))
+                    .style(self.node_style(node));
+                if !title.is_empty() {
+                    p = p.block(Block::default().borders(Borders::ALL).title(title));
+                }
+                frame.render_widget(p, area);
+            }
+            "AnsiText" => {
+                // ansi-to-tui — escape codes become styled spans.
+                let text = self.node_text(node);
+                let parsed = text
+                    .as_str()
+                    .into_text()
+                    .unwrap_or_else(|_| ratatui::text::Text::from(text));
+                frame.render_widget(Paragraph::new(parsed).style(self.node_style(node)), area);
+            }
+            "Terminal" => {
+                // A bordered ANSI screen — same parse as `AnsiText` plus
+                // the terminal frame. A bound `offset` scrolls scrollback.
+                let text = self.node_text(node);
+                let off = self.num(node, "offset", 0.0).max(0.0) as u16;
+                let parsed = text
+                    .as_str()
+                    .into_text()
+                    .unwrap_or_else(|_| ratatui::text::Text::from(text));
+                if let Some(path) = Self::binding_of(node, "offset") {
+                    let calls = self.calls_for(node);
+                    self.focusables
+                        .push((path.clone(), FocusKind::Scroll, calls, area));
+                    let last = parsed.lines.len().saturating_sub(area.height as usize);
+                    self.scroll_meta.push((
+                        path,
+                        ScrollMeta {
+                            max: last as u64,
+                            horizontal: false,
+                            track: false,
+                        },
+                    ));
+                }
+                let title = self.prop_text(node, "title");
+                frame.render_widget(
+                    Paragraph::new(parsed)
+                        .block(Block::default().borders(Borders::ALL).title(title))
+                        .scroll((off, 0)),
+                    area,
+                );
+            }
+            "ScrollView" => {
+                // tui-scrollview — children paint into a virtual buffer
+                // `width`×`height` cells, the viewport clips it and draws
+                // scrollbars. A bound `offset` scrolls vertically.
+                let vw = self.num(node, "width", area.width as f64).max(1.0) as u16;
+                let vh = self.num(node, "height", area.height as f64).max(1.0) as u16;
+                let mut sv = ScrollView::new(Size::new(vw, vh));
+                sv = match self.prop_text(node, "scrollbars").as_str() {
+                    "always" => sv
+                        .horizontal_scrollbar_visibility(ScrollbarVisibility::Always)
+                        .vertical_scrollbar_visibility(ScrollbarVisibility::Always),
+                    "never" => sv
+                        .horizontal_scrollbar_visibility(ScrollbarVisibility::Never)
+                        .vertical_scrollbar_visibility(ScrollbarVisibility::Never),
+                    "vertical" => sv.horizontal_scrollbar_visibility(ScrollbarVisibility::Never),
+                    "horizontal" => sv.vertical_scrollbar_visibility(ScrollbarVisibility::Never),
+                    _ => sv,
+                };
+                // Children paint into a headless frame of the virtual size,
+                // then the cells copy into the scroll buffer — the same
+                // render path, no widget shim. Hit zones inside the view
+                // use virtual coordinates, so the arm drops them: children
+                // of a ScrollView are display-only for now.
+                let mut term = Terminal::new(TestBackend::new(vw, vh)).unwrap();
+                let before = self.focusables.len();
+                let virtual_area = Rect::new(0, 0, vw, vh);
+                let _ = term.draw(|f| {
+                    self.render_children(node, path, virtual_area, f, Direction::Vertical);
+                });
+                self.focusables.truncate(before);
+                let src = term.backend().buffer();
+                let dst = sv.buf_mut();
+                for y in 0..vh {
+                    for x in 0..vw {
+                        if let Some(cell) = src.cell((x, y))
+                            && let Some(d) = dst.cell_mut((x, y))
+                        {
+                            *d = cell.clone();
+                        }
+                    }
+                }
+                if let Some(path) = Self::binding_of(node, "offset") {
+                    let calls = self.calls_for(node);
+                    self.focusables
+                        .push((path.clone(), FocusKind::Scroll, calls, area));
+                    self.scroll_meta.push((
+                        path,
+                        ScrollMeta {
+                            max: vh.saturating_sub(area.height) as u64,
+                            horizontal: false,
+                            track: false,
+                        },
+                    ));
+                }
+                let off = self.num(node, "offset", 0.0).max(0.0) as u16;
+                let mut state = ScrollViewState::with_offset(Position::new(0, off));
+                frame.render_stateful_widget(sv, area, &mut state);
+            }
+            #[cfg(not(target_arch = "wasm32"))]
+            "CodeEditor" => {
+                // ratatui-code-editor — tree-sitter highlighting for the
+                // catalog's language list. `original` diffs against `text`.
+                // Editing needs the crate's crossterm driver — the
+                // doc widget renders and scrolls.
+                let lang = self.prop_text(node, "language");
+                let text = self.node_text(node);
+                match CodeEditorWidget::new(&lang, &text, ratatui_code_editor::theme::vesper()) {
+                    Ok(mut ed) => {
+                        if self.prop_text(node, "folding") == "false" {
+                            ed.set_code_folding_enabled(false);
+                        }
+                        let original = self.prop_text(node, "original");
+                        if !original.is_empty() {
+                            let _ = ed.set_original_code(&original);
+                            ed.set_diff_enabled(true);
+                        }
+                        let off = self.num(node, "offset", 0.0).max(0.0) as usize;
+                        for _ in 0..off.min(500) {
+                            ed.scroll_down(area.height as usize);
+                        }
+                        if let Some(path) = Self::binding_of(node, "offset") {
+                            let calls = self.calls_for(node);
+                            self.focusables
+                                .push((path.clone(), FocusKind::Scroll, calls, area));
+                            self.scroll_meta.push((
+                                path,
+                                ScrollMeta {
+                                    max: 500,
+                                    horizontal: false,
+                                    track: false,
+                                },
+                            ));
+                        }
+                        frame.render_widget(&ed, area);
+                    }
+                    Err(_) => {
+                        frame.render_widget(Paragraph::new(text), area);
+                    }
+                }
+            }
             _ => {
                 frame.render_widget(
                     Paragraph::new(format!("{} — no ratatui renderer", node.element.name))
@@ -1593,6 +2000,104 @@ impl ForgeView {
                     area,
                 );
             }
+        }
+    }
+
+    /// `Tree` content → `TreeItem`s plus every identifier path (for
+    /// all-open seeding). `TreeItem` children nest structurally. An `items`
+    /// prop parses indented text — two spaces or a tab per depth.
+    /// Identifiers are `id` props, else the row text.
+    fn tree_items(&mut self, node: &Node) -> (Vec<TreeItem<'static, String>>, Vec<Vec<String>>) {
+        let mut opens = Vec::new();
+        let kids = self.expand_kids(&node.children);
+        if kids.iter().any(|c| c.element.name == "TreeItem") {
+            let items = kids
+                .iter()
+                .filter(|c| c.element.name == "TreeItem")
+                .map(|c| self.tree_item(c, &mut Vec::new(), &mut opens))
+                .collect();
+            return (items, opens);
+        }
+        let lines: Vec<(usize, String)> = self
+            .prop_text(node, "items")
+            .lines()
+            .filter(|l| !l.trim().is_empty())
+            .map(|l| {
+                let depth: usize = l
+                    .chars()
+                    .take_while(|c| c.is_whitespace())
+                    .map(|c| if c == '\t' { 2 } else { 1 })
+                    .sum::<usize>()
+                    / 2;
+                (depth, l.trim().to_string())
+            })
+            .collect();
+        let mut i = 0;
+        let items = Self::tree_level(&lines, &mut i, 0, &mut Vec::new(), &mut opens);
+        (items, opens)
+    }
+
+    /// One depth of the indented `items` lines → `TreeItem`s — deeper lines
+    /// attach under the row above them.
+    fn tree_level(
+        lines: &[(usize, String)],
+        i: &mut usize,
+        depth: usize,
+        prefix: &mut Vec<String>,
+        opens: &mut Vec<Vec<String>>,
+    ) -> Vec<TreeItem<'static, String>> {
+        let mut out = Vec::new();
+        while let Some((d, text)) = lines.get(*i) {
+            if *d < depth {
+                break;
+            }
+            *i += 1;
+            prefix.push(text.clone());
+            opens.push(prefix.clone());
+            let kids = if lines.get(*i).is_some_and(|(d2, _)| *d2 > depth) {
+                Self::tree_level(lines, i, depth + 1, prefix, opens)
+            } else {
+                Vec::new()
+            };
+            prefix.pop();
+            let item = if kids.is_empty() {
+                TreeItem::new_leaf(text.clone(), text.clone())
+            } else {
+                TreeItem::new(text.clone(), text.clone(), kids)
+                    .unwrap_or_else(|_| TreeItem::new_leaf(text.clone(), text.clone()))
+            };
+            out.push(item);
+        }
+        out
+    }
+
+    /// A `TreeItem` element → the widget item — `id` or the text is the
+    /// identifier, nested `TreeItem` children attach under it.
+    fn tree_item(
+        &mut self,
+        node: &Node,
+        prefix: &mut Vec<String>,
+        opens: &mut Vec<Vec<String>>,
+    ) -> TreeItem<'static, String> {
+        let text = self.node_text(node);
+        let id = self.prop_text(node, "id");
+        let id = if id.is_empty() { text.clone() } else { id };
+        prefix.push(id.clone());
+        opens.push(prefix.clone());
+        let kids: Vec<TreeItem<String>> = {
+            let expanded = self.expand_kids(&node.children);
+            expanded
+                .iter()
+                .filter(|c| c.element.name == "TreeItem")
+                .map(|c| self.tree_item(c, prefix, opens))
+                .collect()
+        };
+        prefix.pop();
+        if kids.is_empty() {
+            TreeItem::new_leaf(id, text)
+        } else {
+            TreeItem::new(id.clone(), text.clone(), kids)
+                .unwrap_or_else(|_| TreeItem::new_leaf(id, text))
         }
     }
 
@@ -1745,6 +2250,7 @@ fn parse_date(text: &str) -> Option<time::Date> {
 /// Bool = toggle (Checkbox/Switch). Select = arrow navigation (List/Tabs).
 /// Action = fire `click` on Enter/Space/down (Button).
 /// Scroll = wheel/keys/track-click move a bound offset (Scrollbar/Log).
+/// Tree = arrows navigate/fold, Enter toggles, clicks pick a row.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FocusKind {
     Input,
@@ -1752,6 +2258,7 @@ pub enum FocusKind {
     Select,
     Action,
     Scroll,
+    Tree,
 }
 
 /// Per-path scroll behavior for a `FocusKind::Scroll` zone — `max` clamps

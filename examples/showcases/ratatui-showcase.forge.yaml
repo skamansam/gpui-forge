@@ -6,6 +6,8 @@ state:
   log_off: number
   sb_pos: number
   menu_sel: number
+  tree_sel: string
+  sv_off: number
 
 base: ratatui
 meta:
@@ -182,3 +184,57 @@ root:
               - Fill:
                 symbol: "*"
           - Mascot:
+      - HStack:
+        style: {gap: 1, height: 10}
+        children:
+          - Block:
+            title: "a Tree — arrows pick"
+            children:
+              - VStack:
+                children:
+                  - Tree:
+                    items: "src\n  main.rs\n  lib.rs\ndocs\n  guide.md"
+                    selected: $tree_sel
+                    style: {height: 6}
+                  - Text: "picked: {$tree_sel}"
+          - Block:
+            title: "Spinner + Markdown"
+            children:
+              - VStack:
+                children:
+                  - Spinner:
+                    kind: braille-six
+                    label: "building…"
+                    step: 2
+                  - Markdown:
+                    text: "**bold** _em_ `code`\n- one\n- two"
+          - Block:
+            title: "a Terminal"
+            children:
+              - Terminal:
+                text: "box:~$ cargo build\n   Compiling forge\n    Finished dev"
+      - HStack:
+        style: {gap: 1, height: 9}
+        children:
+          - Block:
+            title: "ScrollView — 30 virtual rows"
+            children:
+              - ScrollView:
+                width: 24
+                height: 30
+                offset: $sv_off
+                children:
+                  - Text: "scrollable row 1"
+                  - Text: "scrollable row 2"
+                  - Text: "scrollable row 3"
+          - Block:
+            title: "AnsiText"
+            children:
+              - AnsiText:
+                text: "[32mgreen[0m [31mred[0m plain"
+          - Block:
+            title: "CodeEditor"
+            children:
+              - CodeEditor:
+                language: rust
+                text: "fn main() {{\n    println!(\"hi\");\n}"

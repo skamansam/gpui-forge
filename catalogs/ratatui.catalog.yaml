@@ -444,3 +444,160 @@ elements:
     component: ratatui::widgets::Clear
     canvas: Clear
     children: none
+
+  Tree:
+    icon: list-tree
+    group: Display
+    summary: Collapsible indented tree — `items` (2-space indent) or `TreeItem` children.
+    component: tui_tree_widget::Tree
+    canvas: Tree
+    children: any
+    props:
+      items:
+        type: string
+        summary: Indented lines — two spaces or a tab per depth level.
+      selected:
+        type: string
+        summary: Bound identifier path `a/b/c` — arrows, wheel and clicks move it.
+      expanded:
+        type: bool
+        default: true
+        summary: Start with every node open.
+      title: string
+    events:
+      select:
+
+  TreeItem:
+    icon: list-tree
+    group: Display
+    summary: One `Tree` row — `id`/`text` plus nested `TreeItem` children.
+    component: tui_tree_widget::TreeItem
+    canvas: TreeItem
+    children: any
+    props:
+      text: string
+      id:
+        type: string
+        summary: Selection identifier — defaults to `text`.
+
+  Spinner:
+    icon: loader-pinwheel
+    group: Feedback
+    summary: Animated busy glyph — `step` is the frame (bind it and tick).
+    component: throbber_widgets_tui::Throbber
+    canvas: Spinner
+    children: none
+    props:
+      kind:
+        type: enum
+        values: [ascii, box-drawing, arrow, double-arrow, vertical-block, horizontal-block, quadrant-block, quadrant-block-crack, white-square, white-circle, black-circle, clock, braille-one, braille-double, braille-six, braille-six-double, braille-eight, braille-eight-double, ogham-a, ogham-b, ogham-c, parenthesis, canadian]
+        default: braille-six
+      label: string
+      step:
+        type: number
+        summary: Frame step — 0 or absent picks a random frame each draw.
+      symbol:
+        type: enum
+        values: [spin, full, empty]
+        default: spin
+        summary: "`spin` animates through symbols; `full`/`empty` pin one state."
+
+  Markdown:
+    icon: letter-m
+    group: Display
+    summary: Markdown text rendered to styled lines — `offset` scrolls.
+    component: ratatui_markdown::MarkdownRenderer
+    canvas: TextView
+    content: text
+    children: none
+    props:
+      text: string
+      offset:
+        type: number
+        summary: First drawn row — bind it and the wheel or arrows scroll.
+      width:
+        type: number
+        summary: Render width for wrapping — defaults to the area width.
+      title: string
+    events:
+      change:
+
+  AnsiText:
+    icon: terminal
+    group: Display
+    summary: Text with ANSI escape codes rendered as styled spans.
+    component: ansi_to_tui::IntoText
+    canvas: Text
+    content: text
+    children: none
+    props:
+      text: string
+
+  Terminal:
+    icon: square-terminal
+    group: Display
+    summary: Bordered ANSI screen — escape bytes render styled cells.
+    component: ansi_to_tui::IntoText
+    canvas: ScrollView
+    content: text
+    children: none
+    props:
+      text: string
+      title: string
+      offset:
+        type: number
+        summary: First drawn scrollback row — bind it and the wheel scrolls.
+    events:
+      change:
+
+  ScrollView:
+    icon: scroll
+    group: Layout
+    summary: Virtual `width`x`height` canvas — children clip to the viewport.
+    component: tui_scrollview::ScrollView
+    canvas: ScrollView
+    children: any
+    props:
+      width:
+        type: number
+        summary: Virtual content width in cells.
+      height:
+        type: number
+        summary: Virtual content height in cells.
+      offset:
+        type: number
+        summary: Vertical scroll row — bind it and the wheel or arrows scroll.
+      scrollbars:
+        type: enum
+        values: [auto, always, never, vertical, horizontal]
+        default: auto
+      title: string
+    events:
+      change:
+
+  CodeEditor:
+    icon: square-code
+    group: Input
+    summary: Tree-sitter code editor — `language` picks the grammar.
+    component: ratatui_code_editor::Editor
+    canvas: Editor
+    content: text
+    children: none
+    props:
+      text: string
+      language:
+        type: enum
+        values: [text, rust, javascript, typescript, python, go, java, c_sharp, c, cpp, html, css, yaml, json, toml, shell, markdown, markdown-inline]
+        default: text
+      original:
+        type: string
+        summary: Pre-edit content — set it to show a diff against `text`.
+      folding:
+        type: bool
+        default: true
+      offset:
+        type: number
+        summary: First visible row — bind it and the wheel scrolls.
+      title: string
+    events:
+      change:

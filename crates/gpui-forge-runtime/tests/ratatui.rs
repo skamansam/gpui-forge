@@ -198,3 +198,90 @@ root:
     let text = text_of(&buf);
     assert!(text.contains("[x]"), "click toggled the checkbox: {text:?}");
 }
+
+#[test]
+fn extension_widgets_render() {
+    let src = r##"forge: "0.1"
+base: ratatui
+root:
+  VStack:
+  children:
+    - Tree:
+      title: Files
+      items: "src\n  main.rs\n  lib.rs\ndocs"
+      style:
+        height: 5
+    - Spinner:
+      kind: braille-six
+      label: Loading
+      step: 2
+      style:
+        height: 1
+    - Markdown:
+      text: "# Head\n\n- a\n- b"
+      style:
+        height: 6
+    - Terminal:
+      text: "prompt$ run\nok done"
+      title: term
+      style:
+        height: 5
+    - ScrollView:
+      width: 20
+      height: 30
+      scrollbars: never
+      style:
+        height: 4
+      children:
+        - Text: "row-one"
+        - Text: "row-two"
+    - CodeEditor:
+      language: rust
+      text: "fn main() {{}}"
+      style:
+        height: 4
+"##;
+    let mut view = view_of(src);
+    let buf = buffer_of(&mut view, 40, 30);
+    let text = text_of(&buf);
+    assert!(text.contains("main.rs"), "tree renders items: {text:?}");
+    assert!(text.contains("Loading"), "spinner label paints: {text:?}");
+    assert!(text.contains("Head"), "markdown heading paints: {text:?}");
+    assert!(text.contains("prompt"), "terminal paints text: {text:?}");
+    assert!(
+        text.contains("row-one"),
+        "scrollview child paints: {text:?}"
+    );
+    assert!(text.contains("fn"), "code editor paints text: {text:?}");
+}
+
+#[test]
+fn ansi_escapes_become_styles() {
+    let src = "forge: \"0.1\"\nbase: ratatui\nroot:\n  VStack:\n  children:\n    - AnsiText: \"\u{1b}[31mRED\u{1b}[0m\"\n";
+    let mut view = view_of(src);
+    let buf = buffer_of(&mut view, 20, 3);
+    let text = text_of(&buf);
+    assert!(text.contains("RED"), "ansi text paints: {text:?}");
+    let cell = buf.cell((0, 0)).expect("cell exists");
+    assert_eq!(cell.fg, Color::Red, "escape parsed to fg red");
+}
+
+/// The shipped showcase must keep parsing and painting — it exercises every
+/// catalog widget, so a broken arm fails here before a user sees it.
+#[test]
+fn showcase_doc_renders() {
+    let src = include_str!("../../../examples/showcases/ratatui-showcase.forge.yaml");
+    let mut view = view_of(src);
+    let buf = buffer_of(&mut view, 120, 80);
+    let text = text_of(&buf);
+    for needle in [
+        "main.rs",
+        "building",
+        "cargo build",
+        "scrollable",
+        "green",
+        "fn main",
+    ] {
+        assert!(text.contains(needle), "showcase paints {needle}: {text:?}");
+    }
+}

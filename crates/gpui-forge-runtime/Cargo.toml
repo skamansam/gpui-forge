@@ -13,7 +13,16 @@ base-gpui-kit = ["dep:gpui-kit", "dep:gpui-base", "dep:forge-term"]
 base-bezel = ["dep:bezel"]
 base-adabraka = []
 base-guise = ["dep:gpui", "dep:guise-ui"]
-base-ratatui = ["dep:ratatui", "dep:time"]
+base-ratatui = [
+    "dep:ratatui",
+    "dep:time",
+    "dep:ansi-to-tui",
+    "dep:ratatui-code-editor",
+    "dep:ratatui-markdown",
+    "dep:throbber-widgets-tui",
+    "dep:tui-scrollview",
+    "dep:tui-tree-widget",
+]
 base-iced = ["dep:iced"]
 
 [dependencies]
@@ -33,6 +42,15 @@ bezel = { version = "0.2.24", optional = true, features = ["platform"] }
 # widget-calendar pulls `time` for `Monthly`'s `Date` — pure Rust, wasm-safe.
 ratatui = { version = "0.30", optional = true, default-features = false, features = ["std", "widget-calendar"] }
 time = { version = "0.3", optional = true }
+# Extension widgets (#156) — the awesome-ratatui set, all pinned to the
+# ratatui 0.30 line. Each fills a gap in the core set. ANSI screens come
+# from ansi-to-tui (ratatui-core Text). The rest: a tree-sitter code
+# editor, markdown rendering, spinner frames, virtual scroll and trees.
+# The two wasm-unsafe crates sit in the native-only target block below.
+ansi-to-tui = { version = "8", optional = true }
+throbber-widgets-tui = { version = "0.11", optional = true }
+tui-scrollview = { version = "0.6", optional = true }
+tui-tree-widget = { version = "0.24", optional = true }
 # iced base (#113): Elm-architecture toolkit — view()/update()/Element.
 iced = { version = "0.13", optional = true }
 serde_json = "1"
@@ -47,6 +65,12 @@ forge-term = { path = "../forge-term", optional = true }
 # Iconify fetches are blocking — native-only. `ureq`→`rustls`→`ring`→
 # `getrandom 0.2` can't compile for `wasm32-unknown-unknown`.
 ureq = "3"
+# Native-only extension widgets (#156): the editor compiles 16 tree-sitter
+# grammars (C sources, no wasm32), and ratatui-markdown enables ratatui's
+# default `crossterm` backend, which has no wasm32 build. `default-features`
+# drops the editor's own optional crossterm driver — Forge dispatches keys.
+ratatui-code-editor = { version = "0.0.6", optional = true, default-features = false }
+ratatui-markdown = { version = "0.3", optional = true }
 
 
 # `cargo run -p gpui-forge-runtime --example render -- <doc.forge.yaml>`
