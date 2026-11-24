@@ -894,6 +894,8 @@ previewTab: &previewTab
             # `canvas:` analogue, so structure editing/DnD works on every base.
             # The remote host still runs for pixel fidelity — its window floats
             # separately (`remote` mode) or embeds over this slot (`embedded`).
+            # Exception: ratatui docs draw in-process on this same card (#156)
+            # — the runtime's own renderer, no host, direct hit-testing.
             - forge.Preview#canvas:
               remote: "{$studio.host}"
               mode: "{$preview.mode}"
@@ -901,17 +903,6 @@ previewTab: &previewTab
               on click: raise_host()
               style:
                 grow: true
-                border: 1px
-            # #156 — the same document drawn by the ratatui host over its
-            # ANSI stream. No `doc:` — the pane mirrors studio.doc, so
-            # palette drops and node moves land on the edited document.
-            - forge.Preview#canvas_ratatui:
-              remote: ratatui
-              base: ratatui
-              mode: stream
-              style:
-                grow: true
-                min-height: 160px
                 border: 1px
             # #120 Phase 3 — the TUI's ANSI stream lands in `preview.frame`
             # ({seq, cols, rows, data}). The card's terminal emulator paints it.

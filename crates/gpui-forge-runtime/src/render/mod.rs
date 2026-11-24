@@ -29,14 +29,17 @@ mod bezel;
 ))]
 pub use bezel::*;
 
-#[cfg(all(
-    feature = "base-ratatui",
-    not(feature = "base-gpui-kit"),
-    not(feature = "base-guise"),
-    not(feature = "base-bezel"),
-    not(feature = "base-adabraka")
+#[cfg(any(
+    all(
+        feature = "base-ratatui",
+        not(feature = "base-gpui-kit"),
+        not(feature = "base-guise"),
+        not(feature = "base-bezel"),
+        not(feature = "base-adabraka")
+    ),
+    feature = "ratatui-embed"
 ))]
-mod ratatui;
+pub mod ratatui;
 #[cfg(all(
     feature = "base-ratatui",
     not(feature = "base-gpui-kit"),

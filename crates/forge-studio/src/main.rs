@@ -539,6 +539,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "raise_host",
         "pane_key",
         "pane_mouse",
+        "pane_drop_at",
         "save_document",
         "save_project",
         "format_document",
@@ -1121,6 +1122,27 @@ fn dispatch(
                 status(view, &format!("{id} <- drop {payload}"), cx);
             }
         }
+        // #156 — the local ratatui canvas resolved the drop cell itself, so
+        // the doc path arrives in the args — no PANE_DND stash, no host
+        // round-trip. Same commit as `pane_drop`'s `drop` event.
+        "pane_drop_at" => {
+            if let [id, kind, payload, path] = args {
+                if path.is_empty() {
+                    status(
+                        view,
+                        &format!("preview pane `{id}`: drop missed every node"),
+                        cx,
+                    );
+                } else {
+                    match kind.as_str() {
+                        "component" => {
+                            drop_component(view, &[payload.clone(), path.clone()], shared, cx)
+                        }
+                        _ => move_node(view, &[payload.clone(), path.clone()], shared, cx),
+                    }
+                }
+            }
+        }
         // A node dragged inside the card. The source path is the `zone`
         // the host reported on `down`. The release cell is the target.
         "pane_move" => {
@@ -1697,6 +1719,11 @@ fn preview_in_host(view: &mut ForgeView, shared: SharedState, cx: &mut Context<F
         .and_then(Json::as_str)
         .unwrap_or(BASE_ID)
         .to_owned();
+    // #156 — ratatui docs render in-process on the canvas card. No host —
+    // it would only stream frames nothing paints.
+    if base == "ratatui" {
+        return;
+    }
     let Some(binary) = find_preview_binary(&base) else {
         status(
             view,

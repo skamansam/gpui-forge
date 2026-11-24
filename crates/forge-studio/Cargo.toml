@@ -12,7 +12,7 @@ repository.workspace = true
 forge-lib-ely = { path = "../forge-lib-ely" }
 forge-hooks = { path = "../forge-hooks" }
 forge-hooks-macros = { path = "../forge-hooks-macros" }
-gpui-forge-runtime = { workspace = true, features = ["base-gpui-kit"] }
+gpui-forge-runtime = { workspace = true, features = ["base-gpui-kit", "ratatui-embed"] }
 gpui-kit = { workspace = true, features = ["tree-sitter-yaml"] }
 serde_json = "1"
 forge-lib-video = { path = "../forge-lib-video" }

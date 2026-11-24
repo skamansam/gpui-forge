@@ -10,13 +10,13 @@
 use std::{cell::RefCell, rc::Rc};
 
 use gpui::{
-    Bounds, Font, FontFeatures, FontStyle, FontWeight, Hsla, IntoElement, Pixels, ShapedLine,
+    App, Bounds, Font, FontFeatures, FontStyle, FontWeight, Hsla, IntoElement, Pixels, ShapedLine,
     SharedString, Styled, TextAlign, TextRun, UnderlineStyle, Window, canvas, fill, point, px, rgb,
     size,
 };
 
 use crate::{
-    emulator::{CellSnapshot, CursorShape, Emulator},
+    emulator::{CellSnapshot, CursorShape, CursorSnapshot, Emulator},
     palette,
 };
 
@@ -70,6 +70,33 @@ impl TermView {
     /// A caller streaming to a fixed terminal grid needs these to turn a px
     /// slot into matching cols/rows. The cell pitch lives here, not in a
     /// protocol constant.
+    pub fn metrics_sink(mut self, sink: CellMetrics) -> Self {
+        self.metrics = Some(sink);
+        self
+    }
+}
+
+/// An element that paints a caller-owned cell grid — rows of
+/// [`CellSnapshot`]s swapped in each frame. Studio's in-process ratatui
+/// canvas converts a `ratatui::Buffer` and paints it through the same
+/// `shape_row`/quad pipeline [`TermView`] uses (#156).
+pub struct GridView {
+    rows: Rc<RefCell<Vec<Vec<CellSnapshot>>>>,
+    style: TermStyle,
+    metrics: Option<CellMetrics>,
+}
+
+impl GridView {
+    pub fn new(rows: Rc<RefCell<Vec<Vec<CellSnapshot>>>>, style: TermStyle) -> Self {
+        Self {
+            rows,
+            style,
+            metrics: None,
+        }
+    }
+
+    /// Same contract as [`TermView::metrics_sink`] — the cell pitch the grid
+    /// paints with, published each prepaint.
     pub fn metrics_sink(mut self, sink: CellMetrics) -> Self {
         self.metrics = Some(sink);
         self
@@ -145,151 +172,215 @@ impl IntoElement for TermView {
         let emulator = self.emulator;
         let style = self.style;
         let metrics = self.metrics;
+        let family = style.font_family.clone();
         let font_base = move |weight, fstyle| Font {
-            family: style.font_family.clone(),
+            family: family.clone(),
             features: FontFeatures::default(),
             fallbacks: None,
             weight,
             style: fstyle,
         };
+        let paint_style = style.clone();
 
         canvas(
-            move |bounds, _window, cx| {
+            move |bounds, window, cx| {
                 let emu = emulator.borrow();
-                let ts = cx.text_system();
-                let font_id = ts.resolve_font(&font_base(FontWeight::NORMAL, FontStyle::Normal));
-                // '0' is the cell-width probe (alacritty's convention).
-                // ' ' has a narrow advance in many fonts and would pack
-                // every glyph at a fraction of the grid pitch.
-                let cell_w = ts
-                    .advance(font_id, style.font_size, '0')
-                    .map(|s| s.width)
-                    .unwrap_or(style.font_size * 0.6);
-                // ascent+descent can resolve below the em square on some
-                // fonts. 1.2em is the floor or rows cram and glyphs touch.
-                let cell_h = (ts.ascent(font_id, style.font_size)
-                    + ts.descent(font_id, style.font_size))
-                .max(style.font_size * 1.2);
-                if let Some(sink) = &metrics {
-                    *sink.borrow_mut() = Some((cell_w, cell_h));
-                }
-                let (def_fg, def_bg) = (rgb8(style.default_fg), rgb8(style.default_bg));
-                let mut rows = Vec::with_capacity(emu.rows());
-                for r in 0..emu.rows() {
-                    let cells = emu.line(r);
-                    rows.push(shape_row(
-                        &cells,
-                        bounds.origin.y + cell_h * r as f32,
-                        bounds.origin.x,
-                        cell_w,
-                        cell_h,
-                        def_fg,
-                        def_bg,
-                        style.font_size,
-                        &font_base,
-                        _window,
-                    ));
-                }
-                let cursor = emu.cursor().map(|c| {
-                    let origin = point(
-                        bounds.origin.x + cell_w * c.col as f32,
-                        bounds.origin.y + cell_h * c.row as f32,
-                    );
-                    let (bounds, hollow) = match c.shape {
-                        CursorShape::Beam => (
-                            Bounds {
-                                origin,
-                                size: size(px(1.5), cell_h),
-                            },
-                            false,
-                        ),
-                        CursorShape::Underline => (
-                            Bounds {
-                                origin: origin + point(px(0.), cell_h - px(1.5)),
-                                size: size(cell_w, px(1.5)),
-                            },
-                            false,
-                        ),
-                        CursorShape::HollowBlock => (
-                            Bounds {
-                                origin,
-                                size: size(cell_w, cell_h),
-                            },
-                            true,
-                        ),
-                        CursorShape::Block => (
-                            Bounds {
-                                origin,
-                                size: size(cell_w, cell_h),
-                            },
-                            false,
-                        ),
-                    };
-                    (bounds, hollow)
-                });
-                TermPrepaint {
-                    rows,
-                    cursor,
-                    cell_h,
-                }
+                prepaint_grid(
+                    bounds,
+                    &emu.lines(),
+                    emu.cursor(),
+                    &style,
+                    &metrics,
+                    &font_base,
+                    window,
+                    cx,
+                )
             },
-            move |bounds, pre, window, cx| {
-                window.paint_quad(fill(bounds, style.default_bg));
-                for row in &pre.rows {
-                    for (b, color) in &row.bgs {
-                        window.paint_quad(fill(*b, *color));
-                    }
-                }
-                for row in &pre.rows {
-                    for span in &row.spans {
-                        match &span.ink {
-                            CellInk::Glyph(line) => {
-                                let _ = line.paint(
-                                    span.bounds.origin,
-                                    pre.cell_h,
-                                    TextAlign::Left,
-                                    None,
-                                    window,
-                                    cx,
-                                );
-                            }
-                            CellInk::Bars(mask, wt) => {
-                                paint_bars(span.bounds, *mask, *wt, span.fg, window);
-                            }
-                            CellInk::Fracs(fracs) => {
-                                let (b, w, h) =
-                                    (span.bounds, span.bounds.size.width, span.bounds.size.height);
-                                for &(x0, y0, x1, y1) in fracs {
-                                    if x1 <= x0 || y1 <= y0 {
-                                        continue;
-                                    }
-                                    window.paint_quad(fill(
-                                        Bounds {
-                                            origin: point(b.origin.x + w * x0, b.origin.y + h * y0),
-                                            size: size(w * (x1 - x0), h * (y1 - y0)),
-                                        },
-                                        span.fg,
-                                    ));
-                                }
-                            }
-                        }
-                    }
-                }
-                if let Some((b, hollow)) = pre.cursor {
-                    if hollow {
-                        let mut q = fill(b, gpui::transparent_black());
-                        q.border_widths = px(1.).into();
-                        q.border_color = style.cursor;
-                        window.paint_quad(q);
-                    } else {
-                        let mut color = style.cursor;
-                        color.a = 0.35;
-                        window.paint_quad(fill(b, color));
-                    }
-                }
-            },
+            move |bounds, pre, window, cx| paint_grid(bounds, &pre, &paint_style, window, cx),
         )
         .size_full()
+    }
+}
+
+impl IntoElement for GridView {
+    type Element = gpui::Canvas<TermPrepaint>;
+
+    fn into_element(self) -> Self::Element {
+        let rows = self.rows;
+        let style = self.style;
+        let metrics = self.metrics;
+        let family = style.font_family.clone();
+        let font_base = move |weight, fstyle| Font {
+            family: family.clone(),
+            features: FontFeatures::default(),
+            fallbacks: None,
+            weight,
+            style: fstyle,
+        };
+        let paint_style = style.clone();
+
+        canvas(
+            move |bounds, window, cx| {
+                let rows = rows.borrow();
+                prepaint_grid(
+                    bounds, &rows, None, &style, &metrics, &font_base, window, cx,
+                )
+            },
+            move |bounds, pre, window, cx| paint_grid(bounds, &pre, &paint_style, window, cx),
+        )
+        .size_full()
+    }
+}
+
+/// Shared prepaint for the grid painters — resolves the cell pitch, shapes
+/// every row and maps the optional cursor into paint bounds.
+#[allow(clippy::too_many_arguments)]
+fn prepaint_grid(
+    bounds: Bounds<Pixels>,
+    rows: &[Vec<CellSnapshot>],
+    cursor: Option<CursorSnapshot>,
+    style: &TermStyle,
+    metrics: &Option<CellMetrics>,
+    font_base: &dyn Fn(FontWeight, FontStyle) -> Font,
+    window: &mut Window,
+    cx: &mut App,
+) -> TermPrepaint {
+    let ts = cx.text_system();
+    let font_id = ts.resolve_font(&font_base(FontWeight::NORMAL, FontStyle::Normal));
+    // '0' is the cell-width probe (alacritty's convention).
+    // ' ' has a narrow advance in many fonts and would pack
+    // every glyph at a fraction of the grid pitch.
+    let cell_w = ts
+        .advance(font_id, style.font_size, '0')
+        .map(|s| s.width)
+        .unwrap_or(style.font_size * 0.6);
+    // ascent+descent can resolve below the em square on some
+    // fonts. 1.2em is the floor or rows cram and glyphs touch.
+    let cell_h = (ts.ascent(font_id, style.font_size) + ts.descent(font_id, style.font_size))
+        .max(style.font_size * 1.2);
+    if let Some(sink) = metrics {
+        *sink.borrow_mut() = Some((cell_w, cell_h));
+    }
+    let (def_fg, def_bg) = (rgb8(style.default_fg), rgb8(style.default_bg));
+    let mut shaped = Vec::with_capacity(rows.len());
+    for (r, cells) in rows.iter().enumerate() {
+        shaped.push(shape_row(
+            cells,
+            bounds.origin.y + cell_h * r as f32,
+            bounds.origin.x,
+            cell_w,
+            cell_h,
+            def_fg,
+            def_bg,
+            style.font_size,
+            font_base,
+            window,
+        ));
+    }
+    let cursor = cursor.map(|c| {
+        let origin = point(
+            bounds.origin.x + cell_w * c.col as f32,
+            bounds.origin.y + cell_h * c.row as f32,
+        );
+        let (bounds, hollow) = match c.shape {
+            CursorShape::Beam => (
+                Bounds {
+                    origin,
+                    size: size(px(1.5), cell_h),
+                },
+                false,
+            ),
+            CursorShape::Underline => (
+                Bounds {
+                    origin: origin + point(px(0.), cell_h - px(1.5)),
+                    size: size(cell_w, px(1.5)),
+                },
+                false,
+            ),
+            CursorShape::HollowBlock => (
+                Bounds {
+                    origin,
+                    size: size(cell_w, cell_h),
+                },
+                true,
+            ),
+            CursorShape::Block => (
+                Bounds {
+                    origin,
+                    size: size(cell_w, cell_h),
+                },
+                false,
+            ),
+        };
+        (bounds, hollow)
+    });
+    TermPrepaint {
+        rows: shaped,
+        cursor,
+        cell_h,
+    }
+}
+
+/// Shared paint — background fill, per-row bgs, then glyph/bar/frac marks
+/// and the cursor overlay.
+fn paint_grid(
+    bounds: Bounds<Pixels>,
+    pre: &TermPrepaint,
+    style: &TermStyle,
+    window: &mut Window,
+    cx: &mut App,
+) {
+    window.paint_quad(fill(bounds, style.default_bg));
+    for row in &pre.rows {
+        for (b, color) in &row.bgs {
+            window.paint_quad(fill(*b, *color));
+        }
+    }
+    for row in &pre.rows {
+        for span in &row.spans {
+            match &span.ink {
+                CellInk::Glyph(line) => {
+                    let _ = line.paint(
+                        span.bounds.origin,
+                        pre.cell_h,
+                        TextAlign::Left,
+                        None,
+                        window,
+                        cx,
+                    );
+                }
+                CellInk::Bars(mask, wt) => {
+                    paint_bars(span.bounds, *mask, *wt, span.fg, window);
+                }
+                CellInk::Fracs(fracs) => {
+                    let (b, w, h) = (span.bounds, span.bounds.size.width, span.bounds.size.height);
+                    for &(x0, y0, x1, y1) in fracs {
+                        if x1 <= x0 || y1 <= y0 {
+                            continue;
+                        }
+                        window.paint_quad(fill(
+                            Bounds {
+                                origin: point(b.origin.x + w * x0, b.origin.y + h * y0),
+                                size: size(w * (x1 - x0), h * (y1 - y0)),
+                            },
+                            span.fg,
+                        ));
+                    }
+                }
+            }
+        }
+    }
+    if let Some((b, hollow)) = pre.cursor {
+        if hollow {
+            let mut q = fill(b, gpui::transparent_black());
+            q.border_widths = px(1.).into();
+            q.border_color = style.cursor;
+            window.paint_quad(q);
+        } else {
+            let mut color = style.cursor;
+            color.a = 0.35;
+            window.paint_quad(fill(b, color));
+        }
     }
 }
 

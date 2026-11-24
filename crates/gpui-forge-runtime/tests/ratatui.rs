@@ -285,3 +285,38 @@ fn showcase_doc_renders() {
         assert!(text.contains(needle), "showcase paints {needle}: {text:?}");
     }
 }
+
+/// `document.selected` paints the accent frame over the node's zone —
+/// the canvas's selection outline — but only when `dnd` flagged the view.
+#[test]
+fn selection_frames_the_node() {
+    let mut view = view_of(
+        r#"forge: "0.1"
+base: ratatui
+root:
+  VStack:
+  children:
+    - Block:
+      title: card
+      children:
+        - Text: inside
+"#,
+    );
+    view.update_state(&parse_path("document.selected").unwrap(), json!("0.0"));
+    let plain = buffer_of(&mut view, 20, 5);
+    assert!(
+        !plain
+            .content()
+            .iter()
+            .any(|c| c.fg == Color::Cyan && (c.symbol() == "│" || c.symbol() == "─")),
+        "no frame without dnd"
+    );
+    view.set_dnd(true);
+    let buf = buffer_of(&mut view, 20, 5);
+    assert!(
+        buf.content()
+            .iter()
+            .any(|c| c.fg == Color::Cyan && (c.symbol() == "│" || c.symbol() == "─")),
+        "cyan frame cells paint under dnd"
+    );
+}

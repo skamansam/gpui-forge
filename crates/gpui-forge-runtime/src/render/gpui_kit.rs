@@ -204,25 +204,21 @@ fn pane_key_name(ks: &Keystroke) -> Option<String> {
     Some(name.to_string())
 }
 
-/// A pointer event on a stream card → `pane_mouse(id, kind, col, row)`. The
-/// cell comes from the `TermView`'s tracked rect and the same monospace
-/// metrics it paints with, so clicks land on the drawn cell.
-fn send_pane_mouse(
+/// Maps a pointer position inside a stream/local card to its `(col, row)`
+/// cell. The cell comes from the grid's tracked rect and the same monospace
+/// metrics it paints with, so clicks land on the drawn cell. `term_hover`
+/// remembers the result — `on_drop` carries no position.
+fn term_cell(
     view: &mut ForgeView,
     id: &str,
-    kind: &str,
     pos: Point<Pixels>,
     window: &Window,
-    cx: &mut Context<ForgeView>,
-) {
-    let family = cx.theme().mono_font_family.clone();
-    let Some(origin) = view
+    family: &SharedString,
+) -> Option<(u16, u16)> {
+    let origin = view
         .term_bounds
         .get(id)
-        .and_then(|cell| cell.borrow().map(|b| b.origin))
-    else {
-        return;
-    };
+        .and_then(|cell| cell.borrow().map(|b| b.origin))?;
     // The published metrics decide the cell pitch — recomputing here would
     // drift from the painted grid (TermView floors cell_h at 1.2em).
     let (cell_w, cell_h) = match view.term_metrics.get(id).and_then(|cell| *cell.borrow()) {
@@ -230,7 +226,7 @@ fn send_pane_mouse(
         None => {
             let ts = window.text_system();
             let font_id = ts.resolve_font(&Font {
-                family,
+                family: family.clone(),
                 ..Default::default()
             });
             let w = ts
@@ -244,11 +240,26 @@ fn send_pane_mouse(
     let dx = pos.x - origin.x;
     let dy = pos.y - origin.y;
     if dx < px(0.) || dy < px(0.) {
-        return;
+        return None;
     }
-    let (col, row) = ((dx / cell_w) as u16, (dy / cell_h) as u16);
-    // The last hover cell backs `on_drop`, which carries no position.
-    view.term_hover.insert(id.to_string(), (col, row));
+    let cell = ((dx / cell_w) as u16, (dy / cell_h) as u16);
+    view.term_hover.insert(id.to_string(), cell);
+    Some(cell)
+}
+
+/// A pointer event on a stream card → `pane_mouse(id, kind, col, row)`.
+fn send_pane_mouse(
+    view: &mut ForgeView,
+    id: &str,
+    kind: &str,
+    pos: Point<Pixels>,
+    window: &Window,
+    cx: &mut Context<ForgeView>,
+) {
+    let family = cx.theme().mono_font_family.clone();
+    let Some((col, row)) = term_cell(view, id, pos, window, &family) else {
+        return;
+    };
     view.fire_call(
         "pane_mouse",
         vec![
@@ -259,6 +270,149 @@ fn send_pane_mouse(
         ],
         cx,
     );
+}
+
+/// #156 — what a local ratatui pane's sinks queue. The pane's
+/// `ratatui::ForgeView` fires hooks and state writes through sinks that get
+/// `&mut ForgeView` — the TUI contract has no `Context`. The closures push
+/// here, and `drain_tui_outbox` dispatches them on the event path.
+#[cfg(feature = "ratatui-embed")]
+enum TuiOut {
+    /// A doc `on <event>:` call, formatted `name(a, b)` — same wire shape
+    /// the preview host emits.
+    Call(String),
+    /// The pane's whole view state after a binding write.
+    State(Json),
+}
+
+/// Splits a `name(a, b)` wire call — the pane-twin of Studio's `parse_call`.
+#[cfg(feature = "ratatui-embed")]
+fn parse_tui_call(call: &str) -> (String, Vec<String>) {
+    match call.split_once('(') {
+        Some((name, rest)) => {
+            let args = rest.trim_end_matches(')');
+            let args = if args.trim().is_empty() {
+                Vec::new()
+            } else {
+                args.split(", ").map(|a| a.trim().to_owned()).collect()
+            };
+            (name.trim().to_owned(), args)
+        }
+        None => (call.trim().to_owned(), Vec::new()),
+    }
+}
+
+/// Drains queued pane hooks/state onto the shell — calls dispatch through
+/// `fire_call` (Studio's `pane_drop_at`/`select_node` arms), state writes
+/// mirror `document.selected`/`studio.drop_target` back like the preview
+/// entity's `on_state` sink does.
+#[cfg(feature = "ratatui-embed")]
+fn drain_tui_outbox(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
+    let out = std::mem::take(&mut *view.tui_outbox.borrow_mut());
+    for item in out {
+        match item {
+            TuiOut::Call(call) => {
+                let (name, args) = parse_tui_call(&call);
+                view.fire_call(&name, args, cx);
+            }
+            TuiOut::State(state) => {
+                for key in ["document.selected", "studio.drop_target"] {
+                    if let Ok(path) = parse_path(key) {
+                        let value = get_path(&state, &path).cloned().unwrap_or(Json::Null);
+                        if get_path(view.state(), &path) != Some(&value) {
+                            view.update_state(&path, value, cx);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// A ratatui `Buffer` → the `GridView`'s snapshot rows. `Reset` maps to the
+/// style's default fg/bg. Named ANSI colors keep their palette index.
+#[cfg(feature = "ratatui-embed")]
+fn buffer_rows(buf: &::ratatui::buffer::Buffer) -> Vec<Vec<forge_term::CellSnapshot>> {
+    use ::ratatui::buffer::CellDiffOption;
+    use ::ratatui::style::{Color, Modifier};
+    use forge_term::{CellColor, CellSnapshot};
+    let map_color = |c: Color, default: CellColor| match c {
+        Color::Reset => default,
+        Color::Black => CellColor::Indexed(0),
+        Color::Red => CellColor::Indexed(1),
+        Color::Green => CellColor::Indexed(2),
+        Color::Yellow => CellColor::Indexed(3),
+        Color::Blue => CellColor::Indexed(4),
+        Color::Magenta => CellColor::Indexed(5),
+        Color::Cyan => CellColor::Indexed(6),
+        Color::Gray => CellColor::Indexed(7),
+        Color::DarkGray => CellColor::Indexed(8),
+        Color::LightRed => CellColor::Indexed(9),
+        Color::LightGreen => CellColor::Indexed(10),
+        Color::LightYellow => CellColor::Indexed(11),
+        Color::LightBlue => CellColor::Indexed(12),
+        Color::LightMagenta => CellColor::Indexed(13),
+        Color::LightCyan => CellColor::Indexed(14),
+        Color::White => CellColor::Indexed(15),
+        Color::Indexed(i) => CellColor::Indexed(i),
+        Color::Rgb(r, g, b) => CellColor::Rgb(r, g, b),
+    };
+    let area = buf.area;
+    (0..area.height)
+        .map(|y| {
+            (0..area.width)
+                .map(|x| {
+                    let Some(cell) = buf.cell((x, y)) else {
+                        return CellSnapshot {
+                            ch: ' ',
+                            fg: CellColor::Foreground,
+                            bg: CellColor::Background,
+                            bold: false,
+                            dim: false,
+                            italic: false,
+                            underline: false,
+                            inverse: false,
+                            hidden: false,
+                            wide: false,
+                            wide_spacer: false,
+                        };
+                    };
+                    let m = cell.modifier;
+                    CellSnapshot {
+                        ch: cell.symbol().chars().next().unwrap_or(' '),
+                        fg: map_color(cell.fg, CellColor::Foreground),
+                        bg: map_color(cell.bg, CellColor::Background),
+                        bold: m.contains(Modifier::BOLD),
+                        dim: m.contains(Modifier::DIM),
+                        italic: m.contains(Modifier::ITALIC),
+                        underline: m.contains(Modifier::UNDERLINED),
+                        inverse: m.contains(Modifier::REVERSED),
+                        hidden: m.contains(Modifier::HIDDEN),
+                        wide: buf
+                            .cell((x + 1, y))
+                            .is_some_and(|next| next.diff_option == CellDiffOption::Skip),
+                        wide_spacer: cell.diff_option == CellDiffOption::Skip,
+                    }
+                })
+                .collect()
+        })
+        .collect()
+}
+
+/// The card's frame size in cells — the painted rect over the real cell
+/// metrics, same formula Studio sizes remote pane frames with. `None` until
+/// the card has painted once.
+#[cfg(feature = "ratatui-embed")]
+fn tui_frame_size(view: &ForgeView, id: &str) -> Option<(u16, u16)> {
+    let bounds = (*view.term_bounds.get(id)?.borrow())?;
+    let (cw, ch) = view.term_metrics.get(id).and_then(|cell| *cell.borrow())?;
+    let cols = (f64::from(bounds.size.width) / f64::from(cw))
+        .floor()
+        .max(4.) as u16;
+    let rows = (f64::from(bounds.size.height) / f64::from(ch))
+        .floor()
+        .max(2.) as u16;
+    Some((cols, rows))
 }
 
 /// Called with the whole view state after a two-way binding writes to it.
@@ -333,9 +487,9 @@ pub struct ForgeView {
     project_iconset: Option<String>,
     selects: HashMap<String, Entity<SelectState<Options>>>,
     /// Persistent `ResizableState`s keyed by element key — `use_keyed_state`
-    /// orphans panel state when the element-id stack shifts (a stateful
-    /// sibling or ancestor id toggling), and a fresh state lays panels out
-    /// at their minimums. Owning the entity keeps user-dragged sizes alive.
+    /// orphans panel state when the element-id stack shifts. A stateful
+    /// sibling or ancestor id toggling is enough. A fresh state lays panels
+    /// out at their minimums. Owning the entity keeps user-dragged sizes alive.
     resizables: HashMap<String, Entity<ResizableState>>,
     /// The shared `ThemeSwitcher` select — one Light/Dark state per view.
     theme_select: Option<Entity<SelectState<Options>>>,
@@ -378,6 +532,18 @@ pub struct ForgeView {
     /// the card. Set on the first dragging move, read on `up` for the
     /// in-card node move (#156).
     term_drag: HashMap<String, bool>,
+    /// #156 — `forge.Preview` on a ratatui-base doc draws in-process: the
+    /// pane's `ratatui::ForgeView`, doc-mirrored from the `previews` entity
+    /// each render. Replaces the remote stream for the edited doc.
+    #[cfg(feature = "ratatui-embed")]
+    tui_panes: HashMap<String, crate::render::ratatui::ForgeView>,
+    /// The last-rendered cell rows each `GridView` paints.
+    #[cfg(feature = "ratatui-embed")]
+    tui_grids: HashMap<String, std::rc::Rc<std::cell::RefCell<Vec<Vec<forge_term::CellSnapshot>>>>>,
+    /// Pane sinks queue here — `drain_tui_outbox` dispatches on the event
+    /// path, where a `Context` exists.
+    #[cfg(feature = "ratatui-embed")]
+    tui_outbox: std::rc::Rc<std::cell::RefCell<Vec<TuiOut>>>,
     /// Persistent `ScrollHandle`s keyed by scrollable element id — element-state
     /// GC drops scroll offsets on every `cx.notify` re-render. An explicit
     /// `track_scroll` handle keeps them alive.
@@ -580,6 +746,12 @@ impl ForgeView {
             term_metrics: HashMap::new(),
             term_hover: HashMap::new(),
             term_drag: HashMap::new(),
+            #[cfg(feature = "ratatui-embed")]
+            tui_panes: HashMap::new(),
+            #[cfg(feature = "ratatui-embed")]
+            tui_grids: HashMap::new(),
+            #[cfg(feature = "ratatui-embed")]
+            tui_outbox: std::rc::Rc::new(std::cell::RefCell::new(Vec::new())),
             preview_srcs: HashMap::new(),
             scroll_handles: HashMap::new(),
             previews: HashMap::new(),
@@ -748,6 +920,357 @@ impl ForgeView {
             }
             entry.0 = seq;
         }
+    }
+
+    /// #156 — `forge.Preview` on a ratatui-base doc renders in-process.
+    /// The pane's `ratatui::ForgeView` draws into a headless `TestBackend`
+    /// buffer — the same loop `forge-preview ratatui` runs, minus the wire.
+    /// The cells paint through `GridView`. Input, zone resolution and drop
+    /// commit all stay local. `None` keeps the caller on the compat
+    /// path (a non-ratatui doc).
+    #[cfg(feature = "ratatui-embed")]
+    fn tui_card(
+        &mut self,
+        node: &Node,
+        id: &str,
+        preview: &Entity<ForgeView>,
+        cx: &mut Context<Self>,
+    ) -> Option<AnyElement> {
+        let preview_view = preview.read(cx);
+        let doc = preview_view.doc.clone()?;
+        if doc.base.as_deref() != Some("ratatui") {
+            return None;
+        }
+        let base_dir = preview_view.base_dir.clone();
+        // Pull every theme value out eagerly — `cx.theme()` borrows `cx`,
+        // which the handlers' `focus_handle`/`try_update` calls need mutably.
+        let theme = cx.theme();
+        let (bg, fg, mono, dark) = (
+            theme.background,
+            theme.foreground,
+            theme.mono_font_family.clone(),
+            theme.is_dark(),
+        );
+        let colors = serde_json::to_value(theme.colors)
+            .ok()
+            .and_then(|v| v.as_object().cloned())
+            .unwrap_or_default();
+        // DnD edits the document the pane mirrors — only a `doc:`-less pane
+        // previews studio.doc (#156).
+        let editable = self.prop_text(node, "doc").is_none_or(|d| d.is_empty());
+        // `document.selected` mirrors into the pane — hoisted before the
+        // `tui_panes` borrow since it reads the shell's state.
+        let selected = parse_path("document.selected").ok().map(|path| {
+            let value = get_path(self.state(), &path).cloned().unwrap_or(Json::Null);
+            (path, value)
+        });
+        // Frame size follows the painted rect — also before the pane borrow.
+        let (cols, rows) = tui_frame_size(self, id).unwrap_or((80, 24));
+        let catalogs = self.catalogs.clone();
+        let outbox = self.tui_outbox.clone();
+        let tui = self.tui_panes.entry(id.to_owned()).or_insert_with(|| {
+            let mut view = crate::render::ratatui::ForgeView::new(catalogs);
+            view.set_dnd(editable);
+            if let Some(dir) = base_dir {
+                view.set_base_dir(dir);
+            }
+            let calls = outbox.clone();
+            let states = outbox.clone();
+            view.set_sinks(
+                std::rc::Rc::new(move |call, _| {
+                    calls.borrow_mut().push(TuiOut::Call(call.to_owned()));
+                }),
+                std::rc::Rc::new(move |state, _| {
+                    states.borrow_mut().push(TuiOut::State(state.clone()));
+                }),
+            );
+            view
+        });
+        // The preview entity stays the doc store — every studio write path
+        // flows through it untouched. Insert, remove and prop edits land
+        // there, and the pane mirrors whatever it holds each frame.
+        if tui.document() != Some(&doc) {
+            tui.set_document(doc);
+        }
+        // Outline/inspector selection arrives as `document.selected` —
+        // echoed so the pane paints the frame it owns.
+        if let Some((path, value)) = selected
+            && get_path(tui.state(), &path) != Some(&value)
+        {
+            tui.update_state(&path, value);
+        }
+        // `{$theme.*}` bindings resolve off the shell's resolved palette.
+        tui.set_theme(dark, &colors);
+
+        // Draw — 80×24 until the card has painted once.
+        let mut term = ::ratatui::Terminal::new(::ratatui::backend::TestBackend::new(cols, rows))
+            .expect("test backend");
+        term.draw(|frame| tui.render(frame)).ok();
+        let grid = self
+            .tui_grids
+            .entry(id.to_owned())
+            .or_insert_with(|| std::rc::Rc::new(std::cell::RefCell::new(Vec::new())))
+            .clone();
+        *grid.borrow_mut() = buffer_rows(term.backend().buffer());
+
+        // Same chrome/handlers as the stream card — bounds and metrics feed
+        // `term_cell`, `term_drag`/`term_hover` the DnD paths.
+        let focus = self
+            .term_focus
+            .entry(id.to_owned())
+            .or_insert_with(|| cx.focus_handle())
+            .clone();
+        let tcell = self
+            .term_bounds
+            .entry(id.to_owned())
+            .or_insert_with(|| std::rc::Rc::new(std::cell::RefCell::new(None)))
+            .clone();
+        let mcell = self
+            .term_metrics
+            .entry(id.to_owned())
+            .or_insert_with(|| std::rc::Rc::new(std::cell::RefCell::new(None)))
+            .clone();
+        let family = mono.clone();
+        let weak = cx.entity().downgrade();
+        let (weak_k, weak_d, weak_u, weak_s, weak_mv, weak_dm, weak_dp) = (
+            weak.clone(),
+            weak.clone(),
+            weak.clone(),
+            weak.clone(),
+            weak.clone(),
+            weak.clone(),
+            weak.clone(),
+        );
+        let focus_d = focus.clone();
+        let (id_k, id_d, id_u, id_s, id_mv, id_dm, id_dp) = (
+            id.to_owned(),
+            id.to_owned(),
+            id.to_owned(),
+            id.to_owned(),
+            id.to_owned(),
+            id.to_owned(),
+            id.to_owned(),
+        );
+        let (fam_d, fam_u, fam_s, fam_mv, fam_dm) = (
+            family.clone(),
+            family.clone(),
+            family.clone(),
+            family.clone(),
+            family.clone(),
+        );
+        Some(
+            div()
+                .id(format!("preview-tui-{id}"))
+                .size_full()
+                .track_focus(&focus)
+                // Local twin of the stream card's input: keys and pointer
+                // cells go straight to the pane's view. `pane_key`/
+                // `pane_mouse` hooks still fire so Studio's status line
+                // reports input identically on both paths.
+                .on_key_down(move |ev: &KeyDownEvent, _window, cx| {
+                    let Some(key) = pane_key_name(&ev.keystroke) else {
+                        return;
+                    };
+                    try_update(&weak_k, cx, "event", |this, cx| {
+                        if let Some(tui) = this.tui_panes.get_mut(&id_k) {
+                            tui.on_key(&key);
+                        }
+                        this.fire_call("pane_key", vec![id_k.clone(), key], cx);
+                        drain_tui_outbox(this, cx);
+                    })
+                    .ok();
+                })
+                .on_mouse_down(MouseButton::Left, move |ev, window, cx| {
+                    focus_d.focus(window, cx);
+                    let (id, fam) = (id_d.clone(), fam_d.clone());
+                    try_update(&weak_d, cx, "event", |this, cx| {
+                        this.term_drag.insert(id.clone(), false);
+                        let Some((col, row)) = term_cell(this, &id, ev.position, window, &fam)
+                        else {
+                            return;
+                        };
+                        // Stash the drag source and select the zone — the
+                        // in-process twin of the host's `zone` event plus
+                        // the compat canvas's click-select.
+                        let mut zone = None;
+                        if let Some(tui) = this.tui_panes.get_mut(&id) {
+                            zone = tui.zone_path_at(col, row);
+                            tui.on_mouse("down", col, row);
+                        }
+                        this.update_state(
+                            &pane_state_path(&id, "zone"),
+                            Json::String(zone.clone().unwrap_or_default()),
+                            cx,
+                        );
+                        if editable && let Some(path) = zone {
+                            this.update_state(
+                                &parse_path("document.selected").unwrap(),
+                                Json::String(path),
+                                cx,
+                            );
+                            this.fire_call("select_node", vec![], cx);
+                        }
+                        drain_tui_outbox(this, cx);
+                    })
+                    .ok();
+                })
+                .on_mouse_up(MouseButton::Left, move |ev, window, cx| {
+                    let (id, fam) = (id_u.clone(), fam_u.clone());
+                    try_update(&weak_u, cx, "event", |this, cx| {
+                        let Some((col, row)) = term_cell(this, &id, ev.position, window, &fam)
+                        else {
+                            return;
+                        };
+                        if editable && this.term_drag.get(&id).copied().unwrap_or(false) {
+                            // Drag inside the card — a node move. The source
+                            // is the `zone` stashed on `down`.
+                            this.term_drag.insert(id.clone(), false);
+                            let mut target = None;
+                            if let Some(tui) = this.tui_panes.get_mut(&id) {
+                                target = tui.drop_at(col, row);
+                            }
+                            let src = get_path(this.state(), &pane_state_path(&id, "zone"))
+                                .and_then(|j| j.as_str())
+                                .unwrap_or_default()
+                                .to_owned();
+                            this.fire_call(
+                                "pane_drop_at",
+                                vec![
+                                    id.clone(),
+                                    "node".to_string(),
+                                    src,
+                                    target.unwrap_or_default(),
+                                ],
+                                cx,
+                            );
+                        } else if let Some(tui) = this.tui_panes.get_mut(&id) {
+                            tui.on_mouse("up", col, row);
+                        }
+                        drain_tui_outbox(this, cx);
+                    })
+                    .ok();
+                })
+                .on_mouse_move(move |ev: &MouseMoveEvent, window, cx| {
+                    if !editable || !ev.dragging() {
+                        return;
+                    }
+                    let (id, fam) = (id_mv.clone(), fam_mv.clone());
+                    try_update(&weak_mv, cx, "event", |this, cx| {
+                        this.term_drag.insert(id.clone(), true);
+                        let Some((col, row)) = term_cell(this, &id, ev.position, window, &fam)
+                        else {
+                            return;
+                        };
+                        let mut target = None;
+                        if let Some(tui) = this.tui_panes.get_mut(&id) {
+                            target = tui.drop_hover(col, row);
+                        }
+                        this.update_state(
+                            &pane_state_path(&id, "drop_target"),
+                            Json::String(target.unwrap_or_default()),
+                            cx,
+                        );
+                        drain_tui_outbox(this, cx);
+                    })
+                    .ok();
+                })
+                // Palette/doc drags over the card — the pane resolves cells
+                // to doc paths itself. `pane_drop_at` commits without the
+                // host round-trip `pane_drop` needs (#156).
+                .on_drag_move::<ForgeDrag>(move |ev, window, cx| {
+                    if !editable {
+                        return;
+                    }
+                    let (id, fam) = (id_dm.clone(), fam_dm.clone());
+                    try_update(&weak_dm, cx, "event", |this, cx| {
+                        let Some((col, row)) =
+                            term_cell(this, &id, ev.event.position, window, &fam)
+                        else {
+                            return;
+                        };
+                        let mut target = None;
+                        if let Some(tui) = this.tui_panes.get_mut(&id) {
+                            target = tui.drop_hover(col, row);
+                        }
+                        this.update_state(
+                            &pane_state_path(&id, "drop_target"),
+                            Json::String(target.unwrap_or_default()),
+                            cx,
+                        );
+                    })
+                    .ok();
+                })
+                .on_drop::<ForgeDrag>(move |drag, _window, cx| {
+                    if !editable {
+                        return;
+                    }
+                    let id = id_dp.clone();
+                    try_update(&weak_dp, cx, "drop", |this, cx| {
+                        let (kind, payload) = match drag {
+                            ForgeDrag::Component(t) => ("component", t.clone()),
+                            ForgeDrag::Node(p) => ("node", p.clone()),
+                        };
+                        let mut target = None;
+                        if let Some(tui) = this.tui_panes.get_mut(&id) {
+                            let (col, row) = this.term_hover.get(&id).copied().unwrap_or_default();
+                            target = tui.drop_at(col, row);
+                        }
+                        this.update_state(&pane_state_path(&id, "drop_target"), Json::Null, cx);
+                        this.fire_call(
+                            "pane_drop_at",
+                            vec![
+                                id.clone(),
+                                kind.to_string(),
+                                payload,
+                                target.unwrap_or_default(),
+                            ],
+                            cx,
+                        );
+                        drain_tui_outbox(this, cx);
+                    })
+                    .ok();
+                })
+                .on_scroll(move |ev: &ScrollEvent, window, cx| {
+                    let kind = if f32::from(ev.delta.pixel_delta(px(20.)).y) < 0. {
+                        "scroll-down"
+                    } else {
+                        "scroll-up"
+                    };
+                    let (id, fam) = (id_s.clone(), fam_s.clone());
+                    try_update(&weak_s, cx, "event", |this, cx| {
+                        if let Some((col, row)) = term_cell(this, &id, ev.position, window, &fam)
+                            && let Some(tui) = this.tui_panes.get_mut(&id)
+                        {
+                            tui.on_mouse(kind, col, row);
+                        }
+                        drain_tui_outbox(this, cx);
+                    })
+                    .ok();
+                })
+                .child(
+                    div()
+                        .size_full()
+                        .p_2()
+                        .overflow_hidden()
+                        .bg(bg)
+                        .child(BoundsTracker::new(
+                            forge_term::GridView::new(
+                                grid,
+                                forge_term::TermStyle {
+                                    font_family: mono,
+                                    font_size: px(12.),
+                                    default_fg: fg,
+                                    default_bg: bg,
+                                    cursor: fg,
+                                },
+                            )
+                            .metrics_sink(mcell)
+                            .into_any_element(),
+                            tcell,
+                        )),
+                )
+                .into_any_element(),
+        )
     }
 
     /// The `forge.Preview` host for `id`, creating the nested view on first use.
@@ -3521,12 +4044,23 @@ impl ForgeView {
             .collect()
     }
 
+    /// The catalog a node's element defs come from — its namespace when set,
+    /// else the document's base catalog, else the first (gpui-kit). Foreign-
+    /// base nodes inside previews resolve props against their own library.
+    fn node_catalog<'a>(&'a self, node: &'a Node) -> Option<&'a Catalog> {
+        node.element
+            .namespace
+            .as_deref()
+            .or_else(|| self.doc.as_ref().and_then(|d| d.base.as_deref()))
+            .and_then(|lib| self.catalogs.iter().find(|c| c.library == lib))
+            .or_else(|| self.catalogs.first())
+    }
+
     /// A prop's value: the node's content when the catalog maps it to this prop, then the
     /// written prop, then the catalog default.
     fn prop<'a>(&'a self, node: &'a Node, name: &str) -> Option<&'a Value> {
         let def = self
-            .catalogs
-            .first()
+            .node_catalog(node)
             .and_then(|c| c.element(&node.element.name));
         if let Some(content) = &node.content
             && def.and_then(|d| d.content.as_deref()) == Some(name)
@@ -3893,9 +4427,19 @@ impl ForgeView {
             .and_then(|j| j.as_str())
             .unwrap_or_default()
             .to_owned();
-        let props = self
-            .catalogs
-            .first()
+        // The target lives in the previewed doc — its base comes from
+        // `studio.doc_base` (the shell doc is always gpui-kit). Namespace
+        // wins when the element names a library explicitly (#156).
+        let doc_base = get_path(self.state(), &parse_path("studio.doc_base").unwrap())
+            .and_then(|j| j.as_str().map(str::to_owned));
+        let props = target
+            .element
+            .namespace
+            .as_deref()
+            .map(str::to_owned)
+            .or(doc_base)
+            .and_then(|lib| self.catalogs.iter().find(|c| c.library == lib))
+            .or_else(|| self.catalogs.first())
             .and_then(|c| c.element(&target.element.name))
             .map(|def| def.props.clone())
             .unwrap_or_default();
@@ -5014,16 +5558,17 @@ impl ForgeView {
                                 self.preview_srcs.insert(id.clone(), spec);
                             }
                         }
-                        // A view element sizes to content in a flex column —
-                        // the `size_full` wrapper gives the nested view a
-                        // definite slot to fill, so the doc root's `grow`
-                        // has space to claim.
+                        // A view element sizes to content in a flex column.
+                        // The `size_full` wrapper gives the nested view a
+                        // definite slot. The doc root's `grow` has space to
+                        // claim.
                         let element = BoundsLogger::new(
                             div()
                                 .id("preview-fill")
                                 .size_full()
                                 .child(
                                     preview
+                                        .clone()
                                         .cached(
                                             gpui::StyleRefinement::default()
                                                 .flex_1()
@@ -5036,6 +5581,14 @@ impl ForgeView {
                             "preview-fill",
                         )
                         .into_any_element();
+                        // #156 — a ratatui-base doc draws in-process instead
+                        // of through the compat map: same renderer as the
+                        // preview host, no wire, direct hit-testing.
+                        #[cfg(feature = "ratatui-embed")]
+                        let element = match self.tui_card(node, &id, &preview, cx) {
+                            Some(card) => card,
+                            None => element,
+                        };
                         if remote.is_some() {
                             // Compat canvas — pane bounds stay tracked so an
                             // `embedded` host still anchors over the slot.
@@ -7502,7 +8055,7 @@ impl ForgeView {
         } else {
             // Selection highlight — the outline/inspector selection and the
             // DnD drop target get a non-interactive accent frame. Only the
-            // canvas view decorates nodes: in the Studio shell the nested
+            // canvas view decorates nodes. In the Studio shell the nested
             // document's paths collide with outer nodes — `0.1.0` is the
             // outer Resizable — and a frame there resizes the chrome.
             let selected = self.dnd

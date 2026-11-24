@@ -23,6 +23,20 @@ base-ratatui = [
     "dep:tui-scrollview",
     "dep:tui-tree-widget",
 ]
+# In-process ratatui rendering beside another base (#156): Studio's canvas
+# card drives `render::ratatui::ForgeView` directly — same doc, same module,
+# no preview host. Not a base: `render::ForgeView` stays the active base's.
+ratatui-embed = [
+    "dep:ratatui",
+    "dep:time",
+    "dep:ansi-to-tui",
+    "dep:forge-term",
+    "dep:ratatui-code-editor",
+    "dep:ratatui-markdown",
+    "dep:throbber-widgets-tui",
+    "dep:tui-scrollview",
+    "dep:tui-tree-widget",
+]
 base-iced = ["dep:iced"]
 
 [dependencies]

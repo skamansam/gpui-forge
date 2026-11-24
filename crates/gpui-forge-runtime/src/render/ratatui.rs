@@ -123,7 +123,8 @@ pub struct ForgeView {
     pick: bool,
     #[allow(dead_code)]
     placing: bool,
-    #[allow(dead_code)]
+    /// The canvas flag — a `dnd` view paints `document.selected` as an accent
+    /// frame over the node's zone (the gpui canvas's selection outline).
     dnd: bool,
     /// Shown while there is no document.
     empty_text: Option<String>,
@@ -1066,7 +1067,7 @@ impl ForgeView {
         self.zones
             .iter()
             .filter(|(_, r)| r.contains(pos))
-            .min_by_key(|(_, r)| r.area() as u32)
+            .min_by_key(|(_, r)| r.area())
             .map(|(p, r)| (p.clone(), *r))
     }
 
@@ -1120,6 +1121,20 @@ impl ForgeView {
                     .borders(Borders::ALL)
                     .border_style(Style::default().fg(Color::Yellow)),
                 r,
+            );
+        }
+        // `document.selected` — the designer's selected node gets the same
+        // treatment, only where a canvas flagged `dnd` (#156).
+        if self.dnd
+            && let Ok(path) = forge_spec::value::parse_path("document.selected")
+            && let Some(selected) = self.lookup(&path).and_then(Json::as_str)
+            && let Some((_, r)) = self.zones.iter().find(|(p, _)| p == selected)
+        {
+            frame.render_widget(
+                Block::default()
+                    .borders(Borders::ALL)
+                    .border_style(Style::default().fg(Color::Cyan)),
+                *r,
             );
         }
     }
@@ -1706,7 +1721,7 @@ impl ForgeView {
                     .unwrap_or_default();
                 match TuiTree::new(&items) {
                     Ok(tree) => {
-                        let mut state = match binding.as_ref().map(|p| p.to_string()) {
+                        let state = match binding.as_ref().map(|p| p.to_string()) {
                             Some(k) => match self.trees.entry(k) {
                                 std::collections::hash_map::Entry::Occupied(e) => e.into_mut(),
                                 std::collections::hash_map::Entry::Vacant(e) => {
@@ -1751,7 +1766,7 @@ impl ForgeView {
                                     .add_modifier(Modifier::BOLD),
                             );
                         }
-                        frame.render_stateful_widget(t, area, &mut state);
+                        frame.render_stateful_widget(t, area, state);
                     }
                     Err(e) => {
                         frame.render_widget(
@@ -2137,12 +2152,11 @@ impl ForgeView {
         };
         let fill = |n: f64| Constraint::Fill(n.max(1.0) as u16);
         // `Spacer`'s `size` prop is its extent — no style entry needed.
-        if node.element.name == "Spacer" {
-            if let Some((_, v)) = node.props.iter().find(|(k, _)| k == "size") {
-                if let Value::Number { value, .. } = v {
-                    return Constraint::Length((*value).max(0.0) as u16);
-                }
-            }
+        if node.element.name == "Spacer"
+            && let Some((_, Value::Number { value, .. })) =
+                node.props.iter().find(|(k, _)| k == "size")
+        {
+            return Constraint::Length((*value).max(0.0) as u16);
         }
         if let Some((v, unit)) = Self::style_num(&node.style, size) {
             return match unit {
