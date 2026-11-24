@@ -35,7 +35,6 @@ base-ratatui = [
     "dep:tui-piechart",
     "dep:tui-big-text",
     "dep:tui-globe",
-    "dep:scm-record",
 ]
 # In-process ratatui rendering beside another base (#156): Studio's canvas
 # card drives `render::ratatui::ForgeView` directly — same doc, same module,
@@ -63,7 +62,6 @@ ratatui-embed = [
     "dep:tui-piechart",
     "dep:tui-big-text",
     "dep:tui-globe",
-    "dep:scm-record",
 ]
 base-iced = ["dep:iced"]
 
@@ -130,13 +128,11 @@ ureq = "3"
 ratatui-code-editor = { version = "0.0.6", optional = true, default-features = false }
 ratatui-markdown = { version = "0.3", optional = true }
 # Native-only widgets, round two — each pulls `crossterm` as a required
-# dep, which has no wasm32 build. `scm-record` renders an interactive
-# hunk-selection surface for diff review.
+# dep, which has no wasm32 build.
 tui-slider = { version = "0.4", optional = true }
 tui-piechart = { version = "1", optional = true }
 tui-big-text = { version = "0.8", optional = true }
 tui-globe = { version = "1", optional = true }
-scm-record = { version = "0.10", optional = true }
 
 
 # `cargo run -p gpui-forge-runtime --example render -- <doc.forge.yaml>`

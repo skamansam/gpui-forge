@@ -146,6 +146,9 @@ Six core pillars drive the project:
   the same process. Features include palette click/drag insertion, outline
   reparenting, an inspector with two-way source edits, undo/redo, and a disk
   watcher.
+- **A graphical TUI builder** — `base: ratatui` documents render in-process
+  on Studio's canvas as a real cell grid. Drag widgets onto it, click cells
+  to select nodes, and edit ratatui props in the inspector.
 - **Project-aware Studio**. A `forge.Files` sidebar browses the project
   (bounded scan). Right-click offers *New document here*, *Reveal in file
   manager* and *Rename…*. Opened files land in the Document tab. Window

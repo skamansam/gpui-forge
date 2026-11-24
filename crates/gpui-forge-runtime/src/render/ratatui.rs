@@ -2229,7 +2229,7 @@ impl ForgeView {
                 frame.render_stateful_widget(view, area, &mut state);
             }
             "Nodes" => {
-                // tui-nodes — `GraphNode` children are the boxes; the
+                // tui-nodes — `GraphNode` children are the boxes. The
                 // `edges` prop wires ports "from.port>to.port" (child
                 // indices, comma-separated). Placement is automatic.
                 let kids = self.expand_kids(&node.children);
@@ -2280,7 +2280,7 @@ impl ForgeView {
             }
             "Shimmer" => {
                 // tui-shimmer — a highlight sweeps the text over a 4s
-                // cycle. `phase` (0..1) pins a frame; bind it to animate.
+                // cycle. `phase` (0..1) pins a frame. Bind it to animate.
                 let phase = self.num(node, "phase", 0.0) as f32;
                 let spans = tui_shimmer::shimmer_spans_with_style_at_phase(
                     &self.node_text(node),
@@ -2290,8 +2290,8 @@ impl ForgeView {
                 frame.render_widget(Paragraph::new(Line::from(spans)), area);
             }
             "Dialog" => {
-                // tui_confirm_dialog — `open` shows the centered box.
-                // `choice` binds the answer; Left/Right picks a button and
+                // tui_confirm_dialog — `open` draws the centered box.
+                // `choice` binds the answer. Left/Right picks a button and
                 // Enter/y/n commits. `yes-label`/`no-label` use "(Y)es"
                 // markup — the parenthesized char is the hotkey.
                 if self.boolean(node, "open", false) {
@@ -2332,7 +2332,7 @@ impl ForgeView {
             "Fx" => {
                 // tachyonfx — children paint first, then the effect
                 // post-processes their cells. `progress` (0..1) scrubs
-                // through `duration` (ms); a fresh Effect each render
+                // through `duration` (ms). A fresh Effect each render
                 // makes the frame deterministic.
                 self.render_children(node, path, area, frame, Direction::Vertical);
                 let ms = self.num(node, "duration", 800.0).max(1.0) as u32;

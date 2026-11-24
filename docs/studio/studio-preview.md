@@ -55,13 +55,21 @@ document's base. Studio talks to it over a JSON channel on stdin/stdout:
 - The host runs the document through its *native* event loop and reports
   `ready`, diagnostics, fired hooks, and view-state writes back to Studio.
 
-This is how bases without an in-process twin preview from Studio. `ratatui`
-draws through a real `CrosstermBackend` into a byte sink. It streams the
-ANSI output — the same bytes a terminal would get — back as `preview.frame`
-chunks. Studio folds them through `forge-term`'s `alacritty_terminal`
-emulator and paints styled cells in the card. `iced`/`guise`/`adabraka`/
-`bezel` open real native windows, and `gpui-kit` itself can run in-host when
-you want the genuine platform event loop.
+This is how bases without an in-process twin preview from Studio.
+`iced`/`guise`/`adabraka`/`bezel` open real native windows, and `gpui-kit`
+itself can run in-host when you want the genuine platform event loop.
+
+`ratatui` no longer needs the host for Studio's canvas. The
+`ratatui-embed` feature compiles `render::ratatui` into Studio. A
+ratatui-base document renders in-process into a `TestBackend` buffer.
+The buffer converts to `forge-term` `CellSnapshot` rows, and `GridView`
+paints the styled cells in the card. Hit-testing, drops, and selection
+frames resolve against the in-process view, so no host spawns. The
+remote `forge-preview-ratatui` host still works. It draws through a real
+`CrosstermBackend` into a byte sink and streams the ANSI output — the
+same bytes a terminal would get — back as `preview.frame` chunks. A
+`mode: stream` pane folds them through `forge-term`'s
+`alacritty_terminal` emulator.
 
 The status bar's `host` label shows host attachment state. Clicking the
 preview raises the host window.
@@ -108,7 +116,7 @@ Studio's own Theme tab uses the same mechanism — `studio.forge.yaml`'s
   adabraka, iced) get a plain `remote:` pane. The card says the preview
   lives in a separate window — a different GPUI generation can't
   composite into Studio's scene graph.
-- **streamed terminal** — `mode: stream` routes the ratatui host's
+- **streamed terminal** — `mode: stream` routes a ratatui host's
   `frame` events into `preview.panes.<id>.frame`. The events carry
   `{seq, cols, rows, data}` — raw ANSI bytes from the real
   `CrosstermBackend`. The card feeds new chunks into a `forge-term`

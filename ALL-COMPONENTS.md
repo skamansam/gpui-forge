@@ -1229,37 +1229,88 @@ github: https://github.com/AprilNEA/gpui-symbols
 docs: https://ratatui.rs/  
 github: https://github.com/ratatui/ratatui
 
-> ratatui-flavor base — `[x]` widgets render natively in the ratatui arm and
-> via `canvas:` mappings on the gpui compat canvas. The catalog also provides
-> `VStack`/`HStack`/`Input` analogues ratatui lacks.
+> ratatui-flavor base — the catalog mixes core `ratatui::widgets` arms,
+> Forge layout primitives, and extension crates from the awesome-ratatui
+> ecosystem. `[x]` entries render in the ratatui arm and on the gpui compat
+> canvas via `canvas:` mappings. Extension widgets link their backing
+> crate. Native-only entries pull `crossterm` or C sources and fall back to the
+> placeholder on the WASM canvas.
 
-- [x] BarChart — ratatui arm — `data`/`labels`/`bar_width`/`max`
+Core `ratatui::widgets` coverage:
+
+- [x] BarChart — `data`/`labels`/`bar_width`/`max`
 - [ ] Bar — bar value type consumed by BarChart
 - [ ] BarGroup — grouping descriptor for BarChart
 - [x] Block
-- [x] Calendar — ratatui arm — `Monthly` behind `widget-calendar`. `date` prop
-- [x] Canvas — ratatui arm — `map` draws the world map layer
-- [x] Chart — ratatui arm — `data`/`name`/axis bounds
+- [x] Calendar — `Monthly` behind `widget-calendar`. `date` prop
+- [x] Canvas — `map` draws the world map layer
+- [x] Chart — `data`/`name`/axis bounds
 - [ ] Circle — canvas shape — needs a Canvas draw context
-- [x] Clear — ratatui arm — clears its rect
-- [ ] Fill — layout constraint (`Constraint::Fill`), not a widget
-- [x] Gauge
+- [x] Clear — clears its rect
 - [ ] Line — canvas shape — needs a Canvas draw context
+- [x] Gauge
+- [x] LineGauge — `value`/`label`
 - [x] List
 - [ ] ListItem — row value type for `List`
-- [x] Logo — ratatui arm — `RatatuiLogo` `tiny`|`small`
+- [x] Logo — `RatatuiLogo` `tiny`|`small`
 - [ ] Map — reached via `Canvas`'s `map` prop, not a standalone element
-- [ ] Mascot — not a `ratatui::widgets` export (examples-only asset) — dropped from catalog
-- [x] Paragraph
+- [x] Mascot — `RatatuiMascot`
+- [x] Paragraph — rendered as `Text`/`Title`
 - [ ] Points — canvas shape — needs a Canvas draw context
 - [ ] Rectangle — canvas shape — needs a Canvas draw context
 - [ ] Row — row descriptor for `Table`
 - [ ] Cell — cell descriptor inside `Row`
-- [ ] Scrollbar — internal part of `ScrollArea`
-- [x] Sparkline — ratatui arm — `data`/`max`
+- [x] Scrollbar — bound `position` takes wheel and track clicks
+- [x] Sparkline — `data`/`max`
 - [x] Table
 - [x] Tabs
 - [ ] World — map dataset for the canvas `Map` layer
+
+Forge layout and form primitives (no upstream analogue):
+
+- [x] VStack — vertical layout
+- [x] HStack — horizontal layout
+- [x] Spacer — empty area, sized by style
+- [x] Text — styled paragraph
+- [x] Title — bold text
+- [x] Divider — horizontal rule
+- [x] Log — scrollable text, bound `offset`
+- [x] Paper — `Block` alias
+- [x] Card — `Block` alias
+- [x] Progress — `Gauge` alias
+- [x] Input — single-line edit, bound `value`
+- [x] TextInput — `Input` alias
+- [x] Button — `click` call on Enter/Space/down
+- [x] Select — bound `selected` list
+- [x] Menu — `Select` alias
+- [x] Checkbox — bound `checked`
+- [x] Switch — `Checkbox` alias
+- [x] Fill — one glyph tiled over the rect
+
+Extension widgets — awesome-ratatui crates on the 0.30 line:
+
+- [x] Tree (https://crates.io/crates/tui-tree-widget) — `items` or `TreeItem` children, `selected`/`expanded`
+- [x] TreeItem — `Tree` child — `id` + nested `TreeItem`s
+- [x] Spinner (https://crates.io/crates/throbber-widgets-tui) — all symbol sets, `step` binds the frame
+- [x] Markdown (https://crates.io/crates/ratatui-markdown) — native-only (ratatui crossterm default)
+- [x] AnsiText (https://crates.io/crates/ansi-to-tui) — ANSI escapes → styled spans
+- [x] Terminal — ANSI screen → TestBackend grid, `offset` scrollback
+- [x] ScrollView (https://crates.io/crates/tui-scrollview) — virtual `width`x`height`, bound `offset`
+- [x] CodeEditor (https://crates.io/crates/ratatui-code-editor) — tree-sitter highlight, `original` diff — native-only (C grammars)
+- [x] Toast (https://crates.io/crates/ratatui-toaster) — `type` tints
+- [x] Popup (https://crates.io/crates/tui-popup) — children float centered, `width`/`height`
+- [x] WidgetList (https://crates.io/crates/tui-widget-list) — mixed-height items, bound `selected`
+- [x] Nodes (https://crates.io/crates/tui-nodes) — `edges` port links, auto layout
+- [x] GraphNode — `Nodes` child box — `width`/`height`
+- [x] Shimmer (https://crates.io/crates/tui-shimmer) — sweep highlight, `phase` 0..1
+- [x] Dialog (https://crates.io/crates/tui_confirm_dialog) — `open`/`choice` bindings
+- [x] Fx (https://crates.io/crates/tachyonfx) — `kind`/`duration`/`progress` cell post-effects
+- [x] QrCode (https://crates.io/crates/qrcode) — unicode halfblocks from `data`
+- [x] Image (https://crates.io/crates/image) — decode → halfblock raster, `src` on `base_dir`
+- [x] Slider (https://crates.io/crates/tui-slider) — bound `value` keys/wheel/clicks — native-only (crossterm)
+- [x] PieChart (https://crates.io/crates/tui-piechart) — `data`/`labels`/`hole` — native-only (crossterm)
+- [x] BigText (https://crates.io/crates/tui-big-text) — 8x8 pixel font, `size` density — native-only (crossterm)
+- [x] Globe (https://crates.io/crates/tui-globe) — embedded mesh, bound `yaw` rotates — native-only (crossterm)
 
 ## iced Components
 

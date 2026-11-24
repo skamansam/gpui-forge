@@ -387,7 +387,7 @@ fn ansi_escapes_become_styles() {
     assert_eq!(cell.fg, Color::Red, "escape parsed to fg red");
 }
 
-/// A bound Slider takes arrows and a track click; a bound Dialog commits
+/// A bound Slider takes arrows and a track click. A bound Dialog commits
 /// its highlighted button to `choice` on Enter.
 #[test]
 fn slider_and_dialog_interact() {

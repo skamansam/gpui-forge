@@ -46,7 +46,7 @@ root:
 |---|---|---|
 | `$schema` | no | Schema URL (also accepted as a `# yaml-language-server: $schema=…` comment) |
 | `forge` | yes | Spec version, as a string (`"0.1"`) — see Versioning below |
-| `base` | no | Base component system (`gpui-kit`, `bezel`, `adabraka`, `gpui-0.2`, and planned non-GPUI bases `ratatui`, `iced`). Defaults to the project's `forge.toml` |
+| `base` | no | Base component system (`gpui-kit`, `ratatui`, `bezel`, `adabraka`, `gpui-0.2`, and the scaffolded `iced`). Defaults to the project's `forge.toml` |
 | `use` | no | Map of import alias → `"<library-id> [<version-req>]"` |
 | `meta` | no | Map of string → string (title, description, …). `meta: {watch: "true"}` opts the document into Studio hot reload. Edits on disk re-validate and re-render it, and a parse failure keeps the last-good copy (diagnostics land in the status bar + markers). `meta.title` names the app. The skeleton bakes it into the window title. A remote preview host sets its window title to it when the document loads. |
 | `root` | yes | The root node |
@@ -66,6 +66,10 @@ build or run time:
 Everything else (`ely-core`, `gpui-kit`, `gpui-flow`, `base-gpui`,
 `gpui-apple-hig`, `gpui-pdf`, `gpui-whiteboard`, `ratex-gpui`) is pure Rust
 and builds anywhere the base does.
+
+[ratatui-widgets.md](ratatui-widgets.md) documents the ratatui base's
+element set: core `ratatui::widgets` arms,
+Forge primitives, and the extension crates each widget wraps.
 
 ## Fragments, anchors and merge keys
 

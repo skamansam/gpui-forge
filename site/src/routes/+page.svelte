@@ -70,13 +70,15 @@
 
 <section class="tui">
 	<div class="tui-copy">
-		<h2>Desktop apps <em>and</em> terminal apps</h2>
+		<h2>Build a TUI <em>graphically</em></h2>
 		<p>
-			The same document format drives every base. Set <code>base: ratatui</code> and your
-			layout renders on a real <code>TestBackend</code> — blocks, lists, gauges, tabs,
-			inputs, tables — drawn here as a live terminal frame.
+			Set <code>base: ratatui</code> and Forge Studio becomes a visual TUI builder —
+			drag widgets from the palette onto a live cell canvas, click a cell to select
+			its node, and edit real ratatui props in the inspector. No other TUI tool
+			works this way. The document below renders on a real
+			<code>TestBackend</code>.
 		</p>
-		<a href={resolve('/examples')}>More examples →</a>
+		<a href={resolve('/docs/[slug]', { slug: 'studio-tui' })}>Editing TUIs in Studio →</a>
 	</div>
 	<div class="panel">
 		<div class="panel-title"><span>ratatui-dashboard.forge.yaml — terminal frame</span></div>

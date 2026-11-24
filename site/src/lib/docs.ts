@@ -33,9 +33,10 @@ const PAGE_ORDER: Record<string, string[]> = {
 		'yaml-validation',
 		'state-inspector',
 		'adapters',
+		'ratatui-widgets',
 		'components'
 	],
-	studio: ['studio', 'studio-editing', 'studio-preview', 'studio-themes', 'studio-projects'],
+	studio: ['studio', 'studio-editing', 'studio-tui', 'studio-preview', 'studio-themes', 'studio-projects'],
 	web: ['editor', 'preview', 'web-examples'],
 	cli: ['forge-cli', 'forge-toml']
 };
