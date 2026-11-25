@@ -50,6 +50,12 @@ forge-lib-base = { path = "../forge-lib-base", optional = true }
 # wasm-bindgen feature, leaving `now()` an undefined extern at link time.
 [target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
 instant = { version = "0.1", features = ["wasm-bindgen"] }
+# getrandom 0.3 refuses to compile on wasm32-unknown-unknown unless a crate
+# in the graph enables `wasm_js`. tui_confirm_dialog pulls it via `rand`
+# without the feature. gpui-pre/bezel-gpui already enable it for their
+# bases — this covers ratatui's graph. `rand` is only called from
+# `ConfirmDialogState::default`, which the renderer never uses.
+getrandom = { version = "0.3.4", features = ["wasm_js"] }
 
 [lints]
 workspace = true
