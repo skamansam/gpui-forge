@@ -3557,7 +3557,7 @@ fn load_source(
     shared.borrow_mut().undo.clear();
     shared.borrow_mut().redo.clear();
     let catalogs = shared.borrow().catalogs.clone();
-    let (doc, diagnostics) = check::check(src, BASE_ID, &catalogs);
+    let (doc, diagnostics) = check::check(src, &doc_base(src, BASE_ID), &catalogs);
     let mut state = view.state().clone();
     set_path(
         &mut state,
@@ -3914,7 +3914,11 @@ fn reload(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView
     view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(true), cx);
     let src = source(view);
     let catalogs = shared.borrow().catalogs.clone();
-    let (doc, diagnostics) = check::check(&src, BASE_ID, &catalogs);
+    let current_base = get_path(view.state(), &parse_path("studio.doc_base").unwrap())
+        .and_then(Json::as_str)
+        .unwrap_or(BASE_ID)
+        .to_owned();
+    let (doc, diagnostics) = check::check(&src, &doc_base(&src, &current_base), &catalogs);
     view.update_state(
         &parse_path("studio.diagnostics").unwrap(),
         Json::String(problems(&diagnostics)),
@@ -4019,7 +4023,8 @@ fn save_as(shared: SharedState, cx: &mut Context<ForgeView>) {
 }
 
 fn format_document(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView>) {
-    let (doc, _) = check::check(&source(view), BASE_ID, &shared.borrow().catalogs);
+    let src = source(view);
+    let (doc, _) = check::check(&src, &doc_base(&src, BASE_ID), &shared.borrow().catalogs);
     match doc {
         Some(doc) => {
             let formatted = yaml::to_string(&doc, &yaml::WriteOptions::default());
@@ -4524,6 +4529,18 @@ fn source(view: &ForgeView) -> String {
         .to_owned()
 }
 
+/// The check context for an open document: its own `base:` when declared, the
+/// compiled base otherwise. This is the rule `forge check` uses — a
+/// foreign-base doc checks against its own catalog, not a mismatch. A source
+/// that fails to parse keeps `current`, so a mid-edit keystroke does not
+/// flicker the base back to the default.
+fn doc_base(src: &str, current: &str) -> String {
+    match yaml::from_str(src) {
+        Ok(doc) => doc.base.unwrap_or_else(|| BASE_ID.to_owned()),
+        Err(_) => current.to_owned(),
+    }
+}
+
 fn status(view: &mut ForgeView, message: &str, cx: &mut Context<ForgeView>) {
     view.update_state(
         &parse_path("status.message").unwrap(),
@@ -4696,4 +4713,23 @@ fn echo_selected(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
             p.update_state(&path, value.clone(), cx);
         }
     });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::doc_base;
+    use gpui_forge_runtime::base::BASE_ID;
+
+    /// A foreign-base document must check against its own catalog — the
+    /// ratatui showcase otherwise reports a bogus base mismatch and loses
+    /// real diagnostics.
+    #[test]
+    fn doc_base_follows_the_document() {
+        let ratatui = "forge: \"0.1\"\nbase: ratatui\nroot:\n  Text:\n  text: \"hi\"\n";
+        assert_eq!(doc_base(ratatui, BASE_ID), "ratatui");
+        let default = "forge: \"0.1\"\nroot:\n  Text:\n  text: \"hi\"\n";
+        assert_eq!(doc_base(default, BASE_ID), BASE_ID);
+        // Mid-edit garbage keeps the last-known base instead of flickering.
+        assert_eq!(doc_base("root:\n  Text: [", "ratatui"), "ratatui");
+    }
 }
