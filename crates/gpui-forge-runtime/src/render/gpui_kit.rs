@@ -3803,7 +3803,16 @@ impl ForgeView {
     ) -> Vec<AnyElement> {
         let mut out = Vec::with_capacity(nodes.len());
         for (i, node) in nodes.iter().enumerate() {
-            out.extend(self.expand(node, &format!("{key}/{i}"), window, cx));
+            if self.scopes.is_empty() {
+                out.extend(self.expand(node, &format!("{key}/{i}"), window, cx));
+            } else {
+                // Bare blocks expand here without render_target's bake —
+                // scope vars in event args still resolve to literals while
+                // the scope is live.
+                let mut node = node.clone();
+                self.bake_scope(&mut node);
+                out.extend(self.expand(&node, &format!("{key}/{i}"), window, cx));
+            }
         }
         out
     }
