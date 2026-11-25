@@ -637,10 +637,19 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         cx,
     );
     // `forge-studio <doc.forge.yaml>` opens straight into the document.
-    if let Some(path) = std::env::args().nth(1).map(PathBuf::from)
-        && path.is_file()
-    {
-        load_file(path, &mut view, shared.clone(), cx);
+    // `forge-studio <dir>` or `forge-studio forge.toml` opens the project —
+    // same explicit-only resolution the CLI uses.
+    if let Some(path) = std::env::args().nth(1).map(PathBuf::from) {
+        let toml = if path.is_dir() {
+            Some(path.join("forge.toml"))
+        } else {
+            (path.file_name() == Some(std::ffi::OsStr::new("forge.toml"))).then_some(path.clone())
+        };
+        match toml.filter(|t| t.is_file()) {
+            Some(toml) => load_project(toml, &mut view, shared.clone(), cx),
+            None if path.is_file() => load_file(path, &mut view, shared.clone(), cx),
+            None => {}
+        }
     }
     // FORGE_DEBUG_TAB=<n> forces the initial tab — headless harnesses have
     // no clicks to reach the Theme tab, whose `if: $studio.tab` guard gates
@@ -1445,8 +1454,9 @@ fn open_document(shared: SharedState, cx: &mut Context<ForgeView>) {
 }
 
 /// `open_project()` — pick a `forge.toml`. The manifest's `forge.document`
-/// path resolves relative to it and becomes the loaded document, while
-/// `studio.project` tracks the project directory (#49).
+/// — or the first `[[apps]]` document — resolves relative to it and becomes
+/// the loaded document, while `studio.project` tracks the project
+/// directory (#49).
 fn open_project(shared: SharedState, cx: &mut Context<ForgeView>) {
     let receiver = cx.prompt_for_paths(PathPromptOptions {
         files: true,
@@ -1514,6 +1524,16 @@ fn create_project(view: &mut ForgeView, shared: SharedState, cx: &mut Context<Fo
     view.update_state(
         &parse_path("studio.project").unwrap(),
         Json::String(String::new()),
+        cx,
+    );
+    view.update_state(
+        &parse_path("studio.apps").unwrap(),
+        Json::Array(Vec::new()),
+        cx,
+    );
+    view.update_state(
+        &parse_path("studio.multiapp").unwrap(),
+        Json::Bool(false),
         cx,
     );
     view.update_state(&parse_path("studio.dirty").unwrap(), Json::Bool(true), cx);
@@ -3028,6 +3048,60 @@ fn pane_sync(shared: SharedState, cx: &mut Context<ForgeView>) {
     .detach();
 }
 
+/// The project's applications in order: `forge.document` is the primary
+/// entry — named by `[package] name` or its file stem — and every `[[apps]]`
+/// document follows. Mirrors the window order `forge skeleton` emits.
+fn project_apps(src: &str) -> Vec<(String, String)> {
+    let mut apps = Vec::new();
+    if let Some(doc) = manifest_value(src, "document") {
+        let name = manifest_section(src, "package", "name").unwrap_or_else(|| {
+            std::path::Path::new(&doc)
+                .file_stem()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .trim_end_matches(".forge")
+                .to_owned()
+        });
+        apps.push((name, doc));
+    }
+    apps.extend(manifest::manifest_apps(src));
+    apps
+}
+
+/// Re-marks `studio.apps` rows against the open file so the sidebar
+/// highlights the application the editor shows. A member document marks its
+/// `meta.window` target's app — the file you edit belongs to that app.
+fn mark_active_app(view: &mut ForgeView, file: &std::path::Path, cx: &mut Context<ForgeView>) {
+    let Json::Array(apps) = view.state()["studio"]["apps"].clone() else {
+        return;
+    };
+    if apps.is_empty() {
+        return;
+    }
+    let canon = |p: &std::path::Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+    let open = canon(file);
+    // `meta.window` on the open doc resolves relative to the doc's folder.
+    let window = view
+        .document()
+        .and_then(|doc| {
+            doc.meta
+                .iter()
+                .find(|(k, _)| k == "window")
+                .map(|(_, v)| v.clone())
+        })
+        .map(|w| canon(&file.parent().unwrap_or(std::path::Path::new(".")).join(w)));
+    let rows = apps
+        .into_iter()
+        .map(|mut row| {
+            let path = row["path"].as_str().map(|p| canon(std::path::Path::new(p)));
+            let active = path == Some(open.clone()) || path == window;
+            row["active"] = Json::Bool(active);
+            row
+        })
+        .collect();
+    view.update_state(&parse_path("studio.apps").unwrap(), Json::Array(rows), cx);
+}
+
 fn load_project(
     toml: PathBuf,
     view: &mut ForgeView,
@@ -3041,10 +3115,14 @@ fn load_project(
             return;
         }
     };
-    let Some(rel) = manifest_value(&src, "document") else {
-        status(view, "forge.toml has no forge.document", cx);
+    // The project's applications: `forge.document` is the primary entry,
+    // every `[[apps]]` document follows — same order `forge skeleton` uses.
+    let apps = project_apps(&src);
+    let Some((_, rel)) = apps.first() else {
+        status(view, "forge.toml names no entry document", cx);
         return;
     };
+    let rel = rel.clone();
     // `[icons] set` — a non-lucide iconset served from the project's
     // `<assets>/icons/<set>/` directory. `meta.iconset` on a doc wins. It
     // scopes to docs under `project_dir` — a file opened elsewhere falls
@@ -3063,6 +3141,28 @@ fn load_project(
     shared.borrow_mut().project_toml = Some(toml.clone());
     add_icon_root(assets_root(&dir));
     let doc_path = dir.join(&rel);
+    // `studio.apps` feeds the sidebar's application list — each row's `path`
+    // is absolute so `open_path` can load it directly.
+    let canon = |p: &std::path::Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+    let open = canon(&doc_path);
+    let rows: Vec<Json> = apps
+        .iter()
+        .map(|(name, doc)| {
+            let path = dir.join(doc);
+            json!({
+                "name": name,
+                "doc": doc,
+                "path": path.display().to_string(),
+                "active": canon(&path) == open,
+            })
+        })
+        .collect();
+    view.update_state(&parse_path("studio.apps").unwrap(), Json::Array(rows), cx);
+    view.update_state(
+        &parse_path("studio.multiapp").unwrap(),
+        Json::Bool(apps.len() > 1),
+        cx,
+    );
     view.update_state(
         &parse_path("studio.project").unwrap(),
         Json::String(dir.display().to_string()),
@@ -3102,6 +3202,7 @@ fn load_file(
             let dir = path.parent().map(|p| p.to_path_buf());
             shared.borrow_mut().file = Some(path.clone());
             load_source(view, &name, &src, dir.as_deref(), &shared, cx);
+            mark_active_app(view, &path, cx);
             let recents = record_recent(&path);
             refresh_recent_menu(view, &recents, cx);
             // `meta.watch` or project `[forge] watch` — hot-reload on save.
@@ -4717,7 +4818,7 @@ fn echo_selected(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
 
 #[cfg(test)]
 mod tests {
-    use super::doc_base;
+    use super::{doc_base, project_apps};
     use gpui_forge_runtime::base::BASE_ID;
 
     /// A foreign-base document must check against its own catalog — the
@@ -4731,5 +4832,28 @@ mod tests {
         assert_eq!(doc_base(default, BASE_ID), BASE_ID);
         // Mid-edit garbage keeps the last-known base instead of flickering.
         assert_eq!(doc_base("root:\n  Text: [", "ratatui"), "ratatui");
+    }
+
+    /// `forge.document` leads, `[[apps]]` entries follow — the sidebar order
+    /// matches `forge skeleton`'s window order. `package.name` names the
+    /// primary app. `name` or the file stem names the rest.
+    #[test]
+    fn project_apps_lists_document_then_apps() {
+        let src = "[package]\nname = \"studio\"\n\n[forge]\ndocument = \"app.forge.yaml\"\n\n[[apps]]\nname = \"console\"\ndocument = \"console.forge.yaml\"\n\n[[apps]]\ndocument = \"kiosk.forge.yaml\"\n";
+        assert_eq!(
+            project_apps(src),
+            vec![
+                ("studio".to_owned(), "app.forge.yaml".to_owned()),
+                ("console".to_owned(), "console.forge.yaml".to_owned()),
+                ("kiosk".to_owned(), "kiosk.forge.yaml".to_owned()),
+            ]
+        );
+        // No `forge.document` — the first `[[apps]]` block is the entry.
+        let only_apps = "[[apps]]\ndocument = \"a.forge.yaml\"\n";
+        assert_eq!(
+            project_apps(only_apps),
+            vec![("a".to_owned(), "a.forge.yaml".to_owned())]
+        );
+        assert!(project_apps("[forge]\nbase = \"gpui-kit\"\n").is_empty());
     }
 }

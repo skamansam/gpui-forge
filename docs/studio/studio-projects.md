@@ -29,6 +29,11 @@ build noise (`target`, `node_modules`, dot-files), and caps the scan's
 depth and entry count so a huge tree can't stall the UI. The panel is
 resizable. Clicking a file opens it in the **Document** tab.
 
+A project with more than one application lists them under **Apps** —
+`forge.document` first, then every `[[apps]]` entry, named like `forge
+skeleton` names them. Clicking an app opens its base window. The active
+app carries a dot marker, and the list hides for single-app projects.
+
 Right-clicking a row offers file actions: **New document here** creates the
 first free `untitled{,-N}.forge.yaml` in that folder, seeded with the open
 document's base, and opens it. **Reveal in file manager** opens the OS file

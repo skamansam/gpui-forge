@@ -24,6 +24,8 @@ state:
   studio.file: string
   studio.host: string
   studio.project: string
+  studio.apps: list
+  studio.multiapp: boolean
   studio.spec: string
   studio.tab: number
   studio.assets_dir: string
@@ -955,6 +957,30 @@ body: &body
                       if: $studio.project
                 - Text: "{$studio.project_name}"
                   style: {size: xs, color: $theme.muted_foreground}
+                # Multi-app projects list their applications — a click opens
+                # that app's base window. `studio.multiapp` hides the block
+                # for single-app projects.
+                - VStack:
+                  if: $studio.multiapp
+                  style: {gap: 2px}
+                  children:
+                    - Text: Apps
+                      style: {size: xs, weight: semibold, color: $theme.muted_foreground}
+                    - for: $studio.apps
+                      each: a
+                      children:
+                        - HStack:
+                          style: {gap: 4px, align: center}
+                          children:
+                            - Text: "•"
+                              if: $a.active
+                              style: {color: $theme.accent}
+                            - Button: "{$a.name}"
+                              variant: Ghost
+                              size: Small
+                              tooltip: "{$a.doc}"
+                              on click: open_path($a.path)
+                              style: {grow: true}
                 - forge.Files#files:
                   root: "{$studio.project_dir}"
                   nonce: $studio.files_nonce
