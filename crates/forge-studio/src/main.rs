@@ -3717,18 +3717,6 @@ fn load_source(
             Json::String(dir.display().to_string()),
             cx,
         );
-        // No project open. The document's own folder is the workspace.
-        // Root the Files tree, Assets tab and theme list at it. A
-        // single-file session still browses its directory.
-        if view.state()["studio"]["project"]
-            .as_str()
-            .unwrap_or_default()
-            .is_empty()
-        {
-            refresh_files(view, dir, cx);
-            refresh_assets(view, dir, cx);
-            refresh_themes(view, dir, cx);
-        }
     }
     if let Some(doc) = doc {
         // Vendor-on-use — download just the icons this doc references into
@@ -3763,15 +3751,23 @@ fn load_source(
         }
     }
     host_send_source(view, shared);
-    // #148 — the sidebar roots at the document's folder, falling back to the
-    // last-opened project root when the source has no file behind it.
-    let root = dir
-        .map(|d| d.to_path_buf())
-        .or_else(|| shared.borrow().dir.clone());
-    if let Some(root) = root {
-        refresh_files(view, &root, cx);
-        refresh_assets(view, &root, cx);
-        refresh_themes(view, &root, cx);
+    // #148 — document context roots the sidebar at the document's folder,
+    // falling back to the last-opened folder when the source has no file
+    // behind it. An open project keeps its scope — the Files tree only
+    // leaves the project root when `files_scope` toggles it.
+    if view.state()["studio"]["project"]
+        .as_str()
+        .unwrap_or_default()
+        .is_empty()
+    {
+        let root = dir
+            .map(|d| d.to_path_buf())
+            .or_else(|| shared.borrow().dir.clone());
+        if let Some(root) = root {
+            refresh_files(view, &root, cx);
+            refresh_assets(view, &root, cx);
+            refresh_themes(view, &root, cx);
+        }
     }
 }
 
