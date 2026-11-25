@@ -17,6 +17,19 @@ fn doc_meta<'a>(doc: &'a gpui_forge_runtime::forge_spec::Document, key: &str) ->
         .filter(|v| !v.is_empty())
 }
 
+/// `meta:<key>` as a path list — `meta.include` style values, comma- or
+/// whitespace-separated.
+fn doc_meta_list<'a>(doc: &'a gpui_forge_runtime::forge_spec::Document, key: &str) -> Vec<&'a str> {
+    doc_meta(doc, key)
+        .map(|v| {
+            v.split([',', '\n'])
+                .flat_map(str::split_whitespace)
+                .filter(|s| !s.is_empty())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
 /// `forge.toml` — a Forge project manifest.
 #[allow(dead_code)]
 #[derive(serde::Deserialize, Default)]
@@ -28,6 +41,21 @@ struct ForgeToml {
     assets: Assets,
     themes: Assets,
     libraries: std::collections::HashMap<String, String>,
+    /// `[[apps]]` — the project's applications. Each names a base-window
+    /// document. Absent means the single app `[forge] document` describes.
+    apps: Vec<AppEntry>,
+}
+
+/// One `[[apps]]` entry — an application's base-window document.
+#[allow(dead_code)]
+#[derive(serde::Deserialize, Default)]
+#[serde(default)]
+struct AppEntry {
+    /// Application name — the skeleton's crate dir and `--app` selector.
+    /// Defaults to the document's file stem.
+    name: String,
+    /// Base-window document, relative to the manifest.
+    document: String,
 }
 
 #[allow(dead_code)]
@@ -76,24 +104,25 @@ struct Assets {
     dir: String,
 }
 
-fn load_manifest(start: &Path) -> Option<(PathBuf, ForgeToml)> {
-    let mut dir = Some(start);
-    while let Some(d) = dir {
-        let candidate = d.join("forge.toml");
-        if candidate.exists() {
-            match std::fs::read_to_string(&candidate)
-                .ok()
-                .map(|s| toml::from_str::<ForgeToml>(&s))
-            {
-                Some(Ok(m)) => return Some((d.to_path_buf(), m)),
-                Some(Err(e)) => eprintln!("forge: {}: {e}", candidate.display()),
-                None => {}
-            }
-            return None;
-        }
-        dir = d.parent();
+/// Reads `dir/forge.toml` when it exists — nothing more. A project is
+/// explicit: the caller names a directory or manifest, and `forge` never
+/// climbs parent directories looking for one.
+fn load_manifest(dir: &Path) -> Option<(PathBuf, ForgeToml)> {
+    let candidate = dir.join("forge.toml");
+    if !candidate.exists() {
+        return None;
     }
-    None
+    match std::fs::read_to_string(&candidate)
+        .ok()
+        .map(|s| toml::from_str::<ForgeToml>(&s))
+    {
+        Some(Ok(m)) => Some((dir.to_path_buf(), m)),
+        Some(Err(e)) => {
+            eprintln!("forge: {}: {e}", candidate.display());
+            None
+        }
+        None => None,
+    }
 }
 
 const APP_MAIN: &str = r#"use gpui_forge_runtime::render::ForgeView;
@@ -587,7 +616,10 @@ fn usage() {
     eprintln!("      --release       release profile (default: dev)");
     eprintln!("      --codegen       compile the document to Rust, not embedded YAML");
     eprintln!("      --dir <path>    scaffold dir (default: <doc>/.forge-build/<name>)");
-    eprintln!("  forge skeleton [--dir <path>] [--force]  keep a multi-doc app crate");
+    eprintln!("      --app <name>    build the named `[[apps]]` application's window doc");
+    eprintln!(
+        "  forge skeleton [--dir <path>] [--app <name>] [--force]  keep app crates — one per application"
+    );
     eprintln!("  forge fmt <doc.forge.yaml>              canonical reformat (stdout or -w)");
     eprintln!("  forge convert <file>                  between .forge.yaml and JSON");
     eprintln!("      --from yaml|json  input format (else detected by extension/content)");
@@ -648,10 +680,29 @@ fn schema_cmd(rest: &[String]) -> i32 {
     0
 }
 
+/// The document or project argument — the first existing non-flag path that
+/// is not a flag's own value (`--dir`, `-o`, `--app`, `--base`, `--from`,
+/// `--to` each consume the next argument).
 fn doc_path(rest: &[String]) -> Option<PathBuf> {
-    let file = rest.iter().find(|a| !a.starts_with('-'))?;
-    let path = PathBuf::from(file);
-    path.exists().then_some(path)
+    const VALUE_FLAGS: &[&str] = &["--dir", "-o", "--app", "--base", "--from", "--to"];
+    let mut i = 0;
+    while i < rest.len() {
+        let arg = &rest[i];
+        if arg.starts_with('-') {
+            i += if VALUE_FLAGS.contains(&arg.as_str()) {
+                2
+            } else {
+                1
+            };
+            continue;
+        }
+        let path = PathBuf::from(arg);
+        if path.exists() {
+            return Some(path);
+        }
+        i += 1;
+    }
+    None
 }
 
 fn opt_value<'a>(rest: &'a [String], flag: &str) -> Option<&'a str> {
@@ -706,6 +757,16 @@ document = "app.forge.yaml"
 # Multi-doc apps list every document explicitly — `forge skeleton` builds
 # exactly this set (the entry `document` is always included):
 # documents = ["app.forge.yaml", "docs/settings.forge.yaml"]
+
+# Several applications in one project — each names its base-window doc.
+# `forge skeleton` emits one crate per app. A document can also declare
+# membership with `meta.window: <entry doc>` and pull siblings in with
+# `meta.include: "<docs>"`.
+# [[apps]]
+# name = "main"
+# document = "app.forge.yaml"
+# [[apps]]
+# document = "console.forge.yaml"
 
 # [assets]
 # dir = "assets"
@@ -1190,30 +1251,40 @@ fn package_cmd(rest: &[String]) -> i32 {
             return 1;
         }
         let binary = root.join("target/release").join(&manifest.package.binary);
-        return bundle(&m_dir, &manifest, &name, &binary);
+        let entry_doc = m_dir.join(&manifest.forge.document);
+        return bundle(&m_dir, &manifest, &name, &binary, &entry_doc);
     }
     let mut build_args: Vec<String> = rest.to_vec();
     build_args.push("--release".into());
     if build_cmd(&build_args) != 0 {
         return 1;
     }
-    let Some((m_dir, manifest, _doc, name)) = project(rest) else {
+    let Some((m_dir, manifest, doc, name)) = project(rest) else {
         return 2;
+    };
+    let (doc, name) = match opt_value(rest, "--app") {
+        Some(n) => match app_document(&manifest, &m_dir, n) {
+            Some(p) => (p, n.to_owned()),
+            None => {
+                eprintln!("forge: no application `{n}` in this project");
+                return 1;
+            }
+        },
+        None => (doc, name),
     };
     let binary = root.join("target/forge-apps/release").join(&name);
     if !binary.exists() {
         eprintln!("forge: {} not found after build", binary.display());
         return 1;
     }
-    bundle(&m_dir, &manifest, &name, &binary)
+    bundle(&m_dir, &manifest, &name, &binary, &doc)
 }
 
 /// Wraps a built binary for the host OS into `<manifest-dir>/dist/`.
-fn bundle(m_dir: &Path, manifest: &ForgeToml, name: &str, binary: &Path) -> i32 {
+fn bundle(m_dir: &Path, manifest: &ForgeToml, name: &str, binary: &Path, entry_doc: &Path) -> i32 {
     // The entry document's `meta:` carries app identity — read it when the
     // manifest names a document.
-    let entry_doc = m_dir.join(&manifest.forge.document);
-    let doc = std::fs::read_to_string(&entry_doc).ok().and_then(|src| {
+    let doc = std::fs::read_to_string(entry_doc).ok().and_then(|src| {
         gpui_forge_runtime::check::check(
             &src,
             gpui_forge_runtime::base::BASE_ID,
@@ -1241,10 +1312,15 @@ fn bundle(m_dir: &Path, manifest: &ForgeToml, name: &str, binary: &Path) -> i32 
         let appdir = out_dir.join(format!("{name}.AppDir"));
         let _ = std::fs::create_dir_all(appdir.join("usr/bin"));
         let _ = std::fs::copy(binary, appdir.join("usr/bin").join(name));
-        // `[assets] dir` — copied next to the binary so document-relative
-        // paths like `assets/logo.png` resolve against the AppRun cwd.
-        if !manifest.assets.dir.is_empty() {
-            let assets = m_dir.join(&manifest.assets.dir);
+        // `meta.assets` on the entry doc, else `[assets] dir` — copied next
+        // to the binary so document-relative paths like `assets/logo.png`
+        // resolve against the AppRun cwd.
+        let assets = meta("assets")
+            .map(|d| entry_doc.parent().unwrap_or(m_dir).join(d))
+            .or_else(|| {
+                (!manifest.assets.dir.is_empty()).then(|| m_dir.join(&manifest.assets.dir))
+            });
+        if let Some(assets) = assets {
             let dest = assets.file_name().map(|n| appdir.join("usr/bin").join(n));
             if assets.is_dir()
                 && let Some(dest) = dest
@@ -1402,15 +1478,22 @@ fn preview_cmd(rest: &[String]) -> i32 {
     if code != 0 {
         return code;
     }
-    let Some(path) = doc_path(rest) else {
+    // `--app <name>` built that application's window doc — the binary is
+    // named for the app, not the entry document.
+    let Some((m_dir, manifest, path, name)) = project(rest) else {
         return 2;
     };
+    let (path, name) = match opt_value(rest, "--app") {
+        Some(n) => match app_document(&manifest, &m_dir, n) {
+            Some(p) => (p, n.to_owned()),
+            None => {
+                eprintln!("forge: no application `{n}` in this project");
+                return 1;
+            }
+        },
+        None => (path, name.replace('.', "-")),
+    };
     let path = path.canonicalize().unwrap_or(path);
-    let name = path
-        .file_stem()
-        .unwrap_or_default()
-        .to_string_lossy()
-        .replace('.', "-");
     let out = opt_value(rest, "-o")
         .map(PathBuf::from)
         .unwrap_or_else(|| path.parent().unwrap_or(Path::new(".")).join(&name));
@@ -1779,8 +1862,9 @@ pub fn set_state(view: &mut ForgeView, cx: &mut gpui::Context<ForgeView>) {{
     )
 }
 
-/// Resolves the project: a forge.toml on the arg path or up from cwd, plus
-/// the entry document and package name.
+/// Resolves the project: a forge.toml named on the command line (or in the
+/// arg dir, or the cwd — never a parent directory), plus the entry document
+/// and package name. A document argument alone is document context.
 fn project(rest: &[String]) -> Option<(PathBuf, ForgeToml, PathBuf, String)> {
     let manifest_path = doc_path(rest)
         .filter(|p| p.is_dir() || p.file_name() == Some(std::ffi::OsStr::new("forge.toml")));
@@ -1799,8 +1883,17 @@ fn project(rest: &[String]) -> Option<(PathBuf, ForgeToml, PathBuf, String)> {
         manifest.unwrap_or_else(|| (PathBuf::new(), ForgeToml::default()));
     let path = doc_path(rest)
         .filter(|p| p.is_file() && p.file_name() != Some(std::ffi::OsStr::new("forge.toml")))
-        .or_else(|| manifest_dir.join(&manifest.forge.document).into());
-    let path = path.filter(|p| p.exists())?;
+        .or_else(|| {
+            if manifest.forge.document.is_empty() {
+                manifest
+                    .apps
+                    .first()
+                    .map(|a| manifest_dir.join(&a.document))
+            } else {
+                Some(manifest_dir.join(&manifest.forge.document))
+            }
+        });
+    let path = path.filter(|p| p.is_file())?;
     let path = path.canonicalize().unwrap_or(path);
     let name = if manifest.package.name.is_empty() {
         path.file_stem()
@@ -1923,11 +2016,38 @@ fn lib_wiring(library: &str, root: &Path, base_id: &str) -> Option<(String, Stri
     })
 }
 
+/// `--app <name>` in project context — resolves the `[[apps]]` entry whose
+/// name, or document file stem, matches.
+fn app_document(manifest: &ForgeToml, m_dir: &Path, name: &str) -> Option<PathBuf> {
+    manifest
+        .apps
+        .iter()
+        .find(|a| {
+            a.name == name
+                || Path::new(&a.document)
+                    .file_stem()
+                    .is_some_and(|s| s.to_string_lossy().trim_end_matches(".forge") == name)
+        })
+        .map(|a| m_dir.join(&a.document))
+}
+
 fn build_cmd(rest: &[String]) -> i32 {
     let release = rest.iter().any(|a| a == "--release");
     let Some((m_dir, manifest, path, name)) = project(rest) else {
         usage();
         return 2;
+    };
+    // `--app <name>` swaps the entry document for that application's base
+    // window — the single-doc scaffold builds the window alone.
+    let (path, name) = match opt_value(rest, "--app") {
+        Some(n) => match app_document(&manifest, &m_dir, n) {
+            Some(p) => (p, n.to_owned()),
+            None => {
+                eprintln!("forge: no application `{n}` in this project");
+                return 1;
+            }
+        },
+        None => (path, name),
     };
     let dir = opt_value(rest, "--dir")
         .map(PathBuf::from)
@@ -2165,31 +2285,222 @@ fn write(path: &Path, contents: &str) {
     }
 }
 
-/// `forge skeleton [--dir <path>] [--force]` — emit a *kept* multi-doc app
-/// crate: every `*.forge.yaml` under the project becomes a `docs::DOCS`
-/// entry, the union of their `state:` declarations becomes `store::seed()`,
-/// and each `use:` wires adapter deps. Unlike `forge build` nothing is
-/// compiled — the crate itself is the launching pad.
+/// A `.forge.yaml` file pulled into a build — parsed once, grouped into an
+/// application afterwards.
+struct DocFile {
+    /// Canonical path — `meta:` relative paths resolve against its parent.
+    path: PathBuf,
+    src: String,
+    doc: gpui_forge_runtime::forge_spec::Document,
+}
+
+/// One application — the base-window document plus its member documents.
+/// `files` indexes into the collected doc set, the window first.
+struct App {
+    name: String,
+    window: usize,
+    files: Vec<usize>,
+}
+
+/// Reads and parses `seed` files, then chases `meta.include` transitively.
+/// `included_by` remembers which document pulled each file so membership
+/// without an explicit `meta.window` follows the including document's app.
+/// The base argument to `check` only steers validation. Membership resolves
+/// before any application has a known base, so this pass parses with the
+/// compiled base. Per-app diagnostics come afterwards.
+fn collect_docs(
+    seed: Vec<PathBuf>,
+    catalogs: &[gpui_forge_runtime::forge_spec::catalog::Catalog],
+) -> (Vec<DocFile>, std::collections::HashMap<PathBuf, PathBuf>) {
+    use std::collections::{HashMap, HashSet, VecDeque};
+    let mut files: Vec<DocFile> = Vec::new();
+    let mut included_by: HashMap<PathBuf, PathBuf> = HashMap::new();
+    let mut seen: HashSet<PathBuf> = HashSet::new();
+    let mut queue: VecDeque<PathBuf> = VecDeque::new();
+    for p in seed {
+        if seen.insert(p.clone()) {
+            queue.push_back(p);
+        }
+    }
+    while let Some(path) = queue.pop_front() {
+        let src = std::fs::read_to_string(&path).unwrap_or_default();
+        let (doc, _) = check::check(&src, gpui_forge_runtime::base::BASE_ID, catalogs);
+        let Some(doc) = doc else {
+            eprintln!("forge: {} doesn't parse — skipped", path.display());
+            continue;
+        };
+        for inc in doc_meta_list(&doc, "include") {
+            let dir = path.parent().unwrap_or(Path::new("."));
+            let p = dir.join(inc);
+            if !p.exists() {
+                eprintln!(
+                    "forge: {}: `meta.include` names `{inc}` — no such file",
+                    path.display()
+                );
+                continue;
+            }
+            let p = p.canonicalize().unwrap_or(p);
+            if seen.insert(p.clone()) {
+                included_by.insert(p.clone(), path.clone());
+                queue.push_back(p);
+            }
+        }
+        files.push(DocFile { path, src, doc });
+    }
+    (files, included_by)
+}
+
+/// Groups the collected files into applications. `windows` lists the
+/// declared base windows in order — the entry document first, then
+/// `[[apps]]` entries. A `meta.window` back-pointer pulls its target into
+/// the doc set when it was not listed. Unclaimed files follow their
+/// `meta.include` chain, then land on the primary app.
+fn group_apps(
+    files: &mut Vec<DocFile>,
+    included_by: &std::collections::HashMap<PathBuf, PathBuf>,
+    windows: &[(String, PathBuf)],
+    catalogs: &[gpui_forge_runtime::forge_spec::catalog::Catalog],
+) -> Vec<App> {
+    use std::collections::{HashMap, HashSet};
+    let canon = |p: &Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+    // Window membership: file path → the base-window path it belongs to.
+    let mut member_of: HashMap<PathBuf, PathBuf> = HashMap::new();
+    // The window set: declared windows plus every `meta.window` target.
+    let mut window_paths: HashSet<PathBuf> = windows.iter().map(|(_, p)| p.clone()).collect();
+    for f in files.iter() {
+        let Some(window) = doc_meta(&f.doc, "window").map(str::to_owned) else {
+            continue;
+        };
+        if window_paths.contains(&f.path) {
+            // A declared window stays a window even with a stray pointer.
+            continue;
+        }
+        let dir = f.path.parent().unwrap_or(Path::new("."));
+        let target = canon(&dir.join(&window));
+        if !target.exists() {
+            eprintln!(
+                "forge: {}: `meta.window` names `{window}` — no such file, skipped",
+                f.path.display()
+            );
+            continue;
+        }
+        member_of.insert(f.path.clone(), target);
+    }
+    // Pull `meta.window` targets that nobody listed into the doc set.
+    let mut added: Vec<PathBuf> = Vec::new();
+    for target in member_of.values() {
+        if !files.iter().any(|f| &f.path == target) && !added.contains(target) {
+            let src = std::fs::read_to_string(target).unwrap_or_default();
+            let (doc, _) = check::check(&src, gpui_forge_runtime::base::BASE_ID, catalogs);
+            match doc {
+                Some(doc) => {
+                    files.push(DocFile {
+                        path: target.clone(),
+                        src,
+                        doc,
+                    });
+                    added.push(target.clone());
+                }
+                None => eprintln!("forge: {} doesn't parse — skipped", target.display()),
+            }
+        }
+    }
+    window_paths.extend(member_of.values().cloned());
+    // Resolve every file's window: explicit pointer first, then the include
+    // chain, then the primary app.
+    let index: HashMap<PathBuf, usize> = files
+        .iter()
+        .enumerate()
+        .map(|(i, f)| (f.path.clone(), i))
+        .collect();
+    let primary = windows.first().map(|(_, p)| p.clone());
+    let window_of = |f: &DocFile| -> PathBuf {
+        let mut at = f.path.clone();
+        let mut seen = HashSet::new();
+        loop {
+            if window_paths.contains(&at) {
+                return at;
+            }
+            if let Some(w) = member_of.get(&at)
+                && window_paths.contains(w)
+            {
+                return w.clone();
+            }
+            match included_by.get(&at) {
+                Some(up) if seen.insert(up.clone()) => at = up.clone(),
+                _ => return primary.clone().unwrap_or_else(|| f.path.clone()),
+            }
+        }
+    };
+    let mut order: Vec<PathBuf> = windows.iter().map(|(_, p)| p.clone()).collect();
+    for w in &added {
+        if !order.contains(w) {
+            order.push(w.clone());
+        }
+    }
+    // Names: `[[apps]] name`, else the window's file stem.
+    let mut apps: Vec<App> = Vec::new();
+    for w in &order {
+        let name = windows
+            .iter()
+            .find(|(_, p)| p == w)
+            .map(|(n, _)| n.clone())
+            .filter(|n| !n.is_empty())
+            .unwrap_or_else(|| {
+                w.file_stem()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .trim_end_matches(".forge")
+                    .to_owned()
+            });
+        if let Some(&wi) = index.get(w) {
+            apps.push(App {
+                name,
+                window: wi,
+                files: vec![wi],
+            });
+        }
+    }
+    for (i, f) in files.iter().enumerate() {
+        let w = window_of(f);
+        if w == f.path {
+            continue;
+        }
+        if let Some(app) = apps.iter_mut().find(|a| files[a.window].path == w) {
+            app.files.push(i);
+        }
+    }
+    apps
+}
+
+/// `forge skeleton [--dir <path>] [--app <name>] [--force]` — emit a *kept*
+/// app crate per application. Each base window's doc set becomes a
+/// `docs::DOCS` registry. The union of their `state:` declarations becomes
+/// `store::seed()`, and each `use:` wires adapter deps. Unlike `forge build`
+/// nothing compiles — the crates themselves are the launching pad.
 fn skeleton_cmd(rest: &[String]) -> i32 {
-    let Some((m_dir, manifest, path, name)) = project(rest) else {
+    let Some((m_dir, manifest, path, _name)) = project(rest) else {
         usage();
         return 2;
     };
-    let out = opt_value(rest, "--dir")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| m_dir.join("app"));
-    if out.join("src/main.rs").exists() && !rest.iter().any(|a| a == "--force") {
-        eprintln!(
-            "forge: {} already has src/main.rs — pass --force to overwrite",
-            out.display()
-        );
-        return 1;
-    }
-    // The document set is exactly `forge.documents` resolved against the
-    // manifest dir — never a directory scan. The entry document is always
-    // part of the app, listed or not.
+    // The document set is the entry document plus `forge.documents` and
+    // `[[apps]]` windows resolved against the manifest — never a directory
+    // scan. `meta.include` members join through `collect_docs`.
     let path_c = path.canonicalize().unwrap_or_else(|_| path.clone());
-    let mut files = vec![path_c.clone()];
+    let mut seed = vec![path_c.clone()];
+    let mut windows: Vec<(String, PathBuf)> = vec![(String::new(), path_c.clone())];
+    for app in &manifest.apps {
+        let p = m_dir.join(&app.document);
+        if !p.exists() {
+            eprintln!("forge: `apps` names {} — no such file", p.display());
+            return 1;
+        }
+        let p = p.canonicalize().unwrap_or(p);
+        windows.push((app.name.clone(), p.clone()));
+        if !seed.contains(&p) {
+            seed.push(p);
+        }
+    }
     for entry in &manifest.forge.documents {
         let doc = m_dir.join(entry);
         if !doc.exists() {
@@ -2197,49 +2508,27 @@ fn skeleton_cmd(rest: &[String]) -> i32 {
             return 1;
         }
         let doc = doc.canonicalize().unwrap_or(doc);
-        if !files.contains(&doc) {
-            files.push(doc);
+        if !seed.contains(&doc) {
+            seed.push(doc);
         }
     }
     let catalogs = gpui_forge_runtime::check::catalogs();
-    // Parse the primary first — its `base:` is the app's base. Docs on a
-    // different base can't share one binary and are skipped with a note.
-    // The expected base is the manifest's when set, so a project on a
-    // non-default base doesn't flag its own documents as mismatched.
-    let primary_src = std::fs::read_to_string(&path).unwrap_or_default();
-    let expected = if manifest.forge.base.is_empty() {
-        gpui_forge_runtime::base::BASE_ID
-    } else {
-        &manifest.forge.base
+    let (mut files, included_by) = collect_docs(seed, &catalogs);
+    let apps = group_apps(&mut files, &included_by, &windows, &catalogs);
+    let apps = match opt_value(rest, "--app") {
+        Some(name) => match apps.into_iter().find(|a| a.name == name) {
+            Some(a) => vec![a],
+            None => {
+                eprintln!("forge: no application `{name}` in this project");
+                return 1;
+            }
+        },
+        None => apps,
     };
-    let (primary_doc, diags) = check::check(&primary_src, expected, &catalogs);
-    for d in &diags {
-        eprintln!(
-            "{}:{}:{}: {}",
-            path.display(),
-            d.pos.line,
-            d.pos.col,
-            d.message
-        );
-    }
-    let doc_base = primary_doc
-        .as_ref()
-        .and_then(|d| d.base.clone())
-        .filter(|b| !b.is_empty())
-        .or_else(|| (!manifest.forge.base.is_empty()).then(|| manifest.forge.base.clone()))
-        .unwrap_or_else(|| gpui_forge_runtime::base::BASE_ID.to_string());
-    let bases = check::bases();
-    let Some(base) = bases.iter().find(|b| b.id == doc_base) else {
-        eprintln!(
-            "forge: document targets unknown base `{doc_base}` — registered: {}",
-            bases
-                .iter()
-                .map(|b| b.id.as_str())
-                .collect::<Vec<_>>()
-                .join(", ")
-        );
+    if apps.is_empty() {
+        eprintln!("forge: no usable documents — every listed file failed to parse");
         return 1;
-    };
+    }
     let root = workspace_root()
         .canonicalize()
         .unwrap_or_else(|_| workspace_root());
@@ -2249,213 +2538,257 @@ fn skeleton_cmd(rest: &[String]) -> i32 {
         .map(|(n, v)| format!("{n} = \"{v}\""))
         .collect::<Vec<_>>()
         .join("\n");
-    // Per doc: (stem, source, model). Stems dedup for the `docs::DOCS` keys.
-    let mut docs: Vec<(String, String, gpui_forge_runtime::forge_spec::Document)> = Vec::new();
-    let mut entry_meta: Vec<(String, String)> = Vec::new();
-    let mut stems = std::collections::HashMap::<String, usize>::new();
-    let mut lib_deps = Vec::new();
-    let mut lib_uses = Vec::new();
-    let mut lib_register = Vec::new();
-    for file in &files {
-        let raw_stem = file
-            .file_stem()
-            .unwrap_or_default()
-            .to_string_lossy()
-            .trim_end_matches(".forge")
-            .to_owned();
-        let n = stems.entry(raw_stem.clone()).or_insert(0);
-        *n += 1;
-        let stem = if *n == 1 {
-            raw_stem
+    let bases = check::bases();
+    let out_parent = opt_value(rest, "--dir")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| m_dir.join("app"));
+    let multi = apps.len() > 1;
+    let force = rest.iter().any(|a| a == "--force");
+    let mut rc = 0;
+    for (ai, app) in apps.iter().enumerate() {
+        let out = if multi {
+            out_parent.join(&app.name)
         } else {
-            format!("{raw_stem}-{n}")
+            out_parent.clone()
         };
-        let src = std::fs::read_to_string(file).unwrap_or_default();
-        let (doc, d) = check::check(&src, &doc_base, &catalogs);
-        for diag in if file == &path_c { &[][..] } else { &d[..] } {
+        if out.join("src/main.rs").exists() && !force {
             eprintln!(
-                "{}:{}:{}: {}",
-                file.display(),
-                diag.pos.line,
-                diag.pos.col,
-                diag.message
+                "forge: {} already has src/main.rs — pass --force to overwrite",
+                out.display()
             );
-        }
-        let Some(doc) = doc else {
-            eprintln!("forge: {} doesn't parse — skipped", file.display());
-            continue;
-        };
-        if doc.base.as_deref().is_some_and(|b| b != doc_base) {
-            eprintln!(
-                "forge: {} targets base `{}`, not `{doc_base}` — skipped",
-                file.display(),
-                doc.base.as_deref().unwrap_or_default()
-            );
+            rc = 1;
             continue;
         }
-        for import in &doc.imports {
-            if !base.libraries.iter().any(|l| l == &import.library) {
+        let window = &files[app.window];
+        // The application's base: the base window's `base:` wins, the
+        // manifest's `forge.base` fills the gap, the compiled default covers
+        // the rest.
+        let doc_base = window
+            .doc
+            .base
+            .clone()
+            .filter(|b| !b.is_empty())
+            .or_else(|| (!manifest.forge.base.is_empty()).then(|| manifest.forge.base.clone()))
+            .unwrap_or_else(|| gpui_forge_runtime::base::BASE_ID.to_string());
+        let Some(base) = bases.iter().find(|b| b.id == doc_base) else {
+            eprintln!(
+                "forge: {} targets unknown base `{doc_base}` — registered: {}",
+                window.path.display(),
+                bases
+                    .iter()
+                    .map(|b| b.id.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ")
+            );
+            rc = 1;
+            continue;
+        };
+        // Per doc: (stem, source, model). Stems dedup per app for
+        // `docs::DOCS` keys.
+        let mut docs: Vec<(String, String, gpui_forge_runtime::forge_spec::Document)> = Vec::new();
+        let mut stems = std::collections::HashMap::<String, usize>::new();
+        let mut lib_deps = Vec::new();
+        let mut lib_uses = Vec::new();
+        let mut lib_register = Vec::new();
+        for &i in &app.files {
+            let file = &files[i];
+            let raw_stem = file
+                .path
+                .file_stem()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .trim_end_matches(".forge")
+                .to_owned();
+            let n = stems.entry(raw_stem.clone()).or_insert(0);
+            *n += 1;
+            let stem = if *n == 1 {
+                raw_stem
+            } else {
+                format!("{raw_stem}-{n}")
+            };
+            let (_, d) = check::check(&file.src, &doc_base, &catalogs);
+            for diag in &d {
                 eprintln!(
-                    "forge: `{}` is not compatible with base `{}` — skipped",
-                    import.library, base.id
+                    "{}:{}:{}: {}",
+                    file.path.display(),
+                    diag.pos.line,
+                    diag.pos.col,
+                    diag.message
+                );
+            }
+            // Members on a different base than their application's window
+            // can't share the binary — the validation above flags it.
+            if file.doc.base.as_deref().is_some_and(|b| b != doc_base) {
+                eprintln!(
+                    "forge: {} targets base `{}`, not `{doc_base}` — skipped",
+                    file.path.display(),
+                    file.doc.base.as_deref().unwrap_or_default()
                 );
                 continue;
             }
-            match lib_wiring(&import.library, &root, &base.id) {
-                Some((dep, use_, register)) if !lib_deps.contains(&dep) => {
-                    lib_deps.push(dep);
-                    lib_uses.push(use_);
-                    lib_register.push(register);
+            for import in &file.doc.imports {
+                if !base.libraries.iter().any(|l| l == &import.library) {
+                    eprintln!(
+                        "forge: `{}` is not compatible with base `{}` — skipped",
+                        import.library, base.id
+                    );
+                    continue;
                 }
-                Some(_) => {}
-                None => eprintln!(
-                    "forge: no adapter crate known for `{}` — skipped",
-                    import.library
-                ),
+                match lib_wiring(&import.library, &root, &base.id) {
+                    Some((dep, use_, register)) if !lib_deps.contains(&dep) => {
+                        lib_deps.push(dep);
+                        lib_uses.push(use_);
+                        lib_register.push(register);
+                    }
+                    Some(_) => {}
+                    None => eprintln!(
+                        "forge: no adapter crate known for `{}` — skipped",
+                        import.library
+                    ),
+                }
+            }
+            docs.push((stem, file.src.clone(), file.doc.clone()));
+        }
+        if docs.is_empty() {
+            eprintln!("forge: {} has no usable documents", app.name);
+            rc = 1;
+            continue;
+        }
+        // App identity: the base window's `meta:` wins, `forge.toml
+        // [package]` falls back, the file stem is the last resort.
+        let meta = |key: &str| {
+            doc_meta(&window.doc, key)
+                .or_else(|| docs.iter().find_map(|(_, _, d)| doc_meta(d, key)))
+                .filter(|v| !v.is_empty())
+                .map(str::to_owned)
+        };
+        // The crate name: `[[apps]] name` or the window's stem, with the
+        // project's package name keeping its claim on the default app.
+        let name = if ai == 0 && !manifest.package.name.is_empty() {
+            manifest.package.name.clone()
+        } else {
+            app.name.clone()
+        };
+        let title = meta("title").unwrap_or_else(|| {
+            if manifest.package.title.is_empty() {
+                name.replace('-', " ")
+            } else {
+                manifest.package.title.clone()
+            }
+        });
+        let app_id = meta("id").unwrap_or_else(|| {
+            if manifest.package.id.is_empty() {
+                name.clone()
+            } else {
+                manifest.package.id.clone()
+            }
+        });
+        let primary_stem = docs[0].0.clone();
+        // Copy the docs next to the crate so include_str! paths are stable,
+        // then emit src/{main,docs,store}.rs + Cargo.toml.
+        let src_dir = out.join("src");
+        let docs_dir = out.join("docs");
+        if let Err(e) =
+            std::fs::create_dir_all(&src_dir).and_then(|_| std::fs::create_dir_all(&docs_dir))
+        {
+            eprintln!("forge: cannot create {}: {e}", out.display());
+            rc = 1;
+            continue;
+        }
+        let mut entries = String::new();
+        for (stem, src, _) in &docs {
+            write(&docs_dir.join(format!("{stem}.forge.yaml")), src);
+            entries += &format!("    ({stem:?}, include_str!(\"../docs/{stem}.forge.yaml\")),\n");
+        }
+        write(
+            &src_dir.join("docs.rs"),
+            &DOCS_RS
+                .replace("{ENTRIES}", &entries)
+                .replace("{PRIMARY}", &primary_stem),
+        );
+        // The store: every doc's `state:` merges flat (bindings resolve
+        // against one state object), first doc wins on colliding paths.
+        let mut seed = serde_json::Map::new();
+        let mut vars = String::new();
+        for (stem, _, doc) in &docs {
+            for (path, ty) in &doc.state {
+                vars += &format!("    ({stem:?}, {path:?}, {ty:?}),\n");
+                seed_path(&mut seed, path, decl_seed(ty));
             }
         }
-        if file == &path_c {
-            entry_meta = doc.meta.clone();
-        }
-        docs.push((stem, src, doc));
-    }
-    if docs.is_empty() {
-        eprintln!("forge: no usable documents — every listed file failed to parse");
-        return 1;
-    }
-    // App identity: the entry document's `meta:` wins, `forge.toml
-    // [package]` falls back, the file stem is the last resort.
-    let meta = |key: &str| {
-        entry_meta
-            .iter()
-            .find(|(k, _)| k == key)
-            .map(|(_, v)| v.as_str())
-            .or_else(|| docs.iter().find_map(|(_, _, d)| doc_meta(d, key)))
-            .filter(|v| !v.is_empty())
-            .map(str::to_owned)
-    };
-    let title = meta("title").unwrap_or_else(|| {
-        if manifest.package.title.is_empty() {
-            name.replace('-', " ")
-        } else {
-            manifest.package.title.clone()
-        }
-    });
-    let app_id = meta("id").unwrap_or_else(|| {
-        if manifest.package.id.is_empty() {
-            name.clone()
-        } else {
-            manifest.package.id.clone()
-        }
-    });
-    let primary_stem = path
-        .file_stem()
-        .unwrap_or_default()
-        .to_string_lossy()
-        .trim_end_matches(".forge")
-        .to_owned();
-    // Copy the docs next to the crate so include_str! paths are stable,
-    // then emit src/{main,docs,store}.rs + Cargo.toml.
-    let src_dir = out.join("src");
-    let docs_dir = out.join("docs");
-    if let Err(e) =
-        std::fs::create_dir_all(&src_dir).and_then(|_| std::fs::create_dir_all(&docs_dir))
-    {
-        eprintln!("forge: cannot create {}: {e}", out.display());
-        return 1;
-    }
-    let mut entries = String::new();
-    for (stem, src, _) in &docs {
-        write(&docs_dir.join(format!("{stem}.forge.yaml")), src);
-        entries += &format!("    ({stem:?}, include_str!(\"../docs/{stem}.forge.yaml\")),\n");
-    }
-    write(
-        &src_dir.join("docs.rs"),
-        &DOCS_RS
-            .replace("{ENTRIES}", &entries)
-            .replace("{PRIMARY}", &primary_stem),
-    );
-    // The store: every doc's `state:` merges flat (bindings resolve against
-    // one state object), first doc wins on colliding paths.
-    let mut seed = serde_json::Map::new();
-    let mut vars = String::new();
-    for (stem, _, doc) in &docs {
-        for (path, ty) in &doc.state {
-            vars += &format!("    ({stem:?}, {path:?}, {ty:?}),\n");
-            seed_path(&mut seed, path, decl_seed(ty));
-        }
-    }
-    write(
-        &src_dir.join("store.rs"),
-        &STORE_RS.replace("{VARS}", &vars).replace(
-            "{SEED}",
-            &serde_json::to_string_pretty(&Json::Object(seed)).unwrap_or_default(),
-        ),
-    );
-    write(
-        &out.join("Cargo.toml"),
-        &APP_TOML
-            .replace("{NAME}", &name)
-            .replace("{ROOT}", &root.display().to_string())
-            .replace("{LIBS}", &libs)
-            .replace("{LIB_DEPS}", &lib_deps.join("\n"))
-            .replace("{BASE_FEATURE}", &format!("base-{}", base.id))
-            .replace(
-                "{BASE_LIB_DEP}",
-                &format!("{} = \"{}\"", base.library_crate, base.library_version),
-            )
-            .replace(
-                "{BASE_GPUI_DEP}",
-                &if base.gpui_crate == base.library_crate {
-                    String::new()
-                } else {
-                    format!("{} = \"={}\"", base.gpui_crate, base.gpui_version)
-                },
-            ),
-    );
-    if !base.toolchain.is_empty() {
         write(
-            &out.join("rust-toolchain.toml"),
-            &format!("[toolchain]\nchannel = \"{}\"\n", base.toolchain),
+            &src_dir.join("store.rs"),
+            &STORE_RS.replace("{VARS}", &vars).replace(
+                "{SEED}",
+                &serde_json::to_string_pretty(&Json::Object(seed)).unwrap_or_default(),
+            ),
         );
-    }
-    // gpui-kit gets the full multi-doc main. Other bases get their normal
-    // app_main with the docs/store modules appended for manual wiring.
-    let main = if base.id == "gpui-kit" {
-        SKELETON_MAIN.to_string()
-    } else {
-        // Non-gpui-kit bases keep their single-doc app_main — it embeds
-        // `../app.forge.yaml`, so the primary doc also lands at the root.
-        if let Some((_, src, _)) = docs.iter().find(|(s, _, _)| s == &primary_stem) {
-            write(&out.join("app.forge.yaml"), src);
+        write(
+            &out.join("Cargo.toml"),
+            &APP_TOML
+                .replace("{NAME}", &name)
+                .replace("{ROOT}", &root.display().to_string())
+                .replace("{LIBS}", &libs)
+                .replace("{LIB_DEPS}", &lib_deps.join("\n"))
+                .replace("{BASE_FEATURE}", &format!("base-{}", base.id))
+                .replace(
+                    "{BASE_LIB_DEP}",
+                    &format!("{} = \"{}\"", base.library_crate, base.library_version),
+                )
+                .replace(
+                    "{BASE_GPUI_DEP}",
+                    &if base.gpui_crate == base.library_crate {
+                        String::new()
+                    } else {
+                        format!("{} = \"={}\"", base.gpui_crate, base.gpui_version)
+                    },
+                ),
+        );
+        if !base.toolchain.is_empty() {
+            write(
+                &out.join("rust-toolchain.toml"),
+                &format!("[toolchain]\nchannel = \"{}\"\n", base.toolchain),
+            );
         }
-        format!(
-            "{}\n// `forge skeleton` extras — the doc registry and merged\n// state store. Wire them in where this base's main needs them.\nmod docs;\nmod store;\n",
-            app_main(&base.id)
-        )
-    };
-    write(
-        &src_dir.join("main.rs"),
-        &main
-            .replace("{APP_ID}", &app_id)
-            .replace("{BASE_ID}", &doc_base)
-            .replace("{TITLE}", &title)
-            .replace("{LIB_USE}", &lib_uses.join("\n"))
-            .replace("{LIB_REGISTER}", &lib_register.join("\n")),
-    );
-    if base.theme == "gpui-kit" {
-        emit_themes(&root, &m_dir, &manifest, &out, &src_dir);
+        // gpui-kit gets the full multi-doc main. Other bases get their
+        // normal app_main with the docs/store modules appended for manual
+        // wiring.
+        let main = if base.id == "gpui-kit" {
+            SKELETON_MAIN.to_string()
+        } else {
+            // Non-gpui-kit bases keep their single-doc app_main — it embeds
+            // `../app.forge.yaml`, so the primary doc also lands at the root.
+            if let Some((_, src, _)) = docs.iter().find(|(s, _, _)| s == &primary_stem) {
+                write(&out.join("app.forge.yaml"), src);
+            }
+            format!(
+                "{}\n// `forge skeleton` extras — the doc registry and merged\n// state store. Wire them in where this base's main needs them.\nmod docs;\nmod store;\n",
+                app_main(&base.id)
+            )
+        };
+        write(
+            &src_dir.join("main.rs"),
+            &main
+                .replace("{APP_ID}", &app_id)
+                .replace("{BASE_ID}", &doc_base)
+                .replace("{TITLE}", &title)
+                .replace("{LIB_USE}", &lib_uses.join("\n"))
+                .replace("{LIB_REGISTER}", &lib_register.join("\n")),
+        );
+        if base.theme == "gpui-kit" {
+            emit_themes(&root, &m_dir, &manifest, &out, &src_dir);
+        }
+        println!(
+            "forge: skeleton {} — {} doc{} under docs/, `cargo run` inside it",
+            out.display(),
+            docs.len(),
+            if docs.len() == 1 { "" } else { "s" },
+        );
+        for (stem, _, _) in &docs {
+            println!("  docs::{stem}");
+        }
     }
-    println!(
-        "forge: skeleton {} — {} doc{} under docs/, `cargo run` inside it",
-        out.display(),
-        docs.len(),
-        if docs.len() == 1 { "" } else { "s" },
-    );
-    for (stem, _, _) in &docs {
-        println!("  docs::{stem}");
-    }
-    0
+    rc
 }
 
 /// A `state:` entry's seed value — recognized type names get type defaults.

@@ -4,6 +4,9 @@ A document's `meta:` block now carries app identity — title, app id, icon
 (doc wins, manifest is the fallback). So what is the project manifest still
 *for*? This is the honest inventory and the trade-off.
 
+See [multi-app-projects.md](multi-app-projects.md) for the follow-on: explicit
+project context, per-document project data, and multi-application builds.
+
 ## What `forge.toml` actually does today
 
 | Field | Consumer | Covered by the doc? |

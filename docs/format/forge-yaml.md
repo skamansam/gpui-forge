@@ -48,7 +48,7 @@ root:
 | `forge` | yes | Spec version, as a string (`"0.1"`) — see Versioning below |
 | `base` | no | Base component system (`gpui-kit`, `ratatui`, `bezel`, `adabraka`, `gpui-0.2`, and the scaffolded `iced`). Defaults to the project's `forge.toml` |
 | `use` | no | Map of import alias → `"<library-id> [<version-req>]"` |
-| `meta` | no | Map of string → string (title, description, …). `meta: {watch: "true"}` opts the document into Studio hot reload. Edits on disk re-validate and re-render it, and a parse failure keeps the last-good copy (diagnostics land in the status bar + markers). `meta.title` names the app. The skeleton bakes it into the window title. A remote preview host sets its window title to it when the document loads. |
+| `meta` | no | Map of string → string (title, description, …). `meta: {watch: "true"}` opts the document into Studio hot reload. Edits on disk re-validate and re-render it, and a parse failure keeps the last-good copy (diagnostics land in the status bar + markers). `meta.title` names the app. The skeleton bakes it into the window title. A remote preview host sets its window title to it when the document loads. Build-level keys: `meta.assets` names the app's asset directory, `meta.include` lists sibling documents the build pulls in, and `meta.window` points a member document at its application's entry document. |
 | `root` | yes | The root node |
 
 ### Base and library prerequisites
