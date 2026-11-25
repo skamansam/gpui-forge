@@ -24,15 +24,25 @@ Recent files live in the menu too — the list persists at
 
 The left rail is a file viewer rooted at the open document's folder — the
 last-opened project root, or Studio's launch directory before anything
-loads. It lists folders and `*.forge.yaml` files. It filters out VCS and
-build noise (`target`, `node_modules`, dot-files), and caps the scan's
-depth and entry count so a huge tree can't stall the UI. The panel is
-resizable. Clicking a file opens it in the **Document** tab.
+loads. It filters out VCS and build noise (`target`, `node_modules`,
+dot-files), and caps the scan's depth and entry count so a huge tree can't
+stall the UI. The panel is resizable. Clicking a file opens it in the
+**Document** tab.
 
-A project with more than one application lists them under **Apps** —
-`forge.document` first, then every `[[apps]]` entry, named like `forge
-skeleton` names them. Clicking an app opens its base window. The active
-app carries a dot marker, and the list hides for single-app projects.
+With a project open the rail shows the project hierarchy, not a raw
+filesystem scan. `forge.toml` sits first — a double-click opens the
+**Project** tab. One folder per application follows: `files` holds the
+documents the app claims (`meta.window` members, `meta.include` pulls,
+`forge.documents` entries), and `assets` shows its asset directory when
+one exists. Any `*.forge.yaml` no application claims sits under
+**unassigned** — it is on disk but outside every build. Everything else
+stays browsable under **other files**. This is the same grouping `forge
+skeleton` applies.
+
+The box above the tree searches file *contents* — type text and the rail
+lists `file:line` match rows across the project instead of the tree.
+Clearing the box puts the tree back. The tree's own filter box narrows by
+name.
 
 Right-clicking a row offers file actions: **New document here** creates the
 first free `untitled{,-N}.forge.yaml` in that folder, seeded with the open
@@ -50,10 +60,19 @@ status bar shows the open `file` path and `project` dir.
 ## The Project tab
 
 With a `forge.toml` open, a **Project** tab appears next to the document
-tabs (`if: $studio.project`). It edits the manifest itself. The file
-loads into an editor, and **Apply** writes `forge.toml` back to disk and
-re-loads the project, so `document`/`icons`/`assets`/`themes` changes take
-effect without reopening.
+tabs (`if: $studio.project`). It edits the manifest itself in two views:
+
+- **Editor** — a form over the manifest keys. Package identity
+  (`name`/`version`/`id`/`title`/`icon`/`binary`), the build group
+  (`base`, entry `document`, `watch`, member `documents` one per line),
+  extra applications (`name = doc` per line, the name optional), and the
+  `assets`/`themes`/`icons` directories.
+- **Source** — the raw TOML in a code editor.
+
+**Apply** writes `forge.toml` back to disk and re-loads the project, so
+`document`/`icons`/`assets`/`themes` changes take effect without
+reopening. The Editor patches the file's named keys — comments and
+untouched sections survive, and an emptied field removes its key.
 
 ## Watching for external changes
 

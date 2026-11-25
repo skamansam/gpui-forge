@@ -26,6 +26,23 @@ state:
   studio.project: string
   studio.apps: list
   studio.multiapp: boolean
+  studio.project_items: list
+  studio.project_mode: number
+  studio.project_grep: string
+  studio.proj_name: string
+  studio.proj_version: string
+  studio.proj_id: string
+  studio.proj_title: string
+  studio.proj_icon: string
+  studio.proj_binary: string
+  studio.proj_base: string
+  studio.proj_document: string
+  studio.proj_watch: boolean
+  studio.proj_documents: multiline
+  studio.proj_apps: multiline
+  studio.proj_assets_dir: string
+  studio.proj_themes_dir: string
+  studio.proj_iconset: string
   studio.spec: string
   studio.tab: number
   studio.assets_dir: string
@@ -957,37 +974,18 @@ body: &body
                       if: $studio.project
                 - Text: "{$studio.project_name}"
                   style: {size: xs, color: $theme.muted_foreground}
-                # Multi-app projects list their applications — a click opens
-                # that app's base window. `studio.multiapp` hides the block
-                # for single-app projects.
-                - VStack:
-                  if: $studio.multiapp
-                  style: {gap: 2px}
-                  children:
-                    - Text: Apps
-                      style: {size: xs, weight: semibold, color: $theme.muted_foreground}
-                    - for: $studio.apps
-                      each: a
-                      children:
-                        - HStack:
-                          style: {gap: 4px, align: center}
-                          children:
-                            - Text: "•"
-                              if: $a.active
-                              style: {color: $theme.accent}
-                            - Button: "{$a.name}"
-                              variant: Ghost
-                              size: Small
-                              tooltip: "{$a.doc}"
-                              on click: open_path($a.path)
-                              style: {grow: true}
+                - Input#project_grep:
+                  value: bind $studio.project_grep
+                  placeholder: search file contents…
+                  on change: grep_project($studio.project_grep)
                 - forge.Files#files:
-                  root: "{$studio.project_dir}"
+                  # `of:` — the host emits the listing. A project root gets
+                  # the application hierarchy, anything else a plain scan,
+                  # and a content query swaps in `file:line` match rows.
+                  of: studio.project_items
                   nonce: $studio.files_nonce
                   search: $studio.files_search
                   icons: $studio.files_icons
-                  hidden: $studio.files_hidden
-                  folders: $studio.files_folders
                   highlights: $studio.files_highlights
                   selected: bind $studio.file_selected
                   # Single click selects/highlights. Double-click (`open`) loads.
@@ -1027,8 +1025,10 @@ body: &body
                     - Tab: Icons
                       <<: *iconsTab
                     # Only when a forge.toml project is open — edits the
-                    # manifest itself. Apply writes it and re-loads the
-                    # project (document/icons/assets/themes re-derive).
+                    # manifest itself. The Editor sub-tab is a form over
+                    # the manifest keys; Source edits the TOML directly.
+                    # Apply writes the active mode and re-loads the project
+                    # (document/icons/assets/themes re-derive).
                     - Tab: Project
                       if: $studio.project
                       children:
@@ -1037,10 +1037,114 @@ body: &body
                           children:
                             - Text: "{$studio.project}/forge.toml"
                               style: {size: sm, color: $theme.muted_foreground}
-                            - Editor#project_toml:
-                              language: toml
-                              value: bind $studio.toml_source
-                              style: {grow: true, min-height: 0, border: 1px}
+                            - Tabs#project_mode:
+                              variant: Segmented
+                              selected: bind $studio.project_mode
+                              style: {grow: true, min-height: 0}
+                              children:
+                                - Tab: Editor
+                                  children:
+                                    - Settings:
+                                      style: {grow: true, min-height: 0}
+                                      children:
+                                        - SettingPage: Application
+                                          children:
+                                            - SettingsGroup: Package
+                                              children:
+                                                - SettingItem: Name
+                                                  children:
+                                                    - Input:
+                                                      value: bind $studio.proj_name
+                                                      placeholder: package name
+                                                - SettingItem: Version
+                                                  children:
+                                                    - Input:
+                                                      value: bind $studio.proj_version
+                                                      placeholder: 0.1.0
+                                                - SettingItem: Identifier
+                                                  children:
+                                                    - Input:
+                                                      value: bind $studio.proj_id
+                                                      placeholder: dev.example.app
+                                                - SettingItem: Title
+                                                  children:
+                                                    - Input:
+                                                      value: bind $studio.proj_title
+                                                      placeholder: window title
+                                                - SettingItem: Icon
+                                                  children:
+                                                    - Input:
+                                                      value: bind $studio.proj_icon
+                                                      placeholder: icon file in assets
+                                                - SettingItem: Binary
+                                                  children:
+                                                    - Input:
+                                                      value: bind $studio.proj_binary
+                                                      placeholder: existing workspace binary
+                                            - SettingsGroup: Build
+                                              children:
+                                                - SettingItem: Base
+                                                  children:
+                                                    - Select:
+                                                      options: $bases
+                                                      value: bind $studio.proj_base
+                                                      placeholder: gpui-kit
+                                                - SettingItem: Entry document
+                                                  children:
+                                                    - Input:
+                                                      value: bind $studio.proj_document
+                                                      placeholder: main.forge.yaml
+                                                - SettingItem: Watch for changes
+                                                  children:
+                                                    - Switch:
+                                                      checked: bind $studio.proj_watch
+                                                - SettingItem: Member documents
+                                                  children:
+                                                    - VStack:
+                                                      style: {gap: 4px}
+                                                      children:
+                                                        - Text: one document path per line
+                                                          style: {size: xs, color: $theme.muted_foreground}
+                                                        - Editor#proj_documents:
+                                                          value: bind $studio.proj_documents
+                                                          style: {height: 96px, border: 1px}
+                                            - SettingsGroup: Applications
+                                              children:
+                                                - SettingItem: Additional apps
+                                                  children:
+                                                    - VStack:
+                                                      style: {gap: 4px}
+                                                      children:
+                                                        - Text: "one app per line: name = document.forge.yaml"
+                                                          style: {size: xs, color: $theme.muted_foreground}
+                                                        - Editor#proj_apps:
+                                                          value: bind $studio.proj_apps
+                                                          style: {height: 96px, border: 1px}
+                                        - SettingPage: Assets
+                                          children:
+                                            - SettingsGroup: Directories
+                                              children:
+                                                - SettingItem: Assets dir
+                                                  children:
+                                                    - Input:
+                                                      value: bind $studio.proj_assets_dir
+                                                      placeholder: assets
+                                                - SettingItem: Themes dir
+                                                  children:
+                                                    - Input:
+                                                      value: bind $studio.proj_themes_dir
+                                                      placeholder: themes
+                                                - SettingItem: Icon set
+                                                  children:
+                                                    - Input:
+                                                      value: bind $studio.proj_iconset
+                                                      placeholder: lucide
+                                - Tab: Source
+                                  children:
+                                    - Editor#project_toml:
+                                      language: toml
+                                      value: bind $studio.toml_source
+                                      style: {grow: true, min-height: 0, border: 1px}
                             - HStack:
                               style: {justify: end}
                               children:

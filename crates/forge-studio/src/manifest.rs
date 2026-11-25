@@ -31,6 +31,51 @@ pub fn truthy(v: &str) -> bool {
     matches!(v, "true" | "1" | "yes" | "on")
 }
 
+/// A `[section] key = ["a", "b"]` list as owned strings — inline or spread
+/// across lines. The scan quotes each item, so a `,` inside a string does
+/// not split. A missing key gives an empty vec.
+pub fn manifest_list_section(src: &str, section: &str, key: &str) -> Vec<String> {
+    // Section bodies end at the next line-start `[`, never a `[` inside a
+    // value — `documents = ["a"]` holds its own bracket.
+    let body = src
+        .split(&format!("\n[{section}]"))
+        .nth(1)
+        .or_else(|| src.strip_prefix(&format!("[{section}]")))
+        .unwrap_or_default();
+    let body = body.split("\n[").next().unwrap_or_default();
+    let mut lines = body.lines().map(str::trim);
+    let mut text = String::new();
+    for l in lines.by_ref() {
+        let Some(v) = l
+            .strip_prefix(key)
+            .and_then(|r| r.trim_start().strip_prefix('='))
+        else {
+            continue;
+        };
+        text.push_str(v);
+        if v.contains(']') {
+            break;
+        }
+        // Multi-line array — pull lines until the closing bracket.
+        for l in lines.by_ref() {
+            text.push_str(l);
+            if l.contains(']') {
+                break;
+            }
+        }
+        break;
+    }
+    let mut items = Vec::new();
+    let mut rest = text.as_str();
+    while let Some(open) = rest.find('"') {
+        rest = &rest[open + 1..];
+        let Some(close) = rest.find('"') else { break };
+        items.push(rest[..close].to_owned());
+        rest = &rest[close + 1..];
+    }
+    items
+}
+
 /// Every `[[apps]]` block as `(name, document)` — `name` falls back to the
 /// document's file stem. `forge.document` is the primary application. These
 /// are the extra entry points a project declares.

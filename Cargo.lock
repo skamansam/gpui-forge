@@ -4162,6 +4162,7 @@ dependencies = [
  "gpui-forge-runtime",
  "gpui-kit",
  "serde_json",
+ "toml_edit 0.22.27",
  "x11rb 0.14.0",
 ]
 
