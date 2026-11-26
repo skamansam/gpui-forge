@@ -8705,15 +8705,25 @@ impl ResizableDialog {
             drag: None,
         }
     }
+
+    /// The extent the wrapper renders at. `open_dialog` reads this each frame
+    /// so the outer panel tracks the drag — the chrome fixes its own width and
+    /// ignores the wrapper's.
+    pub fn size(&self) -> gpui::Size<Pixels> {
+        self.size
+    }
 }
 
 impl Render for ResizableDialog {
     fn render(&mut self, _window: &mut Window, cx: &mut Context<Self>) -> impl IntoElement {
         let wedge_color = cx.theme().muted_foreground;
         let weak = cx.entity().downgrade();
+        // `w_full`, not `w(size)`: the panel chrome pads the content area, so
+        // a fixed width would overflow it and clip the grip. The panel tracks
+        // `size` through `dialog.w`, the wrapper fills the padded interior.
         div()
             .relative()
-            .w(self.size.width)
+            .w_full()
             .h(self.size.height)
             .overflow_hidden()
             .child(self.child.clone())

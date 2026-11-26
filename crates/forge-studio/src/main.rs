@@ -748,6 +748,11 @@ fn open_dialog(
             _ => None,
         })
         .unwrap_or(Placement::Right);
+    // The dialog chrome fixes its own width (448px default) and ignores the
+    // child's — a declared `width:` or a resizable wrapper must reach the
+    // panel through `dialog.w` / `sheet.size`, or the card stays 448 wide.
+    let declared_w = style_px(&node.style, "width");
+    let declared_h = style_px(&node.style, "height");
     let mut style = node.style.clone();
     let initial = resizable.then(|| {
         let size = size(
@@ -870,12 +875,50 @@ fn open_dialog(
                             if sheet {
                                 window.open_sheet_at(placement, cx, {
                                     let title = title.clone();
-                                    move |sheet, _, _| sheet.title(title.clone()).child(content())
+                                    let resizable = resizable.clone();
+                                    move |sheet, _, cx| {
+                                        let mut sheet = sheet.title(title.clone()).child(content());
+                                        // `size` is the cross axis — width for
+                                        // side sheets, height for top/bottom.
+                                        let extent = match &resizable {
+                                            Some(r) => {
+                                                let s = r.read(cx).size();
+                                                Some(match placement {
+                                                    Placement::Top | Placement::Bottom => s.height,
+                                                    _ => s.width,
+                                                })
+                                            }
+                                            None => match placement {
+                                                Placement::Top | Placement::Bottom => declared_h,
+                                                _ => declared_w,
+                                            },
+                                        };
+                                        if let Some(extent) = extent {
+                                            sheet = sheet.size(extent);
+                                        }
+                                        sheet
+                                    }
                                 });
                             } else {
                                 window.open_dialog(cx, {
                                     let title = title.clone();
-                                    move |dialog, _, _| dialog.title(title.clone()).child(content())
+                                    let resizable = resizable.clone();
+                                    move |dialog, _, cx| {
+                                        let mut dialog =
+                                            dialog.title(title.clone()).child(content());
+                                        // The builder re-runs each frame, so a
+                                        // resizable dialog reads the drag's
+                                        // live size; a static one its declared
+                                        // width. No prop means the 448 default.
+                                        if let Some(w) = resizable
+                                            .as_ref()
+                                            .map(|r| r.read(cx).size().width)
+                                            .or(declared_w)
+                                        {
+                                            dialog = dialog.w(w);
+                                        }
+                                        dialog
+                                    }
                                 });
                             }
                         })

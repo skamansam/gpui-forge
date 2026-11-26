@@ -1162,7 +1162,7 @@ Dialog#preferences:
   title: Forge Studio Preferences
   resizable: true
   style:
-    width: 680px
+    width: 1000px
     height: 600px
     padding: 16px
     gap: 16px
