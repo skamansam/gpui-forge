@@ -3388,10 +3388,15 @@ impl ForgeView {
                                 .ok();
                             })
                         };
-                        menu.item(hook_item("New document here", "files_new"))
-                            .item(hook_item("Reveal in file manager", "files_reveal"))
-                            .separator()
-                            .item(hook_item("Rename…", "files_rename"))
+                        let mut menu = menu
+                            .item(hook_item("New document here", "files_new"))
+                            .item(hook_item("Reveal in file manager", "files_reveal"));
+                        if path.ends_with(".forge.yaml") {
+                            menu = menu
+                                .separator()
+                                .item(hook_item("Add to project", "files_add"));
+                        }
+                        menu.separator().item(hook_item("Rename…", "files_rename"))
                     }
                 })
                 .child(entry.item().label.to_string());

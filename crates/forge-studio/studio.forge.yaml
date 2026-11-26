@@ -28,6 +28,7 @@ state:
   studio.multiapp: boolean
   studio.project_items: list
   studio.project_mode: number
+  studio.files_mode: string
   studio.project_grep: string
   studio.proj_name: string
   studio.proj_version: string
@@ -966,10 +967,10 @@ body: &body
                   children:
                     - Label: Project
                       style: {weight: semibold, size: sm, grow: true}
-                    - Button: project
+                    - Button: "{$studio.files_mode}"
                       variant: Ghost
                       size: Small
-                      tooltip: toggle between the project root and this document's folder
+                      tooltip: project shows declared membership, files browses the whole folder
                       on click: files_scope()
                       if: $studio.project
                 - Text: "{$studio.project_name}"

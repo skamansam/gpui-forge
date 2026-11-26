@@ -576,6 +576,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "files_new",
         "files_reveal",
         "files_rename",
+        "files_add",
         "rename_file",
         "quit",
     ] {
@@ -1237,6 +1238,7 @@ fn dispatch(
         "files_new" => files_new(view, args, shared.clone(), cx),
         "files_reveal" => files_reveal(view, args, cx),
         "files_rename" => files_rename(view, args, shared, cx),
+        "files_add" => files_add(view, args, shared, cx),
         "rename_file" => rename_file(view, shared.clone(), cx),
         "close_dialog" => close_dialog(cx),
         "save_document" => save_document(view, shared, cx),
@@ -3376,35 +3378,13 @@ fn doc_tree(root: &std::path::Path, paths: &[std::path::PathBuf]) -> Vec<Json> {
     emit(root, root_tier)
 }
 
-/// Drops rows `drop` rejects, recursively — empty folders go too.
-fn prune_items(entries: Vec<Json>, drop: &dyn Fn(&std::path::Path, bool) -> bool) -> Vec<Json> {
-    entries
-        .into_iter()
-        .filter_map(|mut e| {
-            let is_dir = e["dir"].as_bool() == Some(true);
-            let path = std::path::PathBuf::from(e["path"].as_str().unwrap_or_default());
-            if drop(&path, is_dir) {
-                return None;
-            }
-            if is_dir {
-                let kids = e["children"].as_array().cloned().unwrap_or_default();
-                let kids = prune_items(kids, drop);
-                if kids.is_empty() {
-                    return None;
-                }
-                e["children"] = Json::Array(kids);
-            }
-            Some(e)
-        })
-        .collect()
-}
-
-/// The sidebar's project tree — `forge.toml` first, then each application
-/// with its claimed docs and asset folder, the unassigned `*.forge.yaml`,
-/// then the remaining files. Emitted as `scan_files`-shaped entries so
+/// The sidebar's project view — `forge.toml` first, then each application
+/// with its claimed docs and asset folder. Only declared membership lists:
+/// a file the manifest and `meta:` never name is not the project's, and
+/// stays out of this view. Emitted as `scan_files`-shaped entries so
 /// `forge.Files of:` renders it like a scanned tree.
 fn project_items(dir: &std::path::Path, src: &str, hidden: bool) -> Vec<Json> {
-    let (mut apps, unassigned) = project_groups(dir, src);
+    let (mut apps, _) = project_groups(dir, src);
     let synth = |parts: &[&str]| {
         let mut p = dir.join(".forge-studio");
         p.extend(parts);
@@ -3426,29 +3406,6 @@ fn project_items(dir: &std::path::Path, src: &str, hidden: bool) -> Vec<Json> {
             }
         }
         out.push(dir_item(&app.name, synth(&[&app.name]), kids));
-    }
-    if !unassigned.is_empty() {
-        out.push(dir_item(
-            "unassigned",
-            synth(&["unassigned"]),
-            doc_tree(dir, &unassigned),
-        ));
-    }
-    // Everything else stays browsable — minus every `*.forge.yaml`
-    // (claimed rows live under their app, the rest under `unassigned`),
-    // `forge.toml` itself and each app's asset root.
-    let asset_roots: Vec<std::path::PathBuf> =
-        apps.iter().filter_map(|a| a.assets_dir.clone()).collect();
-    let mut budget = 400usize;
-    let rest = gpui_forge_runtime::render::scan_files(dir, &[], 6, hidden, &mut budget);
-    let rest = prune_items(rest, &|path: &std::path::Path, is_dir: bool| {
-        (!is_dir
-            && (path.file_name().is_some_and(|n| n == "forge.toml")
-                || path.to_string_lossy().ends_with(".forge.yaml")))
-            || (is_dir && asset_roots.iter().any(|r| path == r))
-    });
-    if !rest.is_empty() {
-        out.push(dir_item("other files", synth(&["other"]), rest));
     }
     out
 }
@@ -3517,6 +3474,11 @@ fn load_project(
     view.update_state(
         &parse_path("studio.project").unwrap(),
         Json::String(dir.display().to_string()),
+        cx,
+    );
+    view.update_state(
+        &parse_path("studio.files_mode").unwrap(),
+        Json::String("project".to_owned()),
         cx,
     );
     view.update_state(
@@ -4345,36 +4307,100 @@ fn collect_icon_names(node: &gpui_forge_runtime::forge_spec::model::Node, out: &
 /// project root (`studio.project`, set by `open_project`) and the current
 /// document's folder (`studio.doc_dir`).
 fn files_scope(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
-    let (project, doc_dir, current) = {
+    let (project, current) = {
         let state = view.state();
         (
             state["studio"]["project"]
                 .as_str()
                 .unwrap_or_default()
                 .to_owned(),
-            state["studio"]["doc_dir"]
-                .as_str()
-                .unwrap_or_default()
-                .to_owned(),
-            state["studio"]["project_dir"]
+            state["studio"]["files_mode"]
                 .as_str()
                 .unwrap_or_default()
                 .to_owned(),
         )
     };
-    // No project open → the only scope is the document's folder.
     if project.is_empty() {
         status(view, "no project — open a forge.toml first", cx);
         return;
     }
-    let next = if current == project { doc_dir } else { project };
-    if next.is_empty() {
+    // `project` view shows declared membership, `files` browses the whole
+    // folder — same root, two listings.
+    let mode = if current == "files" {
+        "project"
+    } else {
+        "files"
+    };
+    view.update_state(
+        &parse_path("studio.files_mode").unwrap(),
+        Json::String(mode.to_owned()),
+        cx,
+    );
+    emit_project_items(view, std::path::Path::new(&project), cx);
+}
+
+/// Appends `rel` to `[forge] documents` in the manifest text — creates
+/// the array when absent. Members land on the primary app, matching how
+/// `forge skeleton` resolves the list.
+fn add_document(src: &str, rel: &str) -> String {
+    let mut doc = src.parse::<toml_edit::DocumentMut>().unwrap_or_default();
+    let mut arr = doc
+        .get("forge")
+        .and_then(|f| f.get("documents"))
+        .and_then(|d| d.as_array())
+        .cloned()
+        .unwrap_or_default();
+    arr.push(rel);
+    doc["forge"]["documents"] = toml_edit::value(arr);
+    doc.to_string()
+}
+
+/// `files_add` — the tree's "Add to project" context action. Adds the doc
+/// to `[forge] documents` and reloads the project so the hierarchy shows
+/// the new member.
+fn files_add(
+    view: &mut ForgeView,
+    args: &[String],
+    shared: &SharedState,
+    cx: &mut Context<ForgeView>,
+) {
+    let Some(path) = args.first().map(PathBuf::from) else {
+        return;
+    };
+    let Some(toml) = shared.borrow().project_toml.clone() else {
+        status(view, "no project open", cx);
+        return;
+    };
+    if !path.to_string_lossy().ends_with(".forge.yaml") {
+        status(view, "only Forge documents join a project", cx);
         return;
     }
-    let next_path = std::path::PathBuf::from(&next);
-    refresh_files(view, &next_path, cx);
-    refresh_assets(view, &next_path, cx);
-    refresh_themes(view, &next_path, cx);
+    let dir = toml.parent().map(|p| p.to_path_buf()).unwrap_or_default();
+    let canon = |p: &std::path::Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+    let doc_path = canon(&path);
+    let Ok(rel) = doc_path.strip_prefix(canon(&dir)) else {
+        status(view, "file is outside the project", cx);
+        return;
+    };
+    // Already claimed? `claim` resolution says so — nothing to write.
+    let src = std::fs::read_to_string(&toml).unwrap_or_default();
+    let (groups, _) = project_groups(&dir, &src);
+    if groups
+        .iter()
+        .flat_map(|g| g.docs.iter())
+        .any(|d| *d == doc_path)
+    {
+        status(view, "already in the project", cx);
+        return;
+    }
+    let rel = rel.to_string_lossy().replace('\\', "/");
+    match std::fs::write(&toml, add_document(&src, &rel)) {
+        Ok(()) => {
+            status(view, &format!("added {rel} to the project"), cx);
+            load_project(toml, view, shared.clone(), cx);
+        }
+        Err(e) => status(view, &format!("cannot write {}: {e}", toml.display()), cx),
+    }
 }
 
 /// `on change: grep_project($studio.project_grep)` — finds the query text
@@ -4490,22 +4516,25 @@ fn refresh_files(view: &mut ForgeView, dir: &std::path::Path, cx: &mut Context<F
     emit_project_items(view, dir, cx);
 }
 
-/// `studio.project_items` drives the `of:` listing — at the project root
-/// it is the application hierarchy, anywhere else a plain scan.
+/// `studio.project_items` drives the `of:` listing — the project
+/// hierarchy at the root in `project` mode, a plain filesystem scan
+/// everywhere else (`files` mode browses the whole folder).
 fn emit_project_items(view: &mut ForgeView, dir: &std::path::Path, cx: &mut Context<ForgeView>) {
     let state = view.state();
     let hidden = state["studio"]["files_hidden"]
         .as_bool()
         .unwrap_or_default();
     let project = state["studio"]["project"].as_str().unwrap_or_default();
+    let browse = state["studio"]["files_mode"].as_str().unwrap_or_default() == "files";
     let canon = |p: &std::path::Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
-    let items = if !project.is_empty() && canon(dir) == canon(std::path::Path::new(project)) {
-        let src = std::fs::read_to_string(dir.join("forge.toml")).unwrap_or_default();
-        project_items(dir, &src, hidden)
-    } else {
-        let mut budget = 400usize;
-        gpui_forge_runtime::render::scan_files(dir, &[], 6, hidden, &mut budget)
-    };
+    let items =
+        if !browse && !project.is_empty() && canon(dir) == canon(std::path::Path::new(project)) {
+            let src = std::fs::read_to_string(dir.join("forge.toml")).unwrap_or_default();
+            project_items(dir, &src, hidden)
+        } else {
+            let mut budget = 400usize;
+            gpui_forge_runtime::render::scan_files(dir, &[], 6, hidden, &mut budget)
+        };
     view.update_state(
         &parse_path("studio.project_items").unwrap(),
         Json::Array(items),
@@ -5407,7 +5436,7 @@ fn echo_selected(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
 
 #[cfg(test)]
 mod tests {
-    use super::{doc_base, patch_manifest, project_apps, project_groups};
+    use super::{add_document, doc_base, patch_manifest, project_apps, project_groups};
     use gpui_forge_runtime::base::BASE_ID;
     use serde_json::json;
 
@@ -5475,6 +5504,17 @@ mod tests {
         assert!(out.contains("dir = \"res\""));
         // The patch replaces the old `[[apps]]` block — not appends to it.
         assert!(!out.contains("document = \"b.forge.yaml\""));
+    }
+
+    #[test]
+    fn add_document_appends_and_creates_the_list() {
+        // Existing list — the new path appends, old members stay.
+        let src = "[forge]\ndocuments = [\"a.forge.yaml\"]\n";
+        let out = add_document(src, "docs/b.forge.yaml");
+        assert!(out.contains("\"a.forge.yaml\"") && out.contains("\"docs/b.forge.yaml\""));
+        // No list at all — the key is created under `[forge]`.
+        let out = add_document("[forge]\nbase = \"gpui-kit\"\n", "c.forge.yaml");
+        assert!(out.contains("documents") && out.contains("\"c.forge.yaml\""));
     }
 
     #[test]

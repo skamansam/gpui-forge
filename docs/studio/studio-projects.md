@@ -34,10 +34,13 @@ filesystem scan. `forge.toml` sits first — a double-click opens the
 **Project** tab. One folder per application follows: `files` holds the
 documents the app claims (`meta.window` members, `meta.include` pulls,
 `forge.documents` entries), and `assets` shows its asset directory when
-one exists. Any `*.forge.yaml` no application claims sits under
-**unassigned** — it is on disk but outside every build. Everything else
-stays browsable under **other files**. This is the same grouping `forge
-skeleton` applies.
+one exists. This is the same grouping `forge skeleton` applies — a
+`*.forge.yaml` nothing claims is simply not in the view.
+
+The **project** button flips the rail into **files** mode — a plain
+filesystem listing of the same folder, strays and all. Right-clicking a
+`*.forge.yaml` row there offers **Add to project**, which appends it to
+`[forge] documents` (the primary app's member list) and reloads.
 
 The box above the tree searches file *contents* — type text and the rail
 lists `file:line` match rows across the project instead of the tree.
