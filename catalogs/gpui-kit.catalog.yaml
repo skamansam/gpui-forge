@@ -163,6 +163,10 @@ elements:
         type: bool
         default: false
         summary: Hide the text, for passwords.
+      invalid:
+        type: bool
+        default: false
+        summary: Danger ring around the field — bind it to an error message.
     events:
       change: string
       submit: string
@@ -972,6 +976,9 @@ elements:
       disabled:
         type: bool
         default: false
+      colors:
+        type: list<string>
+        summary: Featured swatches in the popup — named colors or hex strings.
     events:
       change: color
 

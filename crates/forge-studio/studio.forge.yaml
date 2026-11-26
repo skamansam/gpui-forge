@@ -1027,7 +1027,7 @@ body: &body
                       <<: *iconsTab
                     # Only when a forge.toml project is open — edits the
                     # manifest itself. The Editor sub-tab is a form over
-                    # the manifest keys; Source edits the TOML directly.
+                    # the manifest keys. Source edits the TOML directly.
                     # Apply writes the active mode and re-loads the project
                     # (document/icons/assets/themes re-derive).
                     - Tab: Project
@@ -1211,19 +1211,44 @@ Dialog#preferences:
                     children:
                       - Switch:
                         checked: bind $studio.files_hidden
-                        on change: persist_prefs()
-                  - SettingItem: Folders open
-                    children:
-                      - Select#prefs_files_folders:
-                        options: [tree, navigate]
-                        value: bind $studio.files_folders
-                        on change: persist_prefs()
+                        on change: files_pref_changed()
                   - SettingItem: Highlights
                     children:
-                      - Input:
-                        value: bind $studio.files_highlights
-                        placeholder: "*.forge.yaml = bold; *.json = green"
-                        on change: persist_prefs()
+                      - VStack:
+                        style: {gap: 8px, width: full}
+                        children:
+                          - for: $studio.hl_list
+                            each: h
+                            key: h.id
+                            children:
+                              - VStack:
+                                style: {gap: 4px}
+                                children:
+                                  - HStack:
+                                    style: {gap: 8px, align: center}
+                                    children:
+                                      - ColorPicker:
+                                        value: bind $h.color
+                                        colors: $studio.hl_palette
+                                        on change: hl_changed()
+                                      - Input:
+                                        value: bind $h.glob
+                                        invalid: $h.error
+                                        placeholder: "*.forge.yaml"
+                                        style: {grow: true}
+                                        on change: hl_validate($h.id)
+                                        on submit: hl_commit($h.id)
+                                      - Button:
+                                        variant: Ghost
+                                        icon: x
+                                        compact: true
+                                        on click: hl_remove($h.id)
+                                  - Text: "{$h.error}"
+                                    if: $h.error
+                                    style: {size: xs, color: $theme.danger}
+                          - Button: "+ add highlight"
+                            variant: Ghost
+                            on click: hl_add()
           - SettingPage: Window
             children:
               - SettingsGroup: Decorations
@@ -1247,6 +1272,15 @@ Dialog#preferences:
                         on change: apply_icon_cache()
                   - Text: Iconify sets, name catalogs and vendored SVGs are stored here. Empty means the platform default cache dir.
                     style: {size: xs, color: $theme.muted_foreground}
+      - HStack:
+        style: {justify: end, gap: 8px}
+        children:
+          - Button: Save
+            variant: Ghost
+            on click: persist_prefs()
+          - Button: Close
+            variant: Primary
+            on click: close_prefs()
 
 # ============================================================================
 # THE NEW PROJECT DIALOG

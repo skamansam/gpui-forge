@@ -579,9 +579,14 @@ pub struct ForgeView {
     dnd: bool,
     /// Shown while there is no document (e.g. inside `forge.Preview`).
     empty_text: Option<String>,
-    /// `for`/`with` scope vars — `(name, value)` frames pushed while control
-    /// blocks render. `$item` lookups shadow state from the innermost frame.
-    scopes: Vec<(String, Json)>,
+    /// `for`/`with` scope vars — `(name, value, origin)` frames pushed while
+    /// control blocks render. `$item` lookups shadow state from the innermost
+    /// frame. `origin` is the state path the var came from, so `bind $x.f`
+    /// rewrites to the absolute path and two-way writes reach the source.
+    scopes: Vec<(String, Json, Option<Path>)>,
+    /// A linked view (a modal dialog over this shell) receives `studio.*`
+    /// writes so shell-side handlers — validation, sync — reach it.
+    linked: Option<WeakEntity<ForgeView>>,
 }
 
 type PickZones = Rc<std::cell::RefCell<Vec<(Bounds<Pixels>, String)>>>;
@@ -653,9 +658,10 @@ impl ListDelegate for ForgeListDelegate {
                 };
                 match view.for_items(&source).get(ix.row).cloned() {
                     Some(item) => {
-                        view.scopes.push((each, item));
+                        view.scopes
+                            .push((each, item, view.index_origin(&source, ix.row)));
                         if let Some(index) = &index {
-                            view.scopes.push((index.clone(), Json::from(ix.row)));
+                            view.scopes.push((index.clone(), Json::from(ix.row), None));
                         }
                         // `key: item.id` — resolve the member path against
                         // the scoped item for stable identity (default:
@@ -759,6 +765,7 @@ impl ForgeView {
             hooks: HashMap::new(),
             on_hook: None,
             on_state: None,
+            linked: None,
             subscriptions: Vec::new(),
             errors: Vec::new(),
             base_dir: None,
@@ -1300,6 +1307,12 @@ impl ForgeView {
     pub fn set_sinks(&mut self, on_hook: HookSink, on_state: StateSink) {
         self.on_hook = Some(on_hook);
         self.on_state = Some(on_state);
+    }
+
+    /// Mirrors this view's `studio.*` writes into `other` — the shell links
+    /// its modal dialog so shell-side handlers reach the dialog's state.
+    pub fn link(&mut self, other: WeakEntity<ForgeView>) {
+        self.linked = Some(other);
     }
 
     /// `forge.Vars` — a live state inspector for the *edited document's*
@@ -2921,7 +2934,7 @@ impl ForgeView {
                                         let weak2 = weak.clone();
                                         cell_div = cell_div.children(
                                             try_update(&weak2, cx, "icon cell", |view, cx| {
-                                                view.scopes.push(("item".to_owned(), item));
+                                                view.scopes.push(("item".to_owned(), item, None));
                                                 let mut out = Vec::new();
                                                 for (ci, child) in cell_tpl.iter().enumerate() {
                                                     out.extend(view.expand(
@@ -3657,7 +3670,7 @@ impl ForgeView {
     }
 
     fn write(&mut self, path: &Path, value: Json, cx: &mut Context<Self>) {
-        set_path(&mut self.state, path, value);
+        set_path(&mut self.state, path, value.clone());
         if let Some(sink) = self.on_state.clone() {
             let state = self.state.clone();
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
@@ -3671,6 +3684,17 @@ impl ForgeView {
                     .unwrap_or_else(|| "unknown panic".to_owned());
                 self.report(format!("state sink failed: {detail}"));
             }
+        }
+        // The linked dialog mirrors `studio.*` writes. The equality guard
+        // keeps the dialog's `on_state` merge from echoing the value back.
+        if matches!(path.0.first(), Some(PathSegment::Field(n)) if n == "studio")
+            && let Some(linked) = self.linked.as_ref().and_then(|l| l.upgrade())
+        {
+            linked.update(cx, |view, cx| {
+                if get_path(view.state(), path) != Some(&value) {
+                    view.update_state(path, value, cx);
+                }
+            });
         }
         cx.notify();
     }
@@ -3691,7 +3715,7 @@ impl ForgeView {
         let mut json = &self.state;
         // `for`/`with` scope vars shadow state — innermost frame wins.
         if let Some(PathSegment::Field(name)) = path.0.first()
-            && let Some((_, value)) = self.scopes.iter().rev().find(|(n, _)| n == name)
+            && let Some((_, value, _)) = self.scopes.iter().rev().find(|(n, ..)| n == name)
         {
             json = value;
             segments.next();
@@ -3894,9 +3918,10 @@ impl ForgeView {
                 }
                 let mut out = Vec::new();
                 for (i, item) in items.into_iter().enumerate() {
-                    self.scopes.push((each.clone(), item));
+                    let origin = self.index_origin(source, i);
+                    self.scopes.push((each.clone(), item, origin));
                     if let Some(index) = index {
-                        self.scopes.push((index.clone(), Json::from(i)));
+                        self.scopes.push((index.clone(), Json::from(i), None));
                     }
                     // `key: item.id` — resolve the member path against the
                     // scoped item for stable identity (default: position).
@@ -3921,7 +3946,8 @@ impl ForgeView {
             }
             Control::With { source, name } => {
                 let value = self.resolve(source);
-                self.scopes.push((name.clone(), value));
+                let origin = self.source_origin(source);
+                self.scopes.push((name.clone(), value, origin));
                 let out = self.render_target(node, key, window, cx);
                 self.scopes.pop();
                 out
@@ -3963,9 +3989,10 @@ impl ForgeView {
         }
     }
 
-    /// Rewrites event-arg bindings rooted in a `for`/`with` scope var to the
-    /// resolved literal, recursively — event handlers fire after the scope
-    /// that named `$item` has unwound.
+    /// Rewrites bindings rooted in a `for`/`with` scope var, recursively —
+    /// event args and `value: bind` props fire/write after the scope that
+    /// named `$item` has unwound. Vars with a state origin rewrite to the
+    /// absolute path so two-way binds reach the source list or map.
     fn bake_scope(&self, node: &mut Node) {
         if self.scopes.is_empty() {
             return;
@@ -3974,6 +4001,9 @@ impl ForgeView {
             for arg in &mut event.handler.args {
                 self.bake_value(arg);
             }
+        }
+        for (_, value) in &mut node.props {
+            self.bake_value(value);
         }
         for child in &mut node.children {
             self.bake_scope(child);
@@ -4002,8 +4032,13 @@ impl ForgeView {
 
     fn bake_value(&self, value: &mut Value) {
         match value {
-            Value::Binding { path, .. } if self.scoped(path) => {
-                *value = literal(self.lookup(path).cloned().unwrap_or(Json::Null));
+            Value::Binding { path, mode } if self.scoped(path) => {
+                *value = match self.absolutize(path) {
+                    // Keep the binding — `bind $h.glob` on a row writes back
+                    // to `studio.hl_list[i].glob`, not a stray `h` key.
+                    Some(path) => Value::Binding { path, mode: *mode },
+                    None => literal(self.lookup(path).cloned().unwrap_or(Json::Null)),
+                };
             }
             Value::Interpolated(segments)
                 if segments
@@ -4018,13 +4053,46 @@ impl ForgeView {
         }
     }
 
+    /// `path`'s leading segment as a scope var — innermost frame wins.
+    fn scope_var(&self, path: &Path) -> Option<&(String, Json, Option<Path>)> {
+        match path.0.first() {
+            Some(PathSegment::Field(name)) => self.scopes.iter().rev().find(|(n, ..)| n == name),
+            _ => None,
+        }
+    }
+
     /// `path` is rooted in a `for`/`with` scope var.
     fn scoped(&self, path: &Path) -> bool {
-        matches!(
-            path.0.first(),
-            Some(PathSegment::Field(name))
-                if self.scopes.iter().rev().any(|(n, _)| n == name)
-        )
+        self.scope_var(path).is_some()
+    }
+
+    /// A scope-rooted path rewritten against the var's state origin —
+    /// `h.glob` on `for: $studio.hl_list` row 2 becomes
+    /// `studio.hl_list[2].glob`. `None` when the var has no origin.
+    fn absolutize(&self, path: &Path) -> Option<Path> {
+        let (_, _, origin) = self.scope_var(path)?;
+        let origin = origin.as_ref()?;
+        let mut out = origin.0.clone();
+        out.extend_from_slice(&path.0[1..]);
+        Some(Path(out))
+    }
+
+    /// A `for:`/`with:` source's state path — the scope-origin base for
+    /// `bind` write-through. Non-binding sources have none.
+    fn source_origin(&self, source: &Value) -> Option<Path> {
+        match source {
+            Value::Binding { path, .. } if self.scoped(path) => self.absolutize(path),
+            Value::Binding { path, .. } => Some(path.clone()),
+            _ => None,
+        }
+    }
+
+    /// The item's state path inside a `for:` source — `source[i]`.
+    fn index_origin(&self, source: &Value, i: usize) -> Option<Path> {
+        self.source_origin(source).map(|mut path| {
+            path.0.push(PathSegment::Index(i));
+            path
+        })
     }
 
     /// An `Editor`'s `diagnostics:` prop — squiggle markers as `{line, col,
@@ -5925,10 +5993,26 @@ impl ForgeView {
                 {
                     state.update(cx, |s, cx| s.set_value(value, window, cx));
                 }
-                Input::new(&state)
-                    .cleanable(self.prop_bool(node, "cleanable"))
-                    .disabled(self.prop_bool(node, "disabled"))
-                    .into_any_element()
+                let input = style(
+                    Input::new(&state)
+                        .cleanable(self.prop_bool(node, "cleanable"))
+                        .disabled(self.prop_bool(node, "disabled")),
+                    &node.style,
+                    cx,
+                );
+                // `invalid:` wraps the field in a danger ring — truthy while a
+                // bound error message is non-empty.
+                if self.prop_bool(node, "invalid") {
+                    div()
+                        .flex_1()
+                        .border_1()
+                        .border_color(cx.theme().danger)
+                        .rounded_lg()
+                        .child(input)
+                        .into_any_element()
+                } else {
+                    input.into_any_element()
+                }
             }
             "Textarea" => {
                 let value = self.prop_text(node, "value").unwrap_or_default();
@@ -6856,10 +6940,19 @@ impl ForgeView {
             "FormField" => self.form_field(node, key, window, cx).into_any_element(),
             "ColorPicker" => {
                 let skey = format!("{key}|{}", bind_salt(node));
+                let initial = self
+                    .prop_text(node, "value")
+                    .and_then(|word| self.highlight_color(&word, cx));
                 let state = match self.color_pickers.get(&skey) {
                     Some(state) => state.clone(),
                     None => {
-                        let state = cx.new(|cx| ColorPickerState::new(window, cx));
+                        let state = cx.new(|cx| {
+                            let state = ColorPickerState::new(window, cx);
+                            match initial {
+                                Some(color) => state.default_value(color),
+                                None => state,
+                            }
+                        });
                         let path = self.two_way(node, "value");
                         let changed = node.clone();
                         let subscription = cx.subscribe(&state, move |this, _state, event, cx| {
@@ -6875,7 +6968,33 @@ impl ForgeView {
                         state
                     }
                 };
-                ColorPicker::new(&state).into_any_element()
+                // `value: bind` is controlled — external writes push into the
+                // picker (same pattern as `Input`'s bound-value sync).
+                if matches!(self.prop(node, "value"), Some(Value::Binding { .. }))
+                    && state.read(cx).value() != initial
+                {
+                    state.update(cx, |s, cx| match initial {
+                        Some(color) => s.set_value(color, window, cx),
+                        None => s.clear_value(window, cx),
+                    });
+                } else {
+                    state.update(cx, |s, cx| s.sync_pending_value(window, cx));
+                }
+                // `colors:` — featured swatches in the popup, a named/hex list.
+                let featured: Vec<Hsla> = self
+                    .prop(node, "colors")
+                    .map(|v| {
+                        self.list(v)
+                            .iter()
+                            .filter_map(|word| self.highlight_color(word, cx))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                let picker = ColorPicker::new(&state);
+                match featured.is_empty() {
+                    false => picker.featured_colors(featured).into_any_element(),
+                    true => picker.into_any_element(),
+                }
             }
             "OtpInput" => {
                 let skey = format!("{key}|{}", bind_salt(node));

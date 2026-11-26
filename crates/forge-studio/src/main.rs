@@ -489,6 +489,11 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
                             .get("files_highlights")
                             .and_then(|j| j.as_str())
                             .unwrap_or("*.forge.yaml = bold; *.json = green"),
+                        // Preferences → Highlights — `hl_seed` builds
+                        // `hl_list` rows from the shorthand. The picker's
+                        // `colors:` reads this palette.
+                        "hl_palette": HL_PALETTE,
+                        "hl_list": [],
                         // Iconify cache root — Preferences → Icons. Empty means the
                         // platform default (`~/.cache/gpui-forge/iconify`).
                         "icon_cache": prefs
@@ -551,6 +556,13 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "cycle_preview_base",
         "persist_preview_base",
         "persist_prefs",
+        "files_pref_changed",
+        "hl_validate",
+        "hl_add",
+        "hl_remove",
+        "hl_changed",
+        "hl_commit",
+        "close_prefs",
         "apply_icon_cache",
         "source_changed",
         "copy_snippet",
@@ -749,8 +761,8 @@ fn open_dialog(
         })
         .unwrap_or(Placement::Right);
     // The dialog chrome fixes its own width (448px default) and ignores the
-    // child's — a declared `width:` or a resizable wrapper must reach the
-    // panel through `dialog.w` / `sheet.size`, or the card stays 448 wide.
+    // child's. A declared `width:` or a resizable wrapper must reach the panel
+    // through `dialog.w` / `sheet.size`, or the card stays 448 wide.
     let declared_w = style_px(&node.style, "width");
     let declared_h = style_px(&node.style, "height");
     let mut style = node.style.clone();
@@ -766,15 +778,22 @@ fn open_dialog(
         }
         size
     });
+    // The prefs dialog edits `studio.hl_list` rows — rebuild them from the
+    // persisted shorthand before the dialog's state copy is taken.
+    if name == "preferences" {
+        hl_seed(view, cx);
+    }
     let catalogs = view.catalogs.clone();
     let libraries = view.libraries.clone();
     let shell = cx.entity().downgrade();
     let shared = shared.clone();
+    let studio_seed = view.state().get("studio").cloned().unwrap_or(Json::Null);
     let child = cx.new(|cx| {
         let mut v = ForgeView::new(catalogs);
         v.libraries = libraries;
         let weak = shell.clone();
         let shared = shared.clone();
+        let prev_studio = Rc::new(RefCell::new(studio_seed.clone()));
         v.set_sinks(
             Rc::new(move |call, _, cx| {
                 let (name, args) = parse_call(call);
@@ -787,13 +806,40 @@ fn open_dialog(
             }),
             Rc::new(move |state, _, cx| {
                 let shell = shell.clone();
-                let state = state.to_string();
+                let text = state.to_string();
+                // `studio.*` binds inside the dialog write the dialog's own
+                // state — merge each changed top-level `studio` key back into
+                // the shell so toggles, validation and `persist_prefs` see
+                // them. `link` mirrors shell writes the other way. Only keys
+                // changed since the last sink call go through. Writing every
+                // key per write amplifies through `link`'s forward into a
+                // defer storm when two keys disagree.
+                let studio_now = state.get("studio").cloned().unwrap_or(Json::Null);
+                let mut prev = prev_studio.borrow_mut();
+                let changes: Vec<(String, Json)> = studio_now
+                    .as_object()
+                    .map(|obj| {
+                        obj.iter()
+                            .filter(|(k, v)| prev.get(*k) != Some(*v))
+                            .map(|(k, v)| (k.clone(), v.clone()))
+                            .collect()
+                    })
+                    .unwrap_or_default();
+                *prev = studio_now;
+                drop(prev);
                 cx.defer(move |cx| {
                     shell
                         .update(cx, |view, cx| {
+                            for (key, value) in changes {
+                                if let Ok(path) = parse_path(&format!("studio.{key}"))
+                                    && get_path(view.state(), &path) != Some(&value)
+                                {
+                                    view.update_state(&path, value, cx);
+                                }
+                            }
                             view.update_state(
                                 &parse_path("dialog.state").unwrap(),
-                                Json::String(state.clone()),
+                                Json::String(text.clone()),
                                 cx,
                             );
                         })
@@ -835,11 +881,19 @@ fn open_dialog(
                     .iter()
                     .map(|b| b.id.clone())
                     .collect::<Vec<String>>(),
+                // `studio.*` binds resolve against the dialog's own state —
+                // seed a copy of the shell's subtree so prefs fields start
+                // with their live values. The `on_state` merge writes edits
+                // back. `link` mirrors shell writes into the dialog.
+                "studio": studio_seed,
             }),
             cx,
         );
         v
     });
+    // Shell `studio.*` writes (validation, sync handlers) mirror into the
+    // open dialog — the reverse of the `on_state` merge above.
+    view.link(child.downgrade());
     // The hook runs inside the main window's own update cycle. `App::windows()`
     // Handles can't be `update`d from in here because the window is taken out of
     // the slot map for the duration. A foreground task runs after the update
@@ -908,7 +962,7 @@ fn open_dialog(
                                             dialog.title(title.clone()).child(content());
                                         // The builder re-runs each frame, so a
                                         // resizable dialog reads the drag's
-                                        // live size; a static one its declared
+                                        // live size. A static one reads its declared
                                         // width. No prop means the 448 default.
                                         if let Some(w) = resizable
                                             .as_ref()
@@ -1330,6 +1384,19 @@ fn dispatch(
         "persist_prefs" => {
             save_prefs(view);
             apply_decorations(view, cx);
+        }
+        // Preferences → Files — `files_hidden` re-emits the listing.
+        "files_pref_changed" => files_pref_changed(view, cx),
+        // Preferences → Highlights rows — scoped `bind` writes the row,
+        // these check/sync/persist around it.
+        "hl_validate" => hl_validate(view, args, cx),
+        "hl_commit" => hl_commit(view, args, cx),
+        "hl_changed" => hl_changed(view, cx),
+        "hl_add" => hl_add(view, cx),
+        "hl_remove" => hl_remove(view, args, cx),
+        "close_prefs" => {
+            save_prefs(view);
+            close_dialog(cx);
         }
         // Preferences → Icons — the iconify cache root takes effect
         // immediately (memos cleared), then persists like the other prefs.
@@ -3957,6 +4024,210 @@ fn save_prefs(view: &ForgeView) {
         }
         let _ = std::fs::write(f, body);
     }
+}
+
+/// The fixed palette a new highlight row picks from — hex strings both the
+/// `highlights:` spec parser and `ColorPicker`'s `colors:` prop read.
+const HL_PALETTE: &[&str] = &[
+    "#e03131", "#f76707", "#f59f00", "#37b24d", "#0ca678", "#1098ad", "#1c7ed6", "#3b5bdb",
+    "#7048e8", "#ae3ec9", "#d6336c", "#868e96",
+];
+
+/// Highlight-spec words that are styles, not colors — weights, `italic`,
+/// `underline`. `hl_seed` keeps the first non-style word as the row color.
+const HL_STYLE_WORDS: &[&str] = &[
+    "italic",
+    "underline",
+    "thin",
+    "light",
+    "medium",
+    "normal",
+    "semibold",
+    "bold",
+    "black",
+];
+
+/// `studio.hl_list` — the editable rows `{id, glob, color, error}` behind
+/// the `files_highlights` shorthand. `bind $h.glob` writes rows directly
+/// (scope origins), `hl_validate`/`hl_add`/`hl_remove` mutate the list.
+fn hl_rows(view: &ForgeView) -> Vec<Json> {
+    view.state()["studio"]["hl_list"]
+        .as_array()
+        .cloned()
+        .unwrap_or_default()
+}
+
+/// Rebuilds `studio.files_highlights` — `glob = color` joined by `;` —
+/// from the row list. Empty globs drop out. The rest round-trips to the
+/// prefs file verbatim.
+fn hl_sync(view: &mut ForgeView, rows: &[Json], cx: &mut Context<ForgeView>) {
+    let spec = rows
+        .iter()
+        .filter_map(|row| {
+            let glob = row["glob"].as_str()?.trim();
+            (!glob.is_empty())
+                .then(|| format!("{glob} = {}", row["color"].as_str().unwrap_or_default()))
+        })
+        .collect::<Vec<_>>()
+        .join("; ");
+    view.update_state(
+        &parse_path("studio.files_highlights").unwrap(),
+        Json::String(spec),
+        cx,
+    );
+}
+
+/// Parses `files_highlights` shorthand (`glob = spec` pairs) into `hl_list`
+/// rows. A spec's color is its last non-style word. A style-only spec
+/// falls back to a palette color. Runs when prefs load and before the
+/// dialog's `studio` copy is taken.
+fn hl_seed(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
+    let spec = view.state()["studio"]["files_highlights"]
+        .as_str()
+        .unwrap_or_default()
+        .to_owned();
+    let mut rows = Vec::new();
+    for (i, part) in spec.split([';', '\n']).enumerate() {
+        let Some((glob, spec)) = part.split_once('=') else {
+            continue;
+        };
+        let glob = glob.trim();
+        if glob.is_empty() {
+            continue;
+        }
+        let color = spec
+            .split(|c: char| c.is_whitespace() || c == ',')
+            .rfind(|w| !w.is_empty() && !HL_STYLE_WORDS.contains(w))
+            .unwrap_or(HL_PALETTE[i % HL_PALETTE.len()])
+            .to_owned();
+        rows.push(json!({
+            "id": i.to_string(),
+            "glob": glob,
+            "color": color,
+            "error": "",
+        }));
+    }
+    view.update_state(
+        &parse_path("studio.hl_list").unwrap(),
+        Json::Array(rows),
+        cx,
+    );
+}
+
+/// A glob the highlighter can match — `*`, `?` and literal text. Other
+/// wildcard syntax fails quietly, so it gets a small error instead.
+fn valid_glob(glob: &str) -> Result<(), String> {
+    if glob.trim().is_empty() {
+        return Err("glob is empty".to_owned());
+    }
+    if glob.chars().all(|c| c == '*' || c == '?') {
+        return Err("matches every file".to_owned());
+    }
+    if glob.contains('/') {
+        return Err("globs match file names, not paths".to_owned());
+    }
+    if let Some(c) = glob.chars().find(|c| "[]{}!\\".contains(*c)) {
+        return Err(format!("`{c}` isn't a wildcard — only `*` and `?` match"));
+    }
+    Ok(())
+}
+
+/// `hl_validate(id)` — a row's glob input wrote its value already. Check
+/// it, flag `error`, resync the shorthand. Persistence waits for submit,
+/// add/remove, or close — not every keystroke.
+fn hl_validate(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeView>) {
+    let Some(id) = args.first() else {
+        return;
+    };
+    let mut rows = hl_rows(view);
+    if let Some(row) = rows
+        .iter_mut()
+        .find(|r| r["id"].as_str() == Some(id.as_str()))
+    {
+        let glob = row["glob"].as_str().unwrap_or_default().to_owned();
+        row["error"] = Json::String(valid_glob(&glob).err().unwrap_or_default());
+    }
+    view.update_state(
+        &parse_path("studio.hl_list").unwrap(),
+        Json::Array(rows.clone()),
+        cx,
+    );
+    hl_sync(view, &rows, cx);
+}
+
+/// `hl_add` — a new row with a palette color the list isn't using yet,
+/// wrapping when all twelve are taken.
+fn hl_add(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
+    let mut rows = hl_rows(view);
+    let used: Vec<&str> = rows.iter().filter_map(|r| r["color"].as_str()).collect();
+    let color = HL_PALETTE
+        .iter()
+        .find(|c| !used.contains(c))
+        .copied()
+        .unwrap_or_else(|| HL_PALETTE[rows.len() % HL_PALETTE.len()]);
+    let id = rows
+        .iter()
+        .filter_map(|r| r["id"].as_str()?.parse::<usize>().ok())
+        .max()
+        .map(|m| m + 1)
+        .unwrap_or(0);
+    rows.push(json!({
+        "id": id.to_string(),
+        "glob": "*.forge.yaml",
+        "color": color,
+        "error": "",
+    }));
+    view.update_state(
+        &parse_path("studio.hl_list").unwrap(),
+        Json::Array(rows.clone()),
+        cx,
+    );
+    hl_sync(view, &rows, cx);
+    save_prefs(view);
+}
+
+/// `hl_remove(id)` — drops the row, resyncs, persists.
+fn hl_remove(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeView>) {
+    let Some(id) = args.first() else {
+        return;
+    };
+    let rows: Vec<Json> = hl_rows(view)
+        .into_iter()
+        .filter(|r| r["id"].as_str() != Some(id.as_str()))
+        .collect();
+    view.update_state(
+        &parse_path("studio.hl_list").unwrap(),
+        Json::Array(rows.clone()),
+        cx,
+    );
+    hl_sync(view, &rows, cx);
+    save_prefs(view);
+}
+
+/// `hl_changed` — a color pick wrote its row already. Resync and persist.
+fn hl_changed(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
+    let rows = hl_rows(view);
+    hl_sync(view, &rows, cx);
+    save_prefs(view);
+}
+
+/// `hl_commit(id)` — Enter on a glob field — check, resync, persist.
+fn hl_commit(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeView>) {
+    hl_validate(view, args, cx);
+    save_prefs(view);
+}
+
+/// `files_pref_changed` — `files_hidden` feeds the emitted listing rather
+/// than a bound prop, so the tree re-emits before prefs flush to disk.
+fn files_pref_changed(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
+    let dir = view.state()["studio"]["project_dir"]
+        .as_str()
+        .unwrap_or_default()
+        .to_owned();
+    if !dir.is_empty() {
+        emit_project_items(view, std::path::Path::new(&dir), cx);
+    }
+    save_prefs(view);
 }
 
 /// Live window-chrome switch — `request_decorations` applies on Linux.
