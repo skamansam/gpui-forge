@@ -37,6 +37,12 @@ documents the app claims (`meta.window` members, `meta.include` pulls,
 one exists. This is the same grouping `forge skeleton` applies — a
 `*.forge.yaml` nothing claims is simply not in the view.
 
+Rows carry a tooltip of the form `path - linked by declarer`. The
+declarer is the file that pulls the row into the project. Manifest
+entries and app folders link by `forge.toml`. A `meta.window` member
+links by its window document. A `meta.include` pull links by the
+including document. Hover a row to learn why the file is in the project.
+
 The **project** button flips the rail into **files** mode — a plain
 filesystem listing of the same folder, strays and all. Right-clicking a
 `*.forge.yaml` row there offers **Add to project**, which appends it to

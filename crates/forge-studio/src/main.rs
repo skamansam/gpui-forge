@@ -3212,33 +3212,50 @@ fn scan_docs(dir: &std::path::Path) -> Vec<ScannedDoc> {
 }
 
 /// A project application — window doc, claimed member docs, asset folder.
+/// `assets_linker` names what declares the folder: the window doc for
+/// `meta.assets`, the manifest for `[assets] dir`.
 struct ProjectApp {
     name: String,
     docs: Vec<std::path::PathBuf>,
     assets_dir: Option<std::path::PathBuf>,
+    assets_linker: Option<std::path::PathBuf>,
 }
 
 /// Claims each `*.forge.yaml` under `dir` for an application: `meta.window`
 /// points at the app, `meta.include` follows the includer, `forge.documents`
 /// lands on the primary app. The rest come back unassigned. Mirrors
 /// `forge skeleton`'s grouping — an unlisted `meta.window` target becomes
-/// an application too.
-fn project_groups(dir: &std::path::Path, src: &str) -> (Vec<ProjectApp>, Vec<std::path::PathBuf>) {
+/// an application too. Also returns each shown doc's linker — the file
+/// whose declaration pulls it in — for the view's `linked by` tooltips.
+fn project_groups(
+    dir: &std::path::Path,
+    src: &str,
+) -> (
+    Vec<ProjectApp>,
+    Vec<std::path::PathBuf>,
+    std::collections::HashMap<std::path::PathBuf, std::path::PathBuf>,
+) {
     let canon = |p: &std::path::Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+    let manifest = canon(&dir.join("forge.toml"));
     let docs = scan_docs(dir);
     let mut windows: Vec<(String, std::path::PathBuf)> = project_apps(src)
         .into_iter()
         .map(|(n, d)| (n, canon(&dir.join(d))))
         .collect();
+    let declared_len = windows.len();
     // `meta.window` targets are windows even when `[[apps]]` never names
-    // them — implicit applications, same as `group_apps`.
+    // them — implicit applications, same as `group_apps`. `implicit_src`
+    // keeps the first doc that names each target — its linker.
     let mut member_of: std::collections::HashMap<std::path::PathBuf, std::path::PathBuf> =
+        std::collections::HashMap::new();
+    let mut implicit_src: std::collections::HashMap<std::path::PathBuf, std::path::PathBuf> =
         std::collections::HashMap::new();
     for d in &docs {
         if let Some(w) = &d.window {
             let target = canon(&d.path.parent().unwrap_or(std::path::Path::new(".")).join(w));
             if target != d.path {
-                member_of.insert(d.path.clone(), target);
+                member_of.insert(d.path.clone(), target.clone());
+                implicit_src.entry(target).or_insert_with(|| d.path.clone());
             }
         }
     }
@@ -3252,6 +3269,19 @@ fn project_groups(dir: &std::path::Path, src: &str) -> (Vec<ProjectApp>, Vec<std
                 .to_owned();
             windows.push((name, target.clone()));
         }
+    }
+    let mut links: std::collections::HashMap<std::path::PathBuf, std::path::PathBuf> =
+        std::collections::HashMap::new();
+    for (ix, (_, w)) in windows.iter().enumerate() {
+        let linker = if ix < declared_len {
+            manifest.clone()
+        } else {
+            implicit_src
+                .get(w)
+                .cloned()
+                .unwrap_or_else(|| manifest.clone())
+        };
+        links.insert(w.clone(), linker);
     }
     // Include edges — the includer's app claims the included doc. The
     // first includer wins, matching the chase order `collect_docs` uses.
@@ -3295,17 +3325,27 @@ fn project_groups(dir: &std::path::Path, src: &str) -> (Vec<ProjectApp>, Vec<std
         .map(|(name, window)| {
             // `meta.assets` on the window doc wins. `[assets] dir` fills
             // the gap — the same precedence the runtime applies.
-            let assets_dir = docs
+            let meta_assets = docs
                 .iter()
                 .find(|d| d.path == *window)
-                .and_then(|d| d.assets.clone())
-                .map(|a| window.parent().unwrap_or(std::path::Path::new(".")).join(a))
-                .or_else(|| manifest_assets.clone().map(|a| dir.join(a)))
-                .filter(|p| p.is_dir());
+                .and_then(|d| d.assets.clone());
+            let (assets_dir, assets_linker) = if let Some(a) = meta_assets {
+                (
+                    Some(window.parent().unwrap_or(std::path::Path::new(".")).join(a)),
+                    window.clone(),
+                )
+            } else {
+                (
+                    manifest_assets.clone().map(|a| dir.join(a)),
+                    manifest.clone(),
+                )
+            };
+            let assets_dir = assets_dir.filter(|p| p.is_dir());
             ProjectApp {
                 name: name.clone(),
                 docs: vec![window.clone()],
-                assets_dir,
+                assets_dir: assets_dir.clone(),
+                assets_linker: assets_dir.map(|_| assets_linker),
             }
         })
         .collect();
@@ -3316,47 +3356,90 @@ fn project_groups(dir: &std::path::Path, src: &str) -> (Vec<ProjectApp>, Vec<std
         }
         let mut seen = std::collections::HashSet::new();
         match claim(&d.path, &mut seen) {
-            Some(i) => groups[i].docs.push(d.path.clone()),
+            Some(i) => {
+                // Same precedence `claim` walks — `meta.window`, then
+                // `meta.include`, then `forge.documents` on the manifest.
+                let linker = member_of
+                    .get(&d.path)
+                    .or_else(|| included_by.get(&d.path))
+                    .cloned()
+                    .unwrap_or_else(|| manifest.clone());
+                links.insert(d.path.clone(), linker);
+                groups[i].docs.push(d.path.clone());
+            }
             None => unassigned.push(d.path.clone()),
         }
     }
-    (groups, unassigned)
+    (groups, unassigned, links)
 }
 
-/// A `scan_files`-shaped file row.
-fn file_item(path: &std::path::Path) -> Json {
+/// A `scan_files`-shaped file row. `tip` is the row's tooltip — the
+/// project view fills it with `path - linked by declarer`.
+fn file_item(path: &std::path::Path, tip: &str) -> Json {
     json!({
         "name": path.file_name().unwrap_or_default().to_string_lossy(),
         "path": path.display().to_string(),
         "dir": false,
         "children": [],
+        "tip": tip,
     })
 }
 
 /// A `scan_files`-shaped folder row. `path` doubles as the tree's row id,
 /// so virtual folders name a stable synthetic spot under the project.
-fn dir_item(name: &str, path: std::path::PathBuf, children: Vec<Json>) -> Json {
+fn dir_item(name: &str, path: std::path::PathBuf, children: Vec<Json>, tip: &str) -> Json {
     json!({
         "name": name,
         "path": path.display().to_string(),
         "dir": true,
         "children": children,
+        "tip": tip,
     })
 }
 
+/// The project-relative form of `p` — falls back to the full path
+/// outside `root`.
+fn rel_of(root: &std::path::Path, p: &std::path::Path) -> String {
+    p.strip_prefix(root).unwrap_or(p).display().to_string()
+}
+
+/// `<path> - linked by <declarer>` — the project-view tooltip shape.
+fn link_tip(root: &std::path::Path, name: &str, linker: &std::path::Path) -> String {
+    format!("{name} - linked by {}", rel_of(root, linker))
+}
+
 /// File rows nested by their folders under `root` — an app's docs keep
-/// their directory shape instead of listing flat.
-fn doc_tree(root: &std::path::Path, paths: &[std::path::PathBuf]) -> Vec<Json> {
+/// their directory shape instead of listing flat. Tooltips name each
+/// doc's declarer from `links`. Folder rows point at the app's window doc.
+fn doc_tree(
+    root: &std::path::Path,
+    paths: &[std::path::PathBuf],
+    links: &std::collections::HashMap<std::path::PathBuf, std::path::PathBuf>,
+    window: &std::path::Path,
+) -> Vec<Json> {
     #[derive(Default)]
     struct Tier {
         files: Vec<Json>,
         dirs: std::collections::BTreeMap<String, Tier>,
     }
-    fn emit(prefix: &std::path::Path, tier: Tier) -> Vec<Json> {
+    fn emit(
+        prefix: &std::path::Path,
+        tier: Tier,
+        root: &std::path::Path,
+        window: &std::path::Path,
+    ) -> Vec<Json> {
         let mut out: Vec<Json> = tier
             .dirs
             .into_iter()
-            .map(|(name, sub)| dir_item(&name, prefix.join(&name), emit(&prefix.join(&name), sub)))
+            .map(|(name, sub)| {
+                let path = prefix.join(&name);
+                dir_item(
+                    &name,
+                    path.clone(),
+                    emit(&path, sub, root, window),
+                    &link_tip(root, &rel_of(root, &path), window),
+                )
+            })
             .collect();
         out.extend(tier.files);
         out
@@ -3373,9 +3456,23 @@ fn doc_tree(root: &std::path::Path, paths: &[std::path::PathBuf]) -> Vec<Json> {
                     .or_default();
             }
         }
-        tier.files.push(file_item(p));
+        let linker = links.get(p).map(|p| p.as_path()).unwrap_or(window);
+        tier.files
+            .push(file_item(p, &link_tip(root, &rel_of(root, p), linker)));
     }
-    emit(root, root_tier)
+    emit(root, root_tier, root, window)
+}
+
+/// Stamps `<path> - linked by <linker>` tips onto a `scan_files` listing —
+/// the project's asset trees get the same tooltip treatment as docs.
+fn tip_scan(root: &std::path::Path, linker: &std::path::Path, items: &mut [Json]) {
+    for e in items.iter_mut() {
+        let path = std::path::PathBuf::from(e["path"].as_str().unwrap_or_default());
+        e["tip"] = Json::String(link_tip(root, &rel_of(root, &path), linker));
+        if let Some(kids) = e["children"].as_array_mut() {
+            tip_scan(root, linker, kids);
+        }
+    }
 }
 
 /// The sidebar's project view — `forge.toml` first, then each application
@@ -3384,28 +3481,49 @@ fn doc_tree(root: &std::path::Path, paths: &[std::path::PathBuf]) -> Vec<Json> {
 /// stays out of this view. Emitted as `scan_files`-shaped entries so
 /// `forge.Files of:` renders it like a scanned tree.
 fn project_items(dir: &std::path::Path, src: &str, hidden: bool) -> Vec<Json> {
-    let (mut apps, _) = project_groups(dir, src);
+    let (mut apps, _, links) = project_groups(dir, src);
+    let base = dir.canonicalize().unwrap_or_else(|_| dir.to_path_buf());
     let synth = |parts: &[&str]| {
         let mut p = dir.join(".forge-studio");
         p.extend(parts);
         p
     };
-    let mut out = vec![file_item(&dir.join("forge.toml"))];
+    let mut out = vec![file_item(
+        &dir.join("forge.toml"),
+        "forge.toml - the project manifest",
+    )];
     for app in &mut apps {
+        let window = app.docs[0].clone();
         app.docs[1..].sort();
+        let app_linker = links
+            .get(&window)
+            .cloned()
+            .unwrap_or_else(|| base.join("forge.toml"));
         let mut kids = vec![dir_item(
             "files",
             synth(&[&app.name, "files"]),
-            doc_tree(dir, &app.docs),
+            doc_tree(&base, &app.docs, &links, &window),
+            &link_tip(&base, "files", &window),
         )];
-        if let Some(ad) = &app.assets_dir {
+        if let (Some(ad), Some(linker)) = (&app.assets_dir, &app.assets_linker) {
             let mut budget = 200usize;
-            let scan = gpui_forge_runtime::render::scan_files(ad, &[], 6, hidden, &mut budget);
+            let mut scan = gpui_forge_runtime::render::scan_files(ad, &[], 6, hidden, &mut budget);
+            tip_scan(&base, linker, &mut scan);
             if !scan.is_empty() {
-                kids.push(dir_item("assets", synth(&[&app.name, "assets"]), scan));
+                kids.push(dir_item(
+                    "assets",
+                    synth(&[&app.name, "assets"]),
+                    scan,
+                    &link_tip(&base, "assets", linker),
+                ));
             }
         }
-        out.push(dir_item(&app.name, synth(&[&app.name]), kids));
+        out.push(dir_item(
+            &app.name,
+            synth(&[&app.name]),
+            kids,
+            &link_tip(&base, &app.name, &app_linker),
+        ));
     }
     out
 }
@@ -4384,7 +4502,7 @@ fn files_add(
     };
     // Already claimed? `claim` resolution says so — nothing to write.
     let src = std::fs::read_to_string(&toml).unwrap_or_default();
-    let (groups, _) = project_groups(&dir, &src);
+    let (groups, _, _) = project_groups(&dir, &src);
     if groups
         .iter()
         .flat_map(|g| g.docs.iter())
@@ -4474,6 +4592,7 @@ fn grep_project(view: &mut ForgeView, query: &str, cx: &mut Context<ForgeView>) 
                     "path": path,
                     "dir": false,
                     "children": [],
+                    "tip": format!("{rel}:{}", ix + 1),
                 }));
             }
         }
@@ -5537,7 +5656,7 @@ mod tests {
         )
         .unwrap();
         let src = "[package]\nname = \"demo\"\n\n[forge]\ndocument = \"main.forge.yaml\"\n";
-        let (apps, unassigned) = project_groups(&dir, src);
+        let (apps, unassigned, links) = project_groups(&dir, src);
         let base = |v: &[std::path::PathBuf]| -> Vec<String> {
             v.iter()
                 .map(|p| {
@@ -5556,6 +5675,27 @@ mod tests {
             vec!["main.forge.yaml", "docs/dialog.forge.yaml"]
         );
         assert_eq!(base(&unassigned), vec!["stray.forge.yaml"]);
+        // `links` names the declarer behind each shown doc — the manifest
+        // for the app's entry, the window target for `meta.window` members.
+        let rel = |p: &std::path::Path| {
+            p.strip_prefix(&dir)
+                .unwrap_or(p)
+                .display()
+                .to_string()
+                .replace('\\', "/")
+        };
+        assert_eq!(
+            rel(links
+                .get(&dir.join("main.forge.yaml").canonicalize().unwrap())
+                .unwrap()),
+            "forge.toml"
+        );
+        assert_eq!(
+            rel(links
+                .get(&dir.join("docs/dialog.forge.yaml").canonicalize().unwrap())
+                .unwrap()),
+            "main.forge.yaml"
+        );
         let _ = std::fs::remove_dir_all(&dir);
     }
 }

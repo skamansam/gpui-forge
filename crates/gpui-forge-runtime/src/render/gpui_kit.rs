@@ -3146,7 +3146,8 @@ impl ForgeView {
             .map(|v| self.highlights(v, cx))
             .unwrap_or_default();
         let mut items = Vec::new();
-        Self::files_data(&entries, &mut items);
+        let mut tips = HashMap::new();
+        Self::files_data(&entries, &mut items, &mut tips);
 
         // Search field + refresh button — the field is a real `InputState`
         // like the `Input` arm's, so it's keyboard-focusable and cleanable.
@@ -3231,7 +3232,8 @@ impl ForgeView {
             )
         } else {
             self.files_tree(
-                node, key, sel, sel_value, show_icons, icon_map, highlights, navigate, items, cx,
+                node, key, sel, sel_value, show_icons, icon_map, highlights, navigate, items, tips,
+                cx,
             )
         };
         // The `Tree` virtualizes rows off a uniform_list — it needs a
@@ -3272,6 +3274,7 @@ impl ForgeView {
         highlights: Vec<(String, FileHighlight)>,
         navigate: bool,
         items: Vec<TreeItem>,
+        tips: HashMap<String, String>,
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let skey = format!("{key}|{}", bind_salt(node));
@@ -3291,10 +3294,12 @@ impl ForgeView {
         let weak = cx.entity().downgrade();
         let files_node = node.clone();
         let nav_key = key.to_owned();
+        let tips = std::sync::Arc::new(tips);
         Tree::new(&state, move |ix, entry, selected, _, _cx| {
             let mut item = ListItem::new(ix);
             let path = entry.item().id.to_string();
             let is_dir = path.ends_with('/');
+            let tip = tips.get(&path).cloned();
             let active = sel_value.as_deref() == Some(path.as_str());
             let sel = sel.clone();
             let files_node = files_node.clone();
@@ -3314,6 +3319,9 @@ impl ForgeView {
                 .items_center()
                 .gap_1p5()
                 .pl(px(entry.depth() as f32 * 14.))
+                .when_some(tip, |d, tip| {
+                    d.tooltip(move |_, cx| cx.new(|_| Tooltip::new(tip.clone())).into())
+                })
                 .when_some(highlight, |d, hl| {
                     let d = match hl.weight {
                         Some(w) => d.font_weight(w),
@@ -3406,10 +3414,11 @@ impl ForgeView {
         .into_any_element()
     }
 
-    /// JSON `[{name, path, dir, children}]` → `TreeItem`s — the listing Studio
-    /// writes to `studio.files`. Directories expand by default and get the `/`
-    /// marker the row handler checks.
-    fn files_data(entries: &[Json], items: &mut Vec<TreeItem>) {
+    /// JSON `[{name, path, dir, children, tip}]` → `TreeItem`s — the listing
+    /// Studio writes to `studio.files`. Directories expand by default and get
+    /// the `/` marker the row handler checks. `tip` rows feed `tips` by item
+    /// id so the row can attach a tooltip.
+    fn files_data(entries: &[Json], items: &mut Vec<TreeItem>, tips: &mut HashMap<String, String>) {
         for e in entries {
             let name = e["name"].as_str().unwrap_or_default();
             let mut path = e["path"].as_str().unwrap_or_default().to_owned();
@@ -3417,10 +3426,13 @@ impl ForgeView {
             if is_dir {
                 path.push('/');
             }
+            if let Some(tip) = e["tip"].as_str() {
+                tips.insert(path.clone(), tip.to_owned());
+            }
             let mut data = TreeItem::new(&path, name);
             let mut subs = Vec::new();
             if let Some(children) = e["children"].as_array() {
-                Self::files_data(children, &mut subs);
+                Self::files_data(children, &mut subs, tips);
             }
             if !subs.is_empty() {
                 data = data.children(subs).expanded(true);
