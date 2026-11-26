@@ -3133,6 +3133,8 @@ struct ScannedDoc {
     window: Option<String>,
     include: Vec<String>,
     assets: Option<String>,
+    icon: Option<String>,
+    base: Option<String>,
 }
 
 /// A `meta:` scalar off a doc's source without a full parse. This is the
@@ -3151,6 +3153,23 @@ fn meta_scalar(src: &str, key: &str) -> Option<String> {
         }
         if let Some(v) = t.strip_prefix(&format!("{key}:")) {
             let v = v.trim().trim_matches('"');
+            if !v.is_empty() {
+                return Some(v.to_owned());
+            }
+        }
+    }
+    None
+}
+
+/// Top-level `key: value` off a doc's source without a full parse — the
+/// `meta_scalar` twin for keys that sit outside `meta:`.
+fn top_scalar(src: &str, key: &str) -> Option<String> {
+    for line in src.lines() {
+        if line.starts_with(' ') || line.starts_with('\t') {
+            continue;
+        }
+        if let Some(v) = line.trim().strip_prefix(&format!("{key}:")) {
+            let v = v.trim().trim_matches('"').trim_matches('\'');
             if !v.is_empty() {
                 return Some(v.to_owned());
             }
@@ -3206,6 +3225,11 @@ fn scan_docs(dir: &std::path::Path) -> Vec<ScannedDoc> {
                 window: meta("window"),
                 include,
                 assets: meta("assets"),
+                icon: meta("icon"),
+                base: doc
+                    .as_ref()
+                    .and_then(|d| d.base.clone())
+                    .or_else(|| top_scalar(&src, "base")),
             }
         })
         .collect()
@@ -3213,12 +3237,29 @@ fn scan_docs(dir: &std::path::Path) -> Vec<ScannedDoc> {
 
 /// A project application — window doc, claimed member docs, asset folder.
 /// `assets_linker` names what declares the folder: the window doc for
-/// `meta.assets`, the manifest for `[assets] dir`.
+/// `meta.assets`, the manifest for `[assets] dir`. `icon` is the sidebar
+/// glyph — a lucide name by default, a project-relative file path when a
+/// spec icon exists.
 struct ProjectApp {
     name: String,
+    icon: String,
     docs: Vec<std::path::PathBuf>,
     assets_dir: Option<std::path::PathBuf>,
     assets_linker: Option<std::path::PathBuf>,
+}
+
+/// The sidebar's default app glyph per base — a spec icon
+/// (`meta.icon`, `package.icon`) overrides it in `project_groups`.
+fn base_icon(base: &str) -> &'static str {
+    match base {
+        "gpui-kit" => "app-window",
+        "ratatui" => "terminal",
+        "iced" => "snowflake",
+        "guise" => "venetian-mask",
+        "bezel" => "frame",
+        "adabraka" => "monitor-play",
+        _ => "package",
+    }
 }
 
 /// Claims each `*.forge.yaml` under `dir` for an application: `meta.window`
@@ -3320,9 +3361,12 @@ fn project_groups(
         }
     };
     let manifest_assets = manifest_section(src, "assets", "dir");
+    let manifest_base = manifest_section(src, "forge", "base");
+    let package_icon = manifest_section(src, "package", "icon");
     let mut groups: Vec<ProjectApp> = windows
         .iter()
-        .map(|(name, window)| {
+        .enumerate()
+        .map(|(ix, (name, window))| {
             // `meta.assets` on the window doc wins. `[assets] dir` fills
             // the gap — the same precedence the runtime applies.
             let meta_assets = docs
@@ -3341,8 +3385,41 @@ fn project_groups(
                 )
             };
             let assets_dir = assets_dir.filter(|p| p.is_dir());
+            // Base: the window doc's own `base:`, then `[forge] base`,
+            // then the runtime default — `forge package`'s precedence.
+            let base = docs
+                .iter()
+                .find(|d| d.path == *window)
+                .and_then(|d| d.base.clone())
+                .or_else(|| manifest_base.clone())
+                .unwrap_or_else(|| BASE_ID.to_owned());
+            // Spec icon: `meta.icon` on the window doc, then `package.icon`
+            // for the primary app — `forge package`'s precedence. Emits a
+            // project-relative path only when the file sits under the
+            // project root. The tree falls back to the base's glyph.
+            let spec = docs
+                .iter()
+                .find(|d| d.path == *window)
+                .and_then(|d| d.icon.clone())
+                .map(|i| window.parent().unwrap_or(std::path::Path::new(".")).join(i))
+                .or_else(|| {
+                    (ix == 0)
+                        .then(|| package_icon.clone().map(|i| dir.join(i)))
+                        .flatten()
+                });
+            let icon = spec
+                .map(|p| canon(&p))
+                .filter(|p| p.is_file())
+                .and_then(|p| {
+                    manifest
+                        .parent()
+                        .and_then(|root| p.strip_prefix(root).ok())
+                        .map(|r| r.display().to_string().replace('\\', "/"))
+                })
+                .unwrap_or_else(|| base_icon(&base).to_owned());
             ProjectApp {
                 name: name.clone(),
+                icon,
                 docs: vec![window.clone()],
                 assets_dir: assets_dir.clone(),
                 assets_linker: assets_dir.map(|_| assets_linker),
@@ -3518,12 +3595,14 @@ fn project_items(dir: &std::path::Path, src: &str, hidden: bool) -> Vec<Json> {
                 ));
             }
         }
-        out.push(dir_item(
+        let mut app_row = dir_item(
             &app.name,
             synth(&[&app.name]),
             kids,
             &link_tip(&base, &app.name, &app_linker),
-        ));
+        );
+        app_row["icon"] = Json::String(app.icon.clone());
+        out.push(app_row);
     }
     out
 }
@@ -3565,7 +3644,11 @@ fn load_project(
     let dir = toml.parent().map(|p| p.to_path_buf()).unwrap_or_default();
     shared.borrow_mut().project_dir = Some(dir.clone());
     shared.borrow_mut().project_toml = Some(toml.clone());
+    // The assets root serves `icons/<set>/` iconsets. The project root
+    // itself joins the roots so a spec icon (`meta.icon`, `package.icon`)
+    // resolves wherever in the project the file lives.
     add_icon_root(assets_root(&dir));
+    add_icon_root(dir.clone());
     let doc_path = dir.join(&rel);
     // `studio.apps` feeds the sidebar's application list — each row's `path`
     // is absolute so `open_path` can load it directly.
@@ -5555,7 +5638,7 @@ fn echo_selected(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
 
 #[cfg(test)]
 mod tests {
-    use super::{add_document, doc_base, patch_manifest, project_apps, project_groups};
+    use super::{add_document, base_icon, doc_base, patch_manifest, project_apps, project_groups};
     use gpui_forge_runtime::base::BASE_ID;
     use serde_json::json;
 
@@ -5634,6 +5717,42 @@ mod tests {
         // No list at all — the key is created under `[forge]`.
         let out = add_document("[forge]\nbase = \"gpui-kit\"\n", "c.forge.yaml");
         assert!(out.contains("documents") && out.contains("\"c.forge.yaml\""));
+    }
+
+    /// App glyphs: the base's default unless a spec icon exists —
+    /// `meta.icon` on the window doc, `package.icon` for the primary app.
+    /// A spec path only wins when the file sits under the project root.
+    #[test]
+    fn project_groups_resolves_app_icons() {
+        let dir = std::env::temp_dir().join(format!("forge-icons-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        std::fs::write(
+            dir.join("main.forge.yaml"),
+            "forge: \"0.1\"\nbase: ratatui\nmeta:\n  icon: app.svg\nroot:\n  Text:\n  text: hi\n",
+        )
+        .unwrap();
+        std::fs::write(
+            dir.join("console.forge.yaml"),
+            "forge: \"0.1\"\nroot:\n  Text:\n  text: c\n",
+        )
+        .unwrap();
+        std::fs::write(dir.join("app.svg"), "<svg/>").unwrap();
+        // `meta.icon` (doc-relative) beats the ratatui default.
+        let src = "[package]\nname = \"demo\"\n\n[forge]\ndocument = \"main.forge.yaml\"\n\n[[apps]]\ndocument = \"console.forge.yaml\"\n";
+        let (apps, _, _) = project_groups(&dir, src);
+        assert_eq!(apps[0].icon, "app.svg");
+        // No spec icon — the manifest's `[forge] base` picks the glyph.
+        assert_eq!(apps[1].icon, base_icon("gpui-kit"));
+        // `package.icon` fills the primary app's gap when `meta.icon` is absent.
+        let src = "[package]\nname = \"demo\"\nicon = \"pkg.png\"\n\n[forge]\ndocument = \"console.forge.yaml\"\n";
+        std::fs::write(dir.join("pkg.png"), "png").unwrap();
+        let (apps, _, _) = project_groups(&dir, src);
+        assert_eq!(apps[0].icon, "pkg.png");
+        // A spec icon outside the project can't resolve — base glyph wins.
+        let src = "[package]\nname = \"demo\"\nicon = \"../outside.png\"\n\n[forge]\ndocument = \"console.forge.yaml\"\n";
+        let (apps, _, _) = project_groups(&dir, src);
+        assert_eq!(apps[0].icon, base_icon("gpui-kit"));
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

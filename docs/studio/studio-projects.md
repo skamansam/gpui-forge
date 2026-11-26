@@ -43,6 +43,13 @@ entries and app folders link by `forge.toml`. A `meta.window` member
 links by its window document. A `meta.include` pull links by the
 including document. Hover a row to learn why the file is in the project.
 
+Each application row shows an icon for its base: `app-window` for
+gpui-kit, `terminal` for ratatui, `snowflake` for iced, `venetian-mask`
+for guise, `frame` for bezel, `monitor-play` for adabraka. A spec icon
+overrides the default: `meta.icon` on the window document, or
+`package.icon` for the primary application. The file must live under
+the project root to resolve.
+
 The **project** button flips the rail into **files** mode — a plain
 filesystem listing of the same folder, strays and all. Right-clicking a
 `*.forge.yaml` row there offers **Add to project**, which appends it to

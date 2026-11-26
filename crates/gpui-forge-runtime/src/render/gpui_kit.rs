@@ -3147,7 +3147,8 @@ impl ForgeView {
             .unwrap_or_default();
         let mut items = Vec::new();
         let mut tips = HashMap::new();
-        Self::files_data(&entries, &mut items, &mut tips);
+        let mut row_icons = HashMap::new();
+        Self::files_data(&entries, &mut items, &mut tips, &mut row_icons);
 
         // Search field + refresh button — the field is a real `InputState`
         // like the `Input` arm's, so it's keyboard-focusable and cleanable.
@@ -3233,7 +3234,7 @@ impl ForgeView {
         } else {
             self.files_tree(
                 node, key, sel, sel_value, show_icons, icon_map, highlights, navigate, items, tips,
-                cx,
+                row_icons, cx,
             )
         };
         // The `Tree` virtualizes rows off a uniform_list — it needs a
@@ -3275,6 +3276,7 @@ impl ForgeView {
         navigate: bool,
         items: Vec<TreeItem>,
         tips: HashMap<String, String>,
+        row_icons: HashMap<String, String>,
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let skey = format!("{key}|{}", bind_salt(node));
@@ -3295,11 +3297,13 @@ impl ForgeView {
         let files_node = node.clone();
         let nav_key = key.to_owned();
         let tips = std::sync::Arc::new(tips);
+        let row_icons = std::sync::Arc::new(row_icons);
         Tree::new(&state, move |ix, entry, selected, _, _cx| {
             let mut item = ListItem::new(ix);
             let path = entry.item().id.to_string();
             let is_dir = path.ends_with('/');
             let tip = tips.get(&path).cloned();
+            let row_icon = row_icons.get(&path).cloned();
             let active = sel_value.as_deref() == Some(path.as_str());
             let sel = sel.clone();
             let files_node = files_node.clone();
@@ -3335,15 +3339,26 @@ impl ForgeView {
                     }
                 })
                 .when(show_icons, |d| {
-                    d.child(
-                        icon(&file_icon(
-                            entry.item().label.as_str(),
-                            is_dir,
-                            entry.is_expanded(),
-                            &icon_map,
-                        ))
-                        .with_size(size("small")),
-                    )
+                    // `icon` on the listing entry overrides the glyph — a
+                    // bare name resolves through `icons/<name>.svg`, a path
+                    // (any `/` or `.` in it) loads as an asset directly.
+                    let glyph = row_icon
+                        .map(|v| {
+                            if v.contains('/') || v.contains('.') {
+                                Icon::empty().path(v)
+                            } else {
+                                icon(&v)
+                            }
+                        })
+                        .unwrap_or_else(|| {
+                            icon(&file_icon(
+                                entry.item().label.as_str(),
+                                is_dir,
+                                entry.is_expanded(),
+                                &icon_map,
+                            ))
+                        });
+                    d.child(glyph.with_size(size("small")))
                 })
                 .when(!is_dir, |d| {
                     d.on_mouse_down(MouseButton::Left, move |e, _, cx| {
@@ -3416,9 +3431,14 @@ impl ForgeView {
 
     /// JSON `[{name, path, dir, children, tip}]` → `TreeItem`s — the listing
     /// Studio writes to `studio.files`. Directories expand by default and get
-    /// the `/` marker the row handler checks. `tip` rows feed `tips` by item
-    /// id so the row can attach a tooltip.
-    fn files_data(entries: &[Json], items: &mut Vec<TreeItem>, tips: &mut HashMap<String, String>) {
+    /// the `/` marker the row handler checks. `tip`/`icon` rows feed per-id
+    /// maps so the row can attach a tooltip or swap the glyph.
+    fn files_data(
+        entries: &[Json],
+        items: &mut Vec<TreeItem>,
+        tips: &mut HashMap<String, String>,
+        icons: &mut HashMap<String, String>,
+    ) {
         for e in entries {
             let name = e["name"].as_str().unwrap_or_default();
             let mut path = e["path"].as_str().unwrap_or_default().to_owned();
@@ -3429,10 +3449,13 @@ impl ForgeView {
             if let Some(tip) = e["tip"].as_str() {
                 tips.insert(path.clone(), tip.to_owned());
             }
+            if let Some(icon) = e["icon"].as_str() {
+                icons.insert(path.clone(), icon.to_owned());
+            }
             let mut data = TreeItem::new(&path, name);
             let mut subs = Vec::new();
             if let Some(children) = e["children"].as_array() {
-                Self::files_data(children, &mut subs, tips);
+                Self::files_data(children, &mut subs, tips, icons);
             }
             if !subs.is_empty() {
                 data = data.children(subs).expanded(true);
