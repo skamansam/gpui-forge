@@ -488,7 +488,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
                         "files_highlights": prefs
                             .get("files_highlights")
                             .and_then(|j| j.as_str())
-                            .unwrap_or("*.forge.yaml = bold; *.json = green"),
+                            .unwrap_or(HL_DEFAULT),
                         // Preferences → Highlights — `hl_seed` builds
                         // `hl_list` rows from the shorthand. The picker's
                         // `colors:` reads this palette.
@@ -560,6 +560,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "hl_validate",
         "hl_add",
         "hl_remove",
+        "hl_reset",
         "hl_changed",
         "hl_commit",
         "close_prefs",
@@ -1394,6 +1395,7 @@ fn dispatch(
         "hl_changed" => hl_changed(view, cx),
         "hl_add" => hl_add(view, cx),
         "hl_remove" => hl_remove(view, args, cx),
+        "hl_reset" => hl_reset(view, cx),
         "close_prefs" => {
             save_prefs(view);
             close_dialog(cx);
@@ -4028,6 +4030,14 @@ fn save_prefs(view: &ForgeView) {
 
 /// The fixed palette a new highlight row picks from — hex strings both the
 /// `highlights:` spec parser and `ColorPicker`'s `colors:` prop read.
+/// Factory `files_highlights` — common file kinds keyed to palette colors.
+/// The dotfile rule goes last: matching takes the first glob that hits.
+const HL_DEFAULT: &str = "*.forge.yaml = #e03131 bold; *.toml = #f59f00 bold; \
+    *.md = #1c7ed6; *.rs = #f76707; *.json = #37b24d; *.yaml = #ae3ec9; \
+    *.yml = #ae3ec9; .* = #868e96";
+
+/// Twelve-color pool for the `colors:` featured palette — `hl_add` hands
+/// out the first one no row uses yet.
 const HL_PALETTE: &[&str] = &[
     "#e03131", "#f76707", "#f59f00", "#37b24d", "#0ca678", "#1098ad", "#1c7ed6", "#3b5bdb",
     "#7048e8", "#ae3ec9", "#d6336c", "#868e96",
@@ -4047,7 +4057,7 @@ const HL_STYLE_WORDS: &[&str] = &[
     "black",
 ];
 
-/// `studio.hl_list` — the editable rows `{id, glob, color, error}` behind
+/// `studio.hl_list` — the editable rows `{id, glob, color, bold, error}` behind
 /// the `files_highlights` shorthand. `bind $h.glob` writes rows directly
 /// (scope origins), `hl_validate`/`hl_add`/`hl_remove` mutate the list.
 fn hl_rows(view: &ForgeView) -> Vec<Json> {
@@ -4065,8 +4075,15 @@ fn hl_sync(view: &mut ForgeView, rows: &[Json], cx: &mut Context<ForgeView>) {
         .iter()
         .filter_map(|row| {
             let glob = row["glob"].as_str()?.trim();
-            (!glob.is_empty())
-                .then(|| format!("{glob} = {}", row["color"].as_str().unwrap_or_default()))
+            (!glob.is_empty()).then(|| {
+                let color = row["color"].as_str().unwrap_or_default();
+                let bold = if row["bold"].as_bool().unwrap_or(false) {
+                    " bold"
+                } else {
+                    ""
+                };
+                format!("{glob} = {color}{bold}")
+            })
         })
         .collect::<Vec<_>>()
         .join("; ");
@@ -4100,10 +4117,14 @@ fn hl_seed(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
             .rfind(|w| !w.is_empty() && !HL_STYLE_WORDS.contains(w))
             .unwrap_or(HL_PALETTE[i % HL_PALETTE.len()])
             .to_owned();
+        let bold = spec
+            .split(|c: char| c.is_whitespace() || c == ',')
+            .any(|w| matches!(w, "bold" | "semibold" | "black"));
         rows.push(json!({
             "id": i.to_string(),
             "glob": glob,
             "color": color,
+            "bold": bold,
             "error": "",
         }));
     }
@@ -4175,6 +4196,7 @@ fn hl_add(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
         "id": id.to_string(),
         "glob": "*.forge.yaml",
         "color": color,
+        "bold": false,
         "error": "",
     }));
     view.update_state(
@@ -4183,6 +4205,17 @@ fn hl_add(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
         cx,
     );
     hl_sync(view, &rows, cx);
+    save_prefs(view);
+}
+
+/// `hl_reset` — restores the factory highlight list and persists it.
+fn hl_reset(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
+    view.update_state(
+        &parse_path("studio.files_highlights").unwrap(),
+        Json::String(HL_DEFAULT.to_owned()),
+        cx,
+    );
+    hl_seed(view, cx);
     save_prefs(view);
 }
 

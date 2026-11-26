@@ -1238,6 +1238,10 @@ Dialog#preferences:
                                         style: {grow: true}
                                         on change: hl_validate($h.id)
                                         on submit: hl_commit($h.id)
+                                      - Checkbox:
+                                        label: bold
+                                        checked: bind $h.bold
+                                        on change: hl_changed()
                                       - Button:
                                         variant: Ghost
                                         icon: x
@@ -1246,9 +1250,15 @@ Dialog#preferences:
                                   - Text: "{$h.error}"
                                     if: $h.error
                                     style: {size: xs, color: $theme.danger}
-                          - Button: "+ add highlight"
-                            variant: Ghost
-                            on click: hl_add()
+                          - HStack:
+                            style: {justify: between, width: full}
+                            children:
+                              - Button: "+ add highlight"
+                                variant: Ghost
+                                on click: hl_add()
+                              - Button: reset to defaults
+                                variant: Ghost
+                                on click: hl_reset()
           - SettingPage: Window
             children:
               - SettingsGroup: Decorations
