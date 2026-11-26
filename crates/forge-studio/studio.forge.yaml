@@ -50,6 +50,10 @@ state:
   studio.asset_files: list
   studio.assets_zoom: number
   studio.doc_dir: string
+  studio.doc_file: string
+  studio.doc_source: string
+  studio.doc_label: string
+  studio.doc_text: multiline
   studio.theme_json: multiline
   studio.theme_preview: string
   studio.markers: list
@@ -937,6 +941,46 @@ previewTab: &previewTab
 
 
 # ============================================================================
+# DOCS TAB — markdown editor + live preview for a forge doc's associated
+# pages. The project tree's doc icon runs `doc_open`, which fills
+# `doc_file`/`doc_source`/`doc_text`. Save writes back and creates +
+# associates the page when the buffer is new.
+# ============================================================================
+docsTab: &docsTab
+  children:
+    - VStack:
+      style: {grow: true, min-height: 0, gap: 8px}
+      children:
+        - HStack:
+          style: {gap: 8px, align: center}
+          children:
+            - Icon: book-open
+            - Text: "{$studio.doc_label}"
+              style: {size: sm, color: $theme.muted_foreground, grow: true}
+            - Button:
+              label: Save
+              icon: save
+              size: Small
+              on click: doc_save()
+        - HStack:
+          style: {grow: true, min-height: 0, gap: 8px}
+          children:
+            - Editor#doc_editor:
+              language: markdown
+              highlighting:
+                languages: [markdown]
+                default: markdown
+                show-selection: true
+              value: bind $studio.doc_text
+              placeholder: write markdown…
+              style: {grow: true, min-height: 0, basis: 50%, border: 1px}
+            - TextView#doc_preview:
+              text: "{$studio.doc_text}"
+              format: markdown
+              style: {grow: true, min-height: 0, basis: 50%, border: 1px}
+
+
+# ============================================================================
 # THE MAIN BODY
 # ============================================================================
 body: &body
@@ -991,6 +1035,9 @@ body: &body
                   selected: bind $studio.file_selected
                   # Single click selects/highlights. Double-click (`open`) loads.
                   on open: open_path($studio.file_selected)
+                  # The row's trailing book icon — opens the forge file's
+                  # associated markdown page in the Docs tab.
+                  on doc: doc_open($studio.file_selected)
                   placeholder: no files here
                   style: {grow: true, min-height: 0, min-width: 0}
         - ResizablePanel:
@@ -1025,6 +1072,8 @@ body: &body
                       <<: *assetsTab
                     - Tab: Icons
                       <<: *iconsTab
+                    - Tab: Docs
+                      <<: *docsTab
                     # Only when a forge.toml project is open — edits the
                     # manifest itself. The Editor sub-tab is a form over
                     # the manifest keys. Source edits the TOML directly.
@@ -1163,7 +1212,7 @@ Dialog#preferences:
   resizable: true
   style:
     width: 1000px
-    height: 600px
+    height: 800px
     padding: 16px
     gap: 16px
     radius: 8px

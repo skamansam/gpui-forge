@@ -511,6 +511,13 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
                         "assets_zoom": 0,
                         // Files sidebar "project" toggle — the document's folder.
                         "doc_dir": "",
+                        // Docs tab — `doc_file` is the markdown page being
+                        // edited ("" = unsaved), `doc_source` the forge
+                        // file or manifest it associates with.
+                        "doc_file": "",
+                        "doc_source": "",
+                        "doc_label": "no document",
+                        "doc_text": "",
                         "diagnostics": "",
                         "widget_sets": WIDGET_SETS,
                         "spec": gpui_forge_runtime::forge_spec::SPEC_VERSION,
@@ -563,6 +570,8 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "hl_reset",
         "hl_changed",
         "hl_commit",
+        "doc_open",
+        "doc_save",
         "close_prefs",
         "apply_icon_cache",
         "source_changed",
@@ -1299,6 +1308,12 @@ fn dispatch(
         // (index 4) instead — loaded, not applied. Apply stays explicit.
         "open_path" => {
             if let Some(path) = args.first().map(PathBuf::from) {
+                // Markdown rows — the docs folder's pages — open in the
+                // Docs tab, not the document editor.
+                if path.extension().is_some_and(|e| e == "md") {
+                    doc_open_path(view, &path, cx);
+                    return;
+                }
                 // The tree's `forge.toml` row opens the Project tab, not
                 // the document editor — re-read so Source shows the file.
                 if path.file_name().is_some_and(|n| n == "forge.toml") {
@@ -1308,7 +1323,7 @@ fn dispatch(
                         Json::String(src),
                         cx,
                     );
-                    view.update_state(&parse_path("studio.tab").unwrap(), Json::from(7), cx);
+                    view.update_state(&parse_path("studio.tab").unwrap(), Json::from(8), cx);
                     return;
                 }
                 let src = std::fs::read_to_string(&path).ok();
@@ -1396,6 +1411,14 @@ fn dispatch(
         "hl_add" => hl_add(view, cx),
         "hl_remove" => hl_remove(view, args, cx),
         "hl_reset" => hl_reset(view, cx),
+        // Docs tab — the tree's doc icon fires `doc`, the Save button
+        // `doc_save`.
+        "doc_open" => {
+            if let Some(path) = args.first().map(PathBuf::from) {
+                doc_open_path(view, &path, cx);
+            }
+        }
+        "doc_save" => doc_save(view, cx),
         "close_prefs" => {
             save_prefs(view);
             close_dialog(cx);
@@ -3247,6 +3270,7 @@ struct ScannedDoc {
     assets: Option<String>,
     icon: Option<String>,
     base: Option<String>,
+    docs: Vec<std::path::PathBuf>,
 }
 
 /// A `meta:` scalar off a doc's source without a full parse. This is the
@@ -3311,17 +3335,7 @@ fn scan_docs(dir: &std::path::Path) -> Vec<ScannedDoc> {
         .map(|path| {
             let src = std::fs::read_to_string(&path).unwrap_or_default();
             let doc = yaml::from_str(&src).ok();
-            let meta = |key: &str| {
-                doc.as_ref()
-                    .and_then(|d| {
-                        d.meta
-                            .iter()
-                            .find(|(n, _)| n == key)
-                            .map(|(_, v)| v.clone())
-                    })
-                    .filter(|v| !v.is_empty())
-                    .or_else(|| meta_scalar(&src, key))
-            };
+            let meta = |key: &str| doc_meta(&src, key);
             // `meta.include` splits on commas, newlines and whitespace —
             // the same grammar `forge skeleton` uses.
             let include = meta("include")
@@ -3329,6 +3343,19 @@ fn scan_docs(dir: &std::path::Path) -> Vec<ScannedDoc> {
                     v.split([',', '\n'])
                         .flat_map(str::split_whitespace)
                         .map(str::to_owned)
+                        .collect()
+                })
+                .unwrap_or_default();
+            // `meta docs` names the doc's markdown pages — the same
+            // comma/whitespace grammar `include` uses. `meta doc` works for
+            // a single page. Paths resolve against the doc's folder.
+            let parent = path.parent().unwrap_or(std::path::Path::new("."));
+            let md_docs = meta("docs")
+                .or_else(|| meta("doc"))
+                .map(|v| {
+                    v.split([',', '\n'])
+                        .flat_map(str::split_whitespace)
+                        .map(|d| canon(&parent.join(d)))
                         .collect()
                 })
                 .unwrap_or_default();
@@ -3342,6 +3369,7 @@ fn scan_docs(dir: &std::path::Path) -> Vec<ScannedDoc> {
                     .as_ref()
                     .and_then(|d| d.base.clone())
                     .or_else(|| top_scalar(&src, "base")),
+                docs: md_docs,
             }
         })
         .collect()
@@ -3356,6 +3384,7 @@ struct ProjectApp {
     name: String,
     icon: String,
     docs: Vec<std::path::PathBuf>,
+    doc_files: Vec<std::path::PathBuf>,
     assets_dir: Option<std::path::PathBuf>,
     assets_linker: Option<std::path::PathBuf>,
 }
@@ -3387,6 +3416,7 @@ fn project_groups(
     Vec<ProjectApp>,
     Vec<std::path::PathBuf>,
     std::collections::HashMap<std::path::PathBuf, std::path::PathBuf>,
+    Vec<std::path::PathBuf>,
 ) {
     let canon = |p: &std::path::Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
     let manifest = canon(&dir.join("forge.toml"));
@@ -3472,6 +3502,17 @@ fn project_groups(
             return declared.contains(&cur).then_some(0);
         }
     };
+    // `meta docs` per forge doc — keyed by the doc's canon path so the
+    // app claim loop can collect each member's markdown pages.
+    let md_of: std::collections::HashMap<std::path::PathBuf, Vec<std::path::PathBuf>> = docs
+        .iter()
+        .map(|d| (d.path.clone(), d.docs.clone()))
+        .collect();
+    let manifest_docs: Vec<std::path::PathBuf> =
+        manifest::manifest_list_section(src, "forge", "docs")
+            .into_iter()
+            .map(|d| canon(&dir.join(d)))
+            .collect();
     let manifest_assets = manifest_section(src, "assets", "dir");
     let manifest_base = manifest_section(src, "forge", "base");
     let package_icon = manifest_section(src, "package", "icon");
@@ -3533,6 +3574,7 @@ fn project_groups(
                 name: name.clone(),
                 icon,
                 docs: vec![window.clone()],
+                doc_files: md_of.get(window).cloned().unwrap_or_default(),
                 assets_dir: assets_dir.clone(),
                 assets_linker: assets_dir.map(|_| assets_linker),
             }
@@ -3555,22 +3597,31 @@ fn project_groups(
                     .unwrap_or_else(|| manifest.clone());
                 links.insert(d.path.clone(), linker);
                 groups[i].docs.push(d.path.clone());
+                if let Some(mds) = md_of.get(&d.path) {
+                    groups[i].doc_files.extend(mds.iter().cloned());
+                }
             }
             None => unassigned.push(d.path.clone()),
         }
     }
-    (groups, unassigned, links)
+    for g in &mut groups {
+        g.doc_files.sort();
+        g.doc_files.dedup();
+    }
+    (groups, unassigned, links, manifest_docs)
 }
 
 /// A `scan_files`-shaped file row. `tip` is the row's tooltip — the
-/// project view fills it with `path - linked by declarer`.
-fn file_item(path: &std::path::Path, tip: &str) -> Json {
+/// project view fills it with `path - linked by declarer`. `doc` marks a
+/// forge file so the tree draws its trailing doc icon.
+fn file_item(path: &std::path::Path, tip: &str, doc: bool) -> Json {
     json!({
         "name": path.file_name().unwrap_or_default().to_string_lossy(),
         "path": path.display().to_string(),
         "dir": false,
         "children": [],
         "tip": tip,
+        "doc": doc,
     })
 }
 
@@ -3646,8 +3697,11 @@ fn doc_tree(
             }
         }
         let linker = links.get(p).map(|p| p.as_path()).unwrap_or(window);
-        tier.files
-            .push(file_item(p, &link_tip(root, &rel_of(root, p), linker)));
+        tier.files.push(file_item(
+            p,
+            &link_tip(root, &rel_of(root, p), linker),
+            true,
+        ));
     }
     emit(root, root_tier, root, window)
 }
@@ -3670,17 +3724,35 @@ fn tip_scan(root: &std::path::Path, linker: &std::path::Path, items: &mut [Json]
 /// stays out of this view. Emitted as `scan_files`-shaped entries so
 /// `forge.Files of:` renders it like a scanned tree.
 fn project_items(dir: &std::path::Path, src: &str, hidden: bool) -> Vec<Json> {
-    let (mut apps, _, links) = project_groups(dir, src);
+    let (mut apps, _, links, manifest_docs) = project_groups(dir, src);
     let base = dir.canonicalize().unwrap_or_else(|_| dir.to_path_buf());
     let synth = |parts: &[&str]| {
         let mut p = dir.join(".forge-studio");
         p.extend(parts);
         p
     };
+    // A `docs` folder lists markdown pages — one page opens straight from
+    // the row's doc icon instead, so the folder only shows on two or more.
+    let doc_folder =
+        |mds: &[std::path::PathBuf], path: std::path::PathBuf, linker: &std::path::Path| {
+            let kids = mds
+                .iter()
+                .map(|m| file_item(m, &link_tip(&base, &rel_of(&base, m), linker), false))
+                .collect();
+            dir_item("docs", path, kids, &link_tip(&base, "docs", linker))
+        };
     let mut out = vec![file_item(
         &dir.join("forge.toml"),
         "forge.toml - the project manifest",
+        true,
     )];
+    if manifest_docs.len() > 1 {
+        out.push(doc_folder(
+            &manifest_docs,
+            synth(&["docs"]),
+            &base.join("forge.toml"),
+        ));
+    }
     for app in &mut apps {
         let window = app.docs[0].clone();
         app.docs[1..].sort();
@@ -3694,6 +3766,13 @@ fn project_items(dir: &std::path::Path, src: &str, hidden: bool) -> Vec<Json> {
             doc_tree(&base, &app.docs, &links, &window),
             &link_tip(&base, "files", &window),
         )];
+        if app.doc_files.len() > 1 {
+            kids.push(doc_folder(
+                &app.doc_files,
+                synth(&[&app.name, "docs"]),
+                &window,
+            ));
+        }
         if let (Some(ad), Some(linker)) = (&app.assets_dir, &app.assets_linker) {
             let mut budget = 200usize;
             let mut scan = gpui_forge_runtime::render::scan_files(ad, &[], 6, hidden, &mut budget);
@@ -4261,6 +4340,253 @@ fn files_pref_changed(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
         emit_project_items(view, std::path::Path::new(&dir), cx);
     }
     save_prefs(view);
+}
+
+/// `meta:<key>` off a doc source — parse first, `meta_scalar` fallback.
+/// Same precedence `scan_docs` uses.
+fn doc_meta(src: &str, key: &str) -> Option<String> {
+    yaml::from_str(src)
+        .ok()
+        .and_then(|d| {
+            d.meta
+                .iter()
+                .find(|(n, _)| n == key)
+                .map(|(_, v)| v.clone())
+        })
+        .filter(|v| !v.is_empty())
+        .or_else(|| meta_scalar(src, key))
+}
+
+/// The markdown paths a file associates with — `meta docs`/`meta doc` on a
+/// forge doc, `[forge] docs` on the manifest. Missing files still list.
+fn doc_list_for(path: &std::path::Path) -> Vec<std::path::PathBuf> {
+    let canon = |p: &std::path::Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+    let parent = path.parent().unwrap_or(std::path::Path::new("."));
+    let src = std::fs::read_to_string(path).unwrap_or_default();
+    let raw: Vec<String> = if path.file_name().is_some_and(|n| n == "forge.toml") {
+        manifest::manifest_list_section(&src, "forge", "docs")
+    } else {
+        doc_meta(&src, "docs")
+            .or_else(|| doc_meta(&src, "doc"))
+            .map(|v| {
+                v.split([',', '\n'])
+                    .flat_map(str::split_whitespace)
+                    .map(str::to_owned)
+                    .collect()
+            })
+            .unwrap_or_default()
+    };
+    raw.into_iter().map(|d| canon(&parent.join(d))).collect()
+}
+
+/// The Docs tab loader — an `.md` opens directly, a forge file or the
+/// manifest resolves its first associated page. No page yet means an
+/// unsaved buffer that `doc_save` creates and associates.
+fn doc_open_path(view: &mut ForgeView, path: &std::path::Path, cx: &mut Context<ForgeView>) {
+    let is_md = path.extension().is_some_and(|e| e == "md");
+    let (file, text) = if is_md {
+        (
+            path.display().to_string(),
+            std::fs::read_to_string(path).unwrap_or_default(),
+        )
+    } else {
+        match doc_list_for(path).into_iter().next() {
+            Some(md) => (
+                md.display().to_string(),
+                std::fs::read_to_string(&md).unwrap_or_default(),
+            ),
+            None => (String::new(), String::new()),
+        }
+    };
+    view.update_state(
+        &parse_path("studio.doc_label").unwrap(),
+        Json::String(if file.is_empty() {
+            "unsaved document — Save creates it".to_owned()
+        } else {
+            file.clone()
+        }),
+        cx,
+    );
+    view.update_state(
+        &parse_path("studio.doc_file").unwrap(),
+        Json::String(file),
+        cx,
+    );
+    view.update_state(
+        &parse_path("studio.doc_source").unwrap(),
+        Json::String(if is_md {
+            String::new()
+        } else {
+            path.display().to_string()
+        }),
+        cx,
+    );
+    view.update_state(
+        &parse_path("studio.doc_text").unwrap(),
+        Json::String(text),
+        cx,
+    );
+    view.update_state(&parse_path("studio.tab").unwrap(), Json::from(7), cx);
+}
+
+/// Where a new page lands — `README.md` for the manifest, the doc's stem
+/// beside a forge file.
+fn default_doc_path(source: &std::path::Path) -> std::path::PathBuf {
+    let dir = source.parent().unwrap_or(std::path::Path::new("."));
+    if source.file_name().is_some_and(|n| n == "forge.toml") {
+        dir.join("README.md")
+    } else {
+        let stem = source
+            .file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .trim_end_matches(".forge.yaml")
+            .to_owned();
+        dir.join(format!("{stem}.md"))
+    }
+}
+
+/// `docs: "<rel>"` under `meta:` in a forge doc — merges into an existing
+/// `docs`/`doc` line, inserts under `meta:`, or appends the block.
+fn meta_docs_insert(src: &str, rel: &str) -> String {
+    let mut names: Vec<String> = doc_meta(src, "docs")
+        .or_else(|| doc_meta(src, "doc"))
+        .map(|v| {
+            v.split([',', '\n'])
+                .flat_map(str::split_whitespace)
+                .map(str::to_owned)
+                .collect()
+        })
+        .unwrap_or_default();
+    if !names.iter().any(|n| n == rel) {
+        names.push(rel.to_owned());
+    }
+    let value = format!("docs: \"{}\"", names.join(", "));
+    let finish = |lines: &[String]| {
+        let mut out = lines.join("\n");
+        if src.ends_with('\n') {
+            out.push('\n');
+        }
+        out
+    };
+    let mut lines: Vec<String> = src.lines().map(str::to_owned).collect();
+    let mut meta_ix = None;
+    let mut in_meta = false;
+    for (i, l) in lines.iter().enumerate() {
+        let t = l.trim_start();
+        if !in_meta {
+            in_meta = !l.starts_with(' ') && !l.starts_with('\t') && t == "meta:";
+            if in_meta {
+                meta_ix = Some(i);
+            }
+            continue;
+        }
+        if !t.is_empty() && !l.starts_with(' ') && !l.starts_with('\t') {
+            break;
+        }
+        if t.starts_with("docs:") || t.starts_with("doc:") {
+            let indent = &l[..l.len() - t.len()];
+            lines[i] = format!("{indent}{value}");
+            return finish(&lines);
+        }
+    }
+    match meta_ix {
+        Some(i) => lines.insert(i + 1, format!("  {value}")),
+        None => {
+            lines.push("meta:".to_owned());
+            lines.push(format!("  {value}"));
+        }
+    }
+    finish(&lines)
+}
+
+/// Records `md` on `source` — `[forge] docs` for the manifest via
+/// `toml_edit`, `meta docs` for a forge doc.
+fn associate_doc(source: &std::path::Path, md: &std::path::Path) -> Result<(), String> {
+    let parent = source.parent().unwrap_or(std::path::Path::new("."));
+    let rel = md
+        .strip_prefix(parent)
+        .unwrap_or(md)
+        .display()
+        .to_string()
+        .replace('\\', "/");
+    let src = std::fs::read_to_string(source)
+        .map_err(|e| format!("cannot read {}: {e}", source.display()))?;
+    let out = if source.file_name().is_some_and(|n| n == "forge.toml") {
+        let mut doc = src
+            .parse::<toml_edit::DocumentMut>()
+            .map_err(|e| format!("cannot parse {}: {e}", source.display()))?;
+        let mut arr = doc
+            .get("forge")
+            .and_then(|f| f.get("docs"))
+            .and_then(|d| d.as_array())
+            .cloned()
+            .unwrap_or_default();
+        if !arr.iter().any(|v| v.as_str() == Some(rel.as_str())) {
+            arr.push(rel.as_str());
+        }
+        doc["forge"]["docs"] = toml_edit::value(arr);
+        doc.to_string()
+    } else {
+        meta_docs_insert(&src, &rel)
+    };
+    std::fs::write(source, out).map_err(|e| format!("cannot write {}: {e}", source.display()))
+}
+
+/// Docs tab Save — writes `studio.doc_text` to `studio.doc_file`. A new
+/// buffer lands at its source's default spot and associates there.
+fn doc_save(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
+    let state = view.state();
+    let get = |key: &str| {
+        get_path(state, &parse_path(&format!("studio.{key}")).unwrap())
+            .and_then(|j| j.as_str())
+            .unwrap_or_default()
+            .to_owned()
+    };
+    let text = get("doc_text");
+    let file = get("doc_file");
+    let source = get("doc_source");
+    let target = if !file.is_empty() {
+        PathBuf::from(&file)
+    } else if !source.is_empty() {
+        default_doc_path(std::path::Path::new(&source))
+    } else {
+        status(view, "no document open", cx);
+        return;
+    };
+    if let Err(e) = std::fs::write(&target, &text) {
+        status(view, &format!("cannot save {}: {e}", target.display()), cx);
+        return;
+    }
+    let canon = |p: &std::path::Path| p.canonicalize().unwrap_or_else(|_| p.to_path_buf());
+    if !source.is_empty() {
+        let src = std::path::Path::new(&source);
+        if !doc_list_for(src).iter().any(|d| *d == canon(&target)) {
+            match associate_doc(src, &target) {
+                Ok(()) => {
+                    let dir = view.state()["studio"]["project_dir"]
+                        .as_str()
+                        .unwrap_or_default()
+                        .to_owned();
+                    if !dir.is_empty() {
+                        emit_project_items(view, std::path::Path::new(&dir), cx);
+                    }
+                }
+                Err(e) => status(view, &e, cx),
+            }
+        }
+    }
+    view.update_state(
+        &parse_path("studio.doc_file").unwrap(),
+        Json::String(target.display().to_string()),
+        cx,
+    );
+    view.update_state(
+        &parse_path("studio.doc_label").unwrap(),
+        Json::String(target.display().to_string()),
+        cx,
+    );
+    status(view, &format!("saved {}", target.display()), cx);
 }
 
 /// Live window-chrome switch — `request_decorations` applies on Linux.
@@ -4932,7 +5258,7 @@ fn files_add(
     };
     // Already claimed? `claim` resolution says so — nothing to write.
     let src = std::fs::read_to_string(&toml).unwrap_or_default();
-    let (groups, _, _) = project_groups(&dir, &src);
+    let (groups, _, _, _) = project_groups(&dir, &src);
     if groups
         .iter()
         .flat_map(|g| g.docs.iter())
@@ -6086,18 +6412,18 @@ mod tests {
         std::fs::write(dir.join("app.svg"), "<svg/>").unwrap();
         // `meta.icon` (doc-relative) beats the ratatui default.
         let src = "[package]\nname = \"demo\"\n\n[forge]\ndocument = \"main.forge.yaml\"\n\n[[apps]]\ndocument = \"console.forge.yaml\"\n";
-        let (apps, _, _) = project_groups(&dir, src);
+        let (apps, _, _, _) = project_groups(&dir, src);
         assert_eq!(apps[0].icon, "app.svg");
         // No spec icon — the manifest's `[forge] base` picks the glyph.
         assert_eq!(apps[1].icon, base_icon("gpui-kit"));
         // `package.icon` fills the primary app's gap when `meta.icon` is absent.
         let src = "[package]\nname = \"demo\"\nicon = \"pkg.png\"\n\n[forge]\ndocument = \"console.forge.yaml\"\n";
         std::fs::write(dir.join("pkg.png"), "png").unwrap();
-        let (apps, _, _) = project_groups(&dir, src);
+        let (apps, _, _, _) = project_groups(&dir, src);
         assert_eq!(apps[0].icon, "pkg.png");
         // A spec icon outside the project can't resolve — base glyph wins.
         let src = "[package]\nname = \"demo\"\nicon = \"../outside.png\"\n\n[forge]\ndocument = \"console.forge.yaml\"\n";
-        let (apps, _, _) = project_groups(&dir, src);
+        let (apps, _, _, _) = project_groups(&dir, src);
         assert_eq!(apps[0].icon, base_icon("gpui-kit"));
         let _ = std::fs::remove_dir_all(&dir);
     }
@@ -6122,7 +6448,7 @@ mod tests {
         )
         .unwrap();
         let src = "[package]\nname = \"demo\"\n\n[forge]\ndocument = \"main.forge.yaml\"\n";
-        let (apps, unassigned, links) = project_groups(&dir, src);
+        let (apps, unassigned, links, _) = project_groups(&dir, src);
         let base = |v: &[std::path::PathBuf]| -> Vec<String> {
             v.iter()
                 .map(|p| {

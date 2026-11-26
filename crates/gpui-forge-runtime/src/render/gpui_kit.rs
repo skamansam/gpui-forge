@@ -3161,7 +3161,14 @@ impl ForgeView {
         let mut items = Vec::new();
         let mut tips = HashMap::new();
         let mut row_icons = HashMap::new();
-        Self::files_data(&entries, &mut items, &mut tips, &mut row_icons);
+        let mut doc_rows = HashSet::new();
+        Self::files_data(
+            &entries,
+            &mut items,
+            &mut tips,
+            &mut row_icons,
+            &mut doc_rows,
+        );
 
         // Search field + refresh button — the field is a real `InputState`
         // like the `Input` arm's, so it's keyboard-focusable and cleanable.
@@ -3247,7 +3254,7 @@ impl ForgeView {
         } else {
             self.files_tree(
                 node, key, sel, sel_value, show_icons, icon_map, highlights, navigate, items, tips,
-                row_icons, cx,
+                row_icons, doc_rows, cx,
             )
         };
         // The `Tree` virtualizes rows off a uniform_list — it needs a
@@ -3290,6 +3297,7 @@ impl ForgeView {
         items: Vec<TreeItem>,
         tips: HashMap<String, String>,
         row_icons: HashMap<String, String>,
+        doc_rows: HashSet<String>,
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let skey = format!("{key}|{}", bind_salt(node));
@@ -3311,20 +3319,26 @@ impl ForgeView {
         let nav_key = key.to_owned();
         let tips = std::sync::Arc::new(tips);
         let row_icons = std::sync::Arc::new(row_icons);
+        let doc_rows = std::sync::Arc::new(doc_rows);
         Tree::new(&state, move |ix, entry, selected, _, _cx| {
             let mut item = ListItem::new(ix);
             let path = entry.item().id.to_string();
             let is_dir = path.ends_with('/');
             let tip = tips.get(&path).cloned();
             let row_icon = row_icons.get(&path).cloned();
+            let has_doc = doc_rows.contains(&path);
             let active = sel_value.as_deref() == Some(path.as_str());
             let sel = sel.clone();
             let files_node = files_node.clone();
             let weak = weak.clone();
             let nav_weak = weak.clone();
             let menu_weak = weak.clone();
+            let doc_weak = weak.clone();
             let nav_key = nav_key.clone();
             let nav_path = path.clone();
+            let doc_node = files_node.clone();
+            let doc_sel = sel.clone();
+            let doc_path = path.clone();
             let highlight = highlights
                 .iter()
                 .find(|(pattern, _)| glob_match(pattern, entry.item().label.as_str()))
@@ -3435,7 +3449,34 @@ impl ForgeView {
                         menu.separator().item(hook_item("Rename…", "files_rename"))
                     }
                 })
-                .child(entry.item().label.to_string());
+                .child(
+                    div()
+                        .flex_1()
+                        .min_w_0()
+                        .child(entry.item().label.to_string()),
+                )
+                // `doc` rows — a forge file or the manifest — get a trailing
+                // doc icon. Its click selects the row and fires `doc`. The
+                // row's own open handler must not run too.
+                .when(has_doc, |d| {
+                    d.child(
+                        div()
+                            .id("files-doc")
+                            .flex_none()
+                            .child(icon("book-open").with_size(size("small")))
+                            .on_mouse_down(MouseButton::Left, move |e, _, cx| {
+                                cx.stop_propagation();
+                                let _ = e;
+                                try_update(&doc_weak, cx, "event", |this, cx| {
+                                    if let Some(p) = &doc_sel {
+                                        this.write(p, Json::String(doc_path.clone()), cx);
+                                    }
+                                    this.fire(&doc_node, "doc", cx);
+                                })
+                                .ok();
+                            }),
+                    )
+                });
             item = item.child(row);
             item.selected(selected || active)
         })
@@ -3451,6 +3492,7 @@ impl ForgeView {
         items: &mut Vec<TreeItem>,
         tips: &mut HashMap<String, String>,
         icons: &mut HashMap<String, String>,
+        doc_rows: &mut HashSet<String>,
     ) {
         for e in entries {
             let name = e["name"].as_str().unwrap_or_default();
@@ -3465,10 +3507,13 @@ impl ForgeView {
             if let Some(icon) = e["icon"].as_str() {
                 icons.insert(path.clone(), icon.to_owned());
             }
+            if e["doc"].as_bool().unwrap_or(false) {
+                doc_rows.insert(path.clone());
+            }
             let mut data = TreeItem::new(&path, name);
             let mut subs = Vec::new();
             if let Some(children) = e["children"].as_array() {
-                Self::files_data(children, &mut subs, tips, icons);
+                Self::files_data(children, &mut subs, tips, icons, doc_rows);
             }
             if !subs.is_empty() {
                 data = data.children(subs).expanded(true);
@@ -5679,25 +5724,21 @@ impl ForgeView {
                         // The `size_full` wrapper gives the nested view a
                         // definite slot. The doc root's `grow` has space to
                         // claim.
-                        let element = BoundsLogger::new(
-                            div()
-                                .id("preview-fill")
-                                .size_full()
-                                .child(
-                                    preview
-                                        .clone()
-                                        .cached(
-                                            gpui::StyleRefinement::default()
-                                                .flex_1()
-                                                .min_h_0()
-                                                .w_full(),
-                                        )
-                                        .into_any_element(),
-                                )
-                                .into_any_element(),
-                            "preview-fill",
-                        )
-                        .into_any_element();
+                        let element = div()
+                            .id("preview-fill")
+                            .size_full()
+                            .child(
+                                preview
+                                    .clone()
+                                    .cached(
+                                        gpui::StyleRefinement::default()
+                                            .flex_1()
+                                            .min_h_0()
+                                            .w_full(),
+                                    )
+                                    .into_any_element(),
+                            )
+                            .into_any_element();
                         // #156 — a ratatui-base doc draws in-process instead
                         // of through the compat map: same renderer as the
                         // preview host, no wire, direct hit-testing.

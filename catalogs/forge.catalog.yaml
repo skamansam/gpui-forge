@@ -233,7 +233,8 @@ elements:
       a bounded slot (`grow` plus `min-height 0` inside a fixed-height
       column); its own scrollbar then handles overflow. File rows write
       `selected` and fire `select` on click, `open` on double-click; folders
-      expand (tree) or enter (navigate).
+      expand (tree) or enter (navigate). A `doc`-marked row gets a trailing
+      book icon. Its click writes `selected` and fires `doc`.
     component: gpui_forge_runtime::render::ForgeView
     props:
       of:
@@ -302,6 +303,7 @@ elements:
     events:
       select: string
       open: string
+      doc: string
     children: none
 
   Palette:
