@@ -3873,6 +3873,7 @@ fn load_project(
         Json::String("project".to_owned()),
         cx,
     );
+    view.update_state(&parse_path("studio.files_view").unwrap(), Json::from(0), cx);
     view.update_state(
         &parse_path("studio.toml_source").unwrap(),
         Json::String(src.clone()),
@@ -5185,17 +5186,14 @@ fn collect_icon_names(node: &gpui_forge_runtime::forge_spec::model::Node, out: &
 /// project root (`studio.project`, set by `open_project`) and the current
 /// document's folder (`studio.doc_dir`).
 fn files_scope(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
-    let (project, current) = {
+    let (project, ix) = {
         let state = view.state();
         (
             state["studio"]["project"]
                 .as_str()
                 .unwrap_or_default()
                 .to_owned(),
-            state["studio"]["files_mode"]
-                .as_str()
-                .unwrap_or_default()
-                .to_owned(),
+            state["studio"]["files_view"].as_u64().unwrap_or(0),
         )
     };
     if project.is_empty() {
@@ -5203,12 +5201,9 @@ fn files_scope(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
         return;
     }
     // `project` view shows declared membership, `files` browses the whole
-    // folder — same root, two listings.
-    let mode = if current == "files" {
-        "project"
-    } else {
-        "files"
-    };
+    // folder — same root, two listings. `files_view` is the segmented
+    // switcher's selected index.
+    let mode = if ix == 1 { "files" } else { "project" };
     view.update_state(
         &parse_path("studio.files_mode").unwrap(),
         Json::String(mode.to_owned()),

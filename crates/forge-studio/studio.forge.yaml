@@ -28,6 +28,7 @@ state:
   studio.multiapp: boolean
   studio.project_items: list
   studio.project_mode: number
+  studio.files_view: number
   studio.files_mode: string
   studio.project_grep: string
   studio.proj_name: string
@@ -1015,17 +1016,16 @@ body: &body
                 padding: 8px
                 gap: 8px
               children:
-                - HStack:
-                  style: {gap: 8px, align: center}
+                - Tabs#files_view:
+                  variant: Segmented
+                  selected: bind $studio.files_view
+                  # project shows declared membership, files browses the
+                  # whole folder.
+                  on change: files_scope()
+                  if: $studio.project
                   children:
-                    - Label: Project
-                      style: {weight: semibold, size: sm, grow: true}
-                    - Button: "{$studio.files_mode}"
-                      variant: Ghost
-                      size: Small
-                      tooltip: project shows declared membership, files browses the whole folder
-                      on click: files_scope()
-                      if: $studio.project
+                    - Tab: project
+                    - Tab: files
                 - Text: "{$studio.project_name}"
                   style: {size: xs, color: $theme.muted_foreground}
                 - Input#project_grep:
