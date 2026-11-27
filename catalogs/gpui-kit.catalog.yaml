@@ -515,9 +515,10 @@ elements:
         type: string
         summary: Icon set override — a `set:name` prefix on `name:` wins over this.
       size:
-        type: enum
-        values: [XSmall, Small, Medium, Large]
+        type: string
         default: Medium
+        summary: Glyph size — `XSmall`/`Small`/`Medium`/`Large` or a length
+          like `24px`; bound numbers resolve as px.
       color: color
 
   Image:
@@ -531,6 +532,7 @@ elements:
         required: true
       size:
         type: length
+        bindable: true
       object-fit:
         type: enum
         values: [Contain, Cover, Fill, ScaleDown]
@@ -651,9 +653,10 @@ elements:
         type: number
         default: 5
       size:
-        type: enum
-        values: [XSmall, Small, Medium, Large]
+        type: string
         default: Medium
+        summary: Glyph size — `XSmall`/`Small`/`Medium`/`Large` or a length
+          like `24px`; bound numbers resolve as px.
       color: color
       disabled:
         type: bool

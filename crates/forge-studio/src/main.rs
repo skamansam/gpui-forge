@@ -572,6 +572,8 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "retry_iconset",
         "create_project",
         "preview_in_host",
+        "build_skeleton",
+        "demo_app",
         "raise_host",
         "pane_key",
         "pane_mouse",
@@ -1251,6 +1253,8 @@ fn dispatch(
         }
         "create_project" => create_project(view, shared.clone(), cx),
         "preview_in_host" => preview_in_host(view, shared.clone(), cx),
+        "build_skeleton" => build_skeleton(view, shared.clone(), cx),
+        "demo_app" => demo_app(view, shared.clone(), cx),
         "raise_host" => host_send(&json!({"cmd":"raise"})),
         // Stream cards (ratatui `mode: stream`) — the card fires `pane_key` /
         // `pane_mouse` for input over its tracked TermView. Forward to that
@@ -2537,6 +2541,90 @@ fn flatten_assets(entries: &[Json], root: &std::path::Path, out: &mut Vec<Json>)
             "img": IMAGE_EXTS.contains(&ext.as_str()),
             "size": size,
         }));
+    }
+}
+
+/// The `forge` CLI beside the running Studio — the same sibling-binary
+/// convention the preview hosts use.
+fn find_forge_binary() -> Option<PathBuf> {
+    std::env::current_exe()
+        .ok()?
+        .parent()
+        .map(|d| d.join("forge"))
+        .filter(|p| p.is_file())
+}
+
+/// The loaded project's manifest path — `forge.toml` under `project_dir`.
+fn project_manifest(shared: &SharedState) -> Option<PathBuf> {
+    shared
+        .borrow()
+        .project_dir
+        .as_ref()
+        .map(|d| d.join("forge.toml"))
+        .filter(|p| p.is_file())
+}
+
+/// Project → Build Skeleton — `forge skeleton <manifest>` generates each
+/// application's scaffold (`app/src/main.rs` et al.) from the declared
+/// docs. Synchronous — the emit is fast — so its stdout/stderr reach the
+/// status bar.
+fn build_skeleton(view: &mut ForgeView, shared: SharedState, cx: &mut Context<ForgeView>) {
+    let Some(toml) = project_manifest(&shared) else {
+        status(view, "open a project first — no forge.toml", cx);
+        return;
+    };
+    let Some(forge) = find_forge_binary() else {
+        status(view, "no `forge` binary next to studio", cx);
+        return;
+    };
+    match std::process::Command::new(&forge)
+        .arg("skeleton")
+        .arg(&toml)
+        .output()
+    {
+        Ok(out) => {
+            let msg = String::from_utf8_lossy(&out.stderr).trim().to_owned();
+            let msg = if msg.is_empty() {
+                String::from_utf8_lossy(&out.stdout).trim().to_owned()
+            } else {
+                msg
+            };
+            status(
+                view,
+                &if msg.is_empty() {
+                    format!("skeleton rc {}", out.status.code().unwrap_or(-1))
+                } else {
+                    msg
+                },
+                cx,
+            );
+        }
+        Err(e) => status(view, &format!("forge skeleton failed: {e}"), cx),
+    }
+}
+
+/// Project → Demo — `forge preview <manifest>` builds the generated app
+/// and launches it. The build runs detached — it can take a while — so
+/// the status bar says what is running rather than blocking the UI.
+fn demo_app(view: &mut ForgeView, shared: SharedState, cx: &mut Context<ForgeView>) {
+    let Some(toml) = project_manifest(&shared) else {
+        status(view, "open a project first — no forge.toml", cx);
+        return;
+    };
+    let Some(forge) = find_forge_binary() else {
+        status(view, "no `forge` binary next to studio", cx);
+        return;
+    };
+    match std::process::Command::new(&forge)
+        .arg("preview")
+        .arg(&toml)
+        .stdin(std::process::Stdio::null())
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::inherit())
+        .spawn()
+    {
+        Ok(_) => status(view, "building + launching the demo app…", cx),
+        Err(e) => status(view, &format!("forge preview failed: {e}"), cx),
     }
 }
 

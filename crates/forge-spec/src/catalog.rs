@@ -121,7 +121,7 @@ impl PropType {
             (T::Length, Value::Number { .. }) => true,
             (T::Bool, Value::Bool(_)) => true,
             (T::Color, Value::Color(_)) => true,
-            (T::Icon, Value::Enum(_) | Value::String(_)) => true,
+            (T::Icon, Value::Enum(_) | Value::String(_) | Value::Interpolated(_)) => true,
             (T::Enum(values), Value::Enum(v)) => values.contains(v),
             (T::List(item), Value::List(items)) => items.iter().all(|i| item.accepts(i)),
             (T::Map, Value::Map(_)) => true,

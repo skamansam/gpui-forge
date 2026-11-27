@@ -168,6 +168,13 @@ projectMenu: &projectMenu
   size: Small
   variant: Ghost
   children:
+    - MenuItem: Build Skeleton
+      icon: hammer
+      on click: build_skeleton()
+    - MenuItem: Demo App
+      icon: play
+      on click: demo_app()
+    - MenuSeparator:
     - MenuItem: Preview in Host…
       icon: app-window
       on click: preview_in_host()
@@ -363,7 +370,6 @@ assetsTab: &assetsTab
         - Tabs#assetsZoom:
           variant: Segmented
           selected: bind $studio.assets_zoom
-          style: {grow: true}
           children:
             - Tab: List
             - Tab: Thumbs
@@ -619,7 +625,7 @@ appTab: &appTab
               set: "{$studio.app_iconset}"
               size: 32px
             - Text: "{$studio.app_iconset}:{$studio.app_icon}"
-              style: {size: sm, weight: Semibold}
+              style: {size: sm, weight: semibold}
             - Text: "— double-click an icon in the browser to pick another"
               style: {size: xs, color: $theme.muted_foreground}
         - Scrollable:

@@ -177,6 +177,12 @@ elements:
         type: string
         bindable: true
         summary: The clicked icon's name; the matching cell highlights.
+      added:
+        type: string
+        bindable: true
+        summary: "Bind target for the project-membership list — a JSON
+          `[\"name\", …]` the host maintains. Each cell's `$item.added`
+          reports membership."
       size:
         type: string
         bindable: true
@@ -216,8 +222,10 @@ elements:
           requires shipping its notice with the built app."
     events:
       select: string
+      open: string
+      toggle: string
     # Scoped children — the cell template. Rendered per icon under `$item`
-    # = `{name, set, selected, downloaded}`. The runtime keeps the measured
+    # = `{name, set, selected, downloaded, added}`. The runtime keeps the measured
     # grid frame (pinned width, selected/downloaded rings, hover, click→
     # `selected`/`select`). Absent → the built-in glyph+name cell.
     children: any

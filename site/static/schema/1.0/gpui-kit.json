@@ -2619,22 +2619,12 @@
                 ]
               },
               "size": {
-                "anyOf": [
-                  {
-                    "enum": [
-                      "XSmall",
-                      "Small",
-                      "Medium",
-                      "Large"
-                    ]
-                  },
-                  {
-                    "pattern": "^(\\$|\\{)",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
+                "description": "Glyph size — `XSmall`/`Small`/`Medium`/`Large` or a length like `24px`; bound numbers resolve as px.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
                 ]
               },
               "style": {
@@ -3326,22 +3316,12 @@
                 ]
               },
               "size": {
-                "anyOf": [
-                  {
-                    "enum": [
-                      "XSmall",
-                      "Small",
-                      "Medium",
-                      "Large"
-                    ]
-                  },
-                  {
-                    "pattern": "^(\\$|\\{)",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
+                "description": "Glyph size — `XSmall`/`Small`/`Medium`/`Large` or a length like `24px`; bound numbers resolve as px.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
                 ]
               },
               "style": {
@@ -23415,22 +23395,11 @@
               "size": {
                 "anyOf": [
                   {
-                    "anyOf": [
-                      {
-                        "enum": [
-                          "XSmall",
-                          "Small",
-                          "Medium",
-                          "Large"
-                        ]
-                      },
-                      {
-                        "pattern": "^(\\$|\\{)",
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
+                    "type": [
+                      "string",
+                      "number",
+                      "boolean",
+                      "null"
                     ]
                   },
                   {
@@ -23454,7 +23423,8 @@
                       }
                     ]
                   }
-                ]
+                ],
+                "description": "Glyph size — `XSmall`/`Small`/`Medium`/`Large` or a length like `24px`; bound numbers resolve as px."
               },
               "style": {
                 "$ref": "#/definitions/style"
@@ -23619,6 +23589,15 @@
               }
             },
             "properties": {
+              "added": {
+                "description": "Bind target for the project-membership list — a JSON `[\"name\", …]` the host maintains. Each cell's `$item.added` reports membership.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
+                ]
+              },
               "attribution": {
                 "description": "Publishes bool — true when the set's SPDX license requires shipping its notice with the built app.",
                 "type": [
@@ -23675,7 +23654,19 @@
                   "null"
                 ]
               },
+              "on open": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "on select": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "on toggle": {
                 "type": [
                   "string",
                   "null"
@@ -23795,7 +23786,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Icons(#[\\w-]+| \\.[\\w-]+)?|attribution|bare|categories|category|children|meta|on (select)|query|search|selected|set|sets|size|status|style|theme|themes|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Icons(#[\\w-]+| \\.[\\w-]+)?|added|attribution|bare|categories|category|children|meta|on (select|toggle|open)|query|search|selected|set|sets|size|status|style|theme|themes|tooltip)$"
             }
           }
         },
@@ -34326,22 +34317,12 @@
                 ]
               },
               "size": {
-                "anyOf": [
-                  {
-                    "enum": [
-                      "XSmall",
-                      "Small",
-                      "Medium",
-                      "Large"
-                    ]
-                  },
-                  {
-                    "pattern": "^(\\$|\\{)",
-                    "type": "string"
-                  },
-                  {
-                    "type": "null"
-                  }
+                "description": "Glyph size — `XSmall`/`Small`/`Medium`/`Large` or a length like `24px`; bound numbers resolve as px.",
+                "type": [
+                  "string",
+                  "number",
+                  "boolean",
+                  "null"
                 ]
               },
               "style": {
