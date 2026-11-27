@@ -505,10 +505,12 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
                         "native_decorations": native_decorations(&prefs),
                         "file": "welcome.forge.yaml",
                         // Assets tab — `refresh_assets` rewrites dir + listing when a
-                        // document/project loads.
+                        // document/project loads. Grid is the default view;
+                        // `assets_all` widens the listing to the whole project.
                         "assets_dir": "",
                         "asset_files": [],
-                        "assets_zoom": 0,
+                        "assets_zoom": 2,
+                        "assets_all": false,
                         // Files sidebar "project" toggle — the document's folder.
                         "doc_dir": "",
                         // Docs tab — `doc_file` is the markdown page being
@@ -543,6 +545,7 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "open_path",
         "open_recent",
         "files_scope",
+        "assets_scope",
         "grep_project",
         "icon_copy",
         "toggle_icon_theme",
@@ -1158,6 +1161,7 @@ fn dispatch(
         "open_document" => open_document(shared.clone(), cx),
         "open_project" => open_project(shared.clone(), cx),
         "files_scope" => files_scope(view, cx),
+        "assets_scope" => assets_scope(view, cx),
         "grep_project" => {
             let query = args
                 .first()
@@ -1308,6 +1312,33 @@ fn dispatch(
         // (index 4) instead — loaded, not applied. Apply stays explicit.
         "open_path" => {
             if let Some(path) = args.first().map(PathBuf::from) {
+                // A folder or a media file opens the Assets tab's grid at
+                // the location — the folder itself, or the file's parent —
+                // as a flat listing of the supported media under it.
+                let ext = path
+                    .extension()
+                    .map(|e| e.to_string_lossy().to_lowercase())
+                    .unwrap_or_default();
+                let is_media = ASSET_GLOBS
+                    .iter()
+                    .any(|g| g.trim_start_matches("*.") == ext);
+                if path.is_dir() || is_media {
+                    let loc = if path.is_dir() {
+                        path.clone()
+                    } else {
+                        path.parent()
+                            .map(|p| p.to_path_buf())
+                            .unwrap_or_else(|| PathBuf::from("."))
+                    };
+                    seed_asset_listing(view, &loc, cx);
+                    view.update_state(
+                        &parse_path("studio.assets_zoom").unwrap(),
+                        Json::from(2),
+                        cx,
+                    );
+                    view.update_state(&parse_path("studio.tab").unwrap(), Json::from(5), cx);
+                    return;
+                }
                 // Markdown rows — the docs folder's pages — open in the
                 // Docs tab, not the document editor.
                 if path.extension().is_some_and(|e| e == "md") {
@@ -2296,10 +2327,33 @@ fn assets_root(root: &std::path::Path) -> PathBuf {
 }
 
 /// Seeds the Assets tab: `studio.assets_dir` names the browsed root and
-/// `studio.asset_files` is the flattened media listing the thumbnail/grid
-/// zooms iterate.
+/// `studio.asset_files` is the flattened media listing the zooms iterate.
+/// `assets_all` widens the listing to every supported file under the
+/// project directory — the declared assets dir otherwise.
 fn refresh_assets(view: &mut ForgeView, root: &std::path::Path, cx: &mut Context<ForgeView>) {
-    let dir = assets_root(root);
+    let (all, project) = {
+        let s = view.state();
+        (
+            s["studio"]["assets_all"].as_bool().unwrap_or(false),
+            s["studio"]["project"]
+                .as_str()
+                .unwrap_or_default()
+                .to_owned(),
+        )
+    };
+    let dir = if all && !project.is_empty() {
+        PathBuf::from(project)
+    } else if all {
+        root.to_path_buf()
+    } else {
+        assets_root(root)
+    };
+    seed_asset_listing(view, &dir, cx);
+}
+
+/// Writes `assets_dir` + `asset_files` for `dir` — the flat listing of
+/// supported media under it, folders flattened away.
+fn seed_asset_listing(view: &mut ForgeView, dir: &std::path::Path, cx: &mut Context<ForgeView>) {
     view.update_state(
         &parse_path("studio.assets_dir").unwrap(),
         Json::String(dir.display().to_string()),
@@ -2307,14 +2361,32 @@ fn refresh_assets(view: &mut ForgeView, root: &std::path::Path, cx: &mut Context
     );
     let mut budget = 800usize;
     let filters: Vec<String> = ASSET_GLOBS.iter().map(|s| s.to_string()).collect();
-    let entries = gpui_forge_runtime::render::scan_files(&dir, &filters, 4, false, &mut budget);
+    let entries = gpui_forge_runtime::render::scan_files(dir, &filters, 6, false, &mut budget);
     let mut files = Vec::new();
-    flatten_assets(&entries, &dir, &mut files);
+    flatten_assets(&entries, dir, &mut files);
     view.update_state(
         &parse_path("studio.asset_files").unwrap(),
         Json::Array(files),
         cx,
     );
+}
+
+/// The Assets scope checkbox flipped — re-seed the listing under the
+/// project root, the open document's folder, or the cwd as a last resort.
+fn assets_scope(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
+    let root = {
+        let s = view.state();
+        let project = s["studio"]["project"].as_str().unwrap_or_default();
+        let doc_dir = s["studio"]["doc_dir"].as_str().unwrap_or_default();
+        if !project.is_empty() {
+            PathBuf::from(project)
+        } else if !doc_dir.is_empty() {
+            PathBuf::from(doc_dir)
+        } else {
+            std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
+        }
+    };
+    refresh_assets(view, &root, cx);
 }
 
 /// The project's theme dir: `[themes] dir` in `forge.toml` when declared,

@@ -3334,11 +3334,15 @@ impl ForgeView {
             let nav_weak = weak.clone();
             let menu_weak = weak.clone();
             let doc_weak = weak.clone();
+            let dir_weak = weak.clone();
             let nav_key = nav_key.clone();
             let nav_path = path.clone();
             let doc_node = files_node.clone();
             let doc_sel = sel.clone();
             let doc_path = path.clone();
+            let dir_node = files_node.clone();
+            let dir_sel = sel.clone();
+            let dir_path = path.clone();
             let highlight = highlights
                 .iter()
                 .find(|(pattern, _)| glob_match(pattern, entry.item().label.as_str()))
@@ -3413,6 +3417,23 @@ impl ForgeView {
                         try_update(&nav_weak, cx, "files-nav", move |this, cx| {
                             this.files_nav.insert(key, dir);
                             cx.notify();
+                        })
+                        .ok();
+                    })
+                })
+                // A folder double-click fires `open` too — the single click
+                // still expands through the Tree's own handler. Hosts can
+                // route folder opens (Studio maps them to the Assets grid).
+                .when(is_dir, |d| {
+                    d.on_mouse_down(MouseButton::Left, move |e, _, cx| {
+                        if e.click_count < 2 {
+                            return;
+                        }
+                        try_update(&dir_weak, cx, "event", |this, cx| {
+                            if let Some(p) = &dir_sel {
+                                this.write(p, Json::String(dir_path.clone()), cx);
+                            }
+                            this.fire(&dir_node, "open", cx);
                         })
                         .ok();
                     })

@@ -51,6 +51,7 @@ state:
   studio.assets_dir: string
   studio.asset_files: list
   studio.assets_zoom: number
+  studio.assets_all: boolean
   studio.doc_dir: string
   studio.doc_file: string
   studio.doc_source: string
@@ -338,40 +339,52 @@ welcomeTab: &welcomeTab
 # ============================================================================
 # Browses the project's media: `[assets] dir` from the manifest when set, else
 # `<root>/assets`, else the project root. `studio.assets_zoom` picks the view —
-# 0 List (file tree, folders navigate in place), 1 Thumbs (flat rows with
-# previews), 2 Grid (media cards). `studio.asset_files` is the flattened
-# listing `refresh_assets` seeds on every project/document load.
+# 0 List (flat icon + path rows), 1 Thumbs (preview rows), 2 Grid (media
+# cards — the default). `studio.asset_files` is the flattened listing
+# `refresh_assets` seeds on every project/document load. The `assets_all`
+# checkbox widens the listing to every supported file in the project
+# directory; a folder or media file opened in the sidebar lands here too.
 assetsTab: &assetsTab
   children:
     - VStack:
       style: {grow: true, min-height: 0, min-width: 0, padding: 12px, gap: 10px}
       children:
-        - HStack:
-          style: {gap: 8px, align: center}
+        - Checkbox: "all files in the project directory"
+          checked: bind $studio.assets_all
+          on change: assets_scope()
+        - Tabs#assetsZoom:
+          variant: Segmented
+          selected: bind $studio.assets_zoom
+          style: {grow: true}
           children:
-            - Text: Assets
-              style: {size: sm, weight: semibold}
-            - Text: "{$studio.assets_dir}"
-              style: {size: xs, color: $theme.muted_foreground}
-            - Tabs#assetsZoom:
-              variant: Segmented
-              selected: bind $studio.assets_zoom
-              style: {grow: true}
-              children:
-                - Tab: List
-                - Tab: Thumbs
-                - Tab: Grid
+            - Tab: List
+            - Tab: Thumbs
+            - Tab: Grid
         - if: $studio.assets_zoom
           is: 0
           children:
-            - forge.Files#assetList:
-              root: "{$studio.assets_dir}"
-              filter: ["*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp", "*.svg", "*.ico", "*.bmp", "*.avif", "*.mp4", "*.webm", "*.mov", "*.mkv", "*.ttf", "*.otf", "*.woff", "*.woff2"]
-              nonce: $studio.files_nonce
-              search: true
-              folders: navigate
-              placeholder: no assets found
-              style: {grow: true, min-height: 0}
+            - Scrollable:
+              style: {grow: true, min-height: 0, gap: 2px}
+              children:
+                - for: $studio.asset_files
+                  each: f
+                  children:
+                    - HStack:
+                      style: {gap: 8px, align: center, padding: 4px}
+                      children:
+                        - Image:
+                          src: "{$f.path}"
+                          size: 20px
+                          object-fit: Cover
+                          if: $f.img
+                        - Icon: file
+                          if: $f.img
+                          not: true
+                        - Text: "{$f.rel}"
+                          style: {grow: true, size: sm}
+                  else:
+                    - Text: "no assets — open a project or save this document near an assets/ folder"
+                      style: {size: sm, color: $theme.muted_foreground}
           else:
             - if: $studio.assets_zoom
               is: 1
