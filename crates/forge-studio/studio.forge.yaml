@@ -40,6 +40,7 @@ state:
   studio.proj_document: string
   studio.proj_watch: boolean
   studio.proj_documents: multiline
+  studio.proj_docs: multiline
   studio.proj_apps: multiline
   studio.proj_assets_dir: string
   studio.proj_themes_dir: string
@@ -1157,6 +1158,16 @@ body: &body
                                                           style: {size: xs, color: $theme.muted_foreground}
                                                         - Editor#proj_documents:
                                                           value: bind $studio.proj_documents
+                                                          style: {height: 96px, border: 1px}
+                                                - SettingItem: Documentation pages
+                                                  children:
+                                                    - VStack:
+                                                      style: {gap: 4px}
+                                                      children:
+                                                        - Text: one markdown page per line
+                                                          style: {size: xs, color: $theme.muted_foreground}
+                                                        - Editor#proj_docs:
+                                                          value: bind $studio.proj_docs
                                                           style: {height: 96px, border: 1px}
                                             - SettingsGroup: Applications
                                               children:

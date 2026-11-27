@@ -3907,6 +3907,10 @@ fn load_project(
         Json::String(manifest::manifest_list_section(&src, "forge", "documents").join("\n")),
     );
     set(
+        "proj_docs",
+        Json::String(manifest::manifest_list_section(&src, "forge", "docs").join("\n")),
+    );
+    set(
         "proj_apps",
         Json::String(
             manifest::manifest_apps(&src)
@@ -5506,24 +5510,28 @@ fn patch_manifest(src: &str, studio: &Json) -> String {
     // `watch` is a bool — the Switch's value is authoritative.
     let watch = studio["proj_watch"].as_bool().unwrap_or_default();
     doc["forge"]["watch"] = value(watch);
-    // `[forge] documents` — one relative path per line.
-    let docs_text = get("proj_documents");
-    let docs: Vec<&str> = docs_text
-        .lines()
-        .map(str::trim)
-        .filter(|l| !l.is_empty())
-        .collect();
-    if docs.is_empty() {
-        if let Some(t) = doc.get_mut("forge").and_then(Item::as_table_mut) {
-            t.remove("documents");
+    // List fields — one relative path per line: `[forge] documents`
+    // claims member docs, `[forge] docs` names markdown pages.
+    fn put_list(doc: &mut DocumentMut, sec: &str, key: &str, text: String) {
+        let items: Vec<&str> = text
+            .lines()
+            .map(str::trim)
+            .filter(|l| !l.is_empty())
+            .collect();
+        if items.is_empty() {
+            if let Some(t) = doc.get_mut(sec).and_then(Item::as_table_mut) {
+                t.remove(key);
+            }
+        } else {
+            let mut a = Array::new();
+            for i in items {
+                a.push(i);
+            }
+            doc[sec][key] = value(a);
         }
-    } else {
-        let mut a = Array::new();
-        for d in docs {
-            a.push(d);
-        }
-        doc["forge"]["documents"] = value(a);
     }
+    put_list(&mut doc, "forge", "documents", get("proj_documents"));
+    put_list(&mut doc, "forge", "docs", get("proj_docs"));
     // `[[apps]]` — one `name = doc` (or bare `doc`) per line.
     let apps: Vec<(String, String)> = get("proj_apps")
         .lines()
@@ -6362,6 +6370,7 @@ mod tests {
             "proj_document": "main.forge.yaml",
             "proj_watch": true,
             "proj_documents": "docs/a.forge.yaml\ndocs/b.forge.yaml",
+            "proj_docs": "guide.md\nnotes.md",
             "proj_apps": "console = c.forge.yaml\nk.forge.yaml",
             "proj_assets_dir": "res",
             "proj_themes_dir": "",
@@ -6375,6 +6384,7 @@ mod tests {
         assert!(out.contains("document = \"main.forge.yaml\""));
         assert!(out.contains("watch = true"));
         assert!(out.contains("docs/a.forge.yaml") && out.contains("docs/b.forge.yaml"));
+        assert!(out.contains("docs = [\"guide.md\", \"notes.md\"]"));
         assert!(out.contains("name = \"console\"") && out.contains("k.forge.yaml"));
         assert!(out.contains("dir = \"res\""));
         // The patch replaces the old `[[apps]]` block — not appends to it.
