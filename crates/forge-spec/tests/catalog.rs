@@ -15,7 +15,7 @@ fn errors(src: &str) -> String {
         .to_string()
 }
 
-const HEADER: &str = "catalog: \"0.1\"\nlibrary: x\nversion: 1.0.0\nbases:\n  gpui-kit: \"^0.8\"\n";
+const HEADER: &str = "catalog: \"1.0\"\nlibrary: x\nversion: 1.0.0\nbases:\n  gpui-kit: \"^0.8\"\n";
 
 #[test]
 fn gpui_kit_catalog_loads() {
@@ -128,7 +128,7 @@ fn requires_header_keys() {
     assert!(e.contains("missing `catalog` key"), "{e}");
     assert!(e.contains("missing `library` key"), "{e}");
     assert!(e.contains("at least one supported base"), "{e}");
-    assert!(errors(&HEADER.replace("\"0.1\"", "\"9\"")).contains("unsupported catalog format"));
+    assert!(errors(&HEADER.replace("\"1.0\"", "\"9\"")).contains("unsupported catalog format"));
 }
 
 #[test]

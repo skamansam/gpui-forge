@@ -10,13 +10,13 @@ Each library adapter ships one manifest. The gpui-kit base library's manifest is
 adapter crate once that exists.
 
 Manifests are YAML, read with the same parser as Forge documents, and validated by editors
-through [`schema/catalog-0.1.json`](../../schema/catalog-0.1.json). The loader is
+through [`schema/catalog-1.0.json`](../../schema/catalog-1.0.json). The loader is
 `forge_spec::catalog::from_yaml`.
 
 ## Example
 
 ```yaml
-catalog: "0.1"            # manifest format version
+catalog: "1.0"            # manifest format version
 library: gpui-kit         # library id; documents import it by this id (`use:`)
 name: GPUI Kit
 version: 0.8.0            # library version the manifest describes

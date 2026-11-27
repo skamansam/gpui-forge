@@ -9,7 +9,7 @@ use crate::value::{self, is_element_name, is_namespace, is_prop_key};
 use crate::yaml::tree::{self, Scalar, YNode};
 
 /// Version of the catalog manifest format this crate reads.
-pub const CATALOG_VERSION: &str = "0.1";
+pub const CATALOG_VERSION: &str = "1.0";
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Catalog {

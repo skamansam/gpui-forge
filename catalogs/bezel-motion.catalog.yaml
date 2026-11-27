@@ -1,7 +1,7 @@
-# yaml-language-server: $schema=../schema/catalog-0.1.json
+# yaml-language-server: $schema=../schema/catalog-1.0.json
 # Catalog manifest for bezel-motion — `use: motion: bezel-motion` on the
 # bezel base (#94 ecosystem catalog). Named animations on CSS curves.
-catalog: "0.1"
+catalog: "1.0"
 library: bezel-motion
 name: bezel-motion
 version: 0.2.24

@@ -163,18 +163,18 @@ fn usage() -> ! {
     eprintln!("      [--base <id>]        (default gpui-kit)");
     eprintln!("  xtask check-base <base>  clippy the runtime under a base feature");
     eprintln!("  xtask check-bases        check-base for every registered base");
-    eprintln!("  xtask schemas [--check]  regenerate site/static/schema/0.1/*.json");
+    eprintln!("  xtask schemas [--check]  regenerate site/static/schema/1.0/*.json");
     eprintln!("  xtask components         upstream-drift report (versions + components)");
     eprintln!("      [--check] [--format github] [--report <path>]");
     std::process::exit(2)
 }
 
 /// `xtask schemas` — regenerate the `.forge.yaml` JSON Schemas editors load
-/// (`site/static/schema/0.1/<base>.json` + `generic.json`) via
+/// (`site/static/schema/1.0/<base>.json` + `generic.json`) via
 /// `forge schema --yaml`. `--check` verifies they're current without writing.
 fn schemas_cmd(args: &[String]) -> ! {
     let check = args.iter().any(|a| a == "--check");
-    let out_dir = root().join("site/static/schema/0.1");
+    let out_dir = root().join("site/static/schema/1.0");
     let mut slugs: Vec<Option<String>> = bases().iter().cloned().map(Some).collect();
     slugs.push(None);
 

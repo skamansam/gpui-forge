@@ -19,7 +19,7 @@ resolves the document and sets `dir` so relative asset paths resolve.
 ```toml
 [package]
 name = "my-app"
-version = "0.1.0"
+version = "1.0.0"
 id = "dev.forge.my-app"
 
 [forge]

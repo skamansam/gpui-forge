@@ -4,7 +4,7 @@ use forge_spec::{Document, ElementRef, Node, Value};
 fn doc() -> Document {
     yaml::from_str(
         r#"
-forge: "0.1"
+forge: "1.0"
 root:
   VStack#app:
   style: {gap: 8px}
@@ -127,7 +127,7 @@ fn insert_after_and_move_after_place_siblings() {
 fn control_doc() -> Document {
     yaml::from_str(
         r#"
-forge: "0.1"
+forge: "1.0"
 root:
   VStack:
   children:

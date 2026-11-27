@@ -1,7 +1,7 @@
 # Base manifest — see docs/design/multi-base.md
 # Scaffold for #94. Crate/version pins land with the adapter port — Bezel is
 # crabtalk's fork-track, not a crates.io release.
-base: "0.1"
+base: "1.0"
 id: bezel
 name: Bezel
 description: Bezel components on the bezel-gpui (crabtalk) fork of Zed's GPUI — WASM via bezel-gpui-web.

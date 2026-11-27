@@ -18,7 +18,7 @@ use gpui_kit::{self, AppContext};
 use std::cell::RefCell;
 use std::rc::Rc;
 
-const DOC: &str = r#"forge: "0.1"
+const DOC: &str = r#"forge: "1.0"
 base: gpui-kit
 
 root:

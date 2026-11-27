@@ -23,7 +23,7 @@ pub enum StyleType {
 
 const ALIGN: &[&str] = &["start", "center", "end", "stretch", "baseline"];
 
-/// Every key the 0.1 model defines.
+/// Every key the 1.0 model defines.
 pub const KEYS: &[(&str, StyleType)] = &[
     (
         "direction",

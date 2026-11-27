@@ -1,7 +1,7 @@
-# yaml-language-server: $schema=../schema/catalog-0.1.json
+# yaml-language-server: $schema=../schema/catalog-1.0.json
 # Catalog manifest for the gpui-apple-hig adapter (forge-lib-hig) —
 # `use: hig: gpui-apple-hig` on the gpui-kit base (#90).
-catalog: "0.1"
+catalog: "1.0"
 library: gpui-apple-hig
 name: Apple HIG Components
 version: 0.1.0

@@ -28,7 +28,7 @@ pub fn from_str_with_source_map(src: &str) -> Result<(Document, SourceMap), Diag
         Ok(None) => {
             return Err(Diagnostics(vec![
                 Diagnostic::new(Pos::start(), "empty document")
-                    .with_hint("start with `forge: \"0.1\"` and a `root:` node"),
+                    .with_hint("start with `forge: \"1.0\"` and a `root:` node"),
             ]));
         }
         Err(d) => return Err(Diagnostics(vec![d])),
@@ -185,7 +185,7 @@ impl Reader<'_> {
             self.hint(
                 tree.pos(),
                 "a Forge document must be a YAML mapping",
-                "start with `forge: \"0.1\"` and a `root:` node",
+                "start with `forge: \"1.0\"` and a `root:` node",
             );
             return None;
         };
@@ -268,7 +268,7 @@ impl Reader<'_> {
             }
         }
         if !saw_version {
-            self.hint(Pos::start(), "missing `forge` key", "add `forge: \"0.1\"`");
+            self.hint(Pos::start(), "missing `forge` key", "add `forge: \"1.0\"`");
         }
         if !saw_root {
             self.hint(Pos::start(), "missing `root` key", "add a `root:` node");

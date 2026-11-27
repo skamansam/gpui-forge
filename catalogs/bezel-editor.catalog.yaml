@@ -1,7 +1,7 @@
-# yaml-language-server: $schema=../schema/catalog-0.1.json
+# yaml-language-server: $schema=../schema/catalog-1.0.json
 # Catalog manifest for bezel-editor — `use: bed: bezel-editor` on the bezel
 # base (#94 ecosystem catalog). Notion-style block editor.
-catalog: "0.1"
+catalog: "1.0"
 library: bezel-editor
 name: bezel-editor
 version: 0.2.24

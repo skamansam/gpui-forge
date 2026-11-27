@@ -1,6 +1,6 @@
 # Forge document model
 
-Status: **draft** (spec version `0.1`).
+Status: **draft** (spec version `1.0`).
 
 The document model is the canonical, format-independent AST. [Forge YAML](forge-yaml.md), JSON
 (the same tree as YAML) are its encodings. Any document must survive
@@ -15,7 +15,7 @@ manifests of the document's base and imported libraries.
 ```text
 Document
   schema  : String?                // JSON Schema URL for editors (`$schema`)
-  version : SpecVersion            // "0.1"
+  version : SpecVersion            // "1.0"
   base    : BaseId?                // "gpui-kit" | "bezel" | "adabraka" | "gpui-0.2" | "ratatui" | "iced" | …; inherited from forge.toml when absent
   imports : [Import]               // ordered
   meta    : Map<String, String>    // free-form: title, description, author, ...
@@ -109,7 +109,7 @@ Everything else is catalog validation — element existence (`kit.Button`), prop
 
 ```text
 Document {
-  version: "0.1", base: Some("gpui-kit"),
+  version: "1.0", base: Some("gpui-kit"),
   imports: [Import { alias: "ely", library: "ely-core", version: Some("^0.4") }],
   meta: { title: "Login" },
   root: Node {
@@ -142,9 +142,9 @@ Document {
 
 ## Open questions
 
-- **Control flow.** Forge reserves conditional (`if`) and repeated (`for`) nodes but leaves them out of 0.1. They
+- **Control flow.** Forge reserves conditional (`if`) and repeated (`for`) nodes but leaves them out of 1.0. They
   depend on the state model.
 - **Reusable components / includes.** Referencing another `.forge` file as an element (`use` of a
-  local file) is out of scope for 0.1.
-- **Expressions.** Bindings are plain paths in 0.1 (no `!`, `==`, arithmetic). Derived values are
+  local file) is out of scope for 1.0.
+- **Expressions.** Bindings are plain paths in 1.0 (no `!`, `==`, arithmetic). Derived values are
   computed by hooks.

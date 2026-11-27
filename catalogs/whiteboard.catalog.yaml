@@ -1,8 +1,8 @@
-# yaml-language-server: $schema=../schema/catalog-0.1.json
+# yaml-language-server: $schema=../schema/catalog-1.0.json
 # Catalog manifest for the gpui-whiteboard adapter (forge-lib-zorite
 # `whiteboard` feature) — `use: wb: gpui-whiteboard`. Opt-in zorite
 # adapter (#78).
-catalog: "0.1"
+catalog: "1.0"
 library: gpui-whiteboard
 name: gpui-whiteboard
 version: 0.5.2

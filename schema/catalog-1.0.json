@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://gpui-forge.rudeboy.dev/schema/catalog-0.1.json",
+  "$id": "https://gpui-forge.rudeboy.dev/schema/catalog-1.0.json",
   "title": "GPUI Forge catalog manifest",
   "type": "object",
   "additionalProperties": false,
   "required": ["catalog", "library", "version", "bases", "elements"],
   "properties": {
     "$schema": { "type": "string" },
-    "catalog": { "const": "0.1" },
+    "catalog": { "const": "1.0" },
     "library": { "type": "string", "pattern": "^[a-z][a-z0-9_-]*$" },
     "name": { "type": "string" },
     "version": { "type": "string" },

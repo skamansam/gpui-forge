@@ -2,7 +2,7 @@
 # Scaffold for #96 (vanilla GPUI 0.2 + guise). Registered so `forge new --base
 # guise`, Studio's picker and forge-web can target it. The render adapter that
 # lets a `base-guise` binary compile lands with the upstream-port work.
-base: "0.1"
+base: "1.0"
 id: guise
 name: Guise
 description: crates.io gpui 0.2.2 with guise (Mantine-style) components — desktop only.

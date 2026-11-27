@@ -1,6 +1,6 @@
 # Forge YAML
 
-Status: **draft** (spec version `0.1`).
+Status: **draft** (spec version `1.0`).
 
 Forge documents are **plain YAML 1.2** with a JSON Schema, so any YAML parser, YAML↔JSON converter,
 linter or schema-aware editor works on them. The same tree encoded as JSON is the Forge JSON format.
@@ -12,8 +12,8 @@ File extension: `.forge.yaml` (`.forge.json` for JSON).
 ## At a glance
 
 ```yaml
-# yaml-language-server: $schema=https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
-forge: "0.1"
+# yaml-language-server: $schema=https://gpui-forge.rudeboy.dev/schema/1.0/gpui-kit.json
+forge: "1.0"
 base: gpui-kit
 use:
   ely: ely-core ^0.2
@@ -45,7 +45,7 @@ root:
 | Key | Required | Meaning |
 |---|---|---|
 | `$schema` | no | Schema URL (also accepted as a `# yaml-language-server: $schema=…` comment) |
-| `forge` | yes | Spec version, as a string (`"0.1"`) — see Versioning below |
+| `forge` | yes | Spec version, as a string (`"1.0"`) — see Versioning below |
 | `base` | no | Base component system (`gpui-kit`, `ratatui`, `bezel`, `adabraka`, `gpui-0.2`, and the scaffolded `iced`). Defaults to the project's `forge.toml` |
 | `use` | no | Map of import alias → `"<library-id> [<version-req>]"` |
 | `meta` | no | Map of string → string (title, description, …). `meta: {watch: "true"}` opts the document into Studio hot reload. Edits on disk re-validate and re-render it, and a parse failure keeps the last-good copy (diagnostics land in the status bar + markers). `meta.title` names the app. The skeleton bakes it into the window title. A remote preview host sets its window title to it when the document loads. Build-level keys: `meta.assets` names the app's asset directory, `meta.include` lists sibling documents the build pulls in, and `meta.window` points a member document at its application's entry document. |
@@ -79,7 +79,7 @@ a mapping or sequence value acts as a fragment slot. Forge neither renders nor
 validates it as part of the document. Scalar fragments go inside a container:
 
 ```yaml
-forge: "0.1"
+forge: "1.0"
 
 appMenu: &appMenu              # fragment slot — only referenced via *appMenu
   icon: hamburger
@@ -175,7 +175,7 @@ props. As a node's only key they form a **control block**. Alongside an element 
 become a **modifier** on that element (the element repeats or conditionally renders).
 
 ```yaml
-forge: "0.1"
+forge: "1.0"
 root:
   VStack:
   children:
@@ -245,7 +245,7 @@ root:
   `else:` is the row shown for an empty list:
 
   ```yaml
-  forge: "0.1"
+  forge: "1.0"
   root:
     List:
     selected: bind $picked
@@ -273,7 +273,7 @@ icons come from `Icon` (Lucide names, tinted by `text_color`), not `Image`.
 ## Values
 
 Forge reads every scalar as **text** and types it with the micro-syntax below. Forge ignores
-YAML's own typing, so `0.1`, `on`, `no` or `1e3` never become floats or booleans behind your
+YAML's own typing, so `1.0`, `on`, `no` or `1e3` never become floats or booleans behind your
 back. The scalar's quoting selects the rules:
 
 - **plain** scalars are fully typed (table below).
@@ -298,7 +298,7 @@ Event handlers are `name`, `name()` or `name(arg, ...)`, where arguments use the
 
 The formatter writes canonical output: key order element key, props, `style`, events,
 `children`. Colors write as `#rrggbb[aa]`. Strings that a generic YAML 1.1 tool could
-mis-type (`yes`, `on`, `0.1`, ...) write single-quoted. The formatter does not preserve
+mis-type (`yes`, `on`, `1.0`, ...) write single-quoted. The formatter does not preserve
 comments yet.
 
 YAML gotchas the validator reports with a fix hint:
@@ -314,7 +314,7 @@ YAML gotchas the validator reports with a fix hint:
 - `forge schema --yaml [--base <id>]` emits the JSON Schema for the YAML
   *syntax* — generated from the catalog manifests, so elements, props, events
   and `use:` libraries validate in editors. `cargo xtask schemas` regenerates
-  the set published at `site/static/schema/0.1/` (`<base>.json` per base plus
+  the set published at `site/static/schema/1.0/` (`<base>.json` per base plus
   `generic.json`).
 - `forge convert` turns a `.forge.yaml` document into the JSON form (and back),
   and `site/static/schema/forge-doc.schema.json` ships the generated model schema
@@ -338,7 +338,7 @@ login.forge.yaml:9:9: duplicate id `email` (first defined at 6:9)
 ### Settings form with a library import
 
 ```yaml
-forge: "0.1"
+forge: "1.0"
 use:
   ely: ely-core ^0.2
 
@@ -370,7 +370,7 @@ root:
 ### Minimal file
 
 ```yaml
-forge: "0.1"
+forge: "1.0"
 root:
   Text: Hello, world
 ```

@@ -1,6 +1,6 @@
-# yaml-language-server: $schema=../schema/catalog-0.1.json
+# yaml-language-server: $schema=../schema/catalog-1.0.json
 # Catalog manifest for the Ely adapter (forge-lib-ely) — `use: ely: ely-core`.
-catalog: "0.1"
+catalog: "1.0"
 library: ely-core
 name: Ely Components
 version: 0.2.0

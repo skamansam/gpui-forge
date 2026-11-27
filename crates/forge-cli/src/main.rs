@@ -799,7 +799,7 @@ document = "app.forge.yaml"
         &dir.join("app.forge.yaml"),
         &format!(
             r#"$schema: {}
-forge: "0.1"
+forge: "1.0"
 base: {base}
 
 meta:

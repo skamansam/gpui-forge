@@ -19,7 +19,7 @@ pub use diagnostic::{Diagnostic, Diagnostics, Pos};
 pub use model::*;
 
 /// Version of the Forge document format this crate reads and writes.
-pub const SPEC_VERSION: &str = "0.1";
+pub const SPEC_VERSION: &str = "1.0";
 
 #[cfg(test)]
 mod tests {

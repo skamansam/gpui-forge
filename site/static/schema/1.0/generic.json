@@ -1,5 +1,5 @@
 {
-  "$id": "https://gpui-forge.rudeboy.dev/schema/0.1/generic.json",
+  "$id": "https://gpui-forge.rudeboy.dev/schema/1.0/generic.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": true,
   "definitions": {
@@ -18365,6 +18365,29 @@
                 "maxItems": 0,
                 "type": "array"
               },
+              "colors": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": [
+                        "string",
+                        "number",
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Featured swatches in the popup — named colors or hex strings."
+              },
               "disabled": {
                 "anyOf": [
                   {
@@ -18414,7 +18437,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|ColorPicker(#[\\w-]+| \\.[\\w-]+)?|children|disabled|on (change)|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|ColorPicker(#[\\w-]+| \\.[\\w-]+)?|children|colors|disabled|on (change)|style|tooltip|value)$"
             }
           }
         },
@@ -18448,6 +18471,29 @@
                 "maxItems": 0,
                 "type": "array"
               },
+              "colors": {
+                "anyOf": [
+                  {
+                    "items": {
+                      "type": [
+                        "string",
+                        "number",
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "type": "array"
+                  },
+                  {
+                    "pattern": "^(\\$|\\{)",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Featured swatches in the popup — named colors or hex strings."
+              },
               "disabled": {
                 "anyOf": [
                   {
@@ -18497,7 +18543,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.ColorPicker(#[\\w-]+| \\.[\\w-]+)?|children|disabled|on (change)|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.ColorPicker(#[\\w-]+| \\.[\\w-]+)?|children|colors|disabled|on (change)|style|tooltip|value)$"
             }
           }
         },
@@ -33165,6 +33211,12 @@
                   "null"
                 ]
               },
+              "on doc": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "on open": {
                 "type": [
                   "string",
@@ -33241,7 +33293,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Files(#[\\w-]+| \\.[\\w-]+)?|children|depth|filter|folders|hidden|highlights|icon-map|icons|nonce|of|on (select|open)|placeholder|query|root|search|selected|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Files(#[\\w-]+| \\.[\\w-]+)?|children|depth|filter|folders|hidden|highlights|icon-map|icons|nonce|of|on (select|open|doc)|placeholder|query|root|search|selected|style|tooltip)$"
             }
           }
         },
@@ -33401,6 +33453,12 @@
                   "null"
                 ]
               },
+              "on doc": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
               "on open": {
                 "type": [
                   "string",
@@ -33477,7 +33535,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Files(#[\\w-]+| \\.[\\w-]+)?|children|depth|filter|folders|hidden|highlights|icon-map|icons|nonce|of|on (select|open)|placeholder|query|root|search|selected|style|tooltip)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Files(#[\\w-]+| \\.[\\w-]+)?|children|depth|filter|folders|hidden|highlights|icon-map|icons|nonce|of|on (select|open|doc)|placeholder|query|root|search|selected|style|tooltip)$"
             }
           }
         },
@@ -41307,6 +41365,20 @@
                   "null"
                 ]
               },
+              "invalid": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Danger ring around the field — bind it to an error message."
+              },
               "label": {
                 "anyOf": [
                   {
@@ -41524,7 +41596,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Input(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|description|disabled|error|label|masked|name|on (change|submit)|placeholder|readonly|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|Input(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|description|disabled|error|invalid|label|masked|name|on (change|submit)|placeholder|readonly|style|tooltip|value)$"
             }
           }
         },
@@ -41650,6 +41722,20 @@
                   "null"
                 ]
               },
+              "invalid": {
+                "anyOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "description": "Danger ring around the field — bind it to an error message."
+              },
               "label": {
                 "anyOf": [
                   {
@@ -41867,7 +41953,7 @@
               }
             },
             "propertyNames": {
-              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Input(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|description|disabled|error|label|masked|name|on (change|submit)|placeholder|readonly|style|tooltip|value)$"
+              "pattern": "^((if|for|with|match|else|each|index|key|as|is|not|case .+)|<<|[a-z][\\w-]*\\.Input(#[\\w-]+| \\.[\\w-]+)?|children|cleanable|description|disabled|error|invalid|label|masked|name|on (change|submit)|placeholder|readonly|style|tooltip|value)$"
             }
           }
         },
@@ -103477,8 +103563,8 @@
       ]
     },
     "forge": {
-      "const": "0.1",
-      "description": "Forge spec version — quote it: `forge: \"0.1\"`."
+      "const": "1.0",
+      "description": "Forge spec version — quote it: `forge: \"1.0\"`."
     },
     "meta": {
       "additionalProperties": {

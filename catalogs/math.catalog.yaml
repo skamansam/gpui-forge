@@ -1,7 +1,7 @@
-# yaml-language-server: $schema=../schema/catalog-0.1.json
+# yaml-language-server: $schema=../schema/catalog-1.0.json
 # Catalog manifest for the ratex-gpui adapter (forge-lib-zorite `math`
 # feature) — `use: math: ratex-gpui`. Opt-in zorite adapter (#78).
-catalog: "0.1"
+catalog: "1.0"
 library: ratex-gpui
 name: ratex-gpui
 version: 0.4.1

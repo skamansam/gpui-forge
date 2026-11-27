@@ -40,7 +40,7 @@ fn text_of(buf: &Buffer) -> String {
 #[test]
 fn control_for_repeats_children() {
     let mut view = view_of(
-        r#"forge: "0.1"
+        r#"forge: "1.0"
 base: ratatui
 root:
   VStack:
@@ -61,7 +61,7 @@ root:
 #[test]
 fn control_if_and_else() {
     let mut view = view_of(
-        r#"forge: "0.1"
+        r#"forge: "1.0"
 base: ratatui
 root:
   VStack:
@@ -89,7 +89,7 @@ root:
 #[test]
 fn control_match_and_with() {
     let mut view = view_of(
-        r#"forge: "0.1"
+        r#"forge: "1.0"
 base: ratatui
 root:
   VStack:
@@ -116,7 +116,7 @@ root:
 #[test]
 fn theme_token_paints_text() {
     let mut view = view_of(
-        r#"forge: "0.1"
+        r#"forge: "1.0"
 base: ratatui
 root:
   VStack:
@@ -158,7 +158,7 @@ impl ForgeLibrary for Stub {
 #[test]
 fn namespaced_element_dispatches_to_library() {
     let mut view = view_of(
-        r#"forge: "0.1"
+        r#"forge: "1.0"
 base: ratatui
 use:
   stub: stub-lib
@@ -181,7 +181,7 @@ root:
 #[test]
 fn mouse_click_focuses_and_writes() {
     let mut view = view_of(
-        r#"forge: "0.1"
+        r#"forge: "1.0"
 base: ratatui
 root:
   VStack:
@@ -201,7 +201,7 @@ root:
 
 #[test]
 fn extension_widgets_render() {
-    let src = r##"forge: "0.1"
+    let src = r##"forge: "1.0"
 base: ratatui
 root:
   VStack:
@@ -271,7 +271,7 @@ fn tier2_widgets_render() {
     let dir = std::env::temp_dir().join(format!("forge-img-{}", std::process::id()));
     std::fs::create_dir_all(&dir).unwrap();
     std::fs::write(dir.join("pixel.png"), png).unwrap();
-    let src = r##"forge: "0.1"
+    let src = r##"forge: "1.0"
 base: ratatui
 root:
   VStack:
@@ -378,7 +378,7 @@ root:
 
 #[test]
 fn ansi_escapes_become_styles() {
-    let src = "forge: \"0.1\"\nbase: ratatui\nroot:\n  VStack:\n  children:\n    - AnsiText: \"\u{1b}[31mRED\u{1b}[0m\"\n";
+    let src = "forge: \"1.0\"\nbase: ratatui\nroot:\n  VStack:\n  children:\n    - AnsiText: \"\u{1b}[31mRED\u{1b}[0m\"\n";
     let mut view = view_of(src);
     let buf = buffer_of(&mut view, 20, 3);
     let text = text_of(&buf);
@@ -392,7 +392,7 @@ fn ansi_escapes_become_styles() {
 #[test]
 fn slider_and_dialog_interact() {
     let mut view = view_of(
-        r#"forge: "0.1"
+        r#"forge: "1.0"
 base: ratatui
 root:
   VStack:
@@ -468,7 +468,7 @@ fn showcase_doc_renders() {
 #[test]
 fn selection_frames_the_node() {
     let mut view = view_of(
-        r#"forge: "0.1"
+        r#"forge: "1.0"
 base: ratatui
 root:
   VStack:

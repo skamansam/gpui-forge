@@ -329,8 +329,8 @@ The docs site in `site/` deploys to GitHub Pages on every merge to `main`
 A document is declarative — state, imports and UI in one file:
 
 ```yaml
-$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
-forge: "0.1"
+$schema: https://gpui-forge.rudeboy.dev/schema/1.0/gpui-kit.json
+forge: "1.0"
 base: gpui-kit
 use:
   ely: ely-core

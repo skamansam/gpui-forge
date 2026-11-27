@@ -2,8 +2,8 @@
 # Design Icons). On open, Forge Studio vendors just the icons this doc uses
 # into `assets/icons/mdi/` beside the file. Until then `doc_icon` renders
 # them from api.iconify.design over https.
-$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
-forge: "0.1"
+$schema: https://gpui-forge.rudeboy.dev/schema/1.0/gpui-kit.json
+forge: "1.0"
 base: gpui-kit
 use:
   forge: forge

@@ -45,7 +45,7 @@ namespaced nodes through `render()`.
 Declares what the library exposes so validation and tooling know it:
 
 ```yaml
-catalog: "0.1"
+catalog: "1.0"
 library: ely-core          # id used in `use: alias: <id>`
 name: Ely Components
 version: 0.2.0

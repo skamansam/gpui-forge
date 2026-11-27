@@ -1,5 +1,5 @@
 {
-  "$id": "https://gpui-forge.rudeboy.dev/schema/0.1/iced.json",
+  "$id": "https://gpui-forge.rudeboy.dev/schema/1.0/iced.json",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": true,
   "definitions": {
@@ -3536,8 +3536,8 @@
       "description": "Base component system — fixed for this schema."
     },
     "forge": {
-      "const": "0.1",
-      "description": "Forge spec version — quote it: `forge: \"0.1\"`."
+      "const": "1.0",
+      "description": "Forge spec version — quote it: `forge: \"1.0\"`."
     },
     "meta": {
       "additionalProperties": {

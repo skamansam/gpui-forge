@@ -4,7 +4,7 @@
 //! events, style keys and `use:` libraries without running `forge check`.
 //!
 //! `forge schema --yaml [--base <id>]` prints one. `cargo xtask schemas`
-//! regenerates the set published under `site/static/schema/0.1/`.
+//! regenerates the set published under `site/static/schema/1.0/`.
 //!
 //! The emitted schema targets draft-07 — the dialect yaml-language-server and
 //! JetBrains fully evaluate (`propertyNames`, `if`/`then`, `patternProperties`).
@@ -228,7 +228,7 @@ pub fn document_schema(base: Option<&Base>, bases: &[Base], catalogs: &[Catalog]
             },
             "forge": {
                 "const": SPEC_VERSION,
-                "description": "Forge spec version — quote it: `forge: \"0.1\"`.",
+                "description": "Forge spec version — quote it: `forge: \"1.0\"`.",
             },
             "base": base_prop,
             "use": {

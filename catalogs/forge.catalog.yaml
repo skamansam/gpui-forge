@@ -1,7 +1,7 @@
-# yaml-language-server: $schema=../schema/catalog-0.1.json
+# yaml-language-server: $schema=../schema/catalog-1.0.json
 # Catalog manifest for the Forge runtime's own elements.
 # These are provided by gpui-forge-runtime, not by a component library.
-catalog: "0.1"
+catalog: "1.0"
 library: forge
 name: Forge
 version: 0.1.0

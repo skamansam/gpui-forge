@@ -1,7 +1,7 @@
-# yaml-language-server: $schema=../schema/catalog-0.1.json
+# yaml-language-server: $schema=../schema/catalog-1.0.json
 # Catalog manifest for the gpui-video-player adapter (forge-lib-video) —
 # `use: video: gpui-video-player`. GStreamer 1.14+ must be installed (#77).
-catalog: "0.1"
+catalog: "1.0"
 library: gpui-video-player
 name: Video Player
 version: 0.1.3

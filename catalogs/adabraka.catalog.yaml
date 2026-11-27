@@ -1,8 +1,8 @@
-# yaml-language-server: $schema=../schema/catalog-0.1.json
+# yaml-language-server: $schema=../schema/catalog-1.0.json
 # Catalog manifest for the adabraka base — adabraka-ui components (shadcn
 # flavor) on the adabraka-gpui fork. Scaffold for #95.
 # Format: docs/spec/catalog-manifest.md
-catalog: "0.1"
+catalog: "1.0"
 library: adabraka
 name: adabraka-ui
 version: 0.1.0

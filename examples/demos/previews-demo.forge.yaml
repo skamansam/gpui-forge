@@ -4,8 +4,8 @@
 # parent document when absent). Show/hide is ordinary control flow — the
 # Select below drives `match:`/`case:`. Pane hosts spawn on declaration and
 # die when the pane leaves the document.
-$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
-forge: "0.1"
+$schema: https://gpui-forge.rudeboy.dev/schema/1.0/gpui-kit.json
+forge: "1.0"
 base: gpui-kit
 use:
   forge: forge

@@ -160,7 +160,7 @@ export function fromJson(text: string): Document | null {
 	try { m = JSON.parse(text); } catch { return null; }
 	if (!m?.root) return null;
 	const doc = new Document();
-	doc.set('forge', String(m.version ?? '0.1'));
+	doc.set('forge', String(m.version ?? '1.0'));
 	if (m.base) doc.set('base', m.base);
 	doc.set('root', doc.createNode(jsonToNode(m.root)));
 	return doc;
@@ -227,7 +227,7 @@ export function toJson(text: string): string | null {
 	if (!isMap(root)) return null;
 	return JSON.stringify({
 		schema: get('$schema') ?? null,
-		version: get('forge') ?? '0.1',
+		version: get('forge') ?? '1.0',
 		base: get('base') ?? null,
 		imports: [],
 		meta: [],

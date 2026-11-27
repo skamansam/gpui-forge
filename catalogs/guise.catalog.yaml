@@ -1,9 +1,9 @@
-# yaml-language-server: $schema=../schema/catalog-0.1.json
+# yaml-language-server: $schema=../schema/catalog-1.0.json
 # Catalog manifest for the guise base — guise components on crates.io gpui
 # 0.2.2. Scaffold for #96: shared-vocab layout names (VStack → guise Stack)
 # plus guise-native elements. Extend as the adapter port lands.
 # Format: docs/spec/catalog-manifest.md
-catalog: "0.1"
+catalog: "1.0"
 library: guise
 name: guise
 version: 0.1.0

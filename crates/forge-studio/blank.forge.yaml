@@ -1,6 +1,6 @@
 # The starter document for "Blank" — a minimal Forge document.
-$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
-forge: "0.1"
+$schema: https://gpui-forge.rudeboy.dev/schema/1.0/gpui-kit.json
+forge: "1.0"
 base: gpui-kit
 
 root:

@@ -1,5 +1,5 @@
-$schema: https://gpui-forge.rudeboy.dev/schema/0.1/adabraka.json
-forge: "0.1"
+$schema: https://gpui-forge.rudeboy.dev/schema/1.0/adabraka.json
+forge: "1.0"
 state:
   q: string
   check: bool

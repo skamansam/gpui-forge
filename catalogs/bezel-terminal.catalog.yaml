@@ -1,7 +1,7 @@
-# yaml-language-server: $schema=../schema/catalog-0.1.json
+# yaml-language-server: $schema=../schema/catalog-1.0.json
 # Catalog manifest for bezel-terminal — `use: term: bezel-terminal` on the
 # bezel base (#94 ecosystem catalog). Alacritty-backed terminal emulator.
-catalog: "0.1"
+catalog: "1.0"
 library: bezel-terminal
 name: bezel-terminal
 version: 0.2.24

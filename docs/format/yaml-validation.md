@@ -44,16 +44,16 @@ no `end_col` underlines to end-of-line):
 Forge ships a JSON Schema **per base**, generated from the catalog manifests —
 element names, per-element props, events, content types, `use:` libraries and
 `style:` keys are all validated. They're published with the docs site under
-`schema/0.1/`:
+`schema/1.0/`:
 
 ```text
-https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
-https://gpui-forge.rudeboy.dev/schema/0.1/guise.json
-https://gpui-forge.rudeboy.dev/schema/0.1/adabraka.json
-https://gpui-forge.rudeboy.dev/schema/0.1/bezel.json
-https://gpui-forge.rudeboy.dev/schema/0.1/ratatui.json
-https://gpui-forge.rudeboy.dev/schema/0.1/iced.json
-https://gpui-forge.rudeboy.dev/schema/0.1/generic.json   ← every catalog, any base
+https://gpui-forge.rudeboy.dev/schema/1.0/gpui-kit.json
+https://gpui-forge.rudeboy.dev/schema/1.0/guise.json
+https://gpui-forge.rudeboy.dev/schema/1.0/adabraka.json
+https://gpui-forge.rudeboy.dev/schema/1.0/bezel.json
+https://gpui-forge.rudeboy.dev/schema/1.0/ratatui.json
+https://gpui-forge.rudeboy.dev/schema/1.0/iced.json
+https://gpui-forge.rudeboy.dev/schema/1.0/generic.json   ← every catalog, any base
 ```
 
 `generic` accepts all registered elements — pick it when a document declares
@@ -66,8 +66,8 @@ yaml-language-server (VS Code, Zed, Neovim) picks up without any editor
 config:
 
 ```yaml
-$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
-forge: "0.1"
+$schema: https://gpui-forge.rudeboy.dev/schema/1.0/gpui-kit.json
+forge: "1.0"
 base: gpui-kit
 root: ...
 ```
@@ -75,8 +75,8 @@ root: ...
 ### Modeline alternative
 
 ```yaml
-# yaml-language-server: $schema=https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
-forge: "0.1"
+# yaml-language-server: $schema=https://gpui-forge.rudeboy.dev/schema/1.0/gpui-kit.json
+forge: "1.0"
 ...
 ```
 
@@ -86,7 +86,7 @@ In `settings.json`:
 
 ```json
 "yaml.schemas": {
-  "https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json": "**/*.forge.yaml"
+  "https://gpui-forge.rudeboy.dev/schema/1.0/gpui-kit.json": "**/*.forge.yaml"
 }
 ```
 

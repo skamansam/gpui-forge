@@ -16,7 +16,7 @@ use gpui_forge_runtime::render::ForgeView;
 use std::cell::RefCell;
 use std::rc::Rc;
 
-const EMPTY: &str = r#"forge: "0.1"
+const EMPTY: &str = r#"forge: "1.0"
 base: gpui-kit
 use:
   base: base-gpui
@@ -26,7 +26,7 @@ root:
   children: []
 "#;
 
-const TEXT: &str = r#"forge: "0.1"
+const TEXT: &str = r#"forge: "1.0"
 base: gpui-kit
 use:
   base: base-gpui
@@ -37,7 +37,7 @@ root:
     - Text: hi
 "#;
 
-const BUTTON_PLAIN: &str = r#"forge: "0.1"
+const BUTTON_PLAIN: &str = r#"forge: "1.0"
 base: gpui-kit
 use:
   base: base-gpui
@@ -48,7 +48,7 @@ root:
     - base.Button: Go
 "#;
 
-const CHECKBOX_PLAIN: &str = r#"forge: "0.1"
+const CHECKBOX_PLAIN: &str = r#"forge: "1.0"
 base: gpui-kit
 use:
   base: base-gpui
@@ -59,7 +59,7 @@ root:
     - base.Checkbox: Accept terms
 "#;
 
-const DOC: &str = r#"forge: "0.1"
+const DOC: &str = r#"forge: "1.0"
 base: gpui-kit
 use:
   base: base-gpui

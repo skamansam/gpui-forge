@@ -1,6 +1,6 @@
 # The Forge Studio shell, described in Forge YAML and rendered by gpui-forge-runtime.
-$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
-forge: "0.1"
+$schema: https://gpui-forge.rudeboy.dev/schema/1.0/gpui-kit.json
+forge: "1.0"
 base: gpui-kit
 use:
   forge: forge
@@ -230,9 +230,9 @@ statusBar: &statusBar
       style:
         grow: true
     - Label: "{$studio.project}"
-      secondary: true
+      style: {color: $theme.muted_foreground}
     - Label: "{$studio.host}"
-      secondary: true
+      style: {color: $theme.muted_foreground}
     - Label: "{$studio.file}"
     - Tag: "forge {$studio.spec}"
       outline: true
@@ -1026,8 +1026,6 @@ body: &body
                   children:
                     - Tab: project
                     - Tab: files
-                - Text: "{$studio.project_name}"
-                  style: {size: xs, color: $theme.muted_foreground}
                 - Input#project_grep:
                   value: bind $studio.project_grep
                   placeholder: search file contents…

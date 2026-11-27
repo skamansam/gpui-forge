@@ -4,7 +4,7 @@ use forge_spec::yaml;
 
 const GPUI_KIT: &str = include_str!("../../../catalogs/gpui-kit.catalog.yaml");
 const SPEC: &str = include_str!("../../../docs/format/forge-yaml.md");
-const ELY: &str = "catalog: \"0.1\"
+const ELY: &str = "catalog: \"1.0\"
 library: ely-core
 version: 0.2.0
 bases:
@@ -22,7 +22,7 @@ elements:
     events:
       change: number
 ";
-const BEZEL_ONLY: &str = "catalog: \"0.1\"
+const BEZEL_ONLY: &str = "catalog: \"1.0\"
 library: bezel-chart
 version: 0.1.0
 bases:
@@ -47,7 +47,7 @@ fn check(src: &str) -> Vec<String> {
 }
 
 fn doc(body: &str) -> String {
-    format!("forge: \"0.1\"\nuse:\n  ely: ely-core\nroot:\n{body}")
+    format!("forge: \"1.0\"\nuse:\n  ely: ely-core\nroot:\n{body}")
 }
 
 /// Asserts exactly one error starting with `expected`, or none when `expected` is empty.
@@ -166,7 +166,7 @@ fn duplicate_ids() {
 #[test]
 fn imports_are_checked_against_the_base() {
     let errors =
-        check("forge: \"0.1\"\nuse:\n  chart: bezel-chart\n  foo: foo-lib ^1\nroot:\n  Text: hi\n");
+        check("forge: \"1.0\"\nuse:\n  chart: bezel-chart\n  foo: foo-lib ^1\nroot:\n  Text: hi\n");
     assert_eq!(errors.len(), 2, "{errors:#?}");
     assert!(
         errors[0].starts_with(
@@ -187,7 +187,7 @@ fn imported_children_resolve_by_library() {
         "",
     );
     let errors = check(
-        "forge: \"0.1\"\nuse:\n  ui: ely-core\nroot:\n  ui.Group:\n  children:\n    - ui.Badge: new\n    - Button: no\n",
+        "forge: \"1.0\"\nuse:\n  ui: ely-core\nroot:\n  ui.Group:\n  children:\n    - ui.Badge: new\n    - Button: no\n",
     );
     assert_eq!(errors.len(), 1, "{errors:#?}");
     assert!(
@@ -218,7 +218,7 @@ fn two_way_bindings_inside_lists() {
 
 #[test]
 fn document_base_must_match_project_base() {
-    let errors = check("forge: \"0.1\"\nbase: bezel\nroot:\n  Text: hi\n");
+    let errors = check("forge: \"1.0\"\nbase: bezel\nroot:\n  Text: hi\n");
     assert_eq!(errors.len(), 1, "{errors:#?}");
     assert!(
         errors[0]
@@ -229,7 +229,7 @@ fn document_base_must_match_project_base() {
 
 #[test]
 fn missing_base_catalog() {
-    let doc = yaml::from_str("forge: \"0.1\"\nroot:\n  Text: hi\n").unwrap();
+    let doc = yaml::from_str("forge: \"1.0\"\nroot:\n  Text: hi\n").unwrap();
     let errors = validate(&doc, "adabraka", &catalogs(), None);
     assert_eq!(
         errors[0].to_string(),

@@ -49,7 +49,7 @@ fn spec_examples_read_and_round_trip() {
 #[test]
 fn reads_the_login_example() {
     let doc = read(&yaml_blocks(SPEC)[0]);
-    assert_eq!(doc.version, "0.1");
+    assert_eq!(doc.version, "1.0");
     assert_eq!(doc.base.as_deref(), Some("gpui-kit"));
     assert_eq!(doc.imports[0].alias, "ely");
     assert_eq!(doc.imports[0].library, "ely-core");
@@ -107,8 +107,8 @@ fn reads_the_login_example() {
 
 #[test]
 fn canonical_output_is_stable() {
-    const CANONICAL: &str = r##"$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
-forge: "0.1"
+    const CANONICAL: &str = r##"$schema: https://gpui-forge.rudeboy.dev/schema/1.0/gpui-kit.json
+forge: "1.0"
 base: gpui-kit
 use:
   ely: ely-core ^0.2
@@ -145,9 +145,9 @@ root:
 
 #[test]
 fn both_id_styles() {
-    let doc = read("forge: \"0.1\"\nroot:\n  Input .email:\n");
+    let doc = read("forge: \"1.0\"\nroot:\n  Input .email:\n");
     assert_eq!(doc.root.id.as_deref(), Some("email"));
-    assert_eq!(doc, read("forge: \"0.1\"\nroot:\n  Input#email:\n"));
+    assert_eq!(doc, read("forge: \"1.0\"\nroot:\n  Input#email:\n"));
     let dot = yaml::to_string(
         &doc,
         &WriteOptions {
@@ -160,7 +160,7 @@ fn both_id_styles() {
 
 #[test]
 fn two_element_keys() {
-    let e = errors("forge: \"0.1\"\nroot:\n  Text: hi\n  Button: ok\n");
+    let e = errors("forge: \"1.0\"\nroot:\n  Text: hi\n  Button: ok\n");
     assert!(
         e.contains("4:3: node has two element keys (`Text`, `Button`)"),
         "{e}"
@@ -169,25 +169,25 @@ fn two_element_keys() {
 
 #[test]
 fn unquoted_color_gets_a_hint() {
-    let e = errors("forge: \"0.1\"\nroot:\n  Box:\n  style:\n    color: #fff\n");
+    let e = errors("forge: \"1.0\"\nroot:\n  Box:\n  style:\n    color: #fff\n");
     assert!(e.contains("5:5: `color` has no value; quote colors"), "{e}");
 }
 
 #[test]
 fn duplicate_keys() {
-    let e = errors("forge: \"0.1\"\nroot:\n  Text: a\n  size: lg\n  size: sm\n");
+    let e = errors("forge: \"1.0\"\nroot:\n  Text: a\n  size: lg\n  size: sm\n");
     assert!(e.contains("5:3: duplicated key in mapping"), "{e}");
 }
 
 #[test]
 fn missing_element_key() {
-    let e = errors("forge: \"0.1\"\nroot:\n  variant: primary\n");
+    let e = errors("forge: \"1.0\"\nroot:\n  variant: primary\n");
     assert!(e.contains("3:3: node has no element key"), "{e}");
 }
 
 #[test]
 fn props_nested_under_the_element_key() {
-    let e = errors("forge: \"0.1\"\nroot:\n  Input#email:\n    value: x\n");
+    let e = errors("forge: \"1.0\"\nroot:\n  Input#email:\n    value: x\n");
     assert!(e.contains("an element key holds the node's content"), "{e}");
 }
 
@@ -199,26 +199,26 @@ fn unsupported_version() {
 
 #[test]
 fn two_way_binding_outside_props() {
-    let e = errors("forge: \"0.1\"\nroot:\n  Box:\n  style:\n    width: bind $w\n");
+    let e = errors("forge: \"1.0\"\nroot:\n  Box:\n  style:\n    width: bind $w\n");
     assert!(e.contains("only allowed on props"), "{e}");
 }
 
 #[test]
 fn bad_interpolation() {
-    let e = errors("forge: \"0.1\"\nroot:\n  Text: \"Hi {user}\"\n");
+    let e = errors("forge: \"1.0\"\nroot:\n  Text: \"Hi {user}\"\n");
     assert!(e.contains("3:9: `{user}` is not a binding"), "{e}");
 }
 
 #[test]
 fn yaml_syntax_errors_have_positions() {
-    let e = errors("forge: \"0.1\"\nroot:\n\tText: a\n");
+    let e = errors("forge: \"1.0\"\nroot:\n\tText: a\n");
     assert!(e.starts_with("3:"), "{e}");
 }
 
 #[test]
 fn collects_every_error() {
     let e = errors(
-        "forge: \"0.1\"\nwhat: 1\nroot:\n  Box:\n  children:\n    - variant: x\n    - Text: \"{oops}\"\n",
+        "forge: \"1.0\"\nwhat: 1\nroot:\n  Box:\n  children:\n    - variant: x\n    - Text: \"{oops}\"\n",
     );
     assert_eq!(e.lines().count(), 3, "{e}");
     assert!(e.contains("2:1: unknown top-level key `what`"), "{e}");
@@ -240,7 +240,7 @@ fn anchors_aliases_and_merge_keys() {
     // Fragments at the top level hold `&anchor` slots. `<<` splices them in.
     let doc = read(
         r#"
-forge: "0.1"
+forge: "1.0"
 shared: &shared
   icon: save
   on click: save()
@@ -262,7 +262,7 @@ root:
 fn aliases_inherit_whole_nodes_and_scalar_anchors() {
     let doc = read(
         r#"
-forge: "0.1"
+forge: "1.0"
 fragments:
   btn: &btn
     Button: Save
@@ -284,7 +284,7 @@ fn merge_keys_explicit_wins_and_errors() {
     // Explicit keys override merged ones.
     let doc = read(
         r#"
-forge: "0.1"
+forge: "1.0"
 m: &m
   icon: x
   tooltip: t
@@ -300,7 +300,7 @@ root:
     // Sequences of maps merge in order, earlier winning.
     let doc = read(
         r#"
-forge: "0.1"
+forge: "1.0"
 a: &a {icon: x, tooltip: a}
 b: &b {tooltip: b}
 root:
@@ -311,14 +311,14 @@ root:
     assert_eq!(text(prop(&doc.root, "tooltip")), Some("a"));
 
     // Undefined aliases and scalar merges error.
-    assert!(errors("forge: \"0.1\"\nroot:\n  Button:\n  <<: *missing\n").contains("anchor"));
-    assert!(errors("forge: \"0.1\"\nroot:\n  Button:\n  <<: 'text'\n").contains("merge key `<<`"));
+    assert!(errors("forge: \"1.0\"\nroot:\n  Button:\n  <<: *missing\n").contains("anchor"));
+    assert!(errors("forge: \"1.0\"\nroot:\n  Button:\n  <<: 'text'\n").contains("merge key `<<`"));
 }
 
 #[test]
 fn rejects_multiple_documents() {
     assert!(
-        errors("forge: \"0.1\"\nroot:\n  Text: a\n---\nforge: \"0.1\"\n").contains("exactly one")
+        errors("forge: \"1.0\"\nroot:\n  Text: a\n---\nforge: \"1.0\"\n").contains("exactly one")
     );
 }
 
@@ -329,7 +329,7 @@ fn preserve(doc: &Document) -> String {
 #[test]
 fn preserving_writer_returns_unmodified_source_verbatim() {
     let src = r#"# Forge Studio doc
-forge: "0.1"   # version
+forge: "1.0"   # version
 
 shared: &shared {variant: ghost}   # shared fragment
 
@@ -352,7 +352,7 @@ root:
 
 #[test]
 fn preserving_writer_splices_unchanged_regions() {
-    let src = r#"forge: "0.1"
+    let src = r#"forge: "1.0"
 
 # a comment about the root
 root:
@@ -384,7 +384,7 @@ root:
 
 #[test]
 fn preserving_writer_keeps_anchors_and_merges() {
-    let src = r#"forge: "0.1"
+    let src = r#"forge: "1.0"
 
 frag: &frag
   icon: check
@@ -405,7 +405,7 @@ root:
 
 #[test]
 fn preserving_writer_drops_removed_and_adds_new() {
-    let src = r#"forge: "0.1"
+    let src = r#"forge: "1.0"
 root:
   VStack:
   children:
@@ -441,7 +441,7 @@ fn binding(text: &str) -> Value {
 #[test]
 fn control_blocks_read() {
     let doc = read(
-        r#"forge: "0.1"
+        r#"forge: "1.0"
 root:
   VStack:
   children:
@@ -525,7 +525,7 @@ root:
 #[test]
 fn control_modifiers_on_elements() {
     let doc = read(
-        "forge: \"0.1\"\nroot:\n  VStack:\n  children:\n    - Tab: \"{$tab.name}\"\n      for: $tabs\n      each: tab\n    - Text: Signed in\n      if: $user.signed_in\n",
+        "forge: \"1.0\"\nroot:\n  VStack:\n  children:\n    - Tab: \"{$tab.name}\"\n      for: $tabs\n      each: tab\n    - Text: Signed in\n      if: $user.signed_in\n",
     );
     let [tab, text] = &doc.root.children[..] else {
         unreachable!()
@@ -539,7 +539,7 @@ fn control_modifiers_on_elements() {
 
 #[test]
 fn control_flow_round_trip() {
-    const SRC: &str = r#"forge: "0.1"
+    const SRC: &str = r#"forge: "1.0"
 root:
   VStack:
   children:
@@ -583,40 +583,40 @@ root:
 #[test]
 fn control_flow_errors() {
     // `else` without a control head.
-    let e = errors("forge: \"0.1\"\nroot:\n  else:\n    - Text: a\n");
+    let e = errors("forge: \"1.0\"\nroot:\n  else:\n    - Text: a\n");
     assert!(e.contains("`else` needs `if`, `for` or `match`"), "{e}");
     // Two control keys.
-    let e = errors("forge: \"0.1\"\nroot:\n  if: $a\n  for: $b\n  each: x\n");
+    let e = errors("forge: \"1.0\"\nroot:\n  if: $a\n  for: $b\n  each: x\n");
     assert!(e.contains("two control keys"), "{e}");
     // `is` without `if`.
-    let e = errors("forge: \"0.1\"\nroot:\n  Button: x\n  is: y\n");
+    let e = errors("forge: \"1.0\"\nroot:\n  Button: x\n  is: y\n");
     assert!(e.contains("`is` needs `if`"), "{e}");
     // `for` without `each`.
-    let e = errors("forge: \"0.1\"\nroot:\n  for: $items\n");
+    let e = errors("forge: \"1.0\"\nroot:\n  for: $items\n");
     assert!(e.contains("`for` needs `each: <name>`"), "{e}");
     // `with` without `as`.
-    let e = errors("forge: \"0.1\"\nroot:\n  with: $tab\n");
+    let e = errors("forge: \"1.0\"\nroot:\n  with: $tab\n");
     assert!(e.contains("`with` needs `as: <name>`"), "{e}");
     // `match` with `children`.
-    let e = errors("forge: \"0.1\"\nroot:\n  match: $x\n  children:\n    - Text: a\n");
+    let e = errors("forge: \"1.0\"\nroot:\n  match: $x\n  children:\n    - Text: a\n");
     assert!(e.contains("`match` uses `case` arms"), "{e}");
     // `match` applied to an element.
-    let e = errors("forge: \"0.1\"\nroot:\n  Button: x\n  match: $m\n  case a:\n    - Text: a\n");
+    let e = errors("forge: \"1.0\"\nroot:\n  Button: x\n  match: $m\n  case a:\n    - Text: a\n");
     assert!(e.contains("`match` cannot modify an element"), "{e}");
     // Props on a bare control block.
-    let e = errors("forge: \"0.1\"\nroot:\n  if: $a\n  tooltip: t\n");
+    let e = errors("forge: \"1.0\"\nroot:\n  if: $a\n  tooltip: t\n");
     assert!(e.contains("prop `tooltip` needs an element"), "{e}");
     // `case` without `match`.
-    let e = errors("forge: \"0.1\"\nroot:\n  Button: x\n  case a:\n    - Text: a\n");
+    let e = errors("forge: \"1.0\"\nroot:\n  Button: x\n  case a:\n    - Text: a\n");
     assert!(e.contains("`case a` needs `match`"), "{e}");
     // `else` on `with`.
-    let e = errors("forge: \"0.1\"\nroot:\n  with: $x\n  as: y\n  else:\n    - Text: a\n");
+    let e = errors("forge: \"1.0\"\nroot:\n  with: $x\n  as: y\n  else:\n    - Text: a\n");
     assert!(e.contains("`else` needs `if`, `for` or `match`"), "{e}");
     // `bind` (two-way) is not a valid control operand.
-    let e = errors("forge: \"0.1\"\nroot:\n  for: bind $items\n  each: i\n");
+    let e = errors("forge: \"1.0\"\nroot:\n  for: bind $items\n  each: i\n");
     assert!(e.contains("only allowed on props"), "{e}");
     // A scalar that isn't a binding or list is not a `for` source.
-    let e = errors("forge: \"0.1\"\nroot:\n  for: 42\n  each: i\n");
+    let e = errors("forge: \"1.0\"\nroot:\n  for: 42\n  each: i\n");
     assert!(e.contains("`for` needs a binding like `$items`"), "{e}");
 }
 
@@ -624,7 +624,7 @@ fn control_flow_errors() {
 fn refname_captured_from_merge_alias() {
     let doc = yaml::from_str(
         r#"
-forge: "0.1"
+forge: "1.0"
 frag: &frag
   children:
     - Text: shared
@@ -647,7 +647,7 @@ root:
 #[test]
 fn meta_self_refs_resolve() {
     let doc = yaml::from_str(
-        r#"forge: "0.1"
+        r#"forge: "1.0"
 meta:
   name: my-app
   id: "dev.forge.{$meta.name}"
@@ -671,7 +671,7 @@ root:
 fn duplicate_ref_names_are_rejected() {
     let err = yaml::from_str(
         r#"
-forge: "0.1"
+forge: "1.0"
 frag: &frag
   children:
     - Text: one
@@ -697,7 +697,7 @@ root:
 
 #[test]
 fn for_key_parses_and_round_trips() {
-    let src = r#"forge: "0.1"
+    let src = r#"forge: "1.0"
 
 root:
   VStack:

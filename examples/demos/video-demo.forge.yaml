@@ -1,7 +1,7 @@
 # gpui-video-player — hardware-decoded video on a GStreamer pipeline.
 # Requires GStreamer 1.14+ installed on the host (#77).
-$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json
-forge: "0.1"
+$schema: https://gpui-forge.rudeboy.dev/schema/1.0/gpui-kit.json
+forge: "1.0"
 base: gpui-kit
 use:
   video: gpui-video-player

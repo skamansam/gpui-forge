@@ -1,7 +1,7 @@
-# yaml-language-server: $schema=../schema/catalog-0.1.json
+# yaml-language-server: $schema=../schema/catalog-1.0.json
 # Catalog manifest for the gpui-kit base library (core subset).
 # Format: docs/spec/catalog-manifest.md
-catalog: "0.1"
+catalog: "1.0"
 library: gpui-kit
 name: GPUI Kit
 version: 0.8.0

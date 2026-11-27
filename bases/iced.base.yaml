@@ -1,7 +1,7 @@
 # Base manifest — see docs/design/multi-base.md
 # Scaffold for #113 — the non-GPUI GUI base (Elm-style over winit/wgpu).
 # `gpui` carries the toolkit stack entry (iced itself).
-base: "0.1"
+base: "1.0"
 id: iced
 name: Iced
 description: iced (Elm-style retained GUI over wgpu) — proves the base abstraction works beyond GPUI-family toolkits.

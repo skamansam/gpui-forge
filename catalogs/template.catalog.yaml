@@ -1,6 +1,6 @@
 # Template adapter catalog — see docs/guide/adapters.md and
 # docs/spec/catalog-manifest.md for the full schema.
-catalog: "0.1"
+catalog: "1.0"
 library: template-lib      # what `use: alias: template-lib` imports
 name: Template Library
 version: 0.1.0

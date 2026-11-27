@@ -60,7 +60,7 @@ fn studio_documents_write_back_verbatim() {
 
 #[test]
 fn nested_merge_blocks_stay_verbatim() {
-    let src = r#"forge: "0.1"
+    let src = r#"forge: "1.0"
 app: &app
   children:
     - MenuItem: X

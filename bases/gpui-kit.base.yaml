@@ -1,5 +1,5 @@
 # Base manifest — see docs/design/multi-base.md
-base: "0.1"
+base: "1.0"
 id: gpui-kit
 name: GPUI Kit
 description: gpui-component + gpui-kit on the gpui-pre 0.3.x graph — the primary Forge base.

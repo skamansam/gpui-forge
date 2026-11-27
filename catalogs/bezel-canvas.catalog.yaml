@@ -1,7 +1,7 @@
-# yaml-language-server: $schema=../schema/catalog-0.1.json
+# yaml-language-server: $schema=../schema/catalog-1.0.json
 # Catalog manifest for bezel-canvas — `use: canvas: bezel-canvas` on the bezel
 # base (#94 ecosystem catalog). Infinite canvas over JSON Canvas.
-catalog: "0.1"
+catalog: "1.0"
 library: bezel-canvas
 name: bezel-canvas
 version: 0.2.24

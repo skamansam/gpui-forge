@@ -1,7 +1,7 @@
-# yaml-language-server: $schema=../schema/catalog-0.1.json
+# yaml-language-server: $schema=../schema/catalog-1.0.json
 # Catalog manifest for the ferrum-flow adapter (forge-lib-guise `ferrum`
 # feature) — `use: flow: ferrum-flow` on the guise base (#86).
-catalog: "0.1"
+catalog: "1.0"
 library: ferrum-flow
 name: ferrum-flow
 version: 0.3.1

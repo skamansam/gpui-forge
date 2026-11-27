@@ -171,7 +171,7 @@ export const examples: Example[] = [
 		title: 'Login form',
 		summary: 'Two-way bindings, interpolated text and a hook on click.',
 		state: { user: { name: 'Ada' }, form: { email: '', remember: true } },
-		yaml: `forge: "0.1"
+		yaml: `forge: "1.0"
 base: gpui-kit
 meta:
   title: Login
@@ -230,7 +230,7 @@ impl Render for Login {
 		title: 'Settings panel',
 		summary: 'Switches, a radio group and a select, all bound to state.',
 		state: { prefs: { notifications: true, theme: 1, language: 'English' } },
-		yaml: `forge: "0.1"
+		yaml: `forge: "1.0"
 root:
   VStack:
   style:
@@ -288,7 +288,7 @@ v_flex()
 		title: 'Tabs and badges',
 		summary: 'Containers with children, enum variants and theme tokens.',
 		state: { inbox: { unread: 4 } },
-		yaml: `forge: "0.1"
+		yaml: `forge: "1.0"
 root:
   VStack:
   style:

@@ -139,12 +139,12 @@ fn yaml_doc(src: &str) -> Json {
 #[test]
 fn document_level() {
     let s = schema("gpui-kit");
-    valid(&s, json!({"forge": "0.1", "root": {"Text": "hi"}}));
+    valid(&s, json!({"forge": "1.0", "root": {"Text": "hi"}}));
     invalid(&s, json!({"forge": "0.2", "root": {"Text": "hi"}}));
-    invalid(&s, json!({"forge": "0.1"}));
+    invalid(&s, json!({"forge": "1.0"}));
     invalid(
         &s,
-        json!({"forge": "0.1", "base": "ratatui", "root": {"Text": "hi"}}),
+        json!({"forge": "1.0", "base": "ratatui", "root": {"Text": "hi"}}),
     );
 }
 
@@ -153,24 +153,24 @@ fn unknown_element_and_props() {
     let s = schema("gpui-kit");
     valid(
         &s,
-        json!({"forge": "0.1", "root": {"Button": "OK", "variant": "Primary", "on click": "go()"}}),
+        json!({"forge": "1.0", "root": {"Button": "OK", "variant": "Primary", "on click": "go()"}}),
     );
-    invalid(&s, json!({"forge": "0.1", "root": {"Butto": "OK"}}));
+    invalid(&s, json!({"forge": "1.0", "root": {"Butto": "OK"}}));
     invalid(
         &s,
-        json!({"forge": "0.1", "root": {"Button": "OK", "variat": "Primary"}}),
-    );
-    invalid(
-        &s,
-        json!({"forge": "0.1", "root": {"Button": "OK", "variant": "Nope"}}),
+        json!({"forge": "1.0", "root": {"Button": "OK", "variat": "Primary"}}),
     );
     invalid(
         &s,
-        json!({"forge": "0.1", "root": {"Button": "OK", "on hover": "x()"}}),
+        json!({"forge": "1.0", "root": {"Button": "OK", "variant": "Nope"}}),
     );
     invalid(
         &s,
-        json!({"forge": "0.1", "root": {"Button": "OK", "children": [{"Text": "x"}]}}),
+        json!({"forge": "1.0", "root": {"Button": "OK", "on hover": "x()"}}),
+    );
+    invalid(
+        &s,
+        json!({"forge": "1.0", "root": {"Button": "OK", "children": [{"Text": "x"}]}}),
     );
 }
 
@@ -180,23 +180,23 @@ fn use_imports_and_namespaced_elements() {
     valid(
         &s,
         json!({
-            "forge": "0.1",
+            "forge": "1.0",
             "use": {"ely": "ely-core ^0.4"},
             "root": {"ely.Button": "Hi", "variant": "Primary"},
         }),
     );
     invalid(
         &s,
-        json!({"forge": "0.1", "use": {"ely": "no-such-lib"}, "root": {"Text": "x"}}),
+        json!({"forge": "1.0", "use": {"ely": "no-such-lib"}, "root": {"Text": "x"}}),
     );
     invalid(
         &s,
-        json!({"forge": "0.1", "use": {"Ely": "ely-core"}, "root": {"Text": "x"}}),
+        json!({"forge": "1.0", "use": {"Ely": "ely-core"}, "root": {"Text": "x"}}),
     );
-    invalid(&s, json!({"forge": "0.1", "root": {"ely.NotAWidget": "x"}}));
+    invalid(&s, json!({"forge": "1.0", "root": {"ely.NotAWidget": "x"}}));
     invalid(
         &s,
-        json!({"forge": "0.1", "root": {"ely.Button": "x", "variant": "Nope"}}),
+        json!({"forge": "1.0", "root": {"ely.Button": "x", "variant": "Nope"}}),
     );
 }
 
@@ -205,11 +205,11 @@ fn style_map() {
     let s = schema("gpui-kit");
     valid(
         &s,
-        json!({"forge": "0.1", "root": {"VStack": null, "style": {"gap": "12px", "align": "center"}}}),
+        json!({"forge": "1.0", "root": {"VStack": null, "style": {"gap": "12px", "align": "center"}}}),
     );
     invalid(
         &s,
-        json!({"forge": "0.1", "root": {"VStack": null, "style": {"gpa": "12px"}}}),
+        json!({"forge": "1.0", "root": {"VStack": null, "style": {"gpa": "12px"}}}),
     );
 }
 
@@ -218,9 +218,9 @@ fn ids_and_content() {
     let s = schema("gpui-kit");
     valid(
         &s,
-        json!({"forge": "0.1", "root": {"Input#email": null, "value": "bind $form.email"}}),
+        json!({"forge": "1.0", "root": {"Input#email": null, "value": "bind $form.email"}}),
     );
-    valid(&s, json!({"forge": "0.1", "root": {"Input .email": null}}));
+    valid(&s, json!({"forge": "1.0", "root": {"Input .email": null}}));
 }
 
 #[test]
@@ -356,27 +356,27 @@ fn published_schemas_are_fresh() {
     for (base, file) in [
         (
             "adabraka",
-            include_str!("../../../site/static/schema/0.1/adabraka.json"),
+            include_str!("../../../site/static/schema/1.0/adabraka.json"),
         ),
         (
             "bezel",
-            include_str!("../../../site/static/schema/0.1/bezel.json"),
+            include_str!("../../../site/static/schema/1.0/bezel.json"),
         ),
         (
             "gpui-kit",
-            include_str!("../../../site/static/schema/0.1/gpui-kit.json"),
+            include_str!("../../../site/static/schema/1.0/gpui-kit.json"),
         ),
         (
             "guise",
-            include_str!("../../../site/static/schema/0.1/guise.json"),
+            include_str!("../../../site/static/schema/1.0/guise.json"),
         ),
         (
             "iced",
-            include_str!("../../../site/static/schema/0.1/iced.json"),
+            include_str!("../../../site/static/schema/1.0/iced.json"),
         ),
         (
             "ratatui",
-            include_str!("../../../site/static/schema/0.1/ratatui.json"),
+            include_str!("../../../site/static/schema/1.0/ratatui.json"),
         ),
     ] {
         let expected = yaml_schema::to_json(&yaml_schema::document_schema(
@@ -391,7 +391,7 @@ fn published_schemas_are_fresh() {
     }
     let expected = yaml_schema::to_json(&yaml_schema::document_schema(None, &bases, &catalogs));
     assert_eq!(
-        include_str!("../../../site/static/schema/0.1/generic.json"),
+        include_str!("../../../site/static/schema/1.0/generic.json"),
         expected,
         "generic.json is stale — run `cargo xtask schemas`"
     );

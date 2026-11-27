@@ -64,7 +64,7 @@ fn view_watches(view: &ForgeView) -> bool {
 fn file_watches(view: &ForgeView, shared: &SharedState) -> bool {
     view_watches(view) || shared.borrow().project_watch
 }
-const BLANK: &str = "$schema: https://gpui-forge.rudeboy.dev/schema/0.1/gpui-kit.json\nforge: \"0.1\"\nbase: gpui-kit\n\nroot:\n  VStack:\n  style:\n    padding: 16px\n  children:\n    - Text: Hello, Forge!\n";
+const BLANK: &str = "$schema: https://gpui-forge.rudeboy.dev/schema/1.0/gpui-kit.json\nforge: \"1.0\"\nbase: gpui-kit\n\nroot:\n  VStack:\n  style:\n    padding: 16px\n  children:\n    - Text: Hello, Forge!\n";
 
 // One demo per widget set, shared with `examples/` and the docs site (#129).
 const EXAMPLE_ELY: &str = include_str!("../../../examples/demos/ely-demo.forge.yaml");
@@ -860,7 +860,7 @@ fn open_dialog(
         v.set_document(
             Document {
                 schema: None,
-                version: "0.1".into(),
+                version: "1.0".into(),
                 base: None,
                 imports: vec![],
                 meta: vec![],
@@ -1673,7 +1673,7 @@ fn create_project(view: &mut ForgeView, shared: SharedState, cx: &mut Context<Fo
         return;
     }
     let doc = format!(
-        "$schema: {}\nforge: \"0.1\"\nbase: {base}\n\nroot:\n  VStack:\n  style:\n    padding: 16px\n    gap: 8px\n  children:\n    - Text: Hello, Forge!\n",
+        "$schema: {}\nforge: \"1.0\"\nbase: {base}\n\nroot:\n  VStack:\n  style:\n    padding: 16px\n    gap: 8px\n  children:\n    - Text: Hello, Forge!\n",
         gpui_forge_runtime::forge_spec::yaml_schema::schema_url(&base)
     );
     shared.borrow_mut().file = None;
@@ -1740,7 +1740,7 @@ fn files_new(
         .unwrap_or(BASE_ID)
         .to_owned();
     let doc = format!(
-        "$schema: {}\nforge: \"0.1\"\nbase: {base}\n\nroot:\n  VStack:\n  style:\n    padding: 16px\n    gap: 8px\n  children:\n    - Text: Hello, Forge!\n",
+        "$schema: {}\nforge: \"1.0\"\nbase: {base}\n\nroot:\n  VStack:\n  style:\n    padding: 16px\n    gap: 8px\n  children:\n    - Text: Hello, Forge!\n",
         gpui_forge_runtime::forge_spec::yaml_schema::schema_url(&base)
     );
     if let Err(e) = std::fs::write(&candidate, &doc) {
@@ -5944,7 +5944,7 @@ fn snippet_node(tag: &str) -> Node {
             .map(|line| format!("    {line}"))
             .collect::<Vec<_>>()
             .join("\n");
-        let src = format!("forge: \"0.1\"\nroot:\n  VStack:\n  children:\n{body}");
+        let src = format!("forge: \"1.0\"\nroot:\n  VStack:\n  children:\n{body}");
         if let Ok(doc) = yaml::from_str(&src)
             && let Some(node) = doc.root.children.into_iter().next()
         {
@@ -6323,9 +6323,9 @@ mod tests {
     /// real diagnostics.
     #[test]
     fn doc_base_follows_the_document() {
-        let ratatui = "forge: \"0.1\"\nbase: ratatui\nroot:\n  Text:\n  text: \"hi\"\n";
+        let ratatui = "forge: \"1.0\"\nbase: ratatui\nroot:\n  Text:\n  text: \"hi\"\n";
         assert_eq!(doc_base(ratatui, BASE_ID), "ratatui");
-        let default = "forge: \"0.1\"\nroot:\n  Text:\n  text: \"hi\"\n";
+        let default = "forge: \"1.0\"\nroot:\n  Text:\n  text: \"hi\"\n";
         assert_eq!(doc_base(default, BASE_ID), BASE_ID);
         // Mid-edit garbage keeps the last-known base instead of flickering.
         assert_eq!(doc_base("root:\n  Text: [", "ratatui"), "ratatui");
@@ -6406,12 +6406,12 @@ mod tests {
         std::fs::create_dir_all(&dir).unwrap();
         std::fs::write(
             dir.join("main.forge.yaml"),
-            "forge: \"0.1\"\nbase: ratatui\nmeta:\n  icon: app.svg\nroot:\n  Text:\n  text: hi\n",
+            "forge: \"1.0\"\nbase: ratatui\nmeta:\n  icon: app.svg\nroot:\n  Text:\n  text: hi\n",
         )
         .unwrap();
         std::fs::write(
             dir.join("console.forge.yaml"),
-            "forge: \"0.1\"\nroot:\n  Text:\n  text: c\n",
+            "forge: \"1.0\"\nroot:\n  Text:\n  text: c\n",
         )
         .unwrap();
         std::fs::write(dir.join("app.svg"), "<svg/>").unwrap();
@@ -6439,17 +6439,17 @@ mod tests {
         std::fs::create_dir_all(dir.join("docs")).unwrap();
         std::fs::write(
             dir.join("main.forge.yaml"),
-            "forge: \"0.1\"\nmeta:\n  title: Main\nroot:\n  Text:\n  text: hi\n",
+            "forge: \"1.0\"\nmeta:\n  title: Main\nroot:\n  Text:\n  text: hi\n",
         )
         .unwrap();
         std::fs::write(
             dir.join("docs/dialog.forge.yaml"),
-            "forge: \"0.1\"\nmeta:\n  window: ../main.forge.yaml\nroot:\n  Text:\n  text: d\n",
+            "forge: \"1.0\"\nmeta:\n  window: ../main.forge.yaml\nroot:\n  Text:\n  text: d\n",
         )
         .unwrap();
         std::fs::write(
             dir.join("stray.forge.yaml"),
-            "forge: \"0.1\"\nroot:\n  Text:\n  text: s\n",
+            "forge: \"1.0\"\nroot:\n  Text:\n  text: s\n",
         )
         .unwrap();
         let src = "[package]\nname = \"demo\"\n\n[forge]\ndocument = \"main.forge.yaml\"\n";

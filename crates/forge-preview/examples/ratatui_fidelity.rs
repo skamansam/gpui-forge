@@ -100,7 +100,7 @@ fn forge_doc(cols: u16, rows: u16, src: &str) -> (Vec<u8>, usize) {
 }
 
 const BASIC: &str = r#"
-forge: "0.1"
+forge: "1.0"
 state:
   q: string
   tab: number
@@ -141,7 +141,7 @@ root:
 "#;
 
 const EXOTIC: &str = r#"
-forge: "0.1"
+forge: "1.0"
 base: ratatui
 root:
   VStack:

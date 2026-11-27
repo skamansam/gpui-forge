@@ -1,7 +1,7 @@
-# yaml-language-server: $schema=../schema/catalog-0.1.json
+# yaml-language-server: $schema=../schema/catalog-1.0.json
 # Catalog manifest for bezel-icons — `use: icon: bezel-icons` on the bezel
 # base (#94 ecosystem catalog). Lucide glyphs as typed SVG constants.
-catalog: "0.1"
+catalog: "1.0"
 library: bezel-icons
 name: bezel-icons
 version: 0.2.24

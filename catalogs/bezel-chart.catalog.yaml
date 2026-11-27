@@ -1,7 +1,7 @@
-# yaml-language-server: $schema=../schema/catalog-0.1.json
+# yaml-language-server: $schema=../schema/catalog-1.0.json
 # Catalog manifest for bezel-chart — `use: chart: bezel-chart` on the bezel
 # base (#94 ecosystem catalog).
-catalog: "0.1"
+catalog: "1.0"
 library: bezel-chart
 name: bezel-chart
 version: 0.2.24

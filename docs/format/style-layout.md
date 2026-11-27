@@ -1,6 +1,6 @@
 # Style & layout model
 
-Status: **draft** (spec version `0.1`).
+Status: **draft** (spec version `1.0`).
 
 A node's `style:` map holds presentation that is not a component prop: flex layout, sizing,
 spacing, borders, colors and text. Every key maps onto one family of GPUI `Styled` methods. Values
@@ -95,7 +95,7 @@ Text keys apply to the element and inherit to its children, as in GPUI.
 as a hint), and values must have the key's type. Values may hold bindings (`$ui.width`), checked
 at runtime. `style` forbids two-way bindings (`bind …`).
 
-## Not in 0.1
+## Not in 1.0
 
 Grid layout, absolute positioning, transitions and responsive variants. They will be added as new
 keys, so existing documents stay valid.

@@ -1,8 +1,8 @@
-# yaml-language-server: $schema=../schema/catalog-0.1.json
+# yaml-language-server: $schema=../schema/catalog-1.0.json
 # Catalog manifest for the base-gpui adapter (forge-lib-base) —
 # `use: base: base-gpui` on the gpui-kit base (#85). Base GPUI is a headless
 # Base UI port: the adapter supplies default chrome via style_with_state.
-catalog: "0.1"
+catalog: "1.0"
 library: base-gpui
 name: Base GPUI (headless)
 version: 0.1.0
