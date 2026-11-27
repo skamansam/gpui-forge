@@ -3453,6 +3453,9 @@ impl ForgeView {
                     div()
                         .flex_1()
                         .min_w_0()
+                        .whitespace_nowrap()
+                        .overflow_hidden()
+                        .text_ellipsis()
                         .child(entry.item().label.to_string()),
                 )
                 // `doc` rows — a forge file or the manifest — get a trailing

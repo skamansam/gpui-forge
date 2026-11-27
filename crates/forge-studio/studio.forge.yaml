@@ -961,24 +961,32 @@ docsTab: &docsTab
             - Button:
               label: Save
               icon: save
+              variant: Primary
               size: Small
               on click: doc_save()
-        - HStack:
-          style: {grow: true, min-height: 0, gap: 8px}
+        - Resizable:
+          layout: Horizontal
+          style: {grow: true, min-height: 0}
           children:
-            - Editor#doc_editor:
-              language: markdown
-              highlighting:
-                languages: [markdown]
-                default: markdown
-                show-selection: true
-              value: bind $studio.doc_text
-              placeholder: write markdown…
-              style: {grow: true, min-height: 0, basis: 50%, border: 1px}
-            - TextView#doc_preview:
-              text: "{$studio.doc_text}"
-              format: markdown
-              style: {grow: true, min-height: 0, basis: 50%, border: 1px}
+            - ResizablePanel:
+              min-size: 200
+              children:
+                - Editor#doc_editor:
+                  language: markdown
+                  highlighting:
+                    languages: [markdown]
+                    default: markdown
+                    show-selection: true
+                  value: bind $studio.doc_text
+                  placeholder: write markdown…
+                  style: {grow: true, min-height: 0, border: 1px}
+            - ResizablePanel:
+              min-size: 200
+              children:
+                - TextView#doc_preview:
+                  text: "{$studio.doc_text}"
+                  format: markdown
+                  style: {grow: true, min-height: 0, border: 1px}
 
 
 # ============================================================================
@@ -996,7 +1004,7 @@ body: &body
         # #148 — project sidebar: the folder of the open document, scanned by
         # main.rs into `studio.files`. Clicking a file opens it.
         - ResizablePanel:
-          size: 230
+          size: 250
           min-size: 160
           children:
             - VStack#project:
