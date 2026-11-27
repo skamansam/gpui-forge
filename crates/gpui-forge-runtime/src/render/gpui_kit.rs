@@ -482,6 +482,9 @@ pub struct ForgeView {
     /// `forge.Icons` grid scroll handles per element key — the handle's
     /// bounds are how the cell-column count tracks the rendered width.
     icons_scrolls: HashMap<String, UniformListScrollHandle>,
+    /// `forge.Icons` hovered cell per element key — drives the corner
+    /// add/remove badge a doc's `toggle` hook wires to the project.
+    icons_hover: HashMap<String, String>,
     /// The host's iconset (`[icons] set` in forge.toml) — a document's
     /// `meta.iconset` overrides it, and `lucide` is the bundled default.
     project_iconset: Option<String>,
@@ -734,6 +737,7 @@ impl ForgeView {
             files_nav: HashMap::new(),
             icons_queries: HashMap::new(),
             icons_scrolls: HashMap::new(),
+            icons_hover: HashMap::new(),
             project_iconset: None,
             selects: HashMap::new(),
             resizables: HashMap::new(),
@@ -2241,6 +2245,32 @@ impl ForgeView {
             .iter()
             .find(|e| e.event == "select")
             .map(|e| e.handler.name.clone());
+        // `toggle` — the hover badge's hook: add/remove the icon in the
+        // project's icon dir. `open` — double-click, a detail view hook
+        // (Studio routes it to the Application size sheet).
+        let toggle_handler = node
+            .events
+            .iter()
+            .find(|e| e.event == "toggle")
+            .map(|e| e.handler.name.clone());
+        let open_handler = node
+            .events
+            .iter()
+            .find(|e| e.event == "open")
+            .map(|e| e.handler.name.clone());
+        // `added:` — bound list of names already in the project. A row in it
+        // paints the badge minus even unhovered and `$item.added` is true.
+        let added: std::collections::HashSet<String> = self
+            .two_way(node, "added")
+            .and_then(|p| self.lookup(&p))
+            .and_then(|j| j.as_array().cloned())
+            .map(|a| {
+                a.iter()
+                    .filter_map(|v| v.as_str().map(str::to_owned))
+                    .collect()
+            })
+            .unwrap_or_default();
+        let hovered_name = self.icons_hover.get(key).cloned();
 
         // `bare:`. The doc lays out its own chrome around the grid from the
         // published outputs (`categories`/`themes`/`meta`/`status`/
@@ -2857,12 +2887,19 @@ impl ForgeView {
                                     // embedded, so the mark adds no signal.
                                     let on_disk = materialized.contains(name)
                                         && !BUNDLED_SETS.contains(&set.as_str());
+                                    // `added` (bound list) marks icons the
+                                    // project already ships — the badge
+                                    // paints minus for them even unhovered.
+                                    let in_project = added.contains(name);
+                                    let hovered = hovered_name.as_deref() == Some(name.as_str());
                                     let select_path = selected_path.clone();
                                     let handler = select_handler.clone();
+                                    let opener = open_handler.clone();
                                     let cell_name = name.clone();
                                     let weak = weak.clone();
                                     let mut cell_div = div()
                                         .id(format!("{key}-{name}"))
+                                        .relative()
                                         .flex()
                                         .flex_col()
                                         .items_center()
@@ -2929,6 +2966,7 @@ impl ForgeView {
                                             "set": set,
                                             "selected": active,
                                             "downloaded": on_disk,
+                                            "added": in_project,
                                         });
                                         let tpl_key = format!("{key}/{name}");
                                         let weak2 = weak.clone();
@@ -2950,6 +2988,57 @@ impl ForgeView {
                                             .unwrap_or_default(),
                                         );
                                     }
+                                    // Corner badge — only meaningful when a
+                                    // `toggle` hook exists. Hovered shows
+                                    // plus/minus, `added` rows keep the
+                                    // minus on steady-state too.
+                                    let badge = ((hovered || in_project)
+                                        && toggle_handler.is_some())
+                                    .then(|| {
+                                        let weak = weak.clone();
+                                        let toggle = toggle_handler.clone().unwrap();
+                                        let cell_div_id_name = name.clone();
+                                        div()
+                                            .absolute()
+                                            .top(px(2.))
+                                            .right(px(2.))
+                                            .w(px(18.))
+                                            .h(px(18.))
+                                            .rounded_full()
+                                            .bg(cx.theme().secondary)
+                                            .flex()
+                                            .items_center()
+                                            .justify_center()
+                                            .child(
+                                                icon(if in_project { "minus" } else { "plus" })
+                                                    .with_size(size("XSmall")),
+                                            )
+                                            .text_color(cx.theme().secondary_foreground)
+                                            .on_mouse_down(MouseButton::Left, move |e, _, cx| {
+                                                cx.stop_propagation();
+                                                let _ = e;
+                                                try_update(&weak, cx, "icon toggle", |this, cx| {
+                                                    let synth = Node {
+                                                        events: vec![EventBinding {
+                                                            event: "toggle".into(),
+                                                            handler: HandlerRef {
+                                                                name: toggle.clone(),
+                                                                args: vec![Value::String(
+                                                                    cell_div_id_name.clone(),
+                                                                )],
+                                                            },
+                                                        }],
+                                                        ..Default::default()
+                                                    };
+                                                    this.fire(&synth, "toggle", cx);
+                                                })
+                                                .ok();
+                                            })
+                                            .into_any_element()
+                                    });
+                                    let hov_weak = weak.clone();
+                                    let hov_key = key.to_owned();
+                                    let hov_name = name.clone();
                                     row = row.child(
                                         cell_div
                                             .tooltip({
@@ -2958,7 +3047,32 @@ impl ForgeView {
                                                     cx.new(|_| Tooltip::new(tip.clone())).into()
                                                 }
                                             })
-                                            .on_click(move |_, _, cx| {
+                                            .on_hover(move |hovering, _, cx| {
+                                                try_update(
+                                                    &hov_weak,
+                                                    cx,
+                                                    "icon hover",
+                                                    |this, cx| {
+                                                        if *hovering {
+                                                            this.icons_hover.insert(
+                                                                hov_key.clone(),
+                                                                hov_name.clone(),
+                                                            );
+                                                        } else if this
+                                                            .icons_hover
+                                                            .get(&hov_key)
+                                                            .is_some_and(|n| n == &hov_name)
+                                                        {
+                                                            this.icons_hover.remove(&hov_key);
+                                                        }
+                                                        cx.notify();
+                                                    },
+                                                )
+                                                .ok();
+                                            })
+                                            .when_some(badge, |d, b| d.child(b))
+                                            .on_mouse_down(MouseButton::Left, move |e, _, cx| {
+                                                let clicks = e.click_count;
                                                 let name = cell_name.clone();
                                                 try_update(&weak, cx, "icon select", |this, cx| {
                                                     if let Some(path) = &select_path {
@@ -2968,12 +3082,20 @@ impl ForgeView {
                                                             cx,
                                                         );
                                                     }
-                                                    if let Some(handler) = &handler {
+                                                    // Double-click → `open`
+                                                    // (the detail/sizes view).
+                                                    // Single → `select`.
+                                                    let (event, handler) = if clicks >= 2 {
+                                                        ("open", opener.clone())
+                                                    } else {
+                                                        ("select", handler.clone())
+                                                    };
+                                                    if let Some(handler) = handler {
                                                         let synth = Node {
                                                             events: vec![EventBinding {
-                                                                event: "select".into(),
+                                                                event: event.into(),
                                                                 handler: HandlerRef {
-                                                                    name: handler.clone(),
+                                                                    name: handler,
                                                                     args: vec![Value::String(
                                                                         name.clone(),
                                                                     )],
@@ -2981,7 +3103,7 @@ impl ForgeView {
                                                             }],
                                                             ..Default::default()
                                                         };
-                                                        this.fire(&synth, "select", cx);
+                                                        this.fire(&synth, event, cx);
                                                     }
                                                 })
                                                 .ok();
@@ -6529,10 +6651,14 @@ impl ForgeView {
                     ),
                 };
                 let element = svg().path(doc_icon_path(&set, &name, cx));
-                // `svg()` has no intrinsic size — `size:` takes a px length
-                // or the catalog enum (gpui-kit's steps: 12/14/16/24px).
+                // `svg()` has no intrinsic size — `size:` takes a px length,
+                // a bound number (resolved through `number()`), or the
+                // catalog enum (gpui-kit's steps: 12/14/16/24px).
                 // default 16px like a Medium icon.
-                let element = match self.prop(node, "size").and_then(length) {
+                let size_len = self.prop(node, "size").and_then(|v| {
+                    length(v).or_else(|| self.number(v).map(|n| px(n as f32).into()))
+                });
+                let element = match size_len {
                     Some(size) => element.w(size).h(size),
                     None => {
                         let s = match self.prop_text(node, "size").as_deref() {
@@ -6572,7 +6698,12 @@ impl ForgeView {
                     _ => ObjectFit::Contain,
                 };
                 let element = element.object_fit(fit);
-                match self.prop(node, "size").and_then(length) {
+                // Bound numbers resolve through `number()` — a `size: bind`
+                // prop arrives as `Value::Binding`, not a literal length.
+                match self
+                    .prop(node, "size")
+                    .and_then(|v| length(v).or_else(|| self.number(v).map(|n| px(n as f32).into())))
+                {
                     Some(size) => element.w(size).h(size),
                     None => element,
                 }

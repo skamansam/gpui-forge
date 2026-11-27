@@ -507,10 +507,23 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
                         // Assets tab — `refresh_assets` rewrites dir + listing when a
                         // document/project loads. Grid is the default view;
                         // `assets_all` widens the listing to the whole project.
+                        // `asset_step` (16–512) × `asset_pct` (continuous
+                        // ±25% zoom, resettable) give `asset_px` cell size.
                         "assets_dir": "",
                         "asset_files": [],
                         "assets_zoom": 2,
                         "assets_all": false,
+                        "asset_step": 64,
+                        "asset_pct": 100,
+                        "asset_px": 64,
+                        // Application tab — the icon the size sheet renders,
+                        // plus the set it resolves under. `icons_in_project`
+                        // feeds the browser's plus/minus badge.
+                        "app_icon": "",
+                        "app_iconset": "lucide",
+                        "icons_in_project": [],
+                        // Application tab's size ladder — standard icon sizes.
+                        "icon_steps": [16, 32, 64, 128, 256, 512],
                         // Files sidebar "project" toggle — the document's folder.
                         "doc_dir": "",
                         // Docs tab — `doc_file` is the markdown page being
@@ -548,6 +561,13 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "assets_scope",
         "grep_project",
         "icon_copy",
+        "icon_toggle",
+        "icon_view",
+        "asset_step",
+        "asset_zoom_in",
+        "asset_zoom_out",
+        "asset_zoom_reset",
+        "refresh_project_icons",
         "toggle_icon_theme",
         "retry_iconset",
         "create_project",
@@ -1177,6 +1197,33 @@ fn dispatch(
                 icon_copy(view, name, shared, cx);
             }
         }
+        // Icons-tab: the hover badge adds/removes the project copy.
+        "icon_toggle" => {
+            if let Some(name) = args.first() {
+                icon_toggle(view, name, shared, cx);
+            }
+        }
+        // Icons-tab: double-click opens the Application size sheet.
+        "icon_view" => {
+            if let Some(name) = args.first() {
+                icon_view(view, name, cx);
+            }
+        }
+        // Assets grid: the step dropdown (16–512) and the ±/100% buttons —
+        // `asset_step`/`asset_pct` recombine into `asset_px` per cell.
+        "asset_step" => asset_px(view, cx),
+        "asset_zoom_in" => asset_zoom_by(view, 25.0, cx),
+        "asset_zoom_out" => asset_zoom_by(view, -25.0, cx),
+        "asset_zoom_reset" => {
+            view.update_state(
+                &parse_path("studio.asset_pct").unwrap(),
+                Json::from(100),
+                cx,
+            );
+            asset_px(view, cx);
+        }
+        // Icons set switch — the badge list re-derives for the new set.
+        "refresh_project_icons" => refresh_project_icons(view, shared, cx),
         // Icons-tab: the yaml-side theme checkboxes toggle one encoded
         // `s:`/`p:` entry in `studio.icon_theme`. `forge.Icons` re-derives
         // the filter + re-publishes `checked` flags from there.
@@ -1359,7 +1406,7 @@ fn dispatch(
                         Json::String(src),
                         cx,
                     );
-                    view.update_state(&parse_path("studio.tab").unwrap(), Json::from(8), cx);
+                    view.update_state(&parse_path("studio.tab").unwrap(), Json::from(9), cx);
                     return;
                 }
                 let src = std::fs::read_to_string(&path).ok();
@@ -4070,6 +4117,7 @@ fn load_project(
     refresh_files(view, &dir, cx);
     refresh_assets(view, &dir, cx);
     refresh_themes(view, &dir, cx);
+    refresh_project_icons(view, &shared, cx);
     if watching && shared.borrow().manifest_watching.as_deref() != Some(toml.as_path()) {
         shared.borrow_mut().manifest_watching = Some(toml.clone());
         watch_manifest(toml.clone(), shared.clone(), cx);
@@ -4563,7 +4611,7 @@ fn doc_open_path(view: &mut ForgeView, path: &std::path::Path, cx: &mut Context<
         Json::String(text),
         cx,
     );
-    view.update_state(&parse_path("studio.tab").unwrap(), Json::from(7), cx);
+    view.update_state(&parse_path("studio.tab").unwrap(), Json::from(8), cx);
 }
 
 /// Where a new page lands — `README.md` for the manifest, the doc's stem
@@ -5151,6 +5199,24 @@ fn load_source(
 /// the cached `IconifyJSON`. Bundled/vendored icons load straight from the
 /// asset source. Lands under a registered icon root, so the browser's
 /// "on disk" ring shows on the next render.
+/// The directory icon ops write under — the open document's folder, else
+/// the project root when only a project is loaded.
+fn icon_base_dir(shared: &SharedState) -> Option<PathBuf> {
+    let s = shared.borrow();
+    s.dir.clone().or_else(|| s.project_dir.clone())
+}
+
+/// Where a project icon lives — `<assets>/icons/<name>.svg` for bundled
+/// sets, `<assets>/icons/<set>/<name>.svg` for iconify/vendored sets.
+fn icon_dest(dir: &std::path::Path, set: &str, name: &str) -> PathBuf {
+    let base = assets_root(dir).join("icons");
+    if matches!(set, "" | "lucide" | "heroicons") {
+        base.join(format!("{name}.svg"))
+    } else {
+        base.join(set).join(format!("{name}.svg"))
+    }
+}
+
 fn icon_copy(view: &mut ForgeView, name: &str, shared: &SharedState, cx: &mut Context<ForgeView>) {
     let set = get_path(view.state(), &parse_path("studio.iconset").unwrap())
         .and_then(|j| j.as_str())
@@ -5170,16 +5236,15 @@ fn icon_copy(view: &mut ForgeView, name: &str, shared: &SharedState, cx: &mut Co
         );
         return;
     };
-    let Some(dir) = shared.borrow().dir.clone() else {
+    let Some(dir) = icon_base_dir(shared) else {
         status(view, "open a document first — no assets/ to copy into", cx);
         return;
     };
-    let dest_dir = if bundled {
-        assets_root(&dir).join("icons")
-    } else {
-        assets_root(&dir).join("icons").join(&set)
-    };
-    let dest = dest_dir.join(format!("{name}.svg"));
+    let dest = icon_dest(&dir, &set, name);
+    let dest_dir = dest
+        .parent()
+        .unwrap_or(std::path::Path::new("."))
+        .to_path_buf();
     match std::fs::create_dir_all(&dest_dir).and_then(|_| std::fs::write(&dest, &bytes)) {
         Ok(()) => {
             // Ship attribution with the first copied icon of a licensed set.
@@ -5203,6 +5268,130 @@ fn icon_copy(view: &mut ForgeView, name: &str, shared: &SharedState, cx: &mut Co
         Err(e) => status(view, &format!("copy failed: {e}"), cx),
     }
     cx.refresh_windows();
+}
+
+/// `studio.icons_in_project` — the `.svg` stems under the current set's
+/// project icon dir. The browser's badge paints minus for every name here.
+fn refresh_project_icons(view: &mut ForgeView, shared: &SharedState, cx: &mut Context<ForgeView>) {
+    let Some(dir) = icon_base_dir(shared) else {
+        return;
+    };
+    let set = get_path(view.state(), &parse_path("studio.iconset").unwrap())
+        .and_then(|j| j.as_str())
+        .unwrap_or_default()
+        .to_owned();
+    let base = assets_root(&dir).join("icons");
+    let scan = if matches!(set.as_str(), "" | "lucide" | "heroicons") {
+        base
+    } else {
+        base.join(&set)
+    };
+    let mut names: Vec<Json> = std::fs::read_dir(&scan)
+        .map(|rd| {
+            rd.flatten()
+                .filter_map(|e| {
+                    let p = e.path();
+                    (p.extension().is_some_and(|x| x == "svg"))
+                        .then(|| {
+                            p.file_stem()
+                                .unwrap_or_default()
+                                .to_string_lossy()
+                                .to_string()
+                        })
+                        .map(Json::String)
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+    names.sort_by(|a, b| {
+        a.as_str()
+            .unwrap_or_default()
+            .cmp(b.as_str().unwrap_or_default())
+    });
+    view.update_state(
+        &parse_path("studio.icons_in_project").unwrap(),
+        Json::Array(names),
+        cx,
+    );
+}
+
+/// Icons-tab badge — adds the icon when the project lacks it, removes the
+/// project copy when present. `icons_in_project` re-derives afterward.
+fn icon_toggle(
+    view: &mut ForgeView,
+    name: &str,
+    shared: &SharedState,
+    cx: &mut Context<ForgeView>,
+) {
+    let set = get_path(view.state(), &parse_path("studio.iconset").unwrap())
+        .and_then(|j| j.as_str())
+        .unwrap_or_default()
+        .to_owned();
+    let Some(dir) = icon_base_dir(shared) else {
+        status(view, "open a document first — no assets/ to copy into", cx);
+        return;
+    };
+    let dest = icon_dest(&dir, &set, name);
+    if dest.is_file() {
+        match std::fs::remove_file(&dest) {
+            Ok(()) => status(view, &format!("removed {set}:{name} from the project"), cx),
+            Err(e) => status(view, &format!("remove failed: {e}"), cx),
+        }
+    } else {
+        icon_copy(view, name, shared, cx);
+    }
+    refresh_project_icons(view, shared, cx);
+    cx.refresh_windows();
+}
+
+/// Icons-tab double-click — the Application sheet renders the picked icon
+/// at every standard size. `app_icon`/`app_iconset` feed the sheet.
+fn icon_view(view: &mut ForgeView, name: &str, cx: &mut Context<ForgeView>) {
+    let set = get_path(view.state(), &parse_path("studio.iconset").unwrap())
+        .and_then(|j| j.as_str())
+        .unwrap_or_default()
+        .to_owned();
+    view.update_state(
+        &parse_path("studio.app_icon").unwrap(),
+        Json::String(name.to_owned()),
+        cx,
+    );
+    view.update_state(
+        &parse_path("studio.app_iconset").unwrap(),
+        Json::String(if set.is_empty() { "lucide".into() } else { set }),
+        cx,
+    );
+    view.update_state(&parse_path("studio.tab").unwrap(), Json::from(7), cx);
+}
+
+/// Recomputes `studio.asset_px` — `asset_step` (a standard size) scaled by
+/// the continuous `asset_pct` zoom.
+fn asset_px(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
+    let state = view.state();
+    let step = get_path(state, &parse_path("studio.asset_step").unwrap())
+        .and_then(|j| j.as_f64().or_else(|| j.as_str()?.parse().ok()))
+        .unwrap_or(64.0);
+    let pct = get_path(state, &parse_path("studio.asset_pct").unwrap())
+        .and_then(|j| j.as_f64().or_else(|| j.as_str()?.parse().ok()))
+        .unwrap_or(100.0);
+    view.update_state(
+        &parse_path("studio.asset_px").unwrap(),
+        Json::from((step * pct / 100.0).round().clamp(1.0, 4096.0)),
+        cx,
+    );
+}
+
+/// Continuous zoom on the assets grid — ±25% steps, clamped 10–800%.
+fn asset_zoom_by(view: &mut ForgeView, delta: f64, cx: &mut Context<ForgeView>) {
+    let cur = get_path(view.state(), &parse_path("studio.asset_pct").unwrap())
+        .and_then(|j| j.as_f64().or_else(|| j.as_str()?.parse().ok()))
+        .unwrap_or(100.0);
+    view.update_state(
+        &parse_path("studio.asset_pct").unwrap(),
+        Json::from((cur + delta).clamp(10.0, 800.0)),
+        cx,
+    );
+    asset_px(view, cx);
 }
 
 /// Vendor-on-use — walks a freshly-loaded doc for `icon:` props and `Icon`
