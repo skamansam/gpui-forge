@@ -1312,6 +1312,11 @@ fn dispatch(
         // (index 4) instead — loaded, not applied. Apply stays explicit.
         "open_path" => {
             if let Some(path) = args.first().map(PathBuf::from) {
+                // `.forge-studio` ids are the project view's synthetic
+                // folders — expandable rows, not real paths to open.
+                if path.components().any(|c| c.as_os_str() == ".forge-studio") {
+                    return;
+                }
                 // A folder or a media file opens the Assets tab's grid at
                 // the location — the folder itself, or the file's parent —
                 // as a flat listing of the supported media under it.
@@ -3803,16 +3808,28 @@ fn project_items(dir: &std::path::Path, src: &str, hidden: bool) -> Vec<Json> {
         p.extend(parts);
         p
     };
-    // A `docs` folder lists markdown pages — one page opens straight from
+    // Media scan for an assets folder — the folder shows only when it
+    // yields files. `linker` names the declarer for the row tooltips.
+    let scan_assets = |root: &std::path::Path, linker: &std::path::Path| -> Vec<Json> {
+        let mut budget = 200usize;
+        let mut scan = gpui_forge_runtime::render::scan_files(root, &[], 6, hidden, &mut budget);
+        tip_scan(&base, linker, &mut scan);
+        scan
+    };
+    // A docs folder lists markdown pages — one page opens straight from
     // the row's doc icon instead, so the folder only shows on two or more.
-    let doc_folder =
-        |mds: &[std::path::PathBuf], path: std::path::PathBuf, linker: &std::path::Path| {
-            let kids = mds
-                .iter()
-                .map(|m| file_item(m, &link_tip(&base, &rel_of(&base, m), linker), false))
-                .collect();
-            dir_item("docs", path, kids, &link_tip(&base, "docs", linker))
-        };
+    let doc_folder = |label: &str,
+                      mds: &[std::path::PathBuf],
+                      path: std::path::PathBuf,
+                      linker: &std::path::Path| {
+        let kids = mds
+            .iter()
+            .map(|m| file_item(m, &link_tip(&base, &rel_of(&base, m), linker), false))
+            .collect();
+        let mut folder = dir_item(label, path, kids, &link_tip(&base, label, linker));
+        folder["icon"] = Json::String("library".to_owned());
+        folder
+    };
     let mut out = vec![file_item(
         &dir.join("forge.toml"),
         "forge.toml - the project manifest",
@@ -3820,10 +3837,30 @@ fn project_items(dir: &std::path::Path, src: &str, hidden: bool) -> Vec<Json> {
     )];
     if manifest_docs.len() > 1 {
         out.push(doc_folder(
+            "Project Docs",
             &manifest_docs,
             synth(&["docs"]),
             &base.join("forge.toml"),
         ));
+    }
+    // Project-level assets: the declared `[assets] dir`, or `<root>/assets`
+    // when that folder exists — the same root the Assets tab resolves.
+    let manifest_assets_dir = manifest_section(src, "assets", "dir")
+        .map(|a| dir.join(a))
+        .filter(|d| d.is_dir())
+        .or_else(|| dir.join("assets").is_dir().then(|| dir.join("assets")));
+    if let Some(ad) = manifest_assets_dir {
+        let scan = scan_assets(&ad, &base.join("forge.toml"));
+        if !scan.is_empty() {
+            let mut folder = dir_item(
+                "Project Assets",
+                synth(&["assets"]),
+                scan,
+                &link_tip(&base, "assets", &base.join("forge.toml")),
+            );
+            folder["icon"] = Json::String("images".to_owned());
+            out.push(folder);
+        }
     }
     for app in &mut apps {
         let window = app.docs[0].clone();
@@ -3832,42 +3869,65 @@ fn project_items(dir: &std::path::Path, src: &str, hidden: bool) -> Vec<Json> {
             .get(&window)
             .cloned()
             .unwrap_or_else(|| base.join("forge.toml"));
-        let mut kids = vec![dir_item(
-            "files",
-            synth(&[&app.name, "files"]),
-            doc_tree(&base, &app.docs, &links, &window),
-            &link_tip(&base, "files", &window),
-        )];
+        let mut kids = Vec::new();
         if app.doc_files.len() > 1 {
             kids.push(doc_folder(
+                "App Docs",
                 &app.doc_files,
                 synth(&[&app.name, "docs"]),
                 &window,
             ));
         }
+        let mut files_folder = dir_item(
+            "App Files",
+            synth(&[&app.name, "files"]),
+            doc_tree(&base, &app.docs, &links, &window),
+            &link_tip(&base, "files", &window),
+        );
+        files_folder["icon"] = Json::String("files".to_owned());
+        kids.push(files_folder);
         if let (Some(ad), Some(linker)) = (&app.assets_dir, &app.assets_linker) {
-            let mut budget = 200usize;
-            let mut scan = gpui_forge_runtime::render::scan_files(ad, &[], 6, hidden, &mut budget);
-            tip_scan(&base, linker, &mut scan);
+            let scan = scan_assets(ad, linker);
             if !scan.is_empty() {
-                kids.push(dir_item(
-                    "assets",
+                let mut folder = dir_item(
+                    "App Assets",
                     synth(&[&app.name, "assets"]),
                     scan,
                     &link_tip(&base, "assets", linker),
-                ));
+                );
+                folder["icon"] = Json::String("images".to_owned());
+                kids.push(folder);
             }
         }
         let mut app_row = dir_item(
-            &app.name,
+            &format!("App: {}", app.name),
             synth(&[&app.name]),
             kids,
             &link_tip(&base, &app.name, &app_linker),
         );
         app_row["icon"] = Json::String(app.icon.clone());
+        // The doc icon opens the window doc's pages, not the synthetic id.
+        app_row["doc"] = Json::String(window.display().to_string());
         out.push(app_row);
     }
+    // Project view opens collapsed — every folder closed until clicked.
+    for item in &mut out {
+        close_dirs(item);
+    }
     out
+}
+
+/// Stamps `expanded: false` on a row and every folder beneath it — the
+/// project view's closed-by-default shape.
+fn close_dirs(item: &mut Json) {
+    if item["dir"].as_bool().unwrap_or(false) {
+        item["expanded"] = Json::Bool(false);
+    }
+    if let Some(children) = item["children"].as_array_mut() {
+        for child in children {
+            close_dirs(child);
+        }
+    }
 }
 
 fn load_project(

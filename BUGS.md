@@ -57,3 +57,31 @@
 - [ ] There are many extensions for ratatui and we should supopport as many as we can. There is a great list at https://github.com/ratatui/awesome-ratatui of libs we can use, including a code editor that would be perfect for use in acpilot. Can you look at the acpilot source (../acpilot)? We need the same widgets, or at least the widgets we would need if they weren't custom widgets. — PARTIAL: audit done. acpilot's TUI uses only core ratatui. It draws its ~30 panes custom: editor, PTY terminals, trees, transcript, minimap, toasts, pickers. This change implements the Tier-1 set as catalog widgets backed by awesome-ratatui crates on the ratatui 0.30 line. New widgets: Terminal (paints the node's source text through ratatui into a TestBackend cell buffer). Tree + TreeItem (tui-tree-widget, key and mouse nav, open and selected bindings). Throbber (throbber-widgets-tui, all symbol sets). Markdown (ratatui-markdown, offset-bound scroll). Ansi + AnsiText (ansi-to-tui). ScrollView (tui-scrollview virtual scroll over rendered children). CodeEditor (ratatui-code-editor, tree-sitter highlight, diff vs `original`). CodeEditor and Markdown are native-only deps. Tree-sitter C sources and ratatui's default crossterm backend have no wasm32 build. On the web canvas those arms fall back to the placeholder. This change also adds the Tier-2 and Tier-3 crates from a crates.io reverse-dependency survey of ratatui 0.30 dependents. New widgets: Toast (ratatui-toaster). Popup (tui-popup, children render offscreen and float centered). WidgetList (tui-widget-list, mixed-height items). Nodes + GraphNode (tui-nodes, port edges). Shimmer (tui-shimmer, phase-bound). Dialog (tui_confirm_dialog, open and choice bindings, arrows pick the button). Fx (tachyonfx, progress-scrubbed cell post-effects). QrCode (qrcode unicode). Image (image crate to halfblock cells, `src` on `base_dir`). Slider (tui-slider, bound `value` takes keys, wheel and track clicks). PieChart (tui-piechart, donut via `hole`). BigText (tui-big-text pixel font). Globe (tui-globe embedded mesh, bound `yaw` rotates). Slider, PieChart, BigText and Globe are native-only deps because they pull crossterm. Skipped on purpose: tui-file-explorer and scm-record are app-level components with their own event loops, and boxmaid still targets ratatui 0.29. acpilot's minimap and diff-review panes have no backing crate and stay custom.
 
 - [x] there should be a universal var for whether the user is using native window decorations, to allow for conditionals on such. For example, to remove the title bar when using native decorations and move the menu to another place. There should also be a way to send information to the WM easily, like window name, etc on startup. Maybe via the meta info in the doc, if not alreaady. We need to make sure we document these in all the docs. — DONE: `studio.native_decorations` (bool, persisted pref) is the `if:` var. `meta.title` names the window — the skeleton template already baked it in. The gpui-kit preview host now calls `set_window_title` when a doc with `meta.title` loads. Docs: `docs/format/forge-yaml.md` (meta row) + `docs/studio/studio-themes.md` (Window decorations + Window title sections).
+
+- [x] The project view folders should be closed by default and should be organized like the following: — DONE: project_items emits the drawn shape. forge.toml row, then `Project Docs` (library icon), then `Project Assets` (images icon). Each app row reads `App: name` and carries `App Docs`, `App Files`, `App Assets` folders with typed lucide icons. Every folder emits `expanded: false` — files_data honors the flag, so the view opens collapsed. The app row doc icon writes the window doc path into `selected`, not the synthetic folder id. Double-click opens on `.forge-studio` virtual paths are ignored.
+
+```
+[forge icon] project.forge.toml [docs icon]
+├── [document folder icon] Project Docs
+│   ├── [markdown icon] main.md
+│   └── ...
+|── [image folder icon] Project Assets
+|   |── [png icon] app-name-logo.png
+|   |── [svg icon] app-name-logo.svg
+|   └── ...
+[application icon] App: app-name [docs icon]
+├── [document folder icon] App Docs
+|   ├── [markdown icon] app-name-docs.md
+|   ├── [markdown icon] app-name-notes.md
+|   └── ...
+└── [file folder icon] App Files
+|   ├── [forge file icon] app-name.forge.yaml
+|   |── [forge file icon] app-name-tests.forge.yaml
+|   └── ...
+|── [image folder icon] App Assets
+|   |── [png icon] app-name-logo.png
+|   |── [svg icon] app-name-logo.svg
+|   └── ...
+...
+```
+NOTE: we need to find special icons for each of the folder types and file types. I think we can use the iconify library to find icons for each type if lucide doesn't have it

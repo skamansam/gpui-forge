@@ -3161,7 +3161,7 @@ impl ForgeView {
         let mut items = Vec::new();
         let mut tips = HashMap::new();
         let mut row_icons = HashMap::new();
-        let mut doc_rows = HashSet::new();
+        let mut doc_rows = HashMap::new();
         Self::files_data(
             &entries,
             &mut items,
@@ -3297,7 +3297,7 @@ impl ForgeView {
         items: Vec<TreeItem>,
         tips: HashMap<String, String>,
         row_icons: HashMap<String, String>,
-        doc_rows: HashSet<String>,
+        doc_rows: HashMap<String, String>,
         cx: &mut Context<Self>,
     ) -> AnyElement {
         let skey = format!("{key}|{}", bind_salt(node));
@@ -3326,7 +3326,8 @@ impl ForgeView {
             let is_dir = path.ends_with('/');
             let tip = tips.get(&path).cloned();
             let row_icon = row_icons.get(&path).cloned();
-            let has_doc = doc_rows.contains(&path);
+            let doc_target = doc_rows.get(&path).cloned();
+            let has_doc = doc_target.is_some();
             let active = sel_value.as_deref() == Some(path.as_str());
             let sel = sel.clone();
             let files_node = files_node.clone();
@@ -3339,7 +3340,9 @@ impl ForgeView {
             let nav_path = path.clone();
             let doc_node = files_node.clone();
             let doc_sel = sel.clone();
-            let doc_path = path.clone();
+            // `doc` may name a different source file than the row — the app
+            // row's icon writes its window doc, not the synthetic folder id.
+            let doc_path = doc_target.unwrap_or_else(|| path.clone());
             let dir_node = files_node.clone();
             let dir_sel = sel.clone();
             let dir_path = path.clone();
@@ -3516,7 +3519,7 @@ impl ForgeView {
         items: &mut Vec<TreeItem>,
         tips: &mut HashMap<String, String>,
         icons: &mut HashMap<String, String>,
-        doc_rows: &mut HashSet<String>,
+        doc_rows: &mut HashMap<String, String>,
     ) {
         for e in entries {
             let name = e["name"].as_str().unwrap_or_default();
@@ -3531,8 +3534,14 @@ impl ForgeView {
             if let Some(icon) = e["icon"].as_str() {
                 icons.insert(path.clone(), icon.to_owned());
             }
-            if e["doc"].as_bool().unwrap_or(false) {
-                doc_rows.insert(path.clone());
+            // `doc` marks a row for the trailing docs icon — `true` links the
+            // row's own file, a string links a different source path.
+            if let Some(doc_target) = if e["doc"].as_bool().unwrap_or(false) {
+                Some(path.clone())
+            } else {
+                e["doc"].as_str().map(str::to_owned)
+            } {
+                doc_rows.insert(path.clone(), doc_target);
             }
             let mut data = TreeItem::new(&path, name);
             let mut subs = Vec::new();
@@ -3540,7 +3549,11 @@ impl ForgeView {
                 Self::files_data(children, &mut subs, tips, icons, doc_rows);
             }
             if !subs.is_empty() {
-                data = data.children(subs).expanded(true);
+                // `expanded` lets an emitter close folders on load. Plain
+                // scans omit it and stay open — their browsable default.
+                data = data
+                    .children(subs)
+                    .expanded(e["expanded"].as_bool().unwrap_or(true));
             }
             items.push(data);
         }
