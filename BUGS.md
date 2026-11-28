@@ -95,3 +95,4 @@ NOTE: we need to find special icons for each of the folder types and file types.
 - [ ] forge-spec's `yaml_schema` test is pathological. It ran 15+ minutes at 133% CPU before a manual kill. `cargo test --workspace` effectively hangs on it.
 
 - [ ] GitHub reports 11 dependabot vulnerabilities on the default branch: 2 high, 7 moderate, 2 low. Likely the `site/` node dependencies. See github.com/skamansam/gpui-forge/security/dependabot.
+- [] we need an extensive online help browser that a help menu item activates. the help menu should have an about window item and a help item. we also need a check-for-update mechanism that runs automatically on start and via a menu item in the help menu
