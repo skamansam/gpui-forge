@@ -24,6 +24,8 @@ pub struct Base {
     pub license: Option<String>,
     /// Library ids known compatible with this base (`use: alias: lib`).
     pub libraries: Vec<String>,
+    /// Compatible library ids with their `version` pins — `lib → "^0.2"`.
+    pub library_versions: Vec<(String, String)>,
 }
 
 impl Base {
@@ -41,6 +43,18 @@ impl Base {
             .map(|m| {
                 m.keys()
                     .filter_map(|k| k.as_str().map(str::to_owned))
+                    .collect()
+            })
+            .unwrap_or_default();
+        let lib_versions: Vec<(String, String)> = root["libraries"]
+            .as_mapping()
+            .map(|m| {
+                m.iter()
+                    .filter_map(|(k, v)| {
+                        let id = k.as_str()?.to_owned();
+                        let version = v["version"].as_str().unwrap_or_default().to_owned();
+                        Some((id, version))
+                    })
                     .collect()
             })
             .unwrap_or_default();
@@ -73,6 +87,7 @@ impl Base {
             catalog: Self::text(&root, "catalog"),
             license: Self::text(&root, "license").into(),
             libraries: libs,
+            library_versions: lib_versions,
         })
     }
 }

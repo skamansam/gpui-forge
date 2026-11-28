@@ -59,6 +59,16 @@ state:
   studio.app_iconset: string
   studio.icons_in_project: list
   studio.icon_steps: list
+  studio.wizard_step: number
+  studio.wizard_kind: number
+  studio.wizard_base: string
+  studio.wizard_bases: list
+  studio.wizard_name: string
+  studio.wizard_loc: string
+  studio.wizard_desc: string
+  studio.wizard_template: string
+  studio.wizard_templates: list
+  studio.wizard_libs: list
   studio.doc_dir: string
   studio.doc_file: string
   studio.doc_source: string
@@ -111,7 +121,7 @@ appMenu: &appMenu
       on click: new_document()
     - MenuItem: New Project…
       icon: package-plus
-      on click: open_dialog("new-project")
+      on click: wizard_open()
     - MenuItem: Open…
       icon: folder-open
       on click: open_document()
@@ -288,14 +298,19 @@ welcomeTab: &welcomeTab
               style: {size: xl, weight: bold}
             - Text: a visual builder for Forge documents
               style: {color: $theme.muted_foreground}
-        - Text: "Forge Studio edits .forge.yaml documents live — outline a document in Structure, tune it in the Inspector, and watch the preview rebuild. To get started, choose a starter below."
-          style: {size: sm, color: $theme.muted_foreground, width: 520px}
+        - Text: "Forge Studio edits .forge.yaml documents live — outline a document in Structure, tune it in the Inspector, and watch the preview rebuild. It manages multi-app projects end to end: project tree, docs, assets, icons, themes, skeleton builds and preview hosts, across every registered base from GPUI to terminal."
+          style: {size: sm, color: $theme.muted_foreground, width: 560px}
+        - Button: New Project…
+          icon: package-plus
+          variant: Primary
+          size: Large
+          on click: wizard_open()
         - HStack:
           style: {gap: 16px, justify: center, align: stretch}
           children:
             - GroupBox: Welcome
               variant: Outline
-              style: {width: 170px}
+              style: {width: 170px, min-height: 200px}
               children:
                 - Image#img-welcome:
                   src: ../../gpui_forge_icon_medallion.svg
@@ -311,7 +326,7 @@ welcomeTab: &welcomeTab
                       on click: start_from('welcome')
             - GroupBox: Gallery
               variant: Outline
-              style: {width: 170px}
+              style: {width: 170px, min-height: 200px}
               children:
                 - Image#img-gallery:
                   src: ../../gpui_forge_icon_medallion.svg
@@ -332,7 +347,7 @@ welcomeTab: &welcomeTab
                       on click: start_from('gallery')
             - GroupBox: Blank
               variant: Outline
-              style: {width: 170px}
+              style: {width: 170px, min-height: 200px}
               children:
                 - Image#img-blank:
                   src: ../../gpui_forge_icon_medallion.svg
@@ -1468,36 +1483,138 @@ Dialog#preferences:
             on click: close_prefs()
 
 # ============================================================================
-# THE NEW PROJECT DIALOG
+# THE NEW PROJECT WIZARD
 # ============================================================================
-# File → New Project… — opens a fresh document in the editor. A folder is
-# only asked for on save (#133).
+# File → New Project… / welcome button → `wizard_open()` resets fields and
+# opens this 4-step dialog. Steps: 0 kind+base, 1 name+location+desc,
+# 2 template, 3 libraries. All state is `studio.wizard_*` — the dialog's
+# `studio` seed and the shell↔dialog link sync both directions.
 Dialog#new-project:
+  title: New Project wizard
   style:
-    width: 420px
-    padding: 16px
-    gap: 12px
+    width: 560px
+    padding: 20px
+    gap: 14px
     radius: 8px
     background: $theme.background
     border: 1px
     border-style: solid
     border-color: $theme.border
   children:
-    - Text: New Forge project
-      style: {size: lg, weight: semibold}
-    - Input:
-      value: bind $name
-      placeholder: project name
-    - Select:
-      options: $bases
-      value: bind $base
-      placeholder: base component system
+    - HStack:
+      style: {justify: between, align: center}
+      children:
+        - Text: New Forge project
+          style: {size: lg, weight: semibold}
+        - Text: "step {$studio.wizard_step} / 3"
+          style: {size: xs, color: $theme.muted_foreground}
+    - if: $studio.wizard_step
+      is: 0
+      children:
+        - VStack:
+          style: {gap: 10px}
+          children:
+            - Text: "1/4 — What are you building?"
+              style: {size: sm, weight: semibold}
+            - RadioGroup:
+              selected: bind $studio.wizard_kind
+              on change: wizard_kind()
+              children:
+                - Radio: "GUI application — GPUI window app (gpui-kit, guise, adabraka, bezel, iced)"
+                - Radio: "Console application — terminal UI (ratatui)"
+            - Text: Base component system
+              style: {size: xs, color: $theme.muted_foreground}
+            - Select:
+              options: $studio.wizard_bases
+              value: bind $studio.wizard_base
+              placeholder: base
+              on change: wizard_base()
+      else:
+        - if: $studio.wizard_step
+          is: 1
+          children:
+            - VStack:
+              style: {gap: 10px}
+              children:
+                - Text: "2/4 — Name, location, description"
+                  style: {size: sm, weight: semibold}
+                - Text: Project name
+                  style: {size: xs, color: $theme.muted_foreground}
+                - Input:
+                  value: bind $studio.wizard_name
+                  placeholder: my-app
+                - Text: Location (the project folder goes inside)
+                  style: {size: xs, color: $theme.muted_foreground}
+                - HStack:
+                  style: {gap: 8px, align: center}
+                  children:
+                    - Input:
+                      value: bind $studio.wizard_loc
+                      style: {grow: true}
+                    - Button: Browse…
+                      size: Small
+                      on click: wizard_browse()
+                - Text: Description (optional)
+                  style: {size: xs, color: $theme.muted_foreground}
+                - Input:
+                  value: bind $studio.wizard_desc
+                  placeholder: what this app does
+          else:
+            - if: $studio.wizard_step
+              is: 2
+              children:
+                - VStack:
+                  style: {gap: 10px}
+                  children:
+                    - Text: "3/4 — Template"
+                      style: {size: sm, weight: semibold}
+                    - Select:
+                      options: $studio.wizard_templates
+                      value: bind $studio.wizard_template
+                      placeholder: template
+                    - Text: "`blank` is a minimal hello-world document. A showcase doc starts the app as a full widget tour."
+                      style: {size: xs, color: $theme.muted_foreground}
+              else:
+                - VStack:
+                  style: {gap: 10px}
+                  children:
+                    - Text: "4/4 — Dependencies (optional)"
+                      style: {size: sm, weight: semibold}
+                    - Text: "compatible libraries for {$studio.wizard_base} — checked items are written to `[libraries]` in forge.toml"
+                      style: {size: xs, color: $theme.muted_foreground}
+                    - VStack:
+                      style: {gap: 6px}
+                      children:
+                        - for: $studio.wizard_libs
+                          each: l
+                          children:
+                            - Checkbox: "{$l.id}  (^ {$l.version})"
+                              checked: bind $l.checked
+                          else:
+                            - Text: "no compatible libraries for this base"
+                              style: {size: sm, color: $theme.muted_foreground}
+    - Separator:
     - HStack:
       style: {justify: end, gap: 8px}
       children:
+        - Button: Cancel
+          variant: Ghost
+          on click: close_dialog()
+        - Button: Back
+          variant: Ghost
+          on click: wizard_nav('-1')
+          if: $studio.wizard_step
+          not: 0
+        - Button: Next
+          variant: Primary
+          on click: wizard_nav('1')
+          if: $studio.wizard_step
+          not: 3
         - Button: Create
           variant: Primary
-          on click: create_project()
+          on click: wizard_create()
+          if: $studio.wizard_step
+          is: 3
 
 # ============================================================================
 # THE RENAME DIALOG

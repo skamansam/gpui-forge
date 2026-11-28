@@ -1,3 +1,4 @@
+#![recursion_limit = "256"]
 //! Forge Studio: a Forge document rendered by the Forge runtime.
 //!
 //! The shell is `studio.forge.yaml` — toolbar, palette, source editor, preview and
@@ -524,6 +525,19 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
                         "icons_in_project": [],
                         // Application tab's size ladder — standard icon sizes.
                         "icon_steps": [16, 32, 64, 128, 256, 512],
+                        // New Project wizard — the dialog pages on
+                        // `wizard_step`; pickers re-derive off `wizard_kind`
+                        // + `wizard_base` through `wizard_reseed`.
+                        "wizard_step": 0,
+                        "wizard_kind": 0,
+                        "wizard_base": "",
+                        "wizard_bases": [],
+                        "wizard_name": "",
+                        "wizard_loc": "",
+                        "wizard_desc": "",
+                        "wizard_template": "blank",
+                        "wizard_templates": [],
+                        "wizard_libs": [],
                         // Files sidebar "project" toggle — the document's folder.
                         "doc_dir": "",
                         // Docs tab — `doc_file` is the markdown page being
@@ -574,6 +588,13 @@ fn build_shell(cx: &mut Context<ForgeView>) -> ForgeView {
         "preview_in_host",
         "build_skeleton",
         "demo_app",
+        "wizard_open",
+        "wizard_kind",
+        "wizard_base",
+        "wizard_lib",
+        "wizard_browse",
+        "wizard_nav",
+        "wizard_create",
         "raise_host",
         "pane_key",
         "pane_mouse",
@@ -1255,6 +1276,12 @@ fn dispatch(
         "preview_in_host" => preview_in_host(view, shared.clone(), cx),
         "build_skeleton" => build_skeleton(view, shared.clone(), cx),
         "demo_app" => demo_app(view, shared.clone(), cx),
+        "wizard_open" => wizard_open(view, shared.clone(), cx),
+        "wizard_kind" | "wizard_base" => wizard_reseed(view, cx),
+        "wizard_lib" => wizard_lib(view, args, cx),
+        "wizard_browse" => wizard_browse(view, cx),
+        "wizard_nav" => wizard_nav(view, args, cx),
+        "wizard_create" => wizard_create(view, shared.clone(), cx),
         "raise_host" => host_send(&json!({"cmd":"raise"})),
         // Stream cards (ratatui `mode: stream`) — the card fires `pane_key` /
         // `pane_mouse` for input over its tracked TermView. Forward to that
@@ -1788,6 +1815,325 @@ fn create_project(view: &mut ForgeView, shared: SharedState, cx: &mut Context<Fo
         &format!("new project `{name}` — unsaved; pick a folder on first save"),
         cx,
     );
+}
+
+// ---------------------------------------------------------------------
+// New Project wizard — `Dialog#new-project` pages on `studio.wizard_step`.
+// Fields live under `studio.wizard_*` so the dialog's `studio` seed and
+// the shell↔dialog link keep both sides in sync.
+
+/// GUI bases link a `gpui*` toolkit crate. The rest are console — today
+/// just ratatui, a terminal surface.
+/// Console bases are the terminal-only ones — `gpui.crate` names like
+/// `adabraka-gpui`/`bezel-gpui`/`iced` do not share a `gpui` prefix, so
+/// classify by exclusion instead of a prefix match.
+fn wizard_is_gui(base: &gpui_forge_runtime::forge_spec::base::Base) -> bool {
+    base.gpui_crate != "ratatui"
+}
+
+/// `wizard_open()` — File → New Project… and the welcome button. Resets
+/// the fields, then opens the dialog so a fresh run inherits nothing.
+fn wizard_open(view: &mut ForgeView, shared: SharedState, cx: &mut Context<ForgeView>) {
+    for (key, value) in [
+        ("studio.wizard_step", Json::from(0)),
+        ("studio.wizard_kind", Json::from(0)),
+        ("studio.wizard_name", Json::String(String::new())),
+        (
+            "studio.wizard_loc",
+            Json::String(std::env::var("HOME").unwrap_or_else(|_| ".".into())),
+        ),
+        ("studio.wizard_desc", Json::String(String::new())),
+        ("studio.wizard_template", Json::String("blank".into())),
+    ] {
+        view.update_state(&parse_path(key).unwrap(), value, cx);
+    }
+    wizard_reseed(view, cx);
+    open_dialog(view, &["new-project".into()], &shared, cx);
+}
+
+/// Re-derive the pickers that depend on kind and base: the base list, the
+/// template list, and the library rows. `wizard_kind()`/`wizard_base()`
+/// both land here.
+fn wizard_reseed(view: &mut ForgeView, cx: &mut Context<ForgeView>) {
+    let (gui, current, template) = {
+        let state = view.state();
+        (
+            get_path(state, &parse_path("studio.wizard_kind").unwrap())
+                .and_then(|j| j.as_f64())
+                .unwrap_or(0.0)
+                == 0.0,
+            get_path(state, &parse_path("studio.wizard_base").unwrap())
+                .and_then(|j| j.as_str().map(str::to_owned))
+                .unwrap_or_default(),
+            get_path(state, &parse_path("studio.wizard_template").unwrap())
+                .and_then(|j| j.as_str().map(str::to_owned))
+                .unwrap_or_else(|| "blank".into()),
+        )
+    };
+    let bases: Vec<gpui_forge_runtime::forge_spec::base::Base> = check::bases()
+        .into_iter()
+        .filter(|b| wizard_is_gui(b) == gui)
+        .collect();
+    let ids: Vec<String> = bases.iter().map(|b| b.id.clone()).collect();
+    let base = if ids.contains(&current) {
+        current
+    } else {
+        ids.first().cloned().unwrap_or_default()
+    };
+    view.update_state(&parse_path("studio.wizard_bases").unwrap(), ids.into(), cx);
+    view.update_state(
+        &parse_path("studio.wizard_base").unwrap(),
+        Json::String(base.clone()),
+        cx,
+    );
+
+    // Templates — `blank` plus the base's shipped example doc, if any.
+    let mut templates = vec!["blank".to_owned()];
+    if let Some((stem, _)) = wizard_template_doc(&base) {
+        templates.push(stem);
+    }
+    view.update_state(
+        &parse_path("studio.wizard_templates").unwrap(),
+        templates.clone().into(),
+        cx,
+    );
+    if !templates.contains(&template) {
+        view.update_state(
+            &parse_path("studio.wizard_template").unwrap(),
+            Json::String("blank".into()),
+            cx,
+        );
+    }
+
+    // Libraries — the base's compatible adapters as unchecked rows.
+    let libs: Vec<Json> = bases
+        .iter()
+        .find(|b| b.id == base)
+        .map(|b| {
+            b.library_versions
+                .iter()
+                .map(|(id, v)| serde_json::json!({"id": id, "version": v, "checked": false}))
+                .collect()
+        })
+        .unwrap_or_default();
+    view.update_state(
+        &parse_path("studio.wizard_libs").unwrap(),
+        Json::Array(libs),
+        cx,
+    );
+}
+
+/// The base's shipped example doc — `(stem, path)` — when the repo ships a
+/// showcase/dashboard the new project can start from.
+fn wizard_template_doc(base: &str) -> Option<(String, PathBuf)> {
+    let name = match base {
+        "ratatui" => "demos/ratatui-dashboard".to_owned(),
+        b => format!("showcases/{b}-showcase"),
+    };
+    let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join(format!("../../examples/{name}.forge.yaml"));
+    let stem = name.rsplit('/').next().unwrap_or(&name).to_owned();
+    path.is_file().then_some((stem, path))
+}
+
+/// `wizard_lib(<id>)` — a library row's checkbox toggled; flip `checked`
+/// in `studio.wizard_libs`.
+fn wizard_lib(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeView>) {
+    let Some(id) = args
+        .first()
+        .map(|a| a.trim_matches(|c| c == '"' || c == '\'').to_owned())
+    else {
+        return;
+    };
+    let path = parse_path("studio.wizard_libs").unwrap();
+    let mut libs = get_path(view.state(), &path)
+        .cloned()
+        .unwrap_or(Json::Array(Vec::new()));
+    if let Some(items) = libs.as_array_mut() {
+        for l in items.iter_mut() {
+            if l["id"].as_str() == Some(id.as_str()) {
+                let checked = l["checked"].as_bool().unwrap_or(false);
+                l["checked"] = Json::Bool(!checked);
+            }
+        }
+    }
+    view.update_state(&path, libs, cx);
+}
+
+/// `wizard_browse()` — the location field's folder button. Native picker,
+/// `directories: true`, lands in `studio.wizard_loc`.
+fn wizard_browse(_view: &mut ForgeView, cx: &mut Context<ForgeView>) {
+    let receiver = cx.prompt_for_paths(PathPromptOptions {
+        files: false,
+        directories: true,
+        multiple: false,
+        prompt: Some("Pick the folder the project goes in".into()),
+    });
+    cx.spawn(async move |view, cx| {
+        let Ok(Ok(Some(paths))) = receiver.await else {
+            return;
+        };
+        let Some(path) = paths.into_iter().next() else {
+            return;
+        };
+        view.update(cx, move |view, cx| {
+            view.update_state(
+                &parse_path("studio.wizard_loc").unwrap(),
+                Json::String(path.display().to_string()),
+                cx,
+            );
+        })
+        .ok();
+    })
+    .detach();
+}
+
+/// `wizard_nav(<delta>)` — Back/Next move `studio.wizard_step` in 0..=3.
+fn wizard_nav(view: &mut ForgeView, args: &[String], cx: &mut Context<ForgeView>) {
+    let delta: i64 = args
+        .first()
+        .and_then(|a| a.trim_matches(|c| c == '"' || c == '\'').parse().ok())
+        .unwrap_or(1);
+    let path = parse_path("studio.wizard_step").unwrap();
+    let step = get_path(view.state(), &path)
+        .and_then(|j| j.as_i64())
+        .unwrap_or(0)
+        + delta;
+    view.update_state(&path, Json::from(step.clamp(0, 3)), cx);
+}
+
+/// `wizard_create()` — the last page's Create button. Scaffolds
+/// `<loc>/<name>` through `forge new --base`, then patches the manifest
+/// with the description and the checked `[libraries]`, swaps in the
+/// template doc when one was picked, and loads the project.
+fn wizard_create(view: &mut ForgeView, shared: SharedState, cx: &mut Context<ForgeView>) {
+    let (name, loc, base, desc, template, checked) = {
+        let state = view.state();
+        let field = |key: &str| {
+            get_path(state, &parse_path(&format!("studio.{key}")).unwrap())
+                .and_then(|j| j.as_str().map(str::to_owned))
+                .unwrap_or_default()
+                .trim()
+                .to_owned()
+        };
+        let checked: Vec<(String, String)> =
+            get_path(state, &parse_path("studio.wizard_libs").unwrap())
+                .and_then(|j| j.as_array().cloned())
+                .unwrap_or_default()
+                .iter()
+                .filter(|l| l["checked"].as_bool().unwrap_or(false))
+                .map(|l| {
+                    (
+                        l["id"].as_str().unwrap_or_default().to_owned(),
+                        l["version"].as_str().unwrap_or_default().to_owned(),
+                    )
+                })
+                .collect();
+        (
+            field("wizard_name"),
+            field("wizard_loc"),
+            field("wizard_base"),
+            field("wizard_desc"),
+            field("wizard_template"),
+            checked,
+        )
+    };
+    if name.is_empty() || name.contains(['/', '\\']) {
+        status(view, "project name required (no slashes)", cx);
+        return;
+    }
+    if loc.is_empty() {
+        status(view, "pick a folder for the project", cx);
+        return;
+    }
+    let dir = std::path::Path::new(&loc).join(&name);
+    if dir.exists() {
+        status(view, &format!("{} already exists", dir.display()), cx);
+        return;
+    }
+    let Some(forge) = find_forge_binary() else {
+        status(view, "no `forge` binary next to studio", cx);
+        return;
+    };
+    // `forge new` uses its arg verbatim as `[package] name`/`id` — pass the
+    // bare name with the location as the working dir, not the joined path.
+    let out = std::process::Command::new(&forge)
+        .arg("new")
+        .arg(&name)
+        .current_dir(&loc)
+        .arg("--base")
+        .arg(&base)
+        .output();
+    match out {
+        Ok(o) if !o.status.success() => {
+            status(
+                view,
+                &format!(
+                    "forge new failed: {}",
+                    String::from_utf8_lossy(&o.stderr).trim()
+                ),
+                cx,
+            );
+            return;
+        }
+        Err(e) => {
+            status(view, &format!("forge new failed: {e}"), cx);
+            return;
+        }
+        _ => {}
+    }
+
+    // Manifest extras — `description` under `[package]`, a real
+    // `[libraries]` section for the checked adapters.
+    let toml_path = dir.join("forge.toml");
+    let mut toml = std::fs::read_to_string(&toml_path).unwrap_or_default();
+    if !desc.is_empty() {
+        let desc = desc.replace('"', "\\\"");
+        toml = toml.replacen(
+            &format!("name = \"{name}\""),
+            &format!("name = \"{name}\"\ndescription = \"{desc}\""),
+            1,
+        );
+    }
+    if !checked.is_empty() {
+        toml.push_str("\n[libraries]\n");
+        for (id, v) in checked {
+            toml.push_str(&format!("{id} = \"^{v}\"\n"));
+        }
+    }
+    let _ = std::fs::write(&toml_path, toml);
+
+    // A picked template replaces the scaffold's `app.forge.yaml` — same
+    // base either way, so only `meta.title` needs the project name.
+    if template != "blank"
+        && let Some((_, src)) = wizard_template_doc(&base).filter(|(stem, _)| *stem == template)
+        && let Ok(doc) = std::fs::read_to_string(&src)
+    {
+        let mut in_meta = false;
+        let mut titled = false;
+        let doc = doc
+            .lines()
+            .map(|l| {
+                if l.starts_with("meta:") {
+                    in_meta = true;
+                } else if in_meta && !l.starts_with([' ', '\t', '#']) && !l.trim().is_empty() {
+                    in_meta = false;
+                }
+                if in_meta && !titled && l.trim_start().starts_with("title:") {
+                    titled = true;
+                    let indent = &l[..l.len() - l.trim_start().len()];
+                    return format!("{indent}title: {name}");
+                }
+                l.to_owned()
+            })
+            .collect::<Vec<_>>()
+            .join("\n");
+        let _ = std::fs::write(dir.join("app.forge.yaml"), doc);
+    }
+
+    close_dialog(cx);
+    load_project(toml_path, view, shared, cx);
+    status(view, &format!("created project `{name}`"), cx);
 }
 
 /// #148 context menu — the row's path may be a dir or a file. `dir_of` picks
