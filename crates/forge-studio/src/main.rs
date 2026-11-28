@@ -1410,7 +1410,7 @@ fn dispatch(
                         Json::String(src),
                         cx,
                     );
-                    view.update_state(&parse_path("studio.tab").unwrap(), Json::from(9), cx);
+                    view.update_state(&parse_path("studio.tab").unwrap(), Json::from(8), cx);
                     return;
                 }
                 let src = std::fs::read_to_string(&path).ok();
@@ -4699,7 +4699,7 @@ fn doc_open_path(view: &mut ForgeView, path: &std::path::Path, cx: &mut Context<
         Json::String(text),
         cx,
     );
-    view.update_state(&parse_path("studio.tab").unwrap(), Json::from(8), cx);
+    view.update_state(&parse_path("studio.tab").unwrap(), Json::from(7), cx);
 }
 
 /// Where a new page lands — `README.md` for the manifest, the doc's stem
@@ -5449,7 +5449,12 @@ fn icon_view(view: &mut ForgeView, name: &str, cx: &mut Context<ForgeView>) {
         Json::String(if set.is_empty() { "lucide".into() } else { set }),
         cx,
     );
-    view.update_state(&parse_path("studio.tab").unwrap(), Json::from(7), cx);
+    view.update_state(&parse_path("studio.tab").unwrap(), Json::from(5), cx);
+    view.update_state(
+        &parse_path("studio.assets_zoom").unwrap(),
+        Json::from(3),
+        cx,
+    );
 }
 
 /// Recomputes `studio.asset_px` — `asset_step` (a standard size) scaled by
